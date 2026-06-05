@@ -1,0 +1,38 @@
+{
+  "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/substrate-install",
+  "substrate": {
+    "compose_mode": "host",
+    "host_strategy": "single-host",
+    "hosts": [],
+    "network": "preview",
+    "network_magic": null,
+    "nodes": [
+      {
+        "host": null,
+        "id": "node1",
+        "impl": "cardano-node",
+        "role": "honest",
+        "version": "10.7.1"
+      },
+      {
+        "host": null,
+        "id": "node2",
+        "impl": "cardano-node",
+        "role": "honest",
+        "version": "10.7.1"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        }
+      ]
+    }
+  }
+}

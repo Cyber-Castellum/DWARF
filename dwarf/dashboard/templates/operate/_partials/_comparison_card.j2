@@ -1,0 +1,67 @@
+<article class="comparison-card" id="{{ entry.scenario_id }}">
+  <h3 class="comparison-card__scenario"><code>{{ entry.scenario_id }}</code></h3>
+  <p>
+    Result: <span class="comparison-result {{ 'comparison-result--agreed' if entry.agreed else 'comparison-result--diverged' }}">{{ entry.result }}</span>
+  </p>
+  <p class="comparison-card__runs">
+    amaru: {% if entry.amaru.run_id_url %}<a href="{{ entry.amaru.run_id_url }}"><code>{{ entry.amaru.run_id }}</code></a>{% elif entry.amaru.run_id %}<code>{{ entry.amaru.run_id }}</code>{% else %}<code>—</code>{% endif %}
+    · cardano-node: {% if entry.cardano_node.run_id_url %}<a href="{{ entry.cardano_node.run_id_url }}"><code>{{ entry.cardano_node.run_id }}</code></a>{% elif entry.cardano_node.run_id %}<code>{{ entry.cardano_node.run_id }}</code>{% else %}<code>—</code>{% endif %}
+    {% if entry.seed is not none %} · seed <code>{{ entry.seed }}</code>{% endif %}
+  </p>
+
+  {% for win_key, win_label in [('whole_run', 'Whole run'), ('fault_window', 'Fault window'), ('postfault_window', 'Post-fault window')] %}
+  {% set window = entry.windows[win_key] %}
+  <details class="comparison-window">
+    <summary>
+      {{ win_label }} —
+      {% if window.total_count == 0 %}
+        no metrics emitted in this window
+      {% else %}
+        {{ window.divergent_count }} of {{ window.total_count }} metric{{ '' if window.total_count == 1 else 's' }} diverged
+      {% endif %}
+    </summary>
+    {% if window.metrics %}
+    <dl class="metric-panel-list">
+      {% for m in window.metrics %}
+      <div class="metric-panel">
+        <div class="metric-panel__label">{{ m.label }} <code>{{ m.name }}</code></div>
+        {% if m.asymmetry == 'amaru_only' %}
+        <div class="metric-panel__values">
+          <span class="eyebrow eyebrow--asymmetry">amaru-only metric</span>
+          amaru: <code>{{ m.amaru_raw }}</code>
+        </div>
+        {% else %}
+        <div class="metric-panel__values">
+          amaru: <code>{{ m.amaru_raw }}</code> · cardano-node: <code>{{ m.cardano_raw }}</code>
+        </div>
+        {% if m.normalization %}
+        <div class="metric-panel__norm">
+          per active peer (basis: {{ m.normalization.basis }};
+          amaru {{ m.normalization.amaru_active_peers }} peer{{ '' if m.normalization.amaru_active_peers == 1 else 's' }} /
+          cardano-node {{ m.normalization.cardano_node_active_peers }} peer{{ '' if m.normalization.cardano_node_active_peers == 1 else 's' }})
+          — amaru: <code>{{ m.normalization.amaru_per_active_peer }}</code> ·
+          cardano-node: <code>{{ m.normalization.cardano_node_per_active_peer }}</code>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% if m.divergence %}
+        <div class="metric-panel__divergence">
+          <em>divergent</em>{% if m.divergence_pct is not none %} (Δ {{ '%+.1f'|format(m.divergence_pct) }}%){% elif m.divergence_pct is none and m.amaru_raw != m.cardano_raw and m.cardano_raw == 0 %} (Δ undefined — baseline 0){% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </dl>
+    {% endif %}
+  </details>
+  {% endfor %}
+
+  <p class="coverage-matrix__anchor">
+    <span class="eyebrow">Reference</span>
+    {% if entry.evidence_path %}
+    <code>{{ entry.evidence_path }}</code>
+    {% else %}
+    <code>dwarf/runs/{{ entry.cardano_node.run_id }}/cross-impl-comparison.json</code>
+    {% endif %}
+  </p>
+</article>

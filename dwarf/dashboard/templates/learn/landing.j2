@@ -1,0 +1,128 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<p class="learn-hero">A forensic testing framework for Cardano nodes.</p>
+<p>Dwarf feeds adversarial inputs to Amaru and the Haskell <code>cardano-node</code>, then records every probe as a tamper-evident evidence bundle. The pages below walk through how the substrate is structured, where coverage stands, and how to read what the watcher sees.</p>
+
+<hr class="hairline">
+
+<div class="learn-tile-grid">
+
+  <a class="learn-tile" href="/learn/getting-started">
+    <span class="learn-tile__eyebrow">5-step Hello-Dwarf walkthrough</span>
+    <h2 class="learn-tile__title">Getting started</h2>
+    <p class="learn-tile__sub">Install → run your first scenario → find it in the dashboard → preserve a bundle → write your first assertion. Copy-paste-and-go.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/examples">
+    <span class="learn-tile__eyebrow">10 annotated scenarios across families</span>
+    <h2 class="learn-tile__title">Examples</h2>
+    <p class="learn-tile__sub">Honest baseline · byzantine peer · chainsync fault · blockfetch fault · txsubmission pressure · fuzzing · docker compose · snapshot recovery · era transition · serdes codec.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/walkthroughs">
+    <span class="learn-tile__eyebrow">{{ walkthrough_count }} narrated paths</span>
+    <h2 class="learn-tile__title">Walkthroughs</h2>
+    <p class="learn-tile__sub">Operator paths from <em>Run your first scenario</em> to <em>Compare two implementations</em>. Each step references a real file or page.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/architecture">
+    <span class="learn-tile__eyebrow">Annotated SVG diagram</span>
+    <h2 class="learn-tile__title">Architecture</h2>
+    <p class="learn-tile__sub">The dwarf substrate end to end — telemetry, scenario harness, evidence bundling, comparison, lifecycle.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/concepts">
+    <span class="learn-tile__eyebrow">{{ concept_count }} terms · anchored to project paths</span>
+    <h2 class="learn-tile__title">Glossary (concepts)</h2>
+    <p class="learn-tile__sub">Vocabulary used across the substrate — bucket, lifecycle, scenario, bundle, fault. Each entry resolves to a real file in the repository.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/glossary">
+    <span class="learn-tile__eyebrow">20 audit-grade terms</span>
+    <h2 class="learn-tile__title">Glossary (audit)</h2>
+    <p class="learn-tile__sub">CGPL audit-grade terminology — substrate, primitive, assertion, manifest hash chain, replay determinism, AFL++, qemu-mode, AFLNet, SARIF, plugin, byzantine peer, era transition.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/api">
+    <span class="learn-tile__eyebrow">JSON · SSE · binary endpoints</span>
+    <h2 class="learn-tile__title">REST API</h2>
+    <p class="learn-tile__sub">Reference for the dashboard's machine-readable surface — /healthz, /metrics, /api/health, /api/runs, SSE log tail, bundle export/import. Plus the HTML-only catalog.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/faq">
+    <span class="learn-tile__eyebrow">15 common questions</span>
+    <h2 class="learn-tile__title">FAQ</h2>
+    <p class="learn-tile__sub">First scenario, bundle locations, compose modes, plugins, theme picker, notifications wiring, scraping policy, audit-package export.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/troubleshooting">
+    <span class="learn-tile__eyebrow">12 deploy gotchas + fixes</span>
+    <h2 class="learn-tile__title">Troubleshooting</h2>
+    <p class="learn-tile__sub">rsync silent no-op · DASHBOARD_ROOT path resolution · pgrep parent-vs-listener · docker-cp vs host-mount · /tmp socket 108-byte limit · Caddy SSE 502s.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/operator-runbook">
+    <span class="learn-tile__eyebrow">Deploy + day-2 ops</span>
+    <h2 class="learn-tile__title">Operator runbook</h2>
+    <p class="learn-tile__sub">Docker / bare-metal deploy, common operations, troubleshooting recipes, backup &amp; restore, /healthz + Prometheus monitoring.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/developer-onboarding">
+    <span class="learn-tile__eyebrow">TDD + lane discipline</span>
+    <h2 class="learn-tile__title">Developer onboarding</h2>
+    <p class="learn-tile__sub">Add a primitive · scenario · assertion · profile. Narrow-commit pattern, local validate flow, multi-lane coordination.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/plugin-authoring">
+    <span class="learn-tile__eyebrow">Extend without forking</span>
+    <h2 class="learn-tile__title">Plugin authoring</h2>
+    <p class="learn-tile__sub">Plugin discovery model · register() contract · sandbox / security model · hello-world example · publishing patterns.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/coverage">
+    <span class="learn-tile__eyebrow">Coverage matrix</span>
+    <h2 class="learn-tile__title">Coverage</h2>
+    <p class="learn-tile__sub">Implementations × mini-protocols × fault families × fuzzer backends × CBOR shapes — what is and isn&rsquo;t under probe.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/status">
+    <span class="learn-tile__eyebrow">Project status</span>
+    <h2 class="learn-tile__title">Status</h2>
+    <p class="learn-tile__sub">Current phase, candidate findings under investigation, recent feature commits on <code>main</code>.</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/cli">
+    <span class="learn-tile__eyebrow">Operator CLI reference</span>
+    <h2 class="learn-tile__title">CLI</h2>
+    <p class="learn-tile__sub">Every <code>cardano-profile</code> top-level command group with worked examples — scenario, compare, bundle, fuzz, target, primitive, dashboard, testcase.</p>
+  </a>
+
+</div>
+
+<hr class="hairline">
+
+<section class="learn-substrate">
+  <span class="eyebrow">Substrate at a glance</span>
+  <ul class="data-proof-list">
+    <li class="data-proof-row">
+      <span class="label">Implementations</span>
+      <span class="value"{% if not implementations %} data-empty="true"{% endif %}>{{ implementations|join(', ') if implementations else 'needs source' }}</span>
+    </li>
+    <li class="data-proof-row">
+      <span class="label">Scenarios available</span>
+      <span class="value">{{ scenario_count }}</span>
+    </li>
+    <li class="data-proof-row">
+      <span class="label">Fuzz targets</span>
+      <span class="value">{{ fuzz_target_count }}</span>
+    </li>
+    {% if runs_total and pass_rate_pct is not none %}
+    <li class="data-proof-row">
+      <span class="label">Recent runs (rolling {{ runs_total }})</span>
+      <span class="value">{{ pass_rate_pct }}% pass-rate</span>
+    </li>
+    {% endif %}
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{
+  "healthy": true,
+  "mode": "blockfetch_invalid_block_cbor",
+  "proxy_listen_address": "127.0.0.1:46311",
+  "proxy_session": "dwarf-substrate-20260428T064357Z-223bf4d2-blockfetch_invalid_block_cbor-node1",
+  "proxy_stats": {
+    "connections_seen": 1,
+    "intercepted_segments": 0,
+    "mutated_segments": 0
+  },
+  "result": {
+    "decode_path": "simulated_via_mutated_mux_payload",
+    "invalid_block_rejected": true
+  },
+  "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/runtime.json",
+  "simulation_mode": "mux_proxy_mutation",
+  "target_node": "node1",
+  "upstream_address": "127.0.0.1:34042"
+}

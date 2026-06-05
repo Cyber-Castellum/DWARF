@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "txsubmission_unexpected_body_rejected"}
+  },
+  "additionalProperties": true
+}

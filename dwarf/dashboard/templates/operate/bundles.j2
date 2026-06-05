@@ -1,0 +1,61 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate</span>
+<h1>Bundles</h1>
+<p>Forensic bundles preserved by operator action. Each bundle is a tar.gz archive of a run's full evidence (manifest, events, captured stdout/stderr, resource snapshots) at <code>dwarf/bundles/&lt;run_id&gt;.tar.gz</code>. Click a Run ID to open the per-run inspector. Filter by result to narrow the list; the filter is client-side and refresh resets it.</p>
+
+<hr class="hairline">
+
+{% if empty %}
+<p class="empty-section-statement">
+  No bundles preserved yet.
+  <span class="empty-section-statement__cite">scanned <code>dwarf/bundles/</code>, 0 <code>*.tar.gz</code> files</span>
+</p>
+<p>Bundle a run from <a href="/tests">/tests</a> or via <code>cardano-profile bundle &lt;run-id&gt;</code> to populate this catalog.</p>
+{% else %}
+<div class="filter-bar">
+  <span class="eyebrow">Result</span>
+  <div class="filter-pills" role="group" aria-label="Filter by result">
+    {% for pill in pills %}
+    <button type="button" class="pill" data-status="{{ pill.slug }}" aria-pressed="{{ 'true' if pill.active else 'false' }}">{{ pill.label }} ({{ pill.count }})</button>
+    {% endfor %}
+  </div>
+  <p class="filter-count" aria-live="polite">{{ rows|length }} bundles</p>
+</div>
+
+<table class="bundles-table" data-active-status="">
+  <thead>
+    <tr>
+      <th>Run ID</th>
+      <th>Created</th>
+      <th>Size</th>
+      <th>Scenario</th>
+      <th>Profile</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    {% include "operate/_partials/_bundle_row.j2" %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<script type="module">
+  import {initFilter} from "/static/js/filter.js";
+  initFilter({table: ".bundles-table", axis: "status", label: "bundles"});
+</script>
+{% endif %}
+
+<hr class="hairline">
+
+<section aria-labelledby="import-heading">
+  <header><span class="eyebrow">Import</span><h2 id="import-heading">Import a bundle</h2></header>
+  <p class="page-subhero">Upload a previously-exported <code>bundle.tar.gz</code>. The framework verifies the bundle's hash chain before unpacking into <code>runs/&lt;run_id&gt;/</code>. Equivalent CLI: <code>cardano-profile bundle import &lt;path&gt;</code>.</p>
+  <form class="bundle-import-form" method="post" action="/api/bundle/import" enctype="multipart/form-data">
+    <input type="file" name="bundle" accept=".tar.gz,.tgz,application/gzip,application/x-gzip" required>
+    <button type="submit" class="cta">Import bundle</button>
+  </form>
+  <p class="page-subhero"><small>Existing run-ids are not overwritten.</small></p>
+</section>
+{% endblock %}

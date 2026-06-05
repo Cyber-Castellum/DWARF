@@ -1,0 +1,13 @@
+[
+  {
+    "data_points_used": [],
+    "evaluated_value": {
+      "clean_error": 0,
+      "crash": 0,
+      "ok": 0
+    },
+    "params": {},
+    "primitive": "parse_succeeds_or_clean_error",
+    "result": "pass"
+  }
+]

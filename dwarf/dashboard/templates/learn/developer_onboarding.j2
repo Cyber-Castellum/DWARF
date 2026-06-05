@@ -1,0 +1,112 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Developer onboarding</span>
+<h1>Developer onboarding</h1>
+<p class="page-hero">How to add a primitive, scenario, assertion, or profile to Dwarf without breaking the existing surface. The conventions here are load-bearing — the framework is a multi-lane assessment project where ada2 / ada3 / ada4 / ada5 contribute in parallel, and the conventions keep merges clean.</p>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 1</span><h2>TDD pattern</h2></header>
+  <p>Every primitive, view, and data extractor lands red-test → impl → green:</p>
+  <ol>
+    <li>Write a focused check that asserts the desired behaviour at the smallest meaningful unit.</li>
+    <li>Run it and watch it fail with the right error message. If the failure is for the wrong reason (e.g. ImportError instead of AssertionError), the test is broken first — fix it before writing the impl.</li>
+    <li>Write the minimum impl that turns the test green. Resist scope creep.</li>
+    <li>Run the delivery contract to confirm the package layout and public surface still match the V3 scope.</li>
+    <li>Commit. The narrow commit pattern makes the next step easier.</li>
+  </ol>
+  <p>The retained delivery contract is intentionally narrow: it guards the package shape, required files, scripts, image tag, and M2 catalog scope.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 2</span><h2>Lane discipline</h2></header>
+  <p>Each "lane" is a working file fence — ada2 owns the dashboard surface (templates, views, data extractors, learn pages), ada3 owns the primitive registry + scenario library, ada4 owns the runtime fault layer, ada5 owns evidence-aggregation and substrate compose internals.</p>
+  <p>Cross-lane work needs explicit coordination. Two patterns:</p>
+  <ul>
+    <li><strong>Dispatch note</strong> — write a precise implementation spec, idle, and let the receiving lane land their half. Used when the receiving lane's work has not shipped yet.</li>
+    <li><strong>Graceful fallback import</strong> — write the consuming side defensively so it works whether the producing side has shipped or not:
+      <pre class="run-payload-pre"><code>try:
+    from profile_manager.X import Y
+except ImportError:
+    Y = &lt;fallback&gt;</code></pre>
+    </li>
+  </ul>
+  <p>Don't widen <code>profile_manager/primitives.py</code> beyond your slice — primitive additions go through ada3's review.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 3</span><h2>Narrow commit + commit message style</h2></header>
+  <p>Commits are one logical change. Three files for a feature is fine; thirty is suspicious. The commit message follows this shape:</p>
+  <pre class="run-payload-pre"><code>feat: short imperative summary in <70 chars
+
+Two-paragraph body explaining the WHY (the constraint or symptom)
+and the HOW (the minimum-viable approach). Reference incident or
+slice number that motivated the change.
+
+Tests cover X, Y, Z. Manually verified by Q.</code></pre>
+  <p>Type prefixes: <code>feat</code> (new feature), <code>fix</code> (bug fix), <code>refactor</code> (no behavioural change), <code>test</code> (test-only), <code>docs</code>. The dashboard rebuild slices land as <code>feat:</code> commits with slice number in the body.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 4</span><h2>Local validate flow</h2></header>
+  <p>Before pushing, three commands cover most regressions:</p>
+  <pre class="run-payload-pre"><code># Validate every scenario YAML parses + has all referenced
+# primitives + asserts only known assertion types
+cardano-profile scenario validate dwarf/scenarios/*.yaml
+
+# Confirm delivery package layout and M2 catalog scope
+bash delivery/tests/test_delivery_contract.sh</code></pre>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 5</span><h2>Authoring a new scenario from template</h2></header>
+  <p>Ten templates ship under <code>dwarf/scenarios/templates/</code>: honest-baseline, byzantine-peer, blockfetch-fault, chainsync-fault, txsubmission-pressure, multi-host, docker-mode, snapshot-recovery, network-impairment, resource-abuse.</p>
+  <pre class="run-payload-pre"><code>cardano-profile scenario new \
+  --template byzantine-peer \
+  --name my-byzantine-experiment</code></pre>
+  <p>Or use <a href="/operate/scenarios/new">/operate/scenarios/new</a> in the dashboard — pick template, type a name, preview, click Create. Hot-reload picks up the new file on the next <code>/operate/scenarios</code> request.</p>
+  <p>Scenario name validation: lowercase letters/digits/dot/underscore/dash, 3-80 chars. Existing files are not overwritten.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 6</span><h2>Authoring a new primitive</h2></header>
+  <p>Primitives are atomic actions the framework can execute. Family is the conceptual bucket (<code>runtime</code>, <code>fault</code>, <code>observe</code>, etc.); name is the verb.</p>
+  <pre class="run-payload-pre"><code>cardano-profile primitive new \
+  --family runtime \
+  --name my_new_primitive</code></pre>
+  <p>The scaffold writes:</p>
+  <ul>
+    <li><code>dwarf/primitives/runtime/my_new_primitive.json</code> — params schema + result shape declaration.</li>
+    <li><code>dwarf/scripts/runtime_my_new_primitive.py</code> — the executor.</li>
+    <li>a focused validation check for the new primitive.</li>
+  </ul>
+  <p>Ada3's review covers: name fits the family's verb taxonomy, params schema is JSON-schema-valid, the executor's outputs are deterministic given a seed, the test asserts a load-bearing invariant.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 7</span><h2>Authoring a new profile</h2></header>
+  <p>Profiles are named deployment configurations. Eight templates ship under <code>dwarf/profiles/templates/</code> covering common shapes (haskell-preview, amaru-preview, generated-haskell, generated-mixed, mixed-minimal, etc.).</p>
+  <pre class="run-payload-pre"><code>cardano-profile profile new \
+  --template haskell-preview \
+  --name my-deployment</code></pre>
+  <p>Edit the resulting <code>profiles/my-deployment.yaml</code> for host-specific values (paths, peer counts, network magic). Then deploy:</p>
+  <pre class="run-payload-pre"><code>cardano-profile deploy my-deployment</code></pre>
+</section>
+
+<hr class="hairline">
+
+<p class="page-subhero">Cross-reference: <a href="/learn/cli">CLI reference</a> · <a href="/learn/architecture">architecture</a> · <a href="/learn/api">REST API</a> · <a href="/learn/plugin-authoring">plugin authoring</a></p>
+{% endblock %}

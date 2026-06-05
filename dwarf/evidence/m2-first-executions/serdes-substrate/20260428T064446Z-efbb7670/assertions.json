@@ -1,0 +1,387 @@
+[
+  {
+    "data_points_used": [
+      {
+        "artifact_summary": {
+          "has_correlated_timeline": true,
+          "has_observation_summary": true,
+          "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation",
+          "per_node_dir_count": 2
+        },
+        "exit_code": 0,
+        "outcome": "ok",
+        "result": {
+          "network_magic": 2,
+          "node_ids": [
+            "node1",
+            "node2"
+          ],
+          "observation_primitives": [
+            "tip_state",
+            "connection_state"
+          ],
+          "observation_window_seconds": 10.0,
+          "per_node": {
+            "node1": {
+              "connection_state": {
+                "connect_failures": 0,
+                "connect_successes": 2,
+                "lsof_socket_count": 4,
+                "peer_nodes_connected": [],
+                "pid": 3415102,
+                "port": 34611,
+                "responsive": true,
+                "ss_established_count": 0,
+                "ss_lines": [
+                  "LISTEN     0      8                        127.0.0.1:34611         0.0.0.0:*     users:((\"cardano-node\",pid=3415102,fd=22))",
+                  "LISTEN     0      1024                     127.0.0.1:12798         0.0.0.0:*     users:((\"cardano-node\",pid=3415102,fd=15))",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34611       127.0.0.1:40438 users:((\"cardano-node\",pid=3415102,fd=26))",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:40438       127.0.0.1:34611",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34611       127.0.0.1:40434 users:((\"cardano-node\",pid=3415102,fd=25))",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:40434       127.0.0.1:34611"
+                ],
+                "ss_listen_count": 2,
+                "ss_match_count": 6,
+                "target_node": "node1"
+              },
+              "implementation": "cardano-node",
+              "node_id": "node1",
+              "port": 34611,
+              "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node1.sock",
+              "tip_state": {
+                "failed_sample_count": 0,
+                "latest_tip": {
+                  "block": 0,
+                  "hash": "",
+                  "observed_at": "2026-04-28T06:45:00.795734Z",
+                  "ok": true,
+                  "slot": 0,
+                  "syncProgress": "0.00"
+                },
+                "sample_count": 11,
+                "samples": [
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:50.795527Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:51.809384Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:52.823492Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:53.838613Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:54.853546Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:55.867795Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:56.883355Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:57.898119Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:58.912502Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:59.926933Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:00.795734Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  }
+                ],
+                "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node1.sock",
+                "successful_sample_count": 11,
+                "target_node": "node1"
+              },
+              "version": "10.7.1"
+            },
+            "node2": {
+              "connection_state": {
+                "connect_failures": 0,
+                "connect_successes": 2,
+                "lsof_socket_count": 3,
+                "peer_nodes_connected": [],
+                "pid": 3415116,
+                "port": 34612,
+                "responsive": true,
+                "ss_established_count": 0,
+                "ss_lines": [
+                  "LISTEN     0      8                        127.0.0.1:34612         0.0.0.0:*     users:((\"cardano-node\",pid=3415116,fd=21))",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34612       127.0.0.1:41658 users:((\"cardano-node\",pid=3415116,fd=24))",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:41658       127.0.0.1:34612",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34612       127.0.0.1:41672 users:((\"cardano-node\",pid=3415116,fd=25))",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:41672       127.0.0.1:34612"
+                ],
+                "ss_listen_count": 1,
+                "ss_match_count": 5,
+                "target_node": "node2"
+              },
+              "implementation": "cardano-node",
+              "node_id": "node2",
+              "port": 34612,
+              "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node2.sock",
+              "tip_state": {
+                "failed_sample_count": 0,
+                "latest_tip": {
+                  "block": 0,
+                  "hash": "",
+                  "observed_at": "2026-04-28T06:45:10.879418Z",
+                  "ok": true,
+                  "slot": 0,
+                  "syncProgress": "0.00"
+                },
+                "sample_count": 11,
+                "samples": [
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:00.878377Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:01.892521Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:02.907613Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:03.923238Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:04.938233Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:05.952360Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:06.967651Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:07.982892Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:08.997171Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:10.012220Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:45:10.879418Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  }
+                ],
+                "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node2.sock",
+                "successful_sample_count": 11,
+                "target_node": "node2"
+              },
+              "version": "10.7.1"
+            }
+          },
+          "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+          "sample_interval_seconds": 1.0,
+          "summary": {
+            "chain_select_consistent": true,
+            "expected_peer_edge_count": 1,
+            "expected_peer_edges": [
+              [
+                "node1",
+                "node2"
+              ]
+            ],
+            "latest_tips": {
+              "node1": {
+                "block": 0,
+                "hash": "node1-tip",
+                "slot": 0
+              },
+              "node2": {
+                "block": 0,
+                "hash": "node2-tip",
+                "slot": 0
+              }
+            },
+            "missing_peer_edge_count": 1,
+            "missing_peer_edges": [
+              [
+                "node1",
+                "node2"
+              ]
+            ],
+            "node_count": 2,
+            "observed_peer_edge_count": 0,
+            "observed_peer_edges": [],
+            "quorum_count": 0,
+            "quorum_fraction": 0.0,
+            "quorum_tip": {
+              "hash": null,
+              "nodes": [],
+              "slot": null
+            },
+            "responsive_node_count": 2,
+            "responsive_nodes": [
+              "node1",
+              "node2"
+            ],
+            "tip_group_count": 0,
+            "tip_groups": []
+          }
+        },
+        "stderr": "",
+        "stdout": "node_count=2 responsive_node_count=2 tip_group_count=0 quorum_count=0 quorum_fraction=0.0000 observation_summary_relpath=/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation/observation-summary.json correlated_timeline_relpath=/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation/correlated-timeline.json\n"
+      }
+    ],
+    "evaluated_value": {
+      "completed": 1,
+      "node_count": 2,
+      "responsive_node_count": 2
+    },
+    "params": {},
+    "primitive": "all_nodes_responsive",
+    "result": "pass"
+  },
+  {
+    "data_points_used": [
+      {
+        "artifact_summary": {
+          "has_result_report": true
+        },
+        "exit_code": 0,
+        "outcome": "ok",
+        "report": {
+          "mode": "malformed_input_differential",
+          "result": {
+            "observed_divergence": false,
+            "parity_match": true
+          },
+          "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+          "target_node": "node1"
+        },
+        "result": {
+          "observed_divergence": false,
+          "parity_match": true
+        },
+        "stderr": "",
+        "stdout": "mode=malformed_input_differential target_node=node1\n"
+      }
+    ],
+    "evaluated_value": {
+      "completed": 1,
+      "observed_divergence": false,
+      "parity_match": true
+    },
+    "params": {},
+    "primitive": "malformed_input_parity_preserved",
+    "result": "pass"
+  }
+]

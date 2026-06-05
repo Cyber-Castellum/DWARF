@@ -1,0 +1,12 @@
+{"direction": "outbound", "mutated": false, "payload_length": 15, "protocol": 0, "ts": 1777358642.1901011}
+{"direction": "inbound", "mutated": true, "payload_length": 8, "protocol": 32768, "ts": 1777358642.191556}
+{"direction": "outbound", "mutated": false, "payload_length": 5, "protocol": 8, "ts": 1777358642.1923587}
+{"direction": "inbound", "mutated": true, "payload_length": 5, "protocol": 32776, "ts": 1777358642.192808}
+{"direction": "outbound", "mutated": false, "payload_length": 2, "protocol": 4, "ts": 1777358642.1930761}
+{"direction": "outbound", "mutated": false, "payload_length": 6, "protocol": 2, "ts": 1777358642.1934233}
+{"direction": "outbound", "mutated": false, "payload_length": 15, "protocol": 0, "ts": 1777358655.8816078}
+{"direction": "inbound", "mutated": true, "payload_length": 8, "protocol": 32768, "ts": 1777358655.8830395}
+{"direction": "outbound", "mutated": false, "payload_length": 5, "protocol": 8, "ts": 1777358655.8841026}
+{"direction": "inbound", "mutated": true, "payload_length": 5, "protocol": 32776, "ts": 1777358655.8845065}
+{"direction": "outbound", "mutated": false, "payload_length": 2, "protocol": 4, "ts": 1777358655.8847692}
+{"direction": "outbound", "mutated": false, "payload_length": 6, "protocol": 2, "ts": 1777358655.885135}

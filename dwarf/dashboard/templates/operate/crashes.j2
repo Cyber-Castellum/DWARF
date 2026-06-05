@@ -1,0 +1,97 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Crashes</span>
+<h1>Crash triage</h1>
+<p class="page-hero">AFL++ crashes from recorded runs, deduped by <code>(signal, op)</code> signature. The cheapest stable signature: same mutation operator + same POSIX signal is very likely the same underlying bug. Stack-hash dedup is finer-grained but requires running the binary against each input — out of scope for the read-only data layer. Each row links the exemplar input (first crash by campaign clock).</p>
+
+<hr class="hairline">
+
+{% if empty %}
+<p class="empty-section-statement">
+  No crashes recorded yet.
+  <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 files matching the AFL++ filename grammar</span>
+</p>
+<p>Crash triage activates as soon as a campaign produces a non-empty <code>crashes/</code> directory under <code>runs/&lt;id&gt;/outputs/aflpp/default/</code>. The data layer reads the AFL++ schema directly:</p>
+<pre class="run-payload-pre"><code>id:NNNNNN,sig:NN,src:NNNNNN,time:N,execs:N,op:OPERATOR</code></pre>
+{% else %}
+
+<div class="status-tile-grid">
+  <article class="status-tile">
+    <span class="eyebrow">Crashes recorded</span>
+    <span class="status-tile__metric">{{ total_crashes }}</span>
+    <p class="status-tile__sub">across recorded runs</p>
+  </article>
+  <article class="status-tile">
+    <span class="eyebrow">Dedup signatures</span>
+    <span class="status-tile__metric">{{ total_signatures }}</span>
+    <p class="status-tile__sub">unique <code>(signal, op)</code> tuples</p>
+  </article>
+  <article class="status-tile">
+    <span class="eyebrow">Sources observed</span>
+    <span class="status-tile__metric">{{ sources_observed }}</span>
+    <p class="status-tile__sub">runs contributing</p>
+  </article>
+</div>
+
+<hr class="hairline">
+
+<section class="crash-signatures" aria-labelledby="signatures-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Signatures</span>
+    <h2 id="signatures-heading">Grouped by <code>(signal, op)</code></h2>
+    <p class="page-subhero">Sorted by count descending; ties broken by last-find timestamp. Exemplar input is the earliest crash in the group by campaign clock — the operator's preferred entry point for triage.</p>
+  </header>
+
+  {% for g in groups %}
+  <article class="crash-group" id="{{ g.signature_key }}">
+    <header class="crash-group__head">
+      <span class="eyebrow">{{ g.signal_label }} · op <code>{{ g.op }}</code></span>
+      <h3>{{ g.count }} crash{{ '' if g.count == 1 else 'es' }} · {{ g.contributing_count }} source{{ '' if g.contributing_count == 1 else 's' }}</h3>
+    </header>
+    <table class="config-table">
+      <tbody>
+        <tr>
+          <th scope="row">Signal</th>
+          <td>{{ g.signal_label }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Mutation operator</th>
+          <td><code>{{ g.op }}</code></td>
+        </tr>
+        <tr>
+          <th scope="row">Count</th>
+          <td>{{ g.count }}</td>
+        </tr>
+        <tr>
+          <th scope="row">First find</th>
+          <td>{% if g.first_time_ms is not none %}t+{{ g.first_time_ms }}ms{% else %}—{% endif %}{% if g.first_execs is not none %} · {{ '{:,}'.format(g.first_execs) }} execs{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">Last find</th>
+          <td>{% if g.last_time_ms is not none %}t+{{ g.last_time_ms }}ms{% else %}—{% endif %}{% if g.last_execs is not none %} · {{ '{:,}'.format(g.last_execs) }} execs{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">Exemplar input</th>
+          <td><code>{{ g.exemplar_filename }}</code>{% if g.exemplar_size_bytes is not none %} · {{ g.exemplar_size_bytes }} byte{{ '' if g.exemplar_size_bytes == 1 else 's' }}{% endif %}</td>
+        </tr>
+        {% if g.exemplar_preview %}
+        <tr>
+          <th scope="row">Preview</th>
+          <td><pre class="run-payload-pre"><code>{{ g.exemplar_preview }}</code></pre></td>
+        </tr>
+        {% endif %}
+        <tr>
+          <th scope="row">Contributing</th>
+          <td>
+            {% for s in g.contributing_sources %}{% if not loop.first %} · {% endif %}<code>{{ s.kind }}:{{ s.id }}</code>{% endfor %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+  {% endfor %}
+</section>
+
+{% endif %}
+
+{% endblock %}

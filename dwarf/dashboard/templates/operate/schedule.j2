@@ -1,0 +1,151 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Schedule</span>
+<h1>Scheduled scenario runs</h1>
+<p class="page-hero">Cron-driven scenario fires. Each entry produces a real bundle just like a manual <code>cardano-profile scenario run</code> — the schedule layer is a thin orchestrator over the same mutating endpoint, gated by the same dashboard token.</p>
+
+<hr class="hairline">
+
+{% if empty %}
+<p class="empty-section-statement">
+  No scheduled entries yet.
+  <span class="empty-section-statement__cite">store: <code>$ADA2_DWARF_STATE_DIR/schedule.json</code></span>
+</p>
+{% else %}
+<div class="status-tile-grid">
+  <article class="status-tile">
+    <span class="eyebrow">Scheduled entries</span>
+    <span class="status-tile__metric">{{ entries|length }}</span>
+    <p class="status-tile__sub">across all scenarios</p>
+  </article>
+  <article class="status-tile">
+    <span class="eyebrow">Active</span>
+    <span class="status-tile__metric">{{ entries|selectattr('enabled')|list|length }}</span>
+    <p class="status-tile__sub">enabled · pending fire</p>
+  </article>
+  <article class="status-tile">
+    <span class="eyebrow">Total fires</span>
+    <span class="status-tile__metric">{{ entries|sum(attribute='fire_count') }}</span>
+    <p class="status-tile__sub">cumulative across all entries</p>
+  </article>
+</div>
+
+<hr class="hairline">
+
+<table class="config-table schedule-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Scenario</th>
+      <th>Cron</th>
+      <th>Status</th>
+      <th>Last fired</th>
+      <th>Next fire</th>
+      <th>Fires</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in entries %}
+    <tr id="schedule-{{ e.id }}" class="schedule-row schedule-row--{{ e.status }}">
+      <td><strong>{{ e.name }}</strong>{% if e.last_run_id %}<br><small>last run · <a href="/operate/runs/{{ e.last_run_id }}"><code>{{ e.last_run_id }}</code></a></small>{% endif %}</td>
+      <td><code>{{ e.scenario_id }}</code></td>
+      <td><code>{{ e.cron }}</code></td>
+      <td>
+        {% if e.status == 'running' %}<span class="result-pill result-pill--draft">running</span>
+        {% elif e.status == 'paused' %}<span class="result-pill result-pill--error">paused</span>
+        {% else %}<span class="result-pill result-pill--pass">pending</span>{% endif %}
+      </td>
+      <td>{% if e.last_fired_at %}<code>{{ e.last_fired_at }}</code>{% else %}—{% endif %}</td>
+      <td>{% if e.next_fire_at %}<code>{{ e.next_fire_at }}</code>{% else %}—{% endif %}</td>
+      <td>{{ e.fire_count }}</td>
+      <td class="schedule-actions">
+        {% if e.enabled %}
+        <button class="schedule-btn schedule-btn--pause" data-action="pause" data-id="{{ e.id }}">pause</button>
+        {% else %}
+        <button class="schedule-btn schedule-btn--resume" data-action="resume" data-id="{{ e.id }}">resume</button>
+        {% endif %}
+        <button class="schedule-btn schedule-btn--run" data-action="run-now" data-id="{{ e.id }}">run now</button>
+        <button class="schedule-btn schedule-btn--delete" data-action="delete" data-id="{{ e.id }}">delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<hr class="hairline">
+
+<section class="schedule-create" aria-labelledby="create-heading">
+  <header><span class="eyebrow">Create</span><h2 id="create-heading">New scheduled entry</h2></header>
+  <p class="page-subhero">Pick a scenario and supply a 5-field cron expression. Fields: <code>minute hour day-of-month month day-of-week</code>. Examples: <code>*/15 * * * *</code> (every 15 min), <code>0 */6 * * *</code> (every 6 hours on the hour), <code>0 9 * * 1</code> (Mondays 09:00 UTC).</p>
+  <form id="schedule-create-form" class="schedule-form">
+    <label class="schedule-form__row"><span>Name</span><input type="text" name="name" required maxlength="128" placeholder="e.g. hourly blockfetch smoke"></label>
+    <label class="schedule-form__row"><span>Scenario</span>
+      <select name="scenario" required>
+        <option value="" disabled selected>— pick scenario —</option>
+        {% for s in scenarios %}
+        <option value="{{ s.id }}|{{ s.path }}">{{ s.id }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="schedule-form__row"><span>Cron</span><input type="text" name="cron" required maxlength="64" placeholder="0 * * * *"></label>
+    <label class="schedule-form__row"><span>Token</span><input type="password" name="token" required placeholder="dashboard token"></label>
+    <button type="submit" class="schedule-btn schedule-btn--primary">create</button>
+    <output id="schedule-create-output" aria-live="polite"></output>
+  </form>
+</section>
+
+<script>
+(function() {
+  function postAction(id, action, token) {
+    return fetch('/api/schedule/' + encodeURIComponent(id) + '/' + encodeURIComponent(action) + '?token=' + encodeURIComponent(token), {method: 'POST'});
+  }
+  function getToken() {
+    var t = window.prompt('Dashboard token (required for state changes)');
+    return t || '';
+  }
+  document.querySelectorAll('.schedule-btn[data-action]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.getAttribute('data-id');
+      var action = btn.getAttribute('data-action');
+      var label = action === 'delete' ? 'delete this entry?' : ('confirm ' + action + '?');
+      if (action === 'delete' && !window.confirm(label)) return;
+      var token = getToken();
+      if (!token) return;
+      postAction(id, action, token).then(function(r) {
+        if (r.ok) location.reload();
+        else r.text().then(function(t) { window.alert('error: ' + t); });
+      });
+    });
+  });
+  var form = document.getElementById('schedule-create-form');
+  if (form) {
+    form.addEventListener('submit', function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(form);
+      var name = fd.get('name') || '';
+      var scenario = (fd.get('scenario') || '').toString();
+      var cron = fd.get('cron') || '';
+      var token = fd.get('token') || '';
+      var sep = scenario.indexOf('|');
+      var sid = sep >= 0 ? scenario.slice(0, sep) : scenario;
+      var spath = sep >= 0 ? scenario.slice(sep + 1) : '';
+      var url = '/api/schedule/create?token=' + encodeURIComponent(token);
+      var body = new URLSearchParams();
+      body.set('name', name);
+      body.set('scenario_id', sid);
+      body.set('scenario_path', spath);
+      body.set('cron', cron);
+      var out = document.getElementById('schedule-create-output');
+      out.textContent = 'creating…';
+      fetch(url, {method: 'POST', body: body, headers: {'Content-Type': 'application/x-www-form-urlencoded'}}).then(function(r) {
+        if (r.ok) { out.textContent = 'created'; location.reload(); }
+        else r.text().then(function(t) { out.textContent = 'error: ' + t; });
+      });
+    });
+  }
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,145 @@
+/*
+ * Dwarf dashboard design tokens — slice 20.
+ *
+ * Theme: forensic-noir observability HUD.
+ *   "The watcher in the flask" — deep obsidian field with cyan circuit-trace
+ *   accents, single crimson alert state, surface tonal layering instead of
+ *   1px borders. Palette extracted directly from the dwarf logo.
+ *
+ * Token NAMES preserved from earlier slices so existing CSS consumers
+ * (.runs-table, .filter-pills, .walkthrough, .contract-section, etc.)
+ * pick up the new theme automatically. Values redefined.
+ */
+
+:root {
+  /* ---- Color: obsidian field --------------------------------------- */
+  /* Page background (deepest), barely-blue near-black */
+  --obsidian-0:  #06080B;
+  /* Content well — slight lift for visual hierarchy under the header */
+  --obsidian-1:  #0B0F14;
+  /* Surface (cards/panels at rest) */
+  --obsidian-2:  #131A22;
+  /* Elevated surface (hover/active interactive elements, table row stripe) */
+  --obsidian-3:  #1C242E;
+  /* Most-elevated surface (modals/tooltips when added) */
+  --obsidian-4:  #25303B;
+
+  /* Backwards-compat aliases — existing components keep reading these */
+  --paper:        var(--obsidian-1);
+  --paper-raised: var(--obsidian-2);
+
+  /* ---- Color: cyan-glow (load-bearing brand accent) ---------------- */
+  --cyan-primary: #2BE0E0;
+  --cyan-glow:    #5FF2F2;
+  --cyan-deep:    #156469;
+  --cyan-trace:   rgba(43, 224, 224, 0.18);
+  --cyan-tint:    rgba(43, 224, 224, 0.08);
+
+  --accent:       var(--cyan-primary);
+  --accent-deep:  var(--cyan-deep);
+  --accent-tint:  var(--cyan-tint);
+
+  /* ---- Color: alert (crimson — single fail/critical state) --------- */
+  --crimson:      #C03030;
+  --crimson-glow: #E04848;
+  --crimson-deep: #6B1818;
+
+  /* ---- Color: ink (text on dark) ----------------------------------- */
+  --ink-primary:   #E6F2F2;
+  --ink-secondary: #A4B5BD;
+  --ink-tertiary:  #6B7B85;
+  --ink-disabled:  #44525C;
+
+  --ink:        var(--ink-primary);
+  --ink-muted:  var(--ink-secondary);
+  --ink-body:   var(--ink-primary);
+
+  /* Surface aliases — existing CSS reads var(--surface-2) for hover/target;
+     map to obsidian-3 so dark-theme hover is actually visible. */
+  --surface-1:  var(--obsidian-1);
+  --surface-2:  var(--obsidian-3);
+
+  /* ---- Warm accent (cork tan — sparingly, e.g. Draft status) ------- */
+  --cork:                 #B58A4F;
+  --label-needs-source:   var(--cork);
+
+  /* ---- Surface tonal layering (replaces 1px border sectioning) ----- */
+  /* Token names preserved; semantics moved from "1px border line" to
+     "barely-visible cyan trace" so dark-field sectioning reads as HUD,
+     not paper. */
+  --rule-hairline:  var(--cyan-trace);
+  --rule-soft:      rgba(229, 242, 242, 0.08);
+  --rule:           var(--rule-hairline);
+
+  /* ---- Spacing — 4px base ------------------------------------------ */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-xs: var(--space-1);
+  --space-sm: var(--space-2);
+
+  /* ---- Typography -------------------------------------------------- */
+  /* IBM Plex Sans for display + body (vendored woff2 in /static/fonts).
+     JetBrains Mono for run IDs, paths, table data — operator-grade. */
+  --font-sans:    "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif:   "IBM Plex Serif", ui-serif, Georgia, serif;
+  --font-mono:    "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --type-base:     16px;
+  --type-display:  clamp(2.25rem, 4vw, 3rem);
+  --type-h1:       1.75rem;
+  --type-h2:       1.25rem;
+  --type-body:     1rem;
+  --type-small:    0.875rem;
+  --type-eyebrow:  0.75rem;
+  --type-mono:     0.875rem;
+
+  --leading-tight:   1.2;
+  --leading-default: 1.5;
+  --leading-relaxed: 1.7;
+
+  --tracking-eyebrow:  0.10em;
+  --tracking-wordmark: 0.02em;
+
+  /* ---- Borders / shadows / radius ---------------------------------- */
+  --rule-1:    1px solid var(--rule-hairline);
+  --shadow-1:  0 1px 0 var(--rule-hairline);
+  /* Soft glow shadow for elevated cards — replaces paper shadow */
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.5),
+                 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* ---- Layout ------------------------------------------------------ */
+  --measure: 1080px;
+
+  /* ---- HUD trace overlay (page atmosphere) ------------------------- */
+  /* Subtle: visible enough to register as "HUD", quiet enough that text
+     remains the focal layer. */
+  --hud-trace-color: rgba(43, 224, 224, 0.04);
+}
+
+/* Density modes — set on <body data-density="…"> by per-page templates. */
+body[data-density="dense"] {
+  --type-base: 14px;
+  --space-4:   12px;
+  --space-6:   16px;
+  --space-8:   24px;
+}
+
+body[data-density="reading"] {
+  --type-base:       17px;
+  --leading-default: 1.6;
+  --measure:         720px;
+}
+
+body[data-density="reading"][data-layout="wide"] { --measure: 1100px; }

@@ -1,0 +1,46 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Scenarios · New</span>
+<h1>New scenario from template</h1>
+<p class="page-hero">Pick one of the bundled templates, give the scenario a name, preview the rendered YAML, then click Create. The new file lands at <code>dwarf/scenarios/&lt;name&gt;.yaml</code> and the hot-reload cache picks it up on the next /operate/scenarios request.</p>
+
+<hr class="hairline">
+
+{% if not templates %}
+<p class="empty-section-statement">No scenario templates installed.
+  <span class="empty-section-statement__cite">expected <code>dwarf/scenarios/templates/*.yaml</code></span>
+</p>
+{% else %}
+<form class="scenario-new-form" method="get" action="/operate/scenarios/new">
+  <label class="scenario-new-form__field">
+    <span class="eyebrow">Template</span>
+    <select name="template" onchange="this.form.submit()">
+      {% for t in templates %}
+      <option value="{{ t.slug }}"{% if t.slug == selected_template %} selected{% endif %}>{{ t.label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="scenario-new-form__field">
+    <span class="eyebrow">Scenario name</span>
+    <input type="text" name="name" value="{{ scenario_name or '' }}"
+           placeholder="my-scenario-name"
+           pattern="[a-z0-9][a-z0-9._-]{2,79}"
+           title="lowercase letters / digits / dot / underscore / dash; 3-80 chars"
+           required>
+  </label>
+  <button type="submit" class="cta cta--ghost">Refresh preview</button>
+</form>
+
+<details class="scenario-new-preview" open>
+  <summary>Preview <code>{{ selected_template }}.yaml</code> rendered with <code>{{ scenario_name or '<unnamed>' }}</code></summary>
+  <pre class="run-payload-pre"><code>{{ preview }}</code></pre>
+</details>
+
+<form class="scenario-new-form scenario-new-form--create" method="post" action="/operate/scenarios/new">
+  <input type="hidden" name="template" value="{{ selected_template }}">
+  <input type="hidden" name="name" value="{{ scenario_name or '' }}">
+  <button type="submit" class="cta">Create scenario</button>
+  <p class="page-subhero"><small>Writes <code>dwarf/scenarios/{{ scenario_name or '&lt;name&gt;' }}.yaml</code>. Existing files are not overwritten.</small></p>
+</form>
+{% endif %}
+{% endblock %}

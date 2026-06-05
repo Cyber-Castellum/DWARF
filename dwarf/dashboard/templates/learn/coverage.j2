@@ -1,0 +1,11 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<h1>Coverage</h1>
+<p>What Dwarf actually supports today, derived from current repo state at request time. Each matrix below is auto-populated from real artifacts — scenarios, target manifests, primitive schemas, campaign scripts. Empty cells mean no artifact backs that combination yet; <span class="caveat-label">needs source</span> appears where the right answer can't be determined from disk.</p>
+<hr class="hairline">
+
+{% for matrix in matrices %}
+{% include "learn/_partials/_coverage_matrix.j2" %}
+{% endfor %}
+{% endblock %}

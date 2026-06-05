@@ -1,0 +1,29 @@
+{
+  "id": "package-d",
+  "label": "TxSubmission, Mempool, Submit API, And Observability",
+  "runnable": false,
+  "status": "source/test evidence added; promotion blocked",
+  "candidate_ids": [
+    "CR-M1-DRAFT-012",
+    "CR-M1-DRAFT-013",
+    "CR-M1-DRAFT-016",
+    "CR-M1-DRAFT-017"
+  ],
+  "evidence_paths": [
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-012-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-013-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-016-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-017-evidence.md"
+  ],
+  "blockers": [
+    "TxSubmission duplicate-body, transaction-size, strategic peer behavior, and conformance dependencies remain unresolved.",
+    "Mempool validation-cost, sustained resource-pressure, Haskell policy comparison, and peer-fairness behavior remain unresolved.",
+    "Submit API exposure model, request-size/rate controls, access assumptions, and deployment policy remain unresolved.",
+    "Observability field-sensitivity, retention/playbook policy, log-volume behavior, and metric/log label review remain unresolved."
+  ],
+  "read_only_actions": [
+    "Package D remains status-only after the initial safe source/test evidence pass.",
+    "Future Package D work must not expose Submit API, mutate mempool state on a live profile, or promote risk rows without explicit approval.",
+    "All evidence must remain candidate-only until promotion/scoring is separately approved."
+  ]
+}

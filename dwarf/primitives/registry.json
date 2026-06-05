@@ -1,0 +1,274 @@
+{
+  "$comment": "Dwarf primitives registry. Maps primitive name -> implementation. Scenarios reference primitives by name only. Adding a primitive is a code change: drop a Python module under primitives/<family>/, register it here, add a params_schema, regenerate docs/primitives-reference.md. Pasted scenarios cannot add primitives. The 'primitives' map is empty in this slice; primitives populate in Slices 7, 12, 13, and 14.",
+  "entry_schema": {
+    "$comment": "Documents the shape each entry in 'primitives' must take. Not validated by the runner today; serves as an authoring reference and seed for the loader added in Slice 7.",
+    "class": "string. Name of the class within that module implementing the primitive interface.",
+    "family": "string. One of: setup | load | probe | assertion | fault | teardown.",
+    "module": "string. Python import path of the module providing the primitive.",
+    "params_schema": "string. Path (relative to dwarf/) to a JSON Schema validating this primitive's parameter object inside a scenario's primitive reference.",
+    "runtimes": "array of strings. Execution tiers this primitive can run under: library | single-node | devnet.",
+    "supports": "array of strings. Cardano implementations this primitive can drive: cardano-node | amaru.",
+    "version": "string. Semver of the primitive itself. Bump on behavior change so that bundles record which version produced the result."
+  },
+  "primitives": {
+    "all_nodes_responsive": {
+      "class": "AllNodesResponsive",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/all_nodes_responsive.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "blockfetch_invalid_block_rejected": {
+      "class": "BlockfetchInvalidBlockRejected",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/blockfetch_invalid_block_rejected.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "cbor_edge_cases": {
+      "class": "CborEdgeCases",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/cbor_edge_cases.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "cbor_fuzz_structured": {
+      "class": "CborFuzzStructured",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/cbor_fuzz_structured.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "cbor_fuzz_target": {
+      "class": "CborFuzzTarget",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/cbor_fuzz_target.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "load_shell_command": {
+      "class": "LoadShellCommand",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/load_shell_command.schema.json",
+      "runtimes": [
+        "library",
+        "single-node",
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "malformed_input_parity_preserved": {
+      "class": "MalformedInputParityPreserved",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/malformed_input_parity_preserved.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "parse_succeeds_or_clean_error": {
+      "class": "ParseSucceedsOrCleanError",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/parse_succeeds_or_clean_error.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "parser_exit_status": {
+      "class": "ParserExitStatus",
+      "family": "probe",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/probe/parser_exit_status.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "roundtrip_equals_original": {
+      "class": "RoundtripEqualsOriginal",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/roundtrip_equals_original.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_blockfetch_invalid_block_cbor": {
+      "class": "RuntimeBlockfetchInvalidBlockCbor",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_chainsync_blockfetch_fault.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_compose_substrate": {
+      "class": "RuntimeComposeSubstrate",
+      "family": "setup",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_compose_substrate.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_install_version": {
+      "class": "RuntimeInstallVersion",
+      "family": "setup",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_install_version.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_malformed_input_differential": {
+      "class": "RuntimeMalformedInputDifferential",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_hardening_probe.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_multi_node_observation": {
+      "class": "RuntimeMultiNodeObservation",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_multi_node_observation.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_teardown_substrate": {
+      "class": "RuntimeTeardownSubstrate",
+      "family": "teardown",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/teardown/runtime_teardown_substrate.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_txsubmission_unexpected_body": {
+      "class": "RuntimeTxsubmissionUnexpectedBody",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_txsubmission_probe.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "txsubmission_unexpected_body_rejected": {
+      "class": "TxsubmissionUnexpectedBodyRejected",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/txsubmission_unexpected_body_rejected.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    }
+  }
+}

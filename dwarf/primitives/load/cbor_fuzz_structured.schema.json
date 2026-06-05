@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "cbor_fuzz_structured params",
+  "type": "object",
+  "required": ["target_id", "manifests_dir", "shape"],
+  "properties": {
+    "target_id": { "type": "string", "minLength": 1 },
+    "manifests_dir": { "type": "string", "minLength": 1 },
+    "shape": { "$ref": "#/$defs/shape" },
+    "iterations": { "type": "integer", "minimum": 1 },
+    "mutation_rate": { "type": "number", "minimum": 0 },
+    "per_input_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 }
+  },
+  "$defs": {
+    "length": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        {
+          "type": "object",
+          "properties": {
+            "min": { "type": "integer", "minimum": 0 },
+            "max": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "shape": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["uint", "bytes", "text", "bool", "null", "array", "map", "tag", "any"]
+        },
+        "max": { "type": "integer", "minimum": 0 },
+        "length": { "$ref": "#/$defs/length" },
+        "elements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/shape" }
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "oneOf": [
+                  { "type": "integer" },
+                  { "type": "string", "minLength": 1 }
+                ]
+              },
+              { "$ref": "#/$defs/shape" }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "tag": { "type": "integer", "minimum": 0 },
+        "inner": { "$ref": "#/$defs/shape" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

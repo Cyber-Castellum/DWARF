@@ -1,0 +1,7 @@
+<tr id="{{ row.id }}" data-implementation="{{ row.implementation }}">
+  <td><a href="{{ row.url }}"><code>{{ row.id }}</code></a></td>
+  <td>{{ row.implementation }}</td>
+  <td>{{ row.decoder_type or '—' }}</td>
+  <td>{% if row.invariants %}{{ row.invariants | join(', ') }}{% else %}—{% endif %}</td>
+  <td><code>{{ row.upstream_commit }}</code></td>
+</tr>

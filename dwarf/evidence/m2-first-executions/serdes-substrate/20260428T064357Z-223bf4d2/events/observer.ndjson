@@ -1,0 +1,2 @@
+{"event": "phase_started", "level": "info", "payload": {"phase_id": "default", "phase_index": 1, "phase_title": "Exercise BlockFetch block CBOR deserialization rejection on composed substrate"}, "phase": "framework", "primitive": "framework", "ts": "2026-04-28T06:43:57.799Z"}
+{"event": "phase_completed", "level": "info", "payload": {"phase_id": "default", "phase_index": 1, "phase_title": "Exercise BlockFetch block CBOR deserialization rejection on composed substrate"}, "phase": "framework", "primitive": "framework", "ts": "2026-04-28T06:44:22.343Z"}

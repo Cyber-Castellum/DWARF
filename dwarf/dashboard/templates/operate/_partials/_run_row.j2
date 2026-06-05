@@ -1,0 +1,28 @@
+<tr data-status="{{ row.exit_status or '' }}">
+  <td>
+    {% if row.is_local %}
+    <a href="{{ row.run_url }}"><code>{{ row.run_id }}</code></a>
+    {% else %}
+    <code>{{ row.run_id }}</code> <small>on {{ row.source }}</small>
+    {% endif %}
+  </td>
+  <td>{{ row.ended_at or '—' }}</td>
+  <td>{% if row.scenario_id %}<code>{{ row.scenario_id }}</code>{% else %}—{% endif %}</td>
+  <td>
+    {% if row.profile_id %}
+    <a href="{{ row.profile_url }}"><code>{{ row.profile_id }}</code></a>
+    {% else %}—{% endif %}
+  </td>
+  <td>{{ row.runtime or '—' }}</td>
+  <td>
+    {% if row.exit_status %}
+    <span class="result-pill result-pill--{{ row.exit_status }}">{{ row.exit_status }}</span>
+    {% else %}—{% endif %}
+    {% if row.thinness_signals %}
+    {% for s in row.thinness_signals %}
+    <span class="thinness-pill" title="{{ s.reason }}">thin · {{ s.rule }}</span>
+    {% endfor %}
+    {% endif %}
+  </td>
+  <td>{{ row.target_implementation or '—' }}</td>
+</tr>

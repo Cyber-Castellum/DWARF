@@ -1,0 +1,20 @@
+{
+  "spec_version": "v1",
+  "id": "resource-rss-time-series-cardano-nodes",
+  "title": "60-sample RSS time series across all cardano-node devnet processes (1Hz, 60s)",
+  "authors": ["dwarf"],
+  "tags": ["resource-abuse", "time-series", "process-rss", "cardano-node", "devnet"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "single-node",
+  "seed": "0xCAFEBA52",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "for i in $(seq 1 60); do printf '%s ' \"$(date -Iseconds)\"; ps -C cardano-node -o pid=,rss= --no-headers | awk '{printf \"pid=%s rss_kb=%s; \", $1, $2}'; echo; sleep 1; done",
+      "timeout_seconds": 90
+    }
+  ],
+  "probes": [],
+  "assertions": [],
+  "teardown": []
+}

@@ -1,0 +1,17 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · FAQ</span>
+<h1>Frequently asked questions</h1>
+<p class="page-hero">Quick answers to the questions operators most often ask. For deeper how-tos see <a href="/learn/walkthroughs">walkthroughs</a>; for definitions see <a href="/learn/glossary">glossary</a>.</p>
+
+<hr class="hairline">
+
+<section class="learn-faq">
+  {% for item in items %}
+  <article class="learn-faq__item">
+    <h2 class="learn-faq__q">{{ item.q }}</h2>
+    <div class="learn-faq__a">{{ item.a|safe }}</div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{
+  "id": "{{PROFILE_ID}}",
+  "label": "{{PROFILE_LABEL}}",
+  "haskell_count": 3,
+  "amaru_count": 0,
+  "network_magic": 42,
+  "peer_sharing": false,
+  "topology_pattern": "local-mesh",
+  "shared_genesis": true
+}

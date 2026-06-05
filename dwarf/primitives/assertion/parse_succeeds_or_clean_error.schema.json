@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "parse_succeeds_or_clean_error params",
+  "type": "object",
+  "properties": {
+    "min_outcomes_count": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Minimum number of parse outcomes that must be recorded before the assertion can pass."
+    }
+  },
+  "additionalProperties": false
+}

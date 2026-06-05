@@ -1,0 +1,49 @@
+<article class="profile-entry" id="{{ entry.id }}">
+  <span class="eyebrow">{{ entry.node_type }}</span>
+  <h2 class="profile-entry__label">{{ entry.label }}</h2>
+  <p class="profile-entry__id"><code>{{ entry.id }}</code></p>
+  <dl class="profile-entry__fields">
+    <div>
+      <dt class="profile-entry__field-key">Nodes</dt>
+      <dd class="profile-entry__field-value">
+        {% if entry.node_type == 'mixed' %}
+          {{ entry.node_count }} Haskell + {{ entry.amaru_node_count }} Amaru
+        {% elif entry.node_type == 'amaru' %}
+          {{ entry.amaru_node_count }} Amaru
+        {% else %}
+          {{ entry.node_count }} Haskell
+        {% endif %}
+      </dd>
+    </div>
+    <div>
+      <dt class="profile-entry__field-key">Network magic</dt>
+      <dd class="profile-entry__field-value"><code>{{ entry.network_magic }}</code></dd>
+    </div>
+    <div>
+      <dt class="profile-entry__field-key">Peer sharing</dt>
+      <dd class="profile-entry__field-value">{{ 'enabled' if entry.peer_sharing else 'disabled' }}</dd>
+    </div>
+    {% if entry.upstream_peer_address %}
+    <div>
+      <dt class="profile-entry__field-key">Upstream peer</dt>
+      <dd class="profile-entry__field-value"><code>{{ entry.upstream_peer_address }}</code></dd>
+    </div>
+    {% endif %}
+    {% if entry.listen_address %}
+    <div>
+      <dt class="profile-entry__field-key">Listen address</dt>
+      <dd class="profile-entry__field-value"><code>{{ entry.listen_address }}</code></dd>
+    </div>
+    {% endif %}
+    {% if entry.amaru_network %}
+    <div>
+      <dt class="profile-entry__field-key">Amaru network</dt>
+      <dd class="profile-entry__field-value">{{ entry.amaru_network }}</dd>
+    </div>
+    {% endif %}
+  </dl>
+  <p class="profile-entry__anchor">
+    <span class="eyebrow">Runtime root</span>
+    <code>{{ entry.remote_runtime_root }}</code>
+  </p>
+</article>

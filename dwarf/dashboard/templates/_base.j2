@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" data-theme="{{ theme or 'forensic-noir' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dwarf — {{ page_title }}</title>
+<link rel="icon" type="image/png" href="/static/dwarf-logo.png">
+<link rel="apple-touch-icon" href="/static/dwarf-logo.png">
+<meta name="theme-color" content="#06080B">
+<link rel="stylesheet" href="/static/css/plex.css">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/themes.css">
+<link rel="stylesheet" href="/static/css/base.css">
+</head>
+<body data-density="{{ density }}"{% if layout %} data-layout="{{ layout }}"{% endif %}>
+{# Slice 50 — sparse drifting motes layer. Each dot is decorative,
+   pure-CSS animated, behind page content via z-index: -1. #}
+<div class="substrate-motes" aria-hidden="true">
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+  <span class="substrate-motes__dot"></span>
+</div>
+<header class="shell-header">
+  <a class="brand" href="/operate" aria-label="Dwarf — observability for the Cardano substrate">
+    <img src="/static/dwarf-logo.png" alt="Dwarf">
+  </a>
+  <nav class="shell-nav" aria-label="Primary">
+    <a href="/operate" class="{{ 'active' if active == 'operate' else '' }}">Operate</a>
+    <a href="/learn"   class="{{ 'active' if active == 'learn'   else '' }}">Learn</a>
+  </nav>
+</header>
+<main class="shell-main">
+{% block main %}{% endblock %}
+</main>
+</body>
+</html>

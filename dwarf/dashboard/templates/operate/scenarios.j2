@@ -1,0 +1,52 @@
+{% extends "_base.j2" %}
+{% block main %}
+<div class="scenarios-header">
+  <div>
+    <span class="eyebrow">Operate</span>
+    <h1>Scenarios</h1>
+  </div>
+  <a class="cta" href="/operate/scenarios/new">+ New scenario from template</a>
+</div>
+<p>All scenarios visible to the dashboard, derived from <code>dwarf/scenarios/*.yaml</code> at request time. Filter by family to narrow the list; the filter is client-side and refresh resets it.</p>
+
+<details class="paste-scenario" id="paste-scenario">
+  <summary class="paste-scenario__summary">
+    <span class="eyebrow">Paste a scenario</span>
+    <span class="paste-scenario__hint">Drop YAML in to validate and stage as a pending scenario</span>
+  </summary>
+  <div class="paste-scenario__body">
+    <p class="page-subhero">YAML is validated against <code>dwarf/spec/v1/schema.json</code> and, if valid, written to <code>dwarf/scenarios/pending/&lt;id&gt;.yaml</code>. Promotion into the live corpus is a separate step (<code>cardano-profile scenario promote</code>) gated on declared promotion blockers.</p>
+    <label class="paste-scenario__label" for="paste-scenario-yaml">
+      <span class="eyebrow">Scenario YAML</span>
+    </label>
+    <textarea id="paste-scenario-yaml" class="paste-scenario__textarea" rows="14" autocomplete="off" spellcheck="false" placeholder="id: my-new-scenario&#10;title: ...&#10;runtime: library&#10;target_id: ...&#10;steps:&#10;  - ..."></textarea>
+    <div class="paste-scenario__actions">
+      <button type="button" class="cta cta--primary" data-paste-submit>Validate &amp; stage</button>
+      <button type="button" class="cta cta--ghost" data-paste-clear>Clear</button>
+    </div>
+    <pre class="paste-scenario__output" data-paste-output hidden></pre>
+  </div>
+</details>
+
+<hr class="hairline">
+
+<div class="filter-bar">
+  <span class="eyebrow">Family</span>
+  <div class="filter-pills" role="group" aria-label="Filter by family">
+    <button type="button" class="pill" data-family="" aria-pressed="true">all</button>
+    {% for family in families %}
+    <button type="button" class="pill" data-family="{{ family.slug }}" aria-pressed="false">{{ family.label }}</button>
+    {% endfor %}
+  </div>
+  <p class="filter-count" aria-live="polite">{{ total }} scenarios</p>
+</div>
+
+<ul class="scenario-list">
+{% for row in rows %}
+{% include "operate/_partials/_scenario_row.j2" %}
+{% endfor %}
+</ul>
+
+<script type="module" src="/static/js/scenario-filter.js"></script>
+<script type="module" src="/static/js/paste-scenario.js"></script>
+{% endblock %}

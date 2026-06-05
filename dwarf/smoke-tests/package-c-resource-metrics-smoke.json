@@ -1,0 +1,36 @@
+{
+  "id": "package-c-resource-metrics-smoke",
+  "label": "Package C Resource Metrics Smoke",
+  "category": "package-c",
+  "status": "bounded",
+  "source_reference": "retained-evidence/testing/milestone-1/package-c/M1-PC-010-adversarial-harness-discovery.md; codebases/amaru",
+  "working_directory": "/opt/dwarf/targets/amaru",
+  "timeout_seconds": 1800,
+  "environment": {
+    "CARGO_TERM_COLOR": "never"
+  },
+  "commands": [
+    "source ~/.cargo/env",
+    "mkdir -p package-c-logs",
+    "STAMP=$(date -u +%Y%m%dT%H%M%SZ)",
+    "echo \"RESOURCE_METRICS_STAMP=$STAMP\"",
+    "echo \"RESOURCE_METRICS_SCOPE=bounded existing-test loops only\"",
+    "for i in 1 2 3; do echo \"CHAIN_SYNC_RESPONDER_ITERATION=$i\"; /usr/bin/time -v cargo test -p amaru-protocols chainsync::responder::tests::intersect -- --nocapture; done 2>&1 | tee package-c-logs/${STAMP}-resource-chainsync-responder-loop.log",
+    "for i in 1 2 3; do echo \"TRACK_PEERS_INTERSECT_ITERATION=$i\"; /usr/bin/time -v cargo test -p amaru-consensus track_peers::tests::test_intersect -- --nocapture; done 2>&1 | tee package-c-logs/${STAMP}-resource-track-peers-loop.log",
+    "for i in 1 2 3; do echo \"FETCH_BLOCKS_ITERATION=$i\"; /usr/bin/time -v cargo test -p amaru-consensus fetch_blocks -- --nocapture; done 2>&1 | tee package-c-logs/${STAMP}-resource-fetch-blocks-loop.log",
+    "for i in 1 2 3; do echo \"BLOCKFETCH_PROTOCOL_ITERATION=$i\"; /usr/bin/time -v cargo test -p amaru-protocols blockfetch -- --nocapture; done 2>&1 | tee package-c-logs/${STAMP}-resource-blockfetch-loop.log",
+    "printf 'REMOTE_RESOURCE_LOGS\\n%s\\n%s\\n%s\\n%s\\n' \"package-c-logs/${STAMP}-resource-chainsync-responder-loop.log\" \"package-c-logs/${STAMP}-resource-track-peers-loop.log\" \"package-c-logs/${STAMP}-resource-fetch-blocks-loop.log\" \"package-c-logs/${STAMP}-resource-blockfetch-loop.log\""
+  ],
+  "limitations": [
+    "Bounded resource metrics only; this is not live adversarial load testing.",
+    "Uses existing safe unit and stage tests rather than a malicious multi-peer harness.",
+    "Does not prove numeric adequacy for MAX_FETCHED_BLOCKS, timeout duration, queue bounds, or retry policy.",
+    "Does not execute restart, fork manipulation, persistence mutation, DB corruption, or snapshot deletion.",
+    "No public Cardano network is contacted."
+  ],
+  "safety_notes": [
+    "Runs inside /opt/dwarf/targets/amaru on the Linux target host.",
+    "Captures /usr/bin/time -v metrics for repeated safe test filters.",
+    "Evidence remains candidate-only and does not promote risk rows."
+  ]
+}

@@ -1,0 +1,81 @@
+[package]
+name = "dwarf-amaru-shims"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+# Shim binaries feed bytes to the corresponding amaru_kernel decoder.
+# Outcome contract: exit 0 with stdout "OK" on successful parse; exit 1 with
+# stdout starting "ERR " on a clean decode error; anything else is a crash.
+
+[[bin]]
+name = "amaru-cbor-decode-tx-body"
+path = "src/bin/decode_tx_body.rs"
+
+[[bin]]
+name = "amaru-cbor-decode-block-header"
+path = "src/bin/decode_block_header.rs"
+
+[[bin]]
+name = "amaru-cbor-decode-certificate"
+path = "src/bin/decode_certificate.rs"
+
+[[bin]]
+name = "amaru-cbor-decode-auxiliary-data"
+path = "src/bin/decode_auxiliary_data.rs"
+
+[[bin]]
+name = "amaru-cbor-decode-block"
+path = "src/bin/decode_block.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-keep-alive"
+path = "src/bin/decode_keep_alive.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-handshake"
+path = "src/bin/decode_handshake.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-chainsync"
+path = "src/bin/decode_chainsync.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-blockfetch"
+path = "src/bin/decode_blockfetch.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-txsubmission"
+path = "src/bin/decode_txsubmission.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-peersharing"
+path = "src/bin/decode_peersharing.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-localstatequery"
+path = "src/bin/decode_localstatequery.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-localtxsubmission"
+path = "src/bin/decode_localtxsubmission.rs"
+
+[[bin]]
+name = "amaru-mini-protocol-decode-localtxmonitor"
+path = "src/bin/decode_localtxmonitor.rs"
+
+[[bin]]
+name = "amaru-cbor-decode-submit-api-tx"
+path = "src/bin/decode_submit_api_tx.rs"
+
+[dependencies]
+# Path dependency against the embedded Amaru checkout. The build host is
+# expected to have the same workspace layout (codebases/amaru sibling to
+# dwarf/). Adjust via environment override or a workspace Cargo.toml if the
+# shims are built elsewhere.
+amaru-kernel = { path = "../../../codebases/amaru/crates/amaru-kernel" }
+pallas-network = { path = "../../../codebases/pallas/pallas-network" }
+minicbor = "0.25"
+hex = "0.4"

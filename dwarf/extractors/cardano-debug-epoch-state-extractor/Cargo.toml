@@ -1,0 +1,20 @@
+[package]
+name = "cardano-debug-epoch-state-extractor"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4.5.48", features = ["derive"] }
+hex = "0.4.3"
+pallas-codec = { path = "../../../codebases/pallas/pallas-codec" }
+pallas-network = { path = "../../../codebases/pallas/pallas-network" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+tokio = { version = "1.45.0", features = ["macros", "net", "rt-multi-thread"] }
+
+[dev-dependencies]
+tempfile = "3.23.0"

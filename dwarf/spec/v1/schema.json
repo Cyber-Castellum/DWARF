@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dwarf.local/spec/v1/scenario.schema.json",
+  "title": "Dwarf Scenario v1",
+  "description": "Forensically-sound test, security-test, and fuzzing scenario for Cardano implementations. A scenario is data; primitives are code. The runner instantiates primitives by name from primitives/registry.json and refuses references to unknown primitives or to primitives whose declared runtimes do not include the scenario's runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spec_version",
+    "id",
+    "title",
+    "target",
+    "runtime"
+  ],
+  "properties": {
+    "spec_version": {
+      "description": "Spec major version. v1 scenarios validate against this schema. Breaking changes go to v2 in a new directory.",
+      "const": "v1"
+    },
+    "id": {
+      "description": "Globally unique scenario identifier. Lowercase kebab-case. Stable across renames; treat as a primary key.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "title": {
+      "description": "Human-readable one-line title shown in dashboards and reports.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "authors": {
+      "description": "Optional list of author handles or names.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "tags": {
+      "description": "Optional free-form tags for indexing and filtering (e.g. networking, peer-selection, abuse, ser-deser).",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      },
+      "uniqueItems": true
+    },
+    "related_milestones": {
+      "description": "Optional milestone labels this scenario supports, such as M2.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "m1_trace": {
+      "description": "Optional traceability back to Milestone 1 artifacts. Keys are trace groups such as threat_ids, gap_ids, architecture_ids, and risk_candidate_ids; values are ID lists.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uniqueItems": true
+      }
+    },
+    "evidence_intent": {
+      "description": "How this scenario's evidence is intended to be used. This does not promote or score a finding by itself.",
+      "type": "string",
+      "enum": [
+        "candidate",
+        "regression",
+        "finding-validation",
+        "risk-support"
+      ]
+    },
+    "promotion_blockers": {
+      "description": "Human/code/test gates that must be closed before this scenario supports a promoted finding or risk decision.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "testcase_candidate": {
+      "description": "Optional instruction to ingest the completed run as a testcase lifecycle record automatically. Useful for runtime/devnet anomaly families that do not start from a byte-level corpus input.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "triage_reason"
+      ],
+      "properties": {
+        "classification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "triage_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_artifact_path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "target": {
+      "description": "Which Cardano implementation this scenario targets. The runner refuses if any referenced primitive does not declare support for this implementation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation",
+        "version"
+      ],
+      "properties": {
+        "implementation": {
+          "description": "Cardano implementation under test.",
+          "type": "string",
+          "enum": [
+            "cardano-node",
+            "amaru"
+          ]
+        },
+        "version": {
+          "description": "Version constraint. 'any' accepts whatever is deployed; otherwise a semver range, branch, or commit hash. Resolved value is recorded in the run manifest.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "runtime": {
+      "description": "Execution tier. 'library' drives a library or binary harness directly (no node, no devnet). 'single-node' spins up one node process. 'devnet' deploys a multi-node devnet via the profile-manager. The runner refuses if any referenced primitive's declared runtimes do not include this value.",
+      "type": "string",
+      "enum": [
+        "library",
+        "single-node",
+        "devnet"
+      ]
+    },
+    "profile": {
+      "description": "Devnet profile id, required when runtime is 'devnet', forbidden otherwise. Resolved profile content is captured in the run bundle.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "duration": {
+      "description": "Optional wall-clock cap on the load phase. Accepted units: s, m, h. Examples: '30s', '10m', '2h'.",
+      "type": "string",
+      "pattern": "^[0-9]+(s|m|h)$"
+    },
+    "seed": {
+      "description": "Optional integer or hex string used to seed all primitives' RNGs. If omitted, the runner generates one and records it in the run manifest. Required for deterministic replay.",
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string",
+          "pattern": "^0[xX][0-9a-fA-F]+$"
+        }
+      ]
+    },
+    "setup": {
+      "description": "Ordered list of setup primitive references. Failures abort the run before load.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive_ref"
+      },
+      "default": []
+    },
+    "load": {
+      "description": "Ordered list of load primitive references. The first load primitive's duration (or the scenario's duration field) bounds the run.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive_ref"
+      },
+      "default": []
+    },
+    "faults": {
+      "description": "Optional fault-injection primitives executed concurrently with load.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive_ref"
+      },
+      "default": []
+    },
+    "probes": {
+      "description": "Probe primitives sampled concurrently with load. Each probe writes its time series to probes/<primitive>.ndjson in the run bundle.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive_ref"
+      },
+      "default": []
+    },
+    "assertions": {
+      "description": "Assertion primitives evaluated after load completes. Each assertion records its evaluated value, the data points used, and a pass/fail result in the run bundle.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive_ref"
+      },
+      "default": []
+    },
+    "teardown": {
+      "description": "Ordered list of teardown primitive references. Run regardless of pass/fail. Failures are recorded but do not change the scenario's overall pass/fail.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/primitive_ref"
+      },
+      "default": []
+    },
+    "iterations": {
+      "description": "Number of trial iterations to run when this scenario contains FUZZ slots. Required at runtime when any primitive parameter is the bare keyword \"FUZZ\" or the long-form object {\"fuzz\": {...}}. Defaults to 100 when omitted. Each iteration becomes its own child bundle under a parent run id; all iterations share the parent's chain entry plus a chain entry of their own.",
+      "type": "integer",
+      "minimum": 1,
+      "default": 100
+    },
+    "shrink": {
+      "description": "When true (default), failing iterations trigger shrinking: the runner attempts to find a smaller failing input by reducing FUZZ-generated values toward minimum bounds (smaller integers, shorter strings/bytes). The shrunk failing input is recorded alongside the original. Shrinking only runs when an iteration fails, so it is free in the happy path.",
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "allOf": [
+    {
+      "description": "profile is required when runtime is devnet, forbidden otherwise.",
+      "if": {
+        "properties": {
+          "runtime": {
+            "const": "devnet"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "profile"
+        ],
+        "properties": {
+          "profile": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "profile": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "primitive_ref": {
+      "description": "Reference to a primitive registered in primitives/registry.json. The 'primitive' key names the primitive; remaining keys are parameters validated against that primitive's params_schema. Any parameter value may be a literal matching the primitive's params_schema, OR the bare keyword string \"FUZZ\" (the runner generates values from the primitive's declared parameter type), OR a long-form fuzz spec object {\"fuzz\": {...}} (see fuzz_slot below). The runner enforces FUZZ semantics; this scenario schema accepts any value here so primitives can declare arbitrary parameter shapes.",
+      "type": "object",
+      "required": [
+        "primitive"
+      ],
+      "properties": {
+        "primitive": {
+          "description": "Primitive name as registered in primitives/registry.json. Must exist; the runner refuses unknown names.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1
+        }
+      }
+    },
+    "fuzz_slot": {
+      "$comment": "Documentary schema for the long-form FUZZ slot object. Not directly referenced by primitive_ref (parameter values are free-form) but defines the contract the FUZZ engine uses when it sees {fuzz: {...}} as a parameter value. The bare string \"FUZZ\" is shorthand for {fuzz: {type: <inferred from primitive params_schema>}}.",
+      "type": "object",
+      "required": [
+        "fuzz"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fuzz": {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "description": "Generator strategy. Supported in Slice 8.5: int | bytes | string | bool | choice | weighted_choice. More strategies (regex, custom, dependent) added in later slices.",
+              "type": "string",
+              "enum": [
+                "int",
+                "bytes",
+                "string",
+                "bool",
+                "choice",
+                "weighted_choice"
+              ]
+            },
+            "min": {
+              "description": "Lower bound for int/bytes-length/string-length strategies."
+            },
+            "max": {
+              "description": "Upper bound for int/bytes-length/string-length strategies."
+            },
+            "values": {
+              "description": "Candidate set for choice / weighted_choice strategies.",
+              "type": "array"
+            },
+            "weights": {
+              "description": "Per-value weights for weighted_choice. Length must match values.",
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "distribution": {
+              "description": "Optional distribution hint for numeric strategies. Default: uniform.",
+              "type": "string",
+              "enum": [
+                "uniform"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

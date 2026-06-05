@@ -1,0 +1,171 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Plugin authoring</span>
+<h1>Plugin authoring</h1>
+<p class="page-hero">How to extend Dwarf without forking it. Plugins contribute primitives to the global registry; the framework discovers them at startup and the dashboard surfaces every loaded plugin at <a href="/operate/plugins">/operate/plugins</a>.</p>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 1</span><h2>Discovery model</h2></header>
+  <p>Plugins live under one of two roots, highest precedence first:</p>
+  <ul>
+    <li><code>$DWARF_PLUGINS_DIR</code> — colon-separated path-list of plugin roots. Each path is scanned for direct subdirectories.</li>
+    <li><code>~/.dwarf/plugins/</code> — the default root, always scanned.</li>
+  </ul>
+  <p>Each subdirectory whose top-level contains a <code>plugin.json</code> is treated as a plugin candidate. Ordering across roots is path-list order; ordering within a root is alphabetical (sort keeps the load order deterministic across hosts).</p>
+  <p>Discovery happens lazily — the first call to <code>discover_plugin_manifests()</code> loads every <code>plugin.json</code> and validates the API version. Subsequent dashboard requests reuse the manifest list.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 2</span><h2>The plugin contract</h2></header>
+  <p>A plugin is a directory with these files:</p>
+  <pre class="run-payload-pre"><code>~/.dwarf/plugins/my-plugin/
+├── plugin.json         # required — manifest
+├── entrypoint.py       # the Python module exposing register()
+└── registry.json       # optional — declarative primitives</code></pre>
+
+  <h3><code>plugin.json</code> schema</h3>
+  <pre class="run-payload-pre"><code>{
+  "plugin_id": "my-plugin",
+  "dwarf_api_version": "v1",
+  "version": "0.1.0",
+  "description": "What this plugin contributes, in one sentence.",
+  "entrypoint": "entrypoint.py",
+  "registry": "registry.json"
+}</code></pre>
+  <p>Fields:</p>
+  <ul>
+    <li><code>plugin_id</code> — globally unique. Defaults to the directory name if omitted.</li>
+    <li><code>dwarf_api_version</code> — currently <code>"v1"</code>. Mismatched versions raise <code>ValueError</code> at discovery time so a newer plugin can't silently break against an older framework.</li>
+    <li><code>version</code> — your plugin's semver. Surfaced in the dashboard.</li>
+    <li><code>description</code> — one sentence. Shown next to the plugin in <a href="/operate/plugins">/operate/plugins</a>.</li>
+    <li><code>entrypoint</code> — relative path to a Python module that exports <code>register(registry)</code>.</li>
+    <li><code>registry</code> — relative path to a JSON file declaring primitives without code (data-only plugins).</li>
+  </ul>
+
+  <h3><code>register(registry)</code></h3>
+  <p>The Python entrypoint exports a single function:</p>
+  <pre class="run-payload-pre"><code># entrypoint.py
+def register(registry):
+    """Add primitives to the framework's registry."""
+    registry.register_primitive(
+        name="my_load_primitive",
+        family="runtime",
+        params_schema="params_schema.json",
+        executor=my_executor,
+    )
+
+def my_executor(params, *, output_dir):
+    # ... do the thing, write outputs, return a result dict
+    return {"healthy": True, "load_seen": params["target_qps"]}</code></pre>
+  <p>The registry exposes <code>register_primitive</code>, <code>register_assertion</code>, and <code>register_observer</code>. The framework merges every plugin's registrations into the global registry; conflicts (same name) raise at startup.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 3</span><h2>Sandbox / security model</h2></header>
+  <p><strong>Plugins run with the same privileges as Dwarf.</strong> They can read every file the framework can read, write every file the framework can write, and execute arbitrary code on import. There is no sandbox.</p>
+  <p>Implications:</p>
+  <ul>
+    <li>Only install plugins from sources you trust. Audit the entrypoint before dropping the directory under your plugin root.</li>
+    <li>Don't run plugins from a third party on a production substrate without reviewing the executor code.</li>
+    <li>The <a href="/operate/plugins">/operate/plugins</a> page surfaces the on-disk path of every loaded plugin so an operator can see exactly which directories the framework is loading from.</li>
+  </ul>
+  <p>This matches the threat model: Dwarf is an audit framework, not a multi-tenant system. Operators are expected to control their own plugin roots. A future "signed plugin" mode would be the natural place to add hardening; today, isolation is the operator's responsibility.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 4</span><h2>Example: hello-world load primitive</h2></header>
+  <p>End-to-end walkthrough — write a minimal plugin that adds a <code>hello_load</code> primitive sleeping <code>params.duration_seconds</code> seconds.</p>
+
+  <h3>1. Create the directory</h3>
+  <pre class="run-payload-pre"><code>mkdir -p ~/.dwarf/plugins/hello-world
+cd ~/.dwarf/plugins/hello-world</code></pre>
+
+  <h3>2. Write <code>plugin.json</code></h3>
+  <pre class="run-payload-pre"><code>{
+  "plugin_id": "hello-world",
+  "dwarf_api_version": "v1",
+  "version": "0.1.0",
+  "description": "Minimal example plugin — adds a hello_load primitive.",
+  "entrypoint": "entrypoint.py"
+}</code></pre>
+
+  <h3>3. Write <code>entrypoint.py</code></h3>
+  <pre class="run-payload-pre"><code>import json
+import time
+from pathlib import Path
+
+
+def register(registry):
+    registry.register_primitive(
+        name="hello_load",
+        family="runtime",
+        params_schema={
+            "type": "object",
+            "properties": {
+                "duration_seconds": {"type": "number", "minimum": 0, "default": 1.0}
+            },
+            "required": ["duration_seconds"],
+        },
+        executor=hello_load_executor,
+    )
+
+
+def hello_load_executor(params, *, output_dir):
+    duration = float(params.get("duration_seconds") or 1.0)
+    started_at = time.monotonic()
+    time.sleep(duration)
+    elapsed = time.monotonic() - started_at
+    report = {"healthy": True, "duration_seconds": duration, "elapsed_seconds": elapsed}
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    (Path(output_dir) / "hello-load-report.json").write_text(json.dumps(report))
+    return report</code></pre>
+
+  <h3>4. Restart the dashboard so the loader picks it up</h3>
+  <pre class="run-payload-pre"><code>cardano-profile dashboard restart</code></pre>
+
+  <h3>5. Verify it loaded</h3>
+  <p>Open <a href="/operate/plugins">/operate/plugins</a> — you should see one row for <code>hello-world</code>, version 0.1.0, with one primitive.</p>
+
+  <h3>6. Use it in a scenario</h3>
+  <p>Reference <code>hello_load</code> like any other primitive:</p>
+  <pre class="run-payload-pre"><code>{
+  "spec_version": "v1",
+  "id": "hello-world-smoke",
+  "title": "Hello world plugin smoke",
+  "primitive": "hello_load",
+  "params": {"duration_seconds": 2.0}
+}</code></pre>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 5</span><h2>Publishing &amp; sharing</h2></header>
+  <p>The framework doesn't ship a plugin marketplace today. Two ways to share:</p>
+  <ul>
+    <li><strong>Gist + README</strong> — minimal friction. README documents the primitive's params + outputs; users curl-pipe into <code>~/.dwarf/plugins/&lt;name&gt;/</code>.</li>
+    <li><strong>Git repo</strong> — better for plugins that evolve. Users clone into <code>~/.dwarf/plugins/&lt;name&gt;</code> and pull updates.</li>
+  </ul>
+  <p>Future work: a signed-plugin marketplace would let third parties distribute trustworthy plugins without operators having to read every entrypoint. For now, the model is operator-vetted.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 6</span><h2>Extending without forking</h2></header>
+  <p>Plugin extensibility is the supported way to add capability. Forking the framework should only be necessary when you need to change the framework's <em>core</em> behaviour (the registry, the dashboard, the runtime fault layer). Most additions — new primitives, new fault types, new observation kinds — fit cleanly as plugins.</p>
+  <p>If you find yourself needing to fork, consider whether the right move is upstream — open a dispatch note on what your plugin can't express and how the framework's contract could grow to support it. The framework's primitive registry is intentionally extensible; gaps are bugs.</p>
+</section>
+
+<hr class="hairline">
+
+<p class="page-subhero">Cross-reference: <a href="/operate/plugins">/operate/plugins</a> · <a href="/learn/developer-onboarding">developer onboarding</a> · <a href="/learn/api">REST API</a> · <a href="/learn/glossary">glossary</a></p>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Status</span>
+<h1>The flask</h1>
+<p class="page-hero">You are looking <em>into</em> the flask. Inside lives the framework — small, contained, observational. Outside, <code>cardano-node</code> processes are bound to loopback and reachable only through conduits the framework has earned.</p>
+
+<hr class="hairline">
+
+{# When source is "missing" (no live poll AND no cached evidence) the
+   substrate isn't broken — it just hasn't been composed yet. Render a
+   neutral "no substrate composed" surface, NOT the alarming error red. #}
+{% set _no_substrate = (substrate.source == 'missing' or (substrate.source != 'live' and substrate.source != 'cached')) %}
+
+<section class="flask-stage" aria-labelledby="flask-heading"
+         data-state="{{ 'idle' if _no_substrate else substrate.state }}"
+         data-source="{{ substrate.source }}"
+         data-transport="{{ substrate.transport or 'unknown' }}">
+  <h2 id="flask-heading" class="visually-hidden">Live substrate flask</h2>
+
+  <img class="flask-logo-img{% if _no_substrate %} flask-logo-img--idle{% endif %}" src="/static/dwarf-logo.png"
+       alt="Dwarf in the three-cork flask: crimson eye, grin, ouroboros, cyan circuits"/>
+
+  <p class="flask-caption">
+    {% if _no_substrate %}
+    <span class="data-source data-source--idle">no substrate composed yet</span>
+    {% else %}
+    <span class="data-source data-source--{{ substrate.source }}">{% if substrate.source == 'live' %}live · {{ substrate.transport or 'transport unknown' }}{% elif substrate.source == 'cached' %}cached evidence{% endif %}</span>
+    {% endif %}
+    {% if substrate.evidence_path %} · <code>{{ substrate.evidence_path }}</code>{% endif %}
+  </p>
+
+  {% if _no_substrate %}
+  <p class="flask-caption flask-caption--hint">
+    Compose a substrate by running a scenario from <a href="/operate/scenarios">/operate/scenarios</a>.
+  </p>
+  {% endif %}
+
+  <script type="application/json" id="flask-bootstrap">{{ {
+    "state": substrate.state,
+    "source": substrate.source,
+    "transport": substrate.transport,
+    "expected_nodes": substrate.expected_nodes,
+    "node_processes": substrate.node_processes,
+    "socket_count": substrate.socket_count,
+    "listener_count": substrate.listener_count,
+    "loopback_only": substrate.loopback_only,
+    "tip_block": substrate.tip_block,
+    "sync_progress": substrate.sync_progress,
+    "evidence_path": substrate.evidence_path,
+    "node_pills": substrate.node_pills
+  } | tojson }}</script>
+</section>
+
+<hr class="hairline">
+
+<section class="status-summary" aria-labelledby="summary-heading">
+  <header><span class="eyebrow">Tiles</span><h2 id="summary-heading">At a glance</h2></header>
+  <div class="status-tile-grid">
+
+    {% set _state_caption = '' %}
+    {% if _no_substrate %}
+      {% set _state_caption = 'No substrate composed yet. Run a scenario from /operate/scenarios to compose one; the substrate tile will reflect health once nodes are running.' %}
+    {% elif substrate.state == 'stale' and substrate.node_processes is not none and substrate.expected_nodes is not none and substrate.node_processes != substrate.expected_nodes %}
+      {% set _state_caption = 'Live poll succeeded but the host has ' ~ substrate.node_processes ~ ' cardano-node processes; the active profile expects ' ~ substrate.expected_nodes ~ '. Pick a matching profile in Catalogued profiles below or redeploy the active one.' %}
+    {% elif substrate.state == 'stale' and substrate.source == 'cached' %}
+      {% set _state_caption = 'No live poll — showing the most recent on-disk evidence.' %}
+    {% elif substrate.state == 'error' %}
+      {% set _state_caption = 'Live poll could not complete and no cached evidence is available. Check the dashboard process logs.' %}
+    {% endif %}
+
+    <article class="status-tile status-tile--state-{{ 'idle' if _no_substrate else substrate.state }}"
+             {% if _state_caption %}title="{{ _state_caption }}"{% endif %}>
+      <span class="eyebrow">Substrate</span>
+      <span class="status-tile__metric">{% if _no_substrate %}IDLE{% elif substrate.state == 'ok' %}OK{% elif substrate.state == 'stale' %}STALE{% else %}ERROR{% endif %}</span>
+      {% if _state_caption %}<p class="status-tile__caption">{{ _state_caption }}</p>{% endif %}
+      <dl class="status-tile__rows">
+        <div><dt>processes</dt><dd>{{ substrate.node_processes if substrate.node_processes is not none else '—' }} / {{ substrate.expected_nodes if substrate.expected_nodes is not none else '—' }}</dd></div>
+        <div><dt>sockets</dt><dd>{{ substrate.socket_count if substrate.socket_count is not none else '—' }}</dd></div>
+        <div><dt>listeners</dt><dd>{{ substrate.listener_count if substrate.listener_count is not none else '—' }}</dd></div>
+        <div><dt>loopback only</dt><dd>{{ substrate.loopback_only }}</dd></div>
+        <div><dt>tip block</dt><dd>{{ substrate.tip_block }}</dd></div>
+        <div><dt>sync</dt><dd>{{ substrate.sync_progress }}</dd></div>
+      </dl>
+    </article>
+
+    <article class="status-tile">
+      <span class="eyebrow">Active profile</span>
+      <span class="status-tile__metric"><code>{{ active_profile.id }}</code></span>
+      <p class="status-tile__sub">{{ active_profile.label }}</p>
+      <dl class="status-tile__rows">
+        <div><dt>node type</dt><dd>{{ active_profile.node_type }}</dd></div>
+        <div><dt>node count</dt><dd>{{ active_profile.node_count }}</dd></div>
+        <div><dt>peer sharing</dt><dd>{% if active_profile.peer_sharing %}enabled{% else %}disabled{% endif %}</dd></div>
+      </dl>
+      <p class="status-tile__path" title="{{ active_profile.remote_runtime_root }}"><code>{{ active_profile.remote_runtime_root }}</code></p>
+    </article>
+
+    <article class="status-tile">
+      <span class="eyebrow">Last sync</span>
+      <span class="status-tile__metric">{% if last_sync.live_enabled %}LIVE{% else %}CACHED{% endif %}</span>
+      <p class="status-tile__sub">{{ last_sync.generated_at }}</p>
+      <dl class="status-tile__rows">
+        <div><dt>evidence</dt><dd><code>{{ last_sync.evidence_path }}</code></dd></div>
+      </dl>
+    </article>
+
+    <article class="status-tile">
+      <span class="eyebrow">Dashboard serving</span>
+      <span class="status-tile__metric"><code>{{ serving.bind }}:{{ serving.port }}</code></span>
+      <dl class="status-tile__rows">
+        <div><dt>token</dt><dd>{% if serving.token_set %}set ({{ serving.token_length }} char{{ '' if serving.token_length == 1 else 's' }}){% else %}unset{% endif %}</dd></div>
+        <div><dt>bind</dt><dd>{{ serving.bind }}</dd></div>
+        <div><dt>port</dt><dd>{{ serving.port }}</dd></div>
+      </dl>
+    </article>
+
+  </div>
+</section>
+
+<hr class="hairline">
+
+<section class="flask-runes" aria-labelledby="runes-heading">
+  <header><span class="eyebrow">Inscriptions</span><h2 id="runes-heading">Configuration runes</h2>
+    <p class="page-subhero">Etched into the chamber walls. Click a value to copy. To re-write the inscriptions, run <code>cardano-profile intake</code> from a terminal.</p>
+  </header>
+
+  <table class="config-table flask-runes__table">
+    <thead><tr><th>Key</th><th>Value</th></tr></thead>
+    <tbody>
+      {% for row in config_rows %}
+      <tr>
+        <th scope="row">{{ row.label }}</th>
+        <td>
+          {% if row.copyable %}<button type="button" class="copy-cell" data-copy-value="{{ row.value }}" aria-label="Copy {{ row.label }} to clipboard"><code>{{ row.value }}</code><span class="copy-cell__hint" aria-hidden="true">copy</span></button>
+          {% else %}<span class="config-value">{{ row.value }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if profiles %}
+<hr class="hairline">
+
+<section class="status-profiles" aria-labelledby="profiles-heading">
+  <header><span class="eyebrow">Profiles</span><h2 id="profiles-heading">Catalogued profiles</h2>
+    <p class="page-subhero">Every profile <code>cardano-profile</code> can deploy. The active row glows.</p>
+  </header>
+  <table class="config-table profiles-table">
+    <thead>
+      <tr>
+        <th>ID</th><th>Label</th><th>Node type</th><th>Nodes</th><th>Peer sharing</th><th>Runtime root</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in profiles %}
+      <tr {% if p.is_active %}class="profiles-table__row--active"{% endif %}>
+        <td><code>{{ p.id }}</code>{% if p.is_active %} <span class="result-pill result-pill--pass">active</span>{% endif %}</td>
+        <td>{{ p.label }}</td>
+        <td>{{ p.node_type }}</td>
+        <td>{{ p.node_count }}</td>
+        <td>{% if p.peer_sharing %}enabled{% else %}disabled{% endif %}</td>
+        <td><code>{{ p.remote_runtime_root }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<script type="module" src="/static/js/copy-cell.js"></script>
+{% endblock %}

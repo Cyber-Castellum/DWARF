@@ -1,0 +1,73 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Plugins</span>
+<h1>Plugins</h1>
+<p class="page-hero">Plugins discovered under <code>{{ plugins_env }}</code> (path-list of plugin roots) and <code>{{ default_plugin_root }}</code>. Each plugin contributes primitives to the global registry; the dashboard reads only the manifest + registry metadata, never the plugin module itself.</p>
+
+<hr class="hairline">
+
+<section class="status-summary" aria-labelledby="summary-heading">
+  <h2 id="summary-heading" class="visually-hidden">Plugin summary</h2>
+  <div class="status-tile-grid">
+    <article class="status-tile">
+      <span class="eyebrow">Plugins loaded</span>
+      <span class="status-tile__metric">{{ plugins|length }}</span>
+      <p class="status-tile__sub">expected dwarf_api_version <code>{{ expected_api_version }}</code></p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Primitives contributed</span>
+      <span class="status-tile__metric">{{ total_primitives }}</span>
+      <p class="status-tile__sub">summed across every loaded plugin</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Plugin roots</span>
+      <ul class="status-tile__rows">
+        {% for r in plugin_roots %}<li><code>{{ r }}</code></li>{% endfor %}
+      </ul>
+    </article>
+  </div>
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="plugins-heading">
+  <header><span class="eyebrow">Catalog</span><h2 id="plugins-heading">Loaded plugins</h2></header>
+  {% if not plugins %}
+  <p class="page-subhero">No plugins discovered. Drop a plugin directory containing <code>plugin.json</code> into one of the roots above.</p>
+  {% else %}
+  <table class="config-table plugins-table">
+    <thead>
+      <tr>
+        <th>Plugin</th><th>Version</th><th>API</th><th>Primitives</th><th>Path</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in plugins %}
+      <tr {% if p.error %}class="plugins-table__row--error"{% endif %}>
+        <td>
+          <code>{{ p.plugin_id }}</code>
+          {% if p.description %}<p class="plugins-table__desc">{{ p.description }}</p>{% endif %}
+          {% if p.error %}<p class="plugins-table__error"><code>{{ p.error }}</code></p>{% endif %}
+        </td>
+        <td><code>{{ p.version or '—' }}</code></td>
+        <td><code>{{ p.dwarf_api_version }}</code></td>
+        <td>
+          {% if p.primitives %}
+          <details>
+            <summary>{{ p.primitive_count }} primitive{{ '' if p.primitive_count == 1 else 's' }}</summary>
+            <ul class="plugins-table__primitives">
+              {% for name in p.primitives %}<li><code>{{ name }}</code></li>{% endfor %}
+            </ul>
+          </details>
+          {% else %}
+          <span class="plugins-table__none">—</span>
+          {% endif %}
+        </td>
+        <td><code class="plugins-table__path">{{ p.plugin_root }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endblock %}

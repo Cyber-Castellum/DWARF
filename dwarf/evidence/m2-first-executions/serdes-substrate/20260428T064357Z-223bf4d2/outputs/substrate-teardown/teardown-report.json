@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {
+      "id": "node1",
+      "kind": "node",
+      "session": "dwarf-substrate-20260428T064357Z-223bf4d2-node1",
+      "stderr": "",
+      "stopped": true
+    },
+    {
+      "id": "node2",
+      "kind": "node",
+      "session": "dwarf-substrate-20260428T064357Z-223bf4d2-node2",
+      "stderr": "",
+      "stopped": true
+    },
+    {
+      "id": "blockfetch_invalid_block_cbor-proxy-node1",
+      "kind": "chainsync_blockfetch_proxy",
+      "session": "dwarf-substrate-20260428T064357Z-223bf4d2-blockfetch_invalid_block_cbor-node1",
+      "stderr": "",
+      "stopped": true
+    }
+  ],
+  "remaining_session_names": [],
+  "remaining_sessions": 0,
+  "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/runtime.json",
+  "stopped_count": 3
+}

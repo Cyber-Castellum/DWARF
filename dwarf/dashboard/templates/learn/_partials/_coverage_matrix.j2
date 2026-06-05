@@ -1,0 +1,53 @@
+<section class="coverage-matrix" id="{{ matrix.title | replace(' ', '-') | lower }}">
+  <header class="coverage-matrix__head">
+    <span class="eyebrow">{{ matrix.title }}</span>
+    <p class="coverage-matrix__caption">{{ matrix.caption | safe }}</p>
+  </header>
+  <table class="coverage-table">
+    <thead>
+      <tr>
+        <th></th>
+        {% for col in matrix.columns %}
+        <th scope="col">{{ col.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in matrix.rows %}
+      <tr>
+        <th scope="row">{{ row.label }}</th>
+        {% for col in matrix.columns %}
+        {% set cell = matrix.cells[(row.slug, col.slug)] %}
+        <td class="coverage-cell coverage-cell--{{ cell.state }}">
+          {% if cell.state == "supported" %}
+            {% if cell.pct is defined and cell.pct is not none %}
+              <span class="cell-count" title="{{ cell.count }} {{ cell.artifact_kind }}{% if cell.count != 1 %}s{% endif %} · {{ cell.pct }}% coverage">{{ '%.1f'|format(cell.pct) }}%</span>
+            {% else %}
+              <span class="cell-count">{{ cell.count }} {{ cell.artifact_kind }}{% if cell.count != 1 %}s{% endif %}</span>
+            {% endif %}
+          {% elif cell.state == "zero" %}
+            {# Slice 2 of dispatch 11 — distinct visual for "ran but
+               found nothing" vs "no run recorded". Faint cork tint
+               so the cell reads as "executed with empty result"
+               rather than as a vacuous gap. #}
+            <span class="cell-zero" title="ran with 0% coverage">0.0%</span>
+          {% elif cell.state == "partial" %}
+            <span class="cell-partial">{{ cell.count }} partial</span>
+          {% elif cell.state == "needs_source" %}
+            <span class="caveat-label">needs source</span>
+          {% else %}
+            <span class="cell-empty" title="no run recorded">—</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="coverage-matrix__anchor">
+    <span class="eyebrow">Anchor</span>
+    {% for path in matrix.anchor_paths %}
+    <code>{{ path }}</code>
+    {% endfor %}
+  </p>
+</section>

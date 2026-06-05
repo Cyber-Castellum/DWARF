@@ -1,0 +1,23 @@
+<article class="walkthrough" id="walkthrough-{{ walkthrough.slug }}">
+  <span class="eyebrow">Walkthrough</span>
+  <h2 class="walkthrough__title">{{ walkthrough.title }}</h2>
+  <p class="walkthrough__intro">{{ walkthrough.intro }}</p>
+  {% for step in walkthrough.steps %}
+  <section class="walkthrough-step">
+    <h3 class="walkthrough-step__heading">{{ step.number }}. {{ step.title }}</h3>
+    <p class="walkthrough-step__prose">{{ step.prose }}</p>
+    {% if step.refs %}
+    <p class="walkthrough-step__refs">
+      {% for ref in step.refs %}
+        {% if ref.url %}
+        <a href="{{ ref.url }}">{{ ref.label }}</a>
+        {% else %}
+        <code>{{ ref.anchor_path }}</code>
+        {% endif %}
+        {%- if not loop.last %} · {% endif %}
+      {% endfor %}
+    </p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</article>

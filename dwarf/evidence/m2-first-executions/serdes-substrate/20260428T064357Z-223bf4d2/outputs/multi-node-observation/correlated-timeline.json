@@ -1,0 +1,178 @@
+[
+  {
+    "ts": "2026-04-28T06:44:02.121859Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": null,
+    "hash": null,
+    "ok": false
+  },
+  {
+    "ts": "2026-04-28T06:44:03.136530Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:04.151376Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:05.165688Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:06.180393Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:07.195701Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:08.210206Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:09.225401Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:10.239689Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:11.254344Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:12.122601Z",
+    "node_id": "node1",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:12.200264Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:13.215226Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:14.229784Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:15.244821Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:16.259534Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:17.274453Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:18.289433Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:19.304449Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:20.319358Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:21.334066Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  },
+  {
+    "ts": "2026-04-28T06:44:22.201899Z",
+    "node_id": "node2",
+    "event_type": "tip_sample",
+    "slot": 0,
+    "hash": "",
+    "ok": true
+  }
+]

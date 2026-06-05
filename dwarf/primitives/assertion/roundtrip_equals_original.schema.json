@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "roundtrip_equals_original params",
+  "type": "object",
+  "properties": {
+    "min_inputs_parsed": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Minimum number of successfully parsed inputs required before roundtrip equality can pass."
+    }
+  },
+  "additionalProperties": false
+}

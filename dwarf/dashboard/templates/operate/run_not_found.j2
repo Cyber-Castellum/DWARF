@@ -1,0 +1,16 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Run</span>
+<h1>Run not found</h1>
+<p class="page-hero">No bundle on disk for run id <code>{{ run_id }}</code>.</p>
+
+<hr class="hairline">
+
+<p>Possible reasons:</p>
+<ul>
+  <li>The run id was mistyped.</li>
+  <li>The bundle was preserved on a remote source and is not synced locally yet.</li>
+  <li>The runs directory was rotated.</li>
+</ul>
+<p>Browse <a href="/operate/runs">/operate/runs</a> for the recent runs index.</p>
+{% endblock %}

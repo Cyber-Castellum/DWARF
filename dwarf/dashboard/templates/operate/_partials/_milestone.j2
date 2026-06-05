@@ -1,0 +1,13 @@
+{# Slice-18: per-future-milestone <details> block. Used inside an
+   {% for milestone in future_milestones %} loop in operate/contract.j2.
+   #}
+{% set total = milestone['items']|length %}
+{% set done  = milestone['items']|selectattr('checked')|list|length %}
+<details class="milestone-block">
+  <summary>{{ milestone.id }} — {{ milestone.label }} — Target: {{ milestone.target_date }} — {{ total }} items ({{ done }}/{{ total }} done)</summary>
+  <ul class="milestone-deliverables">
+    {% for item in milestone['items'] %}
+    <li>{{ '☒' if item.checked else '☐' }} {{ item.text }}</li>
+    {% endfor %}
+  </ul>
+</details>

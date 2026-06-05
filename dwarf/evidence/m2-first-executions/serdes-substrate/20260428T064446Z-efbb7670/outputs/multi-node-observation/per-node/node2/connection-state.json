@@ -1,0 +1,20 @@
+{
+  "target_node": "node2",
+  "pid": 3415116,
+  "port": 34612,
+  "connect_successes": 2,
+  "connect_failures": 0,
+  "ss_match_count": 5,
+  "ss_listen_count": 1,
+  "ss_established_count": 0,
+  "lsof_socket_count": 3,
+  "peer_nodes_connected": [],
+  "responsive": true,
+  "ss_lines": [
+    "LISTEN     0      8                        127.0.0.1:34612         0.0.0.0:*     users:((\"cardano-node\",pid=3415116,fd=21))",
+    "CLOSE-WAIT 0      0                        127.0.0.1:34612       127.0.0.1:41658 users:((\"cardano-node\",pid=3415116,fd=24))",
+    "FIN-WAIT-2 0      0                        127.0.0.1:41658       127.0.0.1:34612",
+    "CLOSE-WAIT 0      0                        127.0.0.1:34612       127.0.0.1:41672 users:((\"cardano-node\",pid=3415116,fd=25))",
+    "FIN-WAIT-2 0      0                        127.0.0.1:41672       127.0.0.1:34612"
+  ]
+}

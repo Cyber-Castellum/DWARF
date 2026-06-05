@@ -1,0 +1,17 @@
+{
+  "mode": "txsubmission_unexpected_body",
+  "target_node": "node1",
+  "target_host": "127.0.0.1",
+  "target_port": 35411,
+  "malformation_id": "trailing-bytes-after-done",
+  "handshake_response_kind": "data",
+  "handshake_response_hex": "9902f47a8000000782028200820e0f",
+  "txsubmission_response_kind": "reset",
+  "txsubmission_response_hex": "",
+  "elapsed_ms": 4.251964157447219,
+  "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064422Z-af3bdbf1/outputs/substrate-compose/runtime.json",
+  "result": {
+    "unexpected_body_rejected": true,
+    "rejection_reason": "NotInFlight"
+  }
+}

@@ -1,0 +1,283 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Coverage</span>
+<h1>Cross-bundle coverage roll-up</h1>
+<p class="page-hero">The most recent <code>runtime_coverage_report</code> bundle on disk, surfaced at the top of the dashboard so operators don't have to drill through individual runs to see current coverage. Below: a rolling history of past coverage bundles. The report itself is rendered verbatim — Dwarf does not re-score; it only mirrors what the harness emitted.</p>
+
+<hr class="hairline">
+
+<section class="cvg-trend" aria-labelledby="trend-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Trend · live bitmap delta</span>
+    <h2 id="trend-heading">Per-target bitmap-cvg over time</h2>
+    <p class="page-subhero">One series per <code>scenario.id</code>, sourced from <code>outputs/{aflpp,afl}/default/fuzzer_stats</code> on every AFL/AFL++ run on disk. Latest value, peak, and last-step delta highlight whether each harness is gaining ground.</p>
+  </header>
+
+  {% if trend.empty %}
+  <p class="empty-section-statement">
+    No AFL/AFL++ runs on disk yet — trend chart needs at least one <code>fuzzer_stats</code> file with a <code>bitmap_cvg</code> line.
+    <span class="empty-section-statement__cite">scanned <code>{{ trend.total_runs }}</code> runs</span>
+  </p>
+  {% else %}
+  <div class="status-tile-grid">
+    <article class="status-tile">
+      <span class="eyebrow">Targets tracked</span>
+      <span class="status-tile__metric">{{ trend.total_targets }}</span>
+      <p class="status-tile__sub">distinct <code>scenario.id</code></p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">AFL runs scanned</span>
+      <span class="status-tile__metric">{{ trend.total_runs }}</span>
+      <p class="status-tile__sub">contributing trend points</p>
+    </article>
+  </div>
+
+  <table class="config-table cvg-trend__table">
+    <thead>
+      <tr>
+        <th>Target</th>
+        <th>Engine</th>
+        <th>Runs</th>
+        <th>Latest</th>
+        <th>Peak</th>
+        <th>First → Latest</th>
+        <th>Δ last step</th>
+        <th>Trend</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in trend.targets %}
+      <tr id="trend-{{ t.scenario_id }}">
+        <td><code>{{ t.label }}</code><br><small><code>{{ t.scenario_id }}</code></small></td>
+        <td>{{ t.engine }}</td>
+        <td>{{ t.point_count }}</td>
+        <td>{{ '%.2f'|format(t.latest) }}<small> %</small></td>
+        <td>{{ '%.2f'|format(t.peak) }}<small> %</small></td>
+        <td>{{ '%.2f'|format(t.first) }}<small> %</small> → {{ '%.2f'|format(t.latest) }}<small> %</small></td>
+        <td>
+          {% if t.delta is none %}
+            —
+          {% elif t.direction == 'up' %}
+            <span class="cvg-trend__delta cvg-trend__delta--up">+{{ '%.2f'|format(t.delta) }}<small> pp</small></span>
+          {% elif t.direction == 'down' %}
+            <span class="cvg-trend__delta cvg-trend__delta--down">{{ '%.2f'|format(t.delta) }}<small> pp</small></span>
+          {% else %}
+            <span class="cvg-trend__delta cvg-trend__delta--flat">±0.00<small> pp</small></span>
+          {% endif %}
+        </td>
+        <td class="cvg-trend__spark-cell">{{ t.sparkline|safe }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
+{% if not latest %}
+<p class="empty-section-statement">
+  No coverage roll-up generated yet.
+  <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 runs with <code>outputs/coverage-report/</code></span>
+</p>
+<p>To produce one, aggregate the per-bundle bitmaps:</p>
+<pre class="run-payload-pre"><code># Inside Docker
+docker compose exec dwarf-fw cardano-profile coverage aggregate
+
+# Bare metal
+cardano-profile coverage aggregate</code></pre>
+<p>Or run a <code>runtime_coverage_report</code> scenario directly — see the <a href="/learn/cli#cli-primitive">CLI reference</a> for the example smoke and the <code>--merge-mode</code> options.</p>
+{% else %}
+
+<section class="coverage-rollup" aria-labelledby="rollup-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Latest report · {% if latest.rollup.mode == 'per-target-rollup' %}per-target rollup{% else %}file-level merge{% endif %}</span>
+    <h2 id="rollup-heading">Bundle <a href="{{ latest.run_url }}"><code>{{ latest.run_id }}</code></a></h2>
+    <p class="page-subhero">Generated at <code>{{ latest.rollup.generated_at_utc or '—' }}</code>{% if latest.rollup.bundle_count %} · {{ latest.rollup.bundle_count }} bundle{{ '' if latest.rollup.bundle_count == 1 else 's' }} processed{% endif %}.</p>
+  </header>
+
+  <div class="status-tile-grid coverage-tiles">
+    {% if latest.rollup.mode == 'per-target-rollup' %}
+    <article class="status-tile">
+      <span class="eyebrow">Max bitmap coverage</span>
+      <span class="status-tile__metric">{{ '%.1f'|format(latest.rollup.max_bitmap_cvg) if latest.rollup.max_bitmap_cvg is not none else '—' }}{% if latest.rollup.max_bitmap_cvg is not none %}<small> %</small>{% endif %}</span>
+      <p class="status-tile__sub">peak AFL++ bitmap fill across processed targets</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Queue count</span>
+      <span class="status-tile__metric">{{ latest.rollup.queue_count if latest.rollup.queue_count is not none else '—' }}</span>
+      <p class="status-tile__sub">total queued inputs across all targets</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Exec count</span>
+      <span class="status-tile__metric">{{ '{:,}'.format(latest.rollup.exec_count) if latest.rollup.exec_count is not none else '—' }}</span>
+      <p class="status-tile__sub">target invocations across the campaign</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Novel queue inputs</span>
+      <span class="status-tile__metric">{{ latest.rollup.novel_queue_sha256_count if latest.rollup.novel_queue_sha256_count is not none else '—' }}</span>
+      <p class="status-tile__sub">unique by sha256 across queued inputs</p>
+    </article>
+    {% else %}
+    <article class="status-tile">
+      <span class="eyebrow">Unique edges</span>
+      <span class="status-tile__metric">{{ latest.rollup.total_unique_edges if latest.rollup.total_unique_edges is not none else '—' }}</span>
+      <p class="status-tile__sub">across {{ latest.rollup.processed_aflpp_bundle_count or 0 }} AFL++ bundle{{ '' if latest.rollup.processed_aflpp_bundle_count == 1 else 's' }}</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Covered functions</span>
+      <span class="status-tile__metric">{{ latest.rollup.covered_functions if latest.rollup.covered_functions is not none else '—' }}</span>
+      <p class="status-tile__sub">libFuzzer source-attributable</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Covered lines</span>
+      <span class="status-tile__metric">{{ latest.rollup.covered_lines if latest.rollup.covered_lines is not none else '—' }}</span>
+      <p class="status-tile__sub">source lines reached</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Covered regions</span>
+      <span class="status-tile__metric">{{ latest.rollup.covered_regions if latest.rollup.covered_regions is not none else '—' }}</span>
+      <p class="status-tile__sub">distinct LLVM coverage regions</p>
+    </article>
+    {% endif %}
+  </div>
+</section>
+
+<hr class="hairline">
+
+<section class="coverage-report-frame" aria-labelledby="report-frame-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Report</span>
+    <h2 id="report-frame-heading">Latest report (rendered verbatim)</h2>
+  </header>
+  {% if latest.html_url %}
+  <iframe src="{{ latest.html_url }}" title="Latest coverage report HTML"
+          class="coverage-iframe"
+          sandbox="allow-same-origin allow-scripts"></iframe>
+  <p class="page-subhero">Source: <a href="{{ latest.html_url }}"><code>outputs/coverage-report/coverage.html</code></a> · <a href="{{ latest.summary_url }}">JSON summary</a></p>
+  {% elif latest.file_level_md_url %}
+  <p class="page-subhero">This run produced the file-level merge JSON only (no HTML render). Direct artifacts: <a href="{{ latest.file_level_json_url }}"><code>coverage-report-file-level.json</code></a> · <a href="{{ latest.file_level_md_url }}"><code>coverage-file-level.md</code></a>. The per-bundle table below is derived from the JSON.</p>
+  {% endif %}
+</section>
+
+{% if latest.per_target_rows %}
+<hr class="hairline">
+
+<section class="coverage-targets" aria-labelledby="targets-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Per-target breakdown</span>
+    <h2 id="targets-heading">Targets in this report</h2>
+  </header>
+  <table class="config-table coverage-targets__table">
+    <thead>
+      <tr>
+        <th>Target</th>
+        <th>Engine</th>
+        <th>Queue</th>
+        <th>Exec</th>
+        <th>Exec rate</th>
+        <th>Bitmap %</th>
+        <th>Source bundle</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in latest.per_target_rows %}
+      <tr>
+        <td><code>{{ t.target_label }}</code>{% if t.subcampaign_id %}<br><small>subcampaign <code>{{ t.subcampaign_id }}</code></small>{% endif %}</td>
+        <td>{{ t.engine }}</td>
+        <td>{{ t.queue_count if t.queue_count is not none else '—' }}</td>
+        <td>{{ '{:,}'.format(t.exec_count) if t.exec_count is not none else '—' }}</td>
+        <td>{{ '{:,.0f}'.format(t.exec_rate) if t.exec_rate is not none else '—' }}/s</td>
+        <td>{{ '%.1f'|format(t.bitmap_cvg) if t.bitmap_cvg is not none else '—' }}</td>
+        <td>{% if t.bundle_url %}<a href="{{ t.bundle_url }}"><code>{{ t.bundle_id }}</code></a>{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if latest.per_bundle_rows %}
+<hr class="hairline">
+
+<section class="coverage-bundles" aria-labelledby="bundles-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Per-bundle breakdown</span>
+    <h2 id="bundles-heading">Bundles processed in this merge</h2>
+  </header>
+  <table class="config-table coverage-bundles__table">
+    <thead>
+      <tr>
+        <th>Bundle</th>
+        <th>Engine</th>
+        <th>Status</th>
+        <th>Queue</th>
+        <th>Inputs</th>
+        <th>Edges</th>
+        <th>Functions</th>
+        <th>Lines</th>
+        <th>Regions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in latest.per_bundle_rows %}
+      <tr>
+        <td>{% if b.bundle_url %}<a href="{{ b.bundle_url }}"><code>{{ b.bundle_id }}</code></a>{% else %}—{% endif %}{% if b.target_slug %}<br><small><code>{{ b.target_slug }}</code></small>{% endif %}{% if b.subcampaign_id %}<br><small>subcampaign <code>{{ b.subcampaign_id }}</code></small>{% endif %}</td>
+        <td>{{ b.engine }}</td>
+        <td>{% if b.status == 'ok' %}<span class="result-pill result-pill--pass">{{ b.status }}</span>{% elif b.status == 'skipped' %}<span class="result-pill result-pill--error">skipped</span>{% else %}{{ b.status or '—' }}{% endif %}{% if b.skip_reason %}<br><small>{{ b.skip_reason }}</small>{% endif %}</td>
+        <td>{{ b.queue_count if b.queue_count is not none else '—' }}</td>
+        <td>{{ b.input_count if b.input_count is not none else '—' }}</td>
+        <td>{{ b.unique_edges_observed if b.unique_edges_observed is not none else '—' }}</td>
+        <td>{{ b.covered_functions if b.covered_functions is not none else '—' }}</td>
+        <td>{{ b.covered_lines if b.covered_lines is not none else '—' }}</td>
+        <td>{{ b.covered_regions if b.covered_regions is not none else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% endif %}
+
+{% if history %}
+<hr class="hairline">
+
+<section class="coverage-history" aria-labelledby="history-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">History</span>
+    <h2 id="history-heading">Past coverage reports</h2>
+    <p class="page-subhero">Latest {{ history|length }} runs whose bundle contains <code>outputs/coverage-report/</code>. Sorted newest first.</p>
+  </header>
+  <table class="config-table coverage-history__table">
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Generated</th>
+        <th>Mode</th>
+        <th>Bundles</th>
+        <th>Max bitmap %</th>
+        <th>Edges</th>
+        <th>Functions</th>
+        <th>Queue</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in history %}
+      <tr>
+        <td><a href="{{ h.run_url }}"><code>{{ h.run_id }}</code></a></td>
+        <td>{{ h.generated_at_utc or '—' }}</td>
+        <td>{{ h.mode or '—' }}</td>
+        <td>{{ h.bundle_count if h.bundle_count is not none else '—' }}</td>
+        <td>{{ '%.1f'|format(h.max_bitmap_cvg) if h.max_bitmap_cvg is not none else '—' }}</td>
+        <td>{{ h.total_unique_edges if h.total_unique_edges is not none else '—' }}</td>
+        <td>{{ h.covered_functions if h.covered_functions is not none else '—' }}</td>
+        <td>{{ h.queue_count if h.queue_count is not none else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% endblock %}

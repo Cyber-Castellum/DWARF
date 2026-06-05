@@ -1,0 +1,50 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · CLI</span>
+<h1>Command-line interface</h1>
+<p class="page-hero">Every <code>cardano-profile</code> top-level command group with worked examples. The CLI is the canonical operator interface; this dashboard is a read-only mirror of what these commands produce on disk. Every example below pastes directly into a terminal.</p>
+
+<hr class="hairline">
+
+<nav class="cli-toc" aria-label="CLI groups">
+  <span class="eyebrow">Groups</span>
+  <ul class="cli-toc__list">
+    {% for group in groups %}
+    <li><a href="#cli-{{ group.slug }}"><code>{{ group.title }}</code></a></li>
+    {% endfor %}
+  </ul>
+</nav>
+
+{% for group in groups %}
+<hr class="hairline">
+
+<section class="cli-group" id="cli-{{ group.slug }}" aria-labelledby="cli-{{ group.slug }}-heading">
+  <header class="cli-group__head">
+    <span class="eyebrow">{{ group.title }}</span>
+    <h2 id="cli-{{ group.slug }}-heading"><code>cardano-profile {{ group.title }}</code></h2>
+    <p class="cli-group__summary">{{ group.summary | safe }}</p>
+    <p class="cli-group__anchor"><span class="eyebrow">Source</span> <code>{{ group.anchor_path }}</code></p>
+  </header>
+
+  {% for command in group.commands %}
+  <article class="cli-command" id="cli-{{ group.slug }}-{{ loop.index }}">
+    <header class="cli-command__head">
+      <code class="cli-command__signature">{{ command.name }}</code>
+    </header>
+    <p class="cli-command__summary">{{ command.summary | safe }}</p>
+    {% if command.examples %}
+    <div class="cli-command__examples">
+      <span class="eyebrow">Examples</span>
+      {% for ex in command.examples %}
+      <figure class="cli-example">
+        <figcaption class="cli-example__label">{{ ex.label }}</figcaption>
+        <pre class="cli-example__pre">{{ ex.command }}</pre>
+      </figure>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endfor %}
+{% endblock %}

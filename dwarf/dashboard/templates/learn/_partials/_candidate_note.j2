@@ -1,0 +1,15 @@
+<article class="candidate-note" id="{{ entry.slug }}">
+  <span class="eyebrow eyebrow--candidate">Candidate</span>
+  <h2 class="candidate-note__title">{{ entry.title }}</h2>
+  <p class="candidate-note__status">
+    <span class="eyebrow">Status</span>
+    {{ entry.status }}
+  </p>
+  {% for paragraph in entry.summary.split('\n\n') if paragraph %}
+  <p class="candidate-note__body">{{ paragraph }}</p>
+  {% endfor %}
+  <p class="candidate-note__anchor">
+    <span class="eyebrow">Reference</span>
+    <code>{{ entry.anchor_path }}</code>
+  </p>
+</article>

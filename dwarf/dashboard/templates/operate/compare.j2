@@ -1,0 +1,173 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Compare</span>
+<h1>Compare implementations</h1>
+<p class="page-hero">Run a scenario through both Amaru and cardano-node with the same seed, then diff the outcomes. Divergence between two implementations on identical inputs is the signal — when one parser accepts what the other rejects, or two consensus paths disagree on a block.</p>
+
+<hr class="hairline">
+
+<section class="compare-runner" aria-labelledby="runner-heading">
+  <header class="compare-runner__heading">
+    <span class="eyebrow">Runner</span>
+    <h2 id="runner-heading">Run a compare</h2>
+  </header>
+
+  <div class="compare-runner__layout">
+    <aside class="scenario-picker" aria-labelledby="picker-heading">
+      <header class="scenario-picker__head">
+        <span class="eyebrow" id="picker-heading">Scenario picker</span>
+        <p class="filter-count" data-picker-count>{{ scenarios|length }} scenarios</p>
+      </header>
+
+      {% if scenarios %}
+      <div class="filter-bar">
+        <span class="eyebrow">Family</span>
+        <div class="filter-pills" role="group" aria-label="Filter scenarios by family">
+          {% for pill in pills %}
+          <button type="button" class="pill" data-family="{{ pill.slug }}" aria-pressed="{{ 'true' if pill.active else 'false' }}">{{ pill.label }} ({{ pill.count }})</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <label class="scenario-picker__search">
+        <span class="eyebrow">Search</span>
+        <input type="search" data-picker-search placeholder="filter by id or title" autocomplete="off">
+      </label>
+
+      <ul class="scenario-picker__list" role="listbox" aria-label="Scenarios">
+        {% for row in scenarios %}
+        <li class="scenario-picker__row" data-family="{{ row.family }}" data-id="{{ row.id }}" data-path="{{ row.path }}" data-runtime="{{ row.runtime }}" data-title="{{ row.title }}" role="option" aria-selected="false" tabindex="0">
+          <span class="scenario-picker__family">{{ row.family }}</span>
+          <span class="scenario-picker__id"><code>{{ row.id }}</code></span>
+          <span class="scenario-picker__title">{{ row.title }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-section-statement">
+        No scenarios in <code>dwarf/scenarios/</code>.
+        <span class="empty-section-statement__cite">scanned at request time</span>
+      </p>
+      {% endif %}
+    </aside>
+
+    <div class="run-card" aria-labelledby="run-card-heading">
+      <header class="run-card__head">
+        <span class="eyebrow">Selected scenario</span>
+        <h3 id="run-card-heading" data-run-card-id>Pick a scenario from the list</h3>
+        <p class="run-card__meta">
+          <span data-run-card-family>—</span> · runtime <code data-run-card-runtime>—</code>
+        </p>
+      </header>
+
+      <div class="run-card__cta">
+        <button type="button" class="cta cta--primary" data-run-compare disabled>Run compare</button>
+        <button type="button" class="cta cta--ghost" data-toggle-command aria-expanded="false" aria-controls="compare-command">Show command</button>
+      </div>
+
+      <pre class="command-disclosure" id="compare-command" hidden data-command-template="{{ sample_command }}">{{ sample_command }}</pre>
+
+      <section class="live-output" aria-labelledby="live-output-heading">
+        <header class="live-output__head">
+          <span class="eyebrow" id="live-output-heading">Live output</span>
+          <span class="live-output__state" data-output-state>idle</span>
+        </header>
+        <pre class="live-output__pre" data-output-pre><code data-output-code>No compare in progress. Pick a scenario and click <strong>Run compare</strong>.</code></pre>
+      </section>
+
+      <section class="run-result" hidden data-run-result aria-labelledby="run-result-heading">
+        <header class="run-result__head">
+          <span class="eyebrow" id="run-result-heading">Result</span>
+        </header>
+        <p class="run-result__line">
+          Outcome: <span class="result-pill" data-result-pill>—</span>
+        </p>
+        <p class="run-result__line">
+          Bundle: <a data-result-bundle href="#">open inspector</a>
+        </p>
+      </section>
+    </div>
+  </div>
+</section>
+
+<hr class="hairline">
+
+<section class="recent-compares" aria-labelledby="recents-heading">
+  <header class="recent-compares__head">
+    <span class="eyebrow">Recent compares</span>
+    <h2 id="recents-heading">Recent compare runs</h2>
+    <p class="page-subhero">Latest <strong>{{ recents|length }}</strong> runs whose bundle contains <code>cross-impl-comparison.json</code>. Sorted newest first.</p>
+  </header>
+
+  {% if recents %}
+  <table class="runs-table recent-compares__table">
+    <thead>
+      <tr>
+        <th>Run ID</th>
+        <th>Ended</th>
+        <th>Scenario</th>
+        <th>Family</th>
+        <th>Result</th>
+        <th>Amaru side</th>
+        <th>cardano-node side</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in recents %}
+      <tr>
+        <td><a href="{{ r.run_url }}"><code>{{ r.run_id }}</code></a></td>
+        <td>{{ r.ended_at or '—' }}</td>
+        <td>{% if r.scenario_id %}<code>{{ r.scenario_id }}</code>{% else %}—{% endif %}</td>
+        <td>{{ r.family }}</td>
+        <td><span class="result-pill {{ 'result-pill--pass' if r.agreed else 'result-pill--fail' }}">{{ r.result }}</span></td>
+        <td>{% if r.amaru_run_id %}<a href="{{ r.amaru_run_url }}"><code>{{ r.amaru_run_id }}</code></a>{% else %}—{% endif %}</td>
+        <td>{% if r.cardano_node_run_id %}<a href="{{ r.cardano_node_run_url }}"><code>{{ r.cardano_node_run_id }}</code></a>{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-section-statement">
+    No compare runs recorded.
+    <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 runs with <code>cross-impl-comparison.json</code></span>
+  </p>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
+<section class="standing-dashboard" aria-labelledby="standing-heading">
+  <header class="standing-dashboard__head">
+    <span class="eyebrow">Standing dashboard</span>
+    <h2 id="standing-heading">Latest comparison per scenario</h2>
+    <p class="page-subhero">One row per scenario; the most recent compare run wins. Use this to spot scenarios where Amaru and cardano-node currently disagree.</p>
+  </header>
+
+  {% set _strip_clauses = [] %}
+  {% set _ = _strip_clauses.append(strip.total ~ ' scenarios with cross-impl comparison runs') %}
+  {% if strip.agreed %}{% set _ = _strip_clauses.append(strip.agreed ~ ' at AGREED') %}{% endif %}
+  {% if strip.metric_divergent %}{% set _ = _strip_clauses.append(strip.metric_divergent ~ ' showing metric-level divergence') %}{% endif %}
+  {% set _ = _strip_clauses.append(strip.runs_24h ~ ' compare runs in last 24h') %}
+  <p class="aggregate-strip">{{ _strip_clauses | join('. ') }}.</p>
+
+  {% if empty %}
+  <p class="empty-section-statement">
+    No cross-impl comparisons yet.
+    <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 runs with <code>cross-impl-comparison.json</code></span>
+  </p>
+  <p>Pick a scenario in the runner above and click <strong>Run compare</strong> to populate this dashboard.</p>
+  {% else %}
+  {% for group in families %}
+  <section class="comparison-family">
+    <span class="eyebrow">{{ group.family }} · {{ group.count }} comparison{{ '' if group.count == 1 else 's' }}</span>
+    <h3>{{ group.family }}</h3>
+    {% for entry in group["items"] %}
+    {% include "operate/_partials/_comparison_card.j2" %}
+    {% endfor %}
+  </section>
+  {% endfor %}
+  {% endif %}
+</section>
+
+<script type="module" src="/static/js/compare-runner.js"></script>
+{% endblock %}

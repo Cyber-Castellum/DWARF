@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "malformed_input_parity_preserved"}
+  },
+  "additionalProperties": true
+}

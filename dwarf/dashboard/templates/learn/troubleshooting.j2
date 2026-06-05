@@ -1,0 +1,20 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Troubleshooting</span>
+<h1>Troubleshooting</h1>
+<p class="page-hero">Common deploy gotchas and their fixes — captured from real incidents during the dashboard's slice 39–49 dispatches. Each entry pairs a symptom with the underlying diagnosis and the corrective action.</p>
+
+<hr class="hairline">
+
+<section class="learn-troubleshooting">
+  {% for item in items %}
+  <article class="learn-trouble__item">
+    <h2 class="learn-trouble__symptom">{{ item.symptom|safe }}</h2>
+    <h3>Diagnosis</h3>
+    <div class="learn-trouble__diag">{{ item.diagnosis|safe }}</div>
+    <h3>Fix</h3>
+    <div class="learn-trouble__fix">{{ item.fix|safe }}</div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

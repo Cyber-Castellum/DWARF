@@ -1,0 +1,14 @@
+{
+  "host_load_samples": 48,
+  "host_load_samples_path": "metrics/host/load.ndjson",
+  "metrics_summary_path": "metrics/summary.json",
+  "observer_event_count": 2,
+  "observer_event_log": "events/observer.ndjson",
+  "process_samples": 48,
+  "process_samples_path": "metrics/process/self.ndjson",
+  "sample_interval_seconds": 0.5,
+  "target_event_count": 14,
+  "target_event_hook_log": "events/target-hooks.ndjson",
+  "target_event_log": "events/target.ndjson",
+  "target_hook_event_count": 2
+}

@@ -1,0 +1,97 @@
+{
+  "format": "cbor",
+  "target": "amaru-cargo-fuzz-block",
+  "decoder_entrypoint": "amaru_kernel::from_cbor_no_leftovers::<Block>",
+  "shape": {
+    "type": "array",
+    "length": 5,
+    "fields": [
+      {
+        "index": 0,
+        "name": "header",
+        "type": "nested",
+        "notes": [
+          "Header is a Conway block header structure.",
+          "Hashes commonly appear as 32-byte CBOR byte strings."
+        ]
+      },
+      {
+        "index": 1,
+        "name": "transaction_bodies",
+        "type": "array",
+        "element_type": "map",
+        "constraints": {
+          "min_length": 0
+        }
+      },
+      {
+        "index": 2,
+        "name": "transaction_witnesses",
+        "type": "array",
+        "element_type": "map",
+        "constraints": {
+          "min_length": 0
+        }
+      },
+      {
+        "index": 3,
+        "name": "auxiliary_data",
+        "type": "map",
+        "key_type": "u32",
+        "value_type": "nested"
+      },
+      {
+        "index": 4,
+        "name": "invalid_transactions",
+        "type": "optional_set",
+        "element_type": "u32"
+      }
+    ]
+  },
+  "major_types": {
+    "top_level": [
+      "array"
+    ],
+    "common_nested": [
+      "map",
+      "bytes",
+      "unsigned",
+      "tag"
+    ]
+  },
+  "cbor_tokens": {
+    "array_lengths": [
+      "0x80",
+      "0x81",
+      "0x82",
+      "0x83",
+      "0x84",
+      "0x85"
+    ],
+    "map_lengths": [
+      "0xa0",
+      "0xa1",
+      "0xa2",
+      "0xa3",
+      "0xa4",
+      "0xa5"
+    ],
+    "byte_string_prefixes": [
+      "0x58 0x20",
+      "0x58 0x1c",
+      "0x58 0x1d",
+      "0x58 0x40",
+      "0x59 0x01 0xc0"
+    ],
+    "known_tags": [
+      "0xd8 0x18",
+      "0xd9 0x01 0x02"
+    ]
+  },
+  "sample_sources": [
+    "codebases/amaru/crates/amaru-kernel/src/cardano/block.rs",
+    "dwarf/targets/amaru/src/bin/decode_block.rs",
+    "codebases/amaru/crates/amaru-kernel/src/cardano/network_block.rs"
+  ]
+}
+

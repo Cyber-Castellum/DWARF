@@ -1,0 +1,12 @@
+{
+  "client_to_server_segments": 8,
+  "connections_seen": 3,
+  "intercepted_segments": 12,
+  "mutate_after_segments": 1,
+  "mutated_segments": 4,
+  "mutation_direction": "inbound",
+  "mutation_mode": "flip_payload_byte",
+  "mutation_protocol": "any",
+  "server_to_client_segments": 4,
+  "uptime_seconds": 14.062
+}

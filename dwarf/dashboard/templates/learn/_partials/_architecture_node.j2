@@ -1,0 +1,22 @@
+<article class="architecture-node" id="node-{{ node.slug }}">
+  <span class="eyebrow">{{ node.role }}</span>
+  <h2 class="architecture-node__label">{{ node.label }}</h2>
+  <p class="architecture-node__description">{{ node.description }}</p>
+  {% if node.concept_slug %}
+  <p class="architecture-node__concept">
+    <span class="eyebrow">Concept</span>
+    <a href="/learn/concepts#{{ node.concept_slug }}">{{ node.concept_slug | replace('-', ' ') | title }}</a>
+  </p>
+  {% endif %}
+  {% if node.needs_source %}
+  <p class="empty-section-statement">
+    needs source
+    <span class="empty-section-statement__cite">no anchor file recorded for {{ node.slug }}</span>
+  </p>
+  {% else %}
+  <p class="architecture-node__anchor">
+    <span class="eyebrow">Anchor</span>
+    <code>{{ node.anchor_path }}{% if node.anchor_symbol %} :: {{ node.anchor_symbol }}{% endif %}</code>
+  </p>
+  {% endif %}
+</article>

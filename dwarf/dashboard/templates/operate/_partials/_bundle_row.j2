@@ -1,0 +1,16 @@
+<tr id="{{ row.run_id }}" data-status="{{ row.exit_status or '' }}">
+  <td><a href="{{ row.run_url }}"><code>{{ row.run_id }}</code></a></td>
+  <td>{{ row.created }}</td>
+  <td>{{ row.size_display }}</td>
+  <td>{% if row.scenario_id %}<code>{{ row.scenario_id }}</code>{% else %}—{% endif %}</td>
+  <td>
+    {% if row.profile_id %}
+    <a href="{{ row.profile_url }}"><code>{{ row.profile_id }}</code></a>
+    {% else %}—{% endif %}
+  </td>
+  <td>
+    {% if row.exit_status %}
+    <span class="result-pill result-pill--{{ row.exit_status }}">{{ row.exit_status }}</span>
+    {% else %}—{% endif %}
+  </td>
+</tr>

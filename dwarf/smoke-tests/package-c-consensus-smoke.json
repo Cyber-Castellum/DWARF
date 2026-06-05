@@ -1,0 +1,26 @@
+{
+  "id": "package-c-consensus-smoke",
+  "label": "Package C Consensus Smoke",
+  "category": "package-c",
+  "status": "bounded",
+  "source_reference": "codebases/amaru; retained-evidence/testing/milestone-1/package-c",
+  "working_directory": "/opt/dwarf/targets/amaru",
+  "timeout_seconds": 900,
+  "environment": {},
+  "commands": [
+    "source ~/.cargo/env",
+    "cargo test -p amaru-protocols chainsync -- --nocapture",
+    "cargo test -p amaru-consensus track_peers -- --nocapture",
+    "cargo test -p amaru-consensus validate_block -- --nocapture",
+    "cargo test -p amaru-protocols blockfetch -- --nocapture"
+  ],
+  "limitations": [
+    "Repeatable smoke coverage for Package C only.",
+    "Does not exercise adversarial resource pressure, restart recovery, or destructive persistence scenarios.",
+    "No public Cardano network is contacted."
+  ],
+  "safety_notes": [
+    "Reuses existing bounded Package C test filters.",
+    "Evidence remains candidate-only and does not promote risk rows."
+  ]
+}

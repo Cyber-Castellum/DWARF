@@ -1,0 +1,567 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Run</span>
+<h1 class="run-id-heading"><code>{{ run.run_id }}</code></h1>
+<p class="page-hero">Forensic bundle for one scenario execution. Manifest, observer events, assertion outcomes, resource snapshot, and the tamper-check verdict — all read-only, all sourced from the bundle on disk.</p>
+
+{% if run.thinness_signals %}
+<section class="thinness-banner" aria-labelledby="thinness-heading">
+  <header class="thinness-banner__head">
+    <span class="eyebrow">Thin-pass suspicion</span>
+    <h2 id="thinness-heading">{{ run.thinness_signals|length }} rule{{ '' if run.thinness_signals|length == 1 else 's' }} fired on this bundle</h2>
+    <p class="thinness-banner__sub">Manifest reports <code>{{ run.exit_status or '—' }}</code>, but one or more telemetry-shape rules suggest the pass may be thin. The pass/fail color above is unchanged — the badges below are additive.</p>
+  </header>
+  <ul class="thinness-banner__list">
+    {% for s in run.thinness_signals %}
+    <li class="thinness-banner__item">
+      <span class="thinness-pill thinness-pill--banner">{{ s.rule }} · {{ s.title }}</span>
+      <p class="thinness-banner__reason">{{ s.reason }}<span class="thinness-banner__finding"> · ref: {{ s.finding }}</span></p>
+      <table class="thinness-banner__evidence">
+        <tbody>
+          {% for ev in s.evidence %}
+          <tr>
+            <th scope="row">{{ ev.label }}</th>
+            <td><code>{{ ev.value }}</code></td>
+            <td><code>{{ ev.source }}</code></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<div class="run-status-banner run-status-banner--{{ run.exit_status or 'unknown' }}">
+  <div class="run-status-banner__primary">
+    {% if run.exit_status %}
+    <span class="result-pill result-pill--{{ run.exit_status }}">{{ run.exit_status }}</span>
+    {% else %}
+    <span class="result-pill">no exit status</span>
+    {% endif %}
+    <span class="run-status-banner__scenario">{% if run.scenario_id %}<code>{{ run.scenario_id }}</code>{% else %}—{% endif %}</span>
+    {% if run.target_implementation %}<span class="run-status-banner__target">against <code>{{ run.target_implementation }}</code></span>{% endif %}
+    {% if run.runtime %}<span class="run-status-banner__runtime">{{ run.runtime }} runtime</span>{% endif %}
+  </div>
+  <div class="run-status-banner__cta">
+    <a class="cta cta--ghost" href="/operate/runs/{{ run.run_id }}/live" title="{{ run.explanation.control_help['live tail'] }}">Live tail</a>
+    <a class="cta cta--ghost" href="{{ run.bundle_url }}" download title="{{ run.explanation.control_help['export bundle'] }}">Export bundle (.tar.gz)</a>
+  </div>
+</div>
+
+<section class="run-explainer" aria-labelledby="run-explainer-heading">
+  <header>
+    <span class="eyebrow">Guide</span>
+    <h2 id="run-explainer-heading">{{ run.explanation.title }}</h2>
+  </header>
+  <p class="run-explainer__summary">{{ run.explanation.summary }}</p>
+  <ul class="run-explainer__bullets">
+    {% for item in run.explanation.bullets %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+  <details class="run-explainer__details">
+    <summary>How to read this run</summary>
+    <ol>
+      {% for step in run.explanation.guide_steps %}
+      <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+  </details>
+</section>
+
+<hr class="hairline">
+
+<section class="run-tile-grid" aria-label="Run summary tiles">
+  <article class="status-tile status-tile--state-{{ 'ok' if run.assertion_summary.fail == 0 and run.assertion_summary.total else 'stale' if run.assertion_summary.total else 'error' }}">
+    <span class="eyebrow" title="{{ run.explanation.field_help['assertions'] }}">Assertions</span>
+    <span class="status-tile__metric">{{ run.assertion_summary.pass }} / {{ run.assertion_summary.total }}</span>
+    <p class="status-tile__sub">{{ run.assertion_summary.fail }} failed</p>
+  </article>
+
+  <article class="status-tile status-tile--state-{{ 'ok' if run.verify.ok else 'error' }}">
+    <span class="eyebrow" title="{{ run.explanation.field_help['tamper check'] }}">Tamper check</span>
+    <span class="status-tile__metric">{{ 'VERIFIED' if run.verify.ok else 'FAIL' }}</span>
+    {% if run.verify.errors %}
+    <ul class="status-tile__errors">
+      {% for err in run.verify.errors %}
+      <li>
+        <strong class="status-tile__errors-kind">{{ err.kind }}</strong>
+        {% if err.fields %}
+        <dl class="status-tile__errors-fields">
+          {% for f in err.fields %}
+          <div>
+            <dt>{{ f.label }}</dt>
+            <dd><code{% if f.is_hash %} class="run-chain-hash"{% endif %}>{{ f.value }}</code></dd>
+          </div>
+          {% endfor %}
+        </dl>
+        {% else %}
+        <p class="status-tile__errors-raw"><code>{{ err.raw }}</code></p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </article>
+
+  <article class="status-tile">
+    <span class="eyebrow" title="{{ run.explanation.field_help['wall time'] }}">Wall time</span>
+    <span class="status-tile__metric">{% if run.wall_time_seconds is not none %}{{ '%.2f'|format(run.wall_time_seconds) }}s{% else %}—{% endif %}</span>
+    <dl class="status-tile__rows">
+      <div><dt>process rss Δ</dt><dd>{% if run.process_rss_delta_bytes is not none %}{{ run.process_rss_delta_bytes }} B{% else %}—{% endif %}</dd></div>
+      <div><dt>data dir Δ</dt><dd>{% if run.data_dir_delta_bytes is not none %}{{ run.data_dir_delta_bytes }} B{% else %}—{% endif %}</dd></div>
+    </dl>
+  </article>
+
+  <article class="status-tile">
+    <span class="eyebrow" title="{{ run.explanation.field_help['iteration outcomes'] }}">Iteration outcomes</span>
+    {% if run.iteration_counts %}
+    <dl class="status-tile__rows">
+      {% for outcome, n in run.iteration_counts.items() %}
+      <div><dt>{{ outcome }}</dt><dd>{{ n }}</dd></div>
+      {% endfor %}
+    </dl>
+    {% else %}
+    <p class="status-tile__sub">no iteration events recorded</p>
+    {% endif %}
+  </article>
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="manifest-heading">
+  <header><span class="eyebrow">Manifest</span><h2 id="manifest-heading">Bundle manifest</h2></header>
+  <table class="config-table run-manifest-table">
+    <tbody>
+      <tr><th scope="row" title="{{ run.explanation.field_help['scenario'] }}">scenario</th><td><code>{{ run.scenario_id or '—' }}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['target'] }}">target</th><td><code>{{ run.target_implementation or '—' }}{% if run.target_version %} @ {{ run.target_version }}{% endif %}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['runtime'] }}">runtime</th><td>{{ run.runtime or '—' }}</td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['started'] }}">started</th><td><code>{{ run.started_at or '—' }}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['ended'] }}">ended</th><td><code>{{ run.ended_at or '—' }}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['actor'] }}">actor</th><td>{{ run.actor or '—' }}</td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['seed'] }}">seed</th><td><code>{{ run.seed if run.seed is not none else '—' }}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['profile'] }}">profile</th><td><code>{{ run.profile if run.profile is not none else '—' }}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['evidence path'] }}">evidence path</th><td><code>{{ run.evidence_path or '—' }}</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="chain-heading">
+  <header><span class="eyebrow">Hash chain</span><h2 id="chain-heading">Tamper chain</h2></header>
+  <table class="config-table run-chain-table">
+    <tbody>
+      <tr><th scope="row" title="{{ run.explanation.field_help['manifest hash'] }}">manifest hash</th><td><code class="run-chain-hash">{{ run.chain.manifest_hash or '—' }}</code></td></tr>
+      <tr><th scope="row" title="{{ run.explanation.field_help['prev hash'] }}">prev hash</th><td><code class="run-chain-hash">{{ run.chain.prev_hash or '—' }}</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="provenance-heading">
+  <header><span class="eyebrow">Provenance</span><h2 id="provenance-heading">Attestation chain</h2></header>
+  {% if run.provenance.present %}
+  <p class="run-cross-impl__summary">
+    Verdict: <span class="result-pill {{ 'result-pill--pass' if run.provenance.verdict == 'verified' else 'result-pill--fail' }}">{{ run.provenance.verdict or '—' }}</span>
+    {% if run.provenance.operator_warning %}<span class="result-pill result-pill--error">development key</span>{% endif %}
+  </p>
+  <table class="config-table run-manifest-table">
+    <tbody>
+      <tr><th scope="row">attested at</th><td><code>{{ run.provenance.attested_at_utc or '—' }}</code></td></tr>
+      <tr><th scope="row">signing actor</th><td><code>{{ run.provenance.signing_actor or '—' }}</code></td></tr>
+      <tr><th scope="row">key source</th><td>{{ run.provenance.key_source or '—' }}</td></tr>
+      <tr><th scope="row">key fingerprint</th><td><code class="run-chain-hash">{{ run.provenance.key_fingerprint or '—' }}</code></td></tr>
+      <tr><th scope="row">public key</th><td><code class="run-chain-hash">{{ run.provenance.public_key_hex or '—' }}</code></td></tr>
+      <tr><th scope="row">signature</th><td><code class="run-chain-hash">{{ run.provenance.signature_hex or '—' }}</code></td></tr>
+      <tr><th scope="row">scenario sha256</th><td><code class="run-chain-hash">{{ run.provenance.scenario_yaml_sha256 or '—' }}</code></td></tr>
+      <tr><th scope="row">profile</th><td>{% if run.provenance.active_profile_id %}<code>{{ run.provenance.active_profile_id }}</code>{% else %}—{% endif %}</td></tr>
+      <tr><th scope="row">profile sha256</th><td><code class="run-chain-hash">{{ run.provenance.active_profile_sha256 or '—' }}</code></td></tr>
+      <tr><th scope="row">dwarf source sha256</th><td><code class="run-chain-hash">{{ run.provenance.dwarf_source_sha256 or '—' }}</code></td></tr>
+    </tbody>
+  </table>
+  {% if run.provenance.tooling_versions %}
+  <details class="run-cross-impl__details">
+    <summary>Tooling versions ({{ run.provenance.tooling_versions|length }})</summary>
+    <table class="config-table">
+      <tbody>
+        {% for tool, version in run.provenance.tooling_versions.items() %}
+        <tr><th scope="row">{{ tool }}</th><td><code>{{ version }}</code></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% endif %}
+  <p class="page-subhero">Artifact: <code>{{ run.provenance.artifact_relpath }}</code></p>
+  {% else %}
+  <p class="page-subhero">No attestation captured for this run. To stage a signed
+  attestation, run <code>runtime_bundle_attestation</code> against this bundle —
+  see the <a href="/learn/cli#cli-primitive">CLI reference</a>.</p>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="export-heading">
+  <header><span class="eyebrow">Export</span><h2 id="export-heading" title="{{ run.explanation.control_help['sarif export'] }}">SARIF export</h2></header>
+  {% if run.export.sarif_present %}
+  <p class="run-cross-impl__summary">
+    <a class="cta cta--primary" href="{{ run.export.sarif_download_url }}" title="{{ run.explanation.control_help['download sarif'] }}">Download dwarf-export.sarif ({{ run.export.sarif_size_bytes }} B)</a>
+  </p>
+  <p class="page-subhero" title="{{ run.explanation.control_help['sarif export'] }}">SARIF v2.1.0 — drops directly into GitHub code-scanning, Sonar, or any other SARIF consumer. Artifact: <code>{{ run.export.sarif_artifact_relpath }}</code>.</p>
+  {% else %}
+  <p class="page-subhero" title="{{ run.explanation.control_help['sarif export'] }}">No SARIF export staged for this run yet. Generate one with:</p>
+  <pre class="cli-example__pre" title="{{ run.explanation.control_help['generate sarif'] }}">{{ run.export.generate_command }}</pre>
+  {% endif %}
+</section>
+
+{% if run.replay_artifact %}
+<hr class="hairline">
+
+<section aria-labelledby="replay-heading">
+  <header><span class="eyebrow">Replay</span><h2 id="replay-heading">Replay verdict</h2></header>
+  <p class="run-cross-impl__summary">
+    Verdict: <span class="result-pill {{ 'result-pill--pass' if run.replay_artifact.verdict == 'match' else 'result-pill--fail' }}">{{ run.replay_artifact.verdict or '—' }}</span>
+    {% if run.replay_artifact.replayed_at_utc %} · replayed at <code>{{ run.replay_artifact.replayed_at_utc }}</code>{% endif %}
+  </p>
+  <table class="config-table run-manifest-table">
+    <tbody>
+      <tr><th scope="row">target run</th><td>{% if run.replay_artifact.target_run_id %}<a href="/operate/runs/{{ run.replay_artifact.target_run_id }}"><code>{{ run.replay_artifact.target_run_id }}</code></a>{% else %}—{% endif %}</td></tr>
+      <tr><th scope="row">replay run</th><td>{% if run.replay_artifact.replay_run_id %}<a href="/operate/runs/{{ run.replay_artifact.replay_run_id }}"><code>{{ run.replay_artifact.replay_run_id }}</code></a>{% else %}—{% endif %}</td></tr>
+      <tr><th scope="row">compared paths</th><td>
+        {% if run.replay_artifact.compared_relpaths %}
+        <ul class="run-probe-list">{% for r in run.replay_artifact.compared_relpaths %}<li><code>{{ r }}</code></li>{% endfor %}</ul>
+        {% else %}—{% endif %}
+      </td></tr>
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if run.diff_artifact %}
+<hr class="hairline">
+
+<section aria-labelledby="diff-heading">
+  <header><span class="eyebrow">Diff</span><h2 id="diff-heading">Bundle diff verdict</h2></header>
+  <p class="run-cross-impl__summary">
+    Verdict: <span class="result-pill {{ 'result-pill--pass' if run.diff_artifact.verdict == 'match' else 'result-pill--fail' }}">{{ run.diff_artifact.verdict or '—' }}</span>
+  </p>
+  <table class="config-table run-manifest-table">
+    <tbody>
+      <tr><th scope="row">left run</th><td>{% if run.diff_artifact.left_run_id %}<a href="/operate/runs/{{ run.diff_artifact.left_run_id }}"><code>{{ run.diff_artifact.left_run_id }}</code></a>{% else %}—{% endif %}</td></tr>
+      <tr><th scope="row">right run</th><td>{% if run.diff_artifact.right_run_id %}<a href="/operate/runs/{{ run.diff_artifact.right_run_id }}"><code>{{ run.diff_artifact.right_run_id }}</code></a>{% else %}—{% endif %}</td></tr>
+      <tr><th scope="row">compared paths</th><td>
+        {% if run.diff_artifact.compared_relpaths %}
+        <ul class="run-probe-list">{% for r in run.diff_artifact.compared_relpaths %}<li><code>{{ r }}</code></li>{% endfor %}</ul>
+        {% else %}—{% endif %}
+      </td></tr>
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<hr class="hairline">
+
+<section aria-labelledby="actions-heading" class="run-actions">
+  <header><span class="eyebrow">Actions</span><h2 id="actions-heading" title="{{ run.explanation.control_help['operator actions'] }}">Operator actions</h2></header>
+  <p class="page-subhero">Each card surfaces the CLI invocation for one of ada3's bundle-workflow primitives, with this run-id substituted. Copy the command and run it from a terminal where <code>cardano-profile</code> is on PATH.</p>
+  {% for slug in ['replay', 'diff', 'export_sarif', 'verify_chain'] %}
+  {% set action = run.actions[slug] %}
+  <article class="run-action">
+    <header class="run-action__head">
+      <span class="eyebrow">{{ action.label }}</span>
+      <code class="run-action__primitive">{{ action.primitive }}</code>
+    </header>
+    <p class="run-action__summary">{{ action.summary }}</p>
+    <pre class="cli-example__pre" title="{{ run.explanation.control_help['action command'] }}">{{ action.command if action.command else action.command_template }}</pre>
+  </article>
+  {% endfor %}
+</section>
+
+{% if run.cross_impl.markdown %}
+<hr class="hairline">
+
+<section aria-labelledby="cross-impl-heading">
+  <header><span class="eyebrow">Cross-impl</span><h2 id="cross-impl-heading">Cross-impl comparison</h2></header>
+  <p class="run-cross-impl__summary">
+    Result: <span class="result-pill {{ 'result-pill--pass' if run.cross_impl.result == 'AGREED' else 'result-pill--fail' }}">{{ run.cross_impl.result or '—' }}</span>
+  </p>
+  <details class="run-cross-impl__details">
+    <summary>Show full report</summary>
+    <pre class="run-cross-impl__pre">{{ run.cross_impl.markdown }}</pre>
+  </details>
+</section>
+{% endif %}
+
+{% if run.substrate_evidence.present %}
+<hr class="hairline">
+
+<section class="substrate-evidence" aria-labelledby="substrate-evidence-heading">
+  <header><span class="eyebrow">Substrate evidence</span><h2 id="substrate-evidence-heading" title="{{ run.explanation.control_help['substrate evidence section'] }}">Composed-substrate observations</h2></header>
+  <div class="substrate-evidence__grid">
+    {% if 'topology' in run.substrate_evidence.tiles %}
+    {% set t = run.substrate_evidence.tiles.topology %}
+    <article class="substrate-tile substrate-tile--{{ t.verdict }}">
+      <span class="eyebrow">Topology</span>
+      <p class="substrate-tile__metric">{{ t.node_count }} nodes</p>
+      <dl class="substrate-tile__rows">
+        <div><dt>network</dt><dd>{{ t.network or '—' }}</dd></div>
+        <div><dt>impls</dt><dd>{% for impl, n in t.impl_counts.items() %}<code>{{ impl }}</code>×{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</dd></div>
+        <div><dt>roles</dt><dd>{% for role, n in t.role_counts.items() %}<code>{{ role }}</code>×{{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</dd></div>
+      </dl>
+      <details class="substrate-tile__detail">
+        <summary>Per-node breakdown</summary>
+        <table class="substrate-tile__table">
+          <thead><tr><th>id</th><th>impl</th><th>version</th><th>role</th><th>healthy</th></tr></thead>
+          <tbody>
+            {% for n in t.nodes %}
+            <tr>
+              <td><code>{{ n.id }}</code></td>
+              <td><code>{{ n.impl }}</code></td>
+              <td><code>{{ n.version or '—' }}</code></td>
+              <td><code>{{ n.role or '—' }}</code></td>
+              <td>{{ '✓' if n.healthy else '✗' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+    </article>
+    {% endif %}
+
+    {% if 'multi_node_observation' in run.substrate_evidence.tiles %}
+    {% set t = run.substrate_evidence.tiles.multi_node_observation %}
+    <article class="substrate-tile substrate-tile--{{ t.verdict }}">
+      <span class="eyebrow">Multi-node observation</span>
+      <p class="substrate-tile__metric">{% if t.node_count == 0 %}NO NODES OBSERVED{% elif t.any_divergent %}DIVERGED{% else %}CONVERGED{% endif %}</p>
+      <dl class="substrate-tile__rows">
+        <div><dt>window</dt><dd>{{ t.observation_window_seconds or '—' }}s @ {{ t.sample_interval_seconds or '—' }}s/sample</dd></div>
+        <div><dt>primitives</dt><dd>{% for p in t.observation_primitives %}<code>{{ p }}</code>{% if not loop.last %} · {% endif %}{% endfor %}</dd></div>
+      </dl>
+      <details class="substrate-tile__detail">
+        <summary>Per-node observation</summary>
+        <table class="substrate-tile__table">
+          <thead><tr><th>node</th><th>impl</th><th>tip samples</th><th>tip groups</th><th>conn samples</th><th>latest slot</th></tr></thead>
+          <tbody>
+            {% for n in t.nodes %}
+            <tr>
+              <td><code>{{ n.node_id }}</code></td>
+              <td><code>{{ n.implementation or '—' }}</code></td>
+              <td>{{ n.tip_successful_samples }}/{{ n.tip_sample_count }}</td>
+              <td>{{ n.tip_group_count }}</td>
+              <td>{{ n.connection_successful_samples }}/{{ n.connection_sample_count }}</td>
+              <td>{{ n.latest_slot if n.latest_slot is not none else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+    </article>
+    {% endif %}
+
+    {% if 'byzantine_peer' in run.substrate_evidence.tiles %}
+    {% set t = run.substrate_evidence.tiles.byzantine_peer %}
+    <article class="substrate-tile substrate-tile--{{ t.verdict }}">
+      <span class="eyebrow">Byzantine peer</span>
+      <p class="substrate-tile__metric">{{ t.intercepted_segments }} intercepted · {{ t.mutated_segments }} mutated</p>
+      <dl class="substrate-tile__rows">
+        <div><dt>target</dt><dd><code>{{ t.target_node_id or '—' }}</code></dd></div>
+        <div><dt>upstream</dt><dd><code>{{ t.upstream_address or '—' }}</code></dd></div>
+        <div><dt>proxy</dt><dd><code>{{ t.proxy_listen_address or '—' }}</code></dd></div>
+      </dl>
+    </article>
+    {% endif %}
+
+    {% if 'hf_boundary' in run.substrate_evidence.tiles %}
+    {% set t = run.substrate_evidence.tiles.hf_boundary %}
+    <article class="substrate-tile substrate-tile--{{ t.verdict }}">
+      <span class="eyebrow">HF boundary</span>
+      <p class="substrate-tile__metric">{{ 'CONVERGED' if t.converged else 'DIVERGED' }}</p>
+      <dl class="substrate-tile__rows">
+        <div><dt>network</dt><dd>{{ t.network or '—' }}</dd></div>
+        <div><dt>target slot</dt><dd><code>{{ t.target_slot if t.target_slot is not none else '—' }}</code></dd></div>
+        <div><dt>tx id</dt><dd><code>{{ t.target_tx_id or '—' }}</code></dd></div>
+      </dl>
+      <details class="substrate-tile__detail">
+        <summary>Per-node protocol versions</summary>
+        <table class="substrate-tile__table">
+          <thead><tr><th>node</th><th>protocol version</th></tr></thead>
+          <tbody>
+            {% for node, version in t.node_protocol_versions.items() %}
+            <tr><td><code>{{ node }}</code></td><td><code>{{ version }}</code></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+    </article>
+    {% endif %}
+
+    {% if 'era_transition' in run.substrate_evidence.tiles %}
+    {% set t = run.substrate_evidence.tiles.era_transition %}
+    <article class="substrate-tile substrate-tile--{{ t.verdict }}">
+      <span class="eyebrow">Era transition</span>
+      <p class="substrate-tile__metric"><code>{{ t.pre_observed or '—' }}</code> → <code>{{ t.post_observed or '—' }}</code></p>
+      <dl class="substrate-tile__rows">
+        <div><dt>window</dt><dd>slot {{ t.window_start_slot if t.window_start_slot is not none else '—' }} → {{ t.window_end_slot if t.window_end_slot is not none else '—' }}</dd></div>
+        <div><dt>pre-HF rules</dt><dd>expected <code>{{ t.pre_expected }}</code> · observed <code>{{ t.pre_observed }}</code> {{ '✓' if t.pre_match else '✗' }}</dd></div>
+        <div><dt>post-HF rules</dt><dd>expected <code>{{ t.post_expected }}</code> · observed <code>{{ t.post_observed }}</code> {{ '✓' if t.post_match else '✗' }}</dd></div>
+      </dl>
+    </article>
+    {% endif %}
+
+    {% if 'genesis_mode' in run.substrate_evidence.tiles %}
+    {% set t = run.substrate_evidence.tiles.genesis_mode %}
+    <article class="substrate-tile substrate-tile--{{ t.verdict }}">
+      <span class="eyebrow">Genesis mode</span>
+      <p class="substrate-tile__metric">{{ 'PEER-SET CAPTURED' if t.peer_set_capture_detected else (t.final_mode|upper if t.final_mode else '—') }}</p>
+      <dl class="substrate-tile__rows">
+        <div><dt>target</dt><dd><code>{{ t.target_node or '—' }}</code></dd></div>
+        <div><dt>mode path</dt><dd>{% for m in t.mode_path %}<code>{{ m }}</code>{% if not loop.last %} → {% endif %}{% endfor %}</dd></div>
+        <div><dt>capture</dt><dd>{{ 'detected' if t.peer_set_capture_detected else 'not detected' }}</dd></div>
+      </dl>
+    </article>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if run.floor_preview and run.floor_preview.rows %}
+<hr class="hairline">
+
+<section aria-labelledby="floor-preview-heading" class="floor-preview floor-preview--{{ 'gap' if run.floor_preview.summary.any_gap else 'match' }}">
+  <header class="floor-preview__head">
+    <span class="eyebrow">Floor preview · live re-evaluation</span>
+    <h2 id="floor-preview-heading" title="{{ run.explanation.control_help['floor preview section'] }}">Recorded vs floor-preview</h2>
+    <p class="floor-preview__sub">For every recorded assertion, the production evaluator from <code>profile_manager/primitives.py</code> is re-run against this bundle's preserved telemetry. Gaps mean the bundle's recorded result and the current floor disagree — a candidate for re-run under the tightened floor.</p>
+  </header>
+  <div class="floor-preview__counts">
+    <span class="floor-preview__count floor-preview__count--gap">{{ run.floor_preview.summary.gap }} gap{{ '' if run.floor_preview.summary.gap == 1 else 's' }}</span>
+    <span class="floor-preview__count floor-preview__count--match">{{ run.floor_preview.summary.match }} match{{ '' if run.floor_preview.summary.match == 1 else 'es' }}</span>
+    {% if run.floor_preview.summary.error %}<span class="floor-preview__count floor-preview__count--error">{{ run.floor_preview.summary.error }} error{{ '' if run.floor_preview.summary.error == 1 else 's' }}</span>{% endif %}
+  </div>
+  <table class="config-table floor-preview__table">
+    <thead>
+      <tr>
+        <th>Primitive</th>
+        <th>Recorded</th>
+        <th>Floor preview</th>
+        <th>Kind</th>
+        <th>Why</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in run.floor_preview.rows %}
+      <tr class="floor-preview__row floor-preview__row--{{ r.kind }}">
+        <td><code>{{ r.primitive }}</code></td>
+        <td>
+          {% if r.recorded_result %}
+          <span class="result-pill result-pill--{{ r.recorded_result }}">{{ r.recorded_result }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if r.preview_result %}
+          <span class="result-pill result-pill--{{ r.preview_result }}">{{ r.preview_result }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if r.kind == 'gap' %}
+          <span class="result-pill result-pill--fail">gap</span>
+          {% elif r.kind == 'error' %}
+          <span class="result-pill result-pill--error">error</span>
+          {% else %}
+          <span class="result-pill result-pill--pass">match</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.kind == 'error' %}
+          <code class="floor-preview__error">{{ r.error }}</code>
+          {% elif r.note %}
+          <code>{{ r.note }}</code>
+          {% elif r.evaluated_value %}
+          <code>{{ r.evaluated_value }}</code>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if run.assertions %}
+<hr class="hairline">
+
+<section aria-labelledby="assertions-heading">
+  <header><span class="eyebrow">Assertions</span><h2 id="assertions-heading" title="{{ run.explanation.control_help['assertions section'] }}">Recorded assertions</h2></header>
+  <table class="config-table run-assertions-table">
+    <thead><tr><th title="{{ run.explanation.field_help['primitive'] }}">Primitive</th><th title="{{ run.explanation.field_help['params'] }}">Params</th><th title="{{ run.explanation.field_help['evaluated'] }}">Evaluated</th><th title="{{ run.explanation.field_help['result'] }}">Result</th></tr></thead>
+    <tbody>
+      {% for a in run.assertions %}
+      <tr>
+        <td><code>{{ a.primitive }}</code></td>
+        <td><code>{{ a.params|tojson }}</code></td>
+        <td>
+          {% if a.evaluated_value_pretty.is_long %}
+          <details class="run-payload-disclosure">
+            <summary title="{{ run.explanation.field_help['payload details'] }}">Payload ({{ a.evaluated_value_pretty.length }} chars)</summary>
+            <pre class="run-payload-pre"><code>{{ a.evaluated_value_pretty.pretty }}</code></pre>
+          </details>
+          {% else %}
+          <code title="{{ run.explanation.field_help['payload details'] }}">{{ a.evaluated_value_pretty.compact }}</code>
+          {% endif %}
+        </td>
+        <td>{{ a.result }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if run.probes %}
+<hr class="hairline">
+
+<section aria-labelledby="probes-heading">
+  <header><span class="eyebrow">Probes</span><h2 id="probes-heading" title="{{ run.explanation.control_help['probes section'] }}">Time-series probes</h2></header>
+  <ul class="run-probe-list">
+    {% for p in run.probes %}
+    <li title="{{ run.explanation.field_help['probe'] }}"><code>{{ p.name }}</code> — <span title="{{ run.explanation.field_help['samples'] }}">{{ p.samples }} samples</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if run.log_tail %}
+<hr class="hairline">
+
+<section aria-labelledby="log-heading">
+  <header><span class="eyebrow">Log tail</span><h2 id="log-heading" title="{{ run.explanation.control_help['log tail section'] }}">Last {{ run.log_tail|length }} log events</h2></header>
+  <table class="config-table run-log-table">
+    <thead><tr><th title="{{ run.explanation.field_help['ts'] }}">ts</th><th title="{{ run.explanation.field_help['phase'] }}">phase</th><th title="{{ run.explanation.field_help['primitive'] }}">primitive</th><th title="{{ run.explanation.field_help['event'] }}">event</th><th title="{{ run.explanation.field_help['payload'] }}">payload</th></tr></thead>
+    <tbody>
+      {% for e in run.log_tail %}
+      <tr title="{{ run.explanation.field_help['log row'] }}">
+        <td><code>{{ e.ts }}</code></td>
+        <td>{{ e.phase }}</td>
+        <td><code>{{ e.primitive }}</code></td>
+        <td>{{ e.event }}</td>
+        <td>
+          {% if e.payload_pretty.is_long %}
+          <details class="run-payload-disclosure">
+            <summary title="{{ run.explanation.field_help['payload details'] }}">Payload ({{ e.payload_pretty.length }} chars)</summary>
+            <pre class="run-payload-pre"><code>{{ e.payload_pretty.pretty }}</code></pre>
+          </details>
+          {% else %}
+          <code title="{{ run.explanation.field_help['payload details'] }}">{{ e.payload_pretty.compact }}</code>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

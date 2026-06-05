@@ -1,0 +1,42 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Run · Live</span>
+<h1 class="run-id-heading"><code>{{ run_id }}</code></h1>
+<p class="page-hero">Streaming the run's <code>log.ndjson</code> in real time. The stream closes automatically when the framework writes <code>manifest.json</code> (final phase complete) or after 10 minutes of idle silence. <a href="/operate/runs/{{ run_id }}">↩ inspector</a></p>
+
+<hr class="hairline">
+
+<section class="run-live" aria-labelledby="live-heading">
+  <header>
+    <span class="eyebrow">Status</span>
+    <h2 id="live-heading"><span class="run-live__state" data-run-live-state>connecting…</span></h2>
+  </header>
+  <pre class="run-live__pre" data-run-live-output></pre>
+</section>
+
+<script type="module">
+  const out = document.querySelector('[data-run-live-output]');
+  const state = document.querySelector('[data-run-live-state]');
+  const url = "/operate/runs/{{ run_id }}/tail";
+  const es = new EventSource(url);
+  let autoScroll = true;
+  out.addEventListener('scroll', () => {
+    autoScroll = out.scrollTop + out.clientHeight >= out.scrollHeight - 8;
+  });
+  function append(line) {
+    out.textContent += line + "\n";
+    if (autoScroll) out.scrollTop = out.scrollHeight;
+  }
+  es.addEventListener('hello', (e) => {
+    state.textContent = "live · streaming " + e.data;
+  });
+  es.addEventListener('log', (e) => append(e.data));
+  es.addEventListener('end', (e) => {
+    state.textContent = "closed · " + e.data;
+    es.close();
+  });
+  es.addEventListener('error', () => {
+    state.textContent = "stream error · auto-retry";
+  });
+</script>
+{% endblock %}

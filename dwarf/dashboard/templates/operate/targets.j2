@@ -1,0 +1,47 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate</span>
+<h1>Targets</h1>
+<p>M2 serialization/deserialization target catalog. Each listed target is a per-implementation shim around an Amaru or cardano-node Concise Binary Object Representation (CBOR) or mini-protocol decoder/parser, defined by a manifest at <code>dwarf/targets/manifests/&lt;id&gt;.yaml</code>.</p>
+
+<hr class="hairline">
+
+{% if empty %}
+<p class="empty-section-statement">
+  No M2 target manifests found.
+  <span class="empty-section-statement__cite">scanned <code>dwarf/targets/manifests/</code>, 0 <code>*.yaml</code> files</span>
+</p>
+{% else %}
+<div class="filter-bar">
+  <span class="eyebrow">Implementation</span>
+  <div class="filter-pills" role="group" aria-label="Filter by implementation">
+    {% for pill in pills %}
+    <button type="button" class="pill" data-implementation="{{ pill.slug }}" aria-pressed="{{ 'true' if pill.active else 'false' }}">{{ pill.label }} ({{ pill.count }})</button>
+    {% endfor %}
+  </div>
+  <p class="filter-count" aria-live="polite">{{ rows|length }} M2 targets</p>
+</div>
+
+<table class="targets-table" data-active-implementation="">
+  <thead>
+    <tr>
+      <th>Target ID</th>
+      <th>Implementation</th>
+      <th>Decoder type</th>
+      <th>Invariants</th>
+      <th>Upstream commit</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    {% include "operate/_partials/_target_row.j2" %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<script type="module">
+  import {initFilter} from "/static/js/filter.js";
+  initFilter({table: ".targets-table", axis: "implementation", label: "targets"});
+</script>
+{% endif %}
+{% endblock %}

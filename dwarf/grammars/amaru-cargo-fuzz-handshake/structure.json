@@ -1,0 +1,15 @@
+{
+  "format": "cbor",
+  "target": "amaru-cargo-fuzz-handshake",
+  "decoder_entrypoint": "decode(data) in dwarf/targets/amaru-cargo-fuzz-handshake/fuzz_targets/handshake.rs",
+  "shape": {
+    "type": "array",
+    "notes": [
+      "Top-level handshake messages are arrays keyed by message id 0..3.",
+      "Message 0 and 3 carry a version table map.",
+      "Message 1 carries version plus version_data.",
+      "Message 2 carries a keyed refuse reason."
+    ]
+  }
+}
+

@@ -1,0 +1,92 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Static Analysis</span>
+<h1>clippy / audit / deny status</h1>
+<p class="page-hero">Operator-readable view of the three static-analysis primitives ada3 ships: <code>runtime_static_analysis_clippy</code> (lints), <code>runtime_static_analysis_audit</code> (advisory database checks), and <code>runtime_static_analysis_deny</code> (license + policy + banned-crate checks). The page mirrors each tool's most recent run on disk — the count, the verbatim status string, the crate that was checked, and the raw stderr tail — without re-categorizing what those tools reported.</p>
+
+<hr class="hairline">
+
+<section class="static-analysis-grid" aria-labelledby="grid-heading">
+  <h2 id="grid-heading" class="visually-hidden">Per-tool latest runs</h2>
+
+  {% for tool in tools %}
+  {% set t = latest[tool] %}
+  <article class="static-tool-card" id="tool-{{ tool }}">
+    <header class="static-tool-card__head">
+      <span class="eyebrow">cargo {{ tool }}</span>
+      <h2><code>runtime_static_analysis_{{ tool }}</code></h2>
+    </header>
+
+    {% if not t %}
+    <p class="empty-section-statement">
+      No <code>{{ tool }}</code> runs yet.
+      <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 runs with <code>outputs/static-analysis-{{ tool }}/</code></span>
+    </p>
+    <p class="page-subhero">Generate one with <code>cardano-profile scenario run dwarf/scenarios/runtime-static-analysis-{{ tool }}-example-smoke.yaml</code>.</p>
+    {% else %}
+    <div class="static-tool-card__status">
+      <span class="result-pill {% if t.pill_state == 'ok' %}result-pill--pass{% elif t.pill_state == 'stale' %}result-pill--error{% else %}result-pill--fail{% endif %}">{{ t.tool_status or 'unknown' }}</span>
+      <span class="static-tool-card__exit">exit <code>{{ t.tool_exit_code if t.tool_exit_code is not none else '—' }}</code></span>
+      <span class="static-tool-card__count">count <code>{{ t.findings_count if t.findings_count is not none else '—' }}</code></span>
+    </div>
+    <table class="config-table static-tool-card__meta">
+      <tbody>
+        <tr><th scope="row">executed</th><td><code>{{ t.executed_at_utc or '—' }}</code></td></tr>
+        <tr><th scope="row">crate</th><td><code>{{ t.crate_dir or '—' }}</code></td></tr>
+        <tr><th scope="row">command</th><td><code>{{ t.command|join(' ') if t.command else '—' }}</code></td></tr>
+        {% if t.parsed_line_count is not none %}
+        <tr><th scope="row">parsed lines</th><td>{{ t.parsed_line_count }}</td></tr>
+        {% endif %}
+        {% if t.parse_error %}
+        <tr><th scope="row">parse error</th><td><code>{{ t.parse_error }}</code></td></tr>
+        {% endif %}
+        <tr><th scope="row">bundle</th><td><a href="{{ t.run_url }}"><code>{{ t.run_id }}</code></a></td></tr>
+      </tbody>
+    </table>
+
+    <div class="static-tool-card__links">
+      {% if t.findings_url %}<a href="{{ t.findings_url }}"><code>findings.json</code></a>{% endif %}
+      {% if t.stdout_url %} · <a href="{{ t.stdout_url }}"><code>stdout.log</code></a>{% endif %}
+      {% if t.stderr_url %} · <a href="{{ t.stderr_url }}"><code>stderr.log</code></a>{% endif %}
+    </div>
+
+    {% if t.stderr_tail %}
+    <details class="static-tool-card__stderr">
+      <summary>stderr tail ({{ t.stderr_tail|length }} bytes)</summary>
+      <pre class="run-cross-impl__pre">{{ t.stderr_tail }}</pre>
+    </details>
+    {% endif %}
+
+    {% if history[tool] %}
+    <details class="static-tool-card__history">
+      <summary>History — last {{ history[tool]|length }} run{{ '' if history[tool]|length == 1 else 's' }}</summary>
+      <table class="config-table static-tool-card__history-table">
+        <thead>
+          <tr>
+            <th>Run</th>
+            <th>Executed</th>
+            <th>Status</th>
+            <th>Exit</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in history[tool] %}
+          <tr>
+            <td><a href="{{ h.run_url }}"><code>{{ h.run_id }}</code></a></td>
+            <td>{{ h.executed_at_utc or '—' }}</td>
+            <td><span class="result-pill {% if h.pill_state == 'ok' %}result-pill--pass{% elif h.pill_state == 'stale' %}result-pill--error{% else %}result-pill--fail{% endif %}">{{ h.tool_status or 'unknown' }}</span></td>
+            <td>{{ h.tool_exit_code if h.tool_exit_code is not none else '—' }}</td>
+            <td>{{ h.findings_count if h.findings_count is not none else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+
+    {% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

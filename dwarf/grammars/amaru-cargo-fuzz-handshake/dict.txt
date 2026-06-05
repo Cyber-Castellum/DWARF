@@ -1,0 +1,14 @@
+# libFuzzer dictionary for amaru-cargo-fuzz-handshake
+"\x82\x00"
+"\x83\x01"
+"\x82\x02"
+"\x82\x03"
+"\xa0"
+"\xa1"
+"\xa2"
+"\x0b"
+"\xf4"
+"\xf5"
+"\x00"
+"\x01"
+

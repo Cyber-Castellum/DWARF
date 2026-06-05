@@ -1,0 +1,27 @@
+{
+  "id": "environment-smoke",
+  "label": "Environment Smoke",
+  "category": "environment",
+  "status": "bounded",
+  "source_reference": "devnet/profile-manager",
+  "working_directory": "/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled",
+  "timeout_seconds": 120,
+  "environment": {},
+  "commands": [
+    "hostname",
+    "uname -a",
+    "/usr/local/bin/cardano-node --version",
+    "/usr/local/bin/cardano-cli --version",
+    "tmux ls 2>/dev/null | grep -E 'cardano-profile-|cardano-devnet' || true",
+    "ss -ltnp 2>/dev/null | grep -E 'cardano|amaru|41087|46051|36619' || true"
+  ],
+  "limitations": [
+    "Environment smoke only; no parser, protocol, consensus, or fuzz coverage.",
+    "No public Cardano network is contacted.",
+    "No remote state is intentionally changed."
+  ],
+  "safety_notes": [
+    "Read-only host and runtime inspection.",
+    "Use before package tests to establish host/tool/runtime context."
+  ]
+}

@@ -1,0 +1,96 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate</span>
+<h1>Runs</h1>
+<p>Most recent forensic runs (last 100), newest first. Each row links to its bundle inspector at <code>/operate/runs/&lt;id&gt;</code> and its profile at <code>/operate/profiles#&lt;id&gt;</code>. Filter by result to narrow the list; the filter is client-side and refresh resets it.</p>
+
+<hr class="hairline">
+
+{% if families %}
+<section class="issue-families" aria-labelledby="issue-families-heading">
+  <header class="issue-families__head">
+    <span class="eyebrow">Issue families</span>
+    <h2 id="issue-families-heading">Runtime-anomaly families across recent runs</h2>
+    <p class="page-subhero">Aggregated triage groupings from the testcase lifecycle ({{ runtime_anomaly_count }} runtime-anomaly case{{ '' if runtime_anomaly_count == 1 else 's' }} total). Each row groups one (triage reason, implementation) family and counts the cases that have landed there.</p>
+  </header>
+  <table class="config-table issue-families__table">
+    <thead>
+      <tr>
+        <th>Triage reason</th>
+        <th>Implementation</th>
+        <th>Buckets</th>
+        <th>Cases</th>
+        <th>Pending replay</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fam in families %}
+      <tr>
+        <td><code>{{ fam.triage_reason }}</code></td>
+        <td>{{ fam.target_implementation }}</td>
+        <td>{{ fam.bucket_count }}</td>
+        <td>{{ fam.case_count }}</td>
+        <td>{{ fam.pending_replay_count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<hr class="hairline">
+{% endif %}
+
+{% if empty %}
+<p class="empty-section-statement">
+  No forensic runs recorded yet.
+  <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 runs with manifests</span>
+</p>
+{% else %}
+<form class="filter-bar runs-filter-bar" method="get" action="/operate/runs" role="search">
+  <span class="eyebrow">Result</span>
+  <div class="filter-pills" role="group" aria-label="Filter by result">
+    {% for pill in pills %}
+    <a class="pill{% if pill.active %} pill--active{% endif %}"
+       href="/operate/runs?{% if pill.slug %}outcome={{ pill.slug }}{% endif %}{% if filter_q %}{% if pill.slug %}&{% endif %}q={{ filter_q }}{% endif %}"
+       aria-pressed="{{ 'true' if pill.active else 'false' }}">{{ pill.label }} ({{ pill.count }})</a>
+    {% endfor %}
+  </div>
+  <label class="runs-filter-bar__search">
+    <span class="eyebrow">Search</span>
+    <input type="search" name="q" value="{{ filter_q or '' }}"
+           placeholder="run-id / scenario / profile / target"
+           maxlength="128" autocomplete="off">
+  </label>
+  {% if filter_outcome %}<input type="hidden" name="outcome" value="{{ filter_outcome }}">{% endif %}
+  <button type="submit" class="cta cta--ghost">Filter</button>
+  {% if filter_outcome or filter_q %}
+  <a class="filter-clear" href="/operate/runs">clear</a>
+  {% endif %}
+  <p class="filter-count" aria-live="polite">{{ filtered_count if filtered_count is defined else rows|length }} of {{ all_count if all_count is defined else rows|length }} runs</p>
+</form>
+
+<table class="runs-table" data-active-status="">
+  <thead>
+    <tr>
+      <th>Run ID</th>
+      <th>Ended</th>
+      <th>Scenario</th>
+      <th>Profile</th>
+      <th>Runtime</th>
+      <th>Result</th>
+      <th>Target</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    {% include "operate/_partials/_run_row.j2" %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<script type="module">
+  import {initFilter} from "/static/js/filter.js";
+  initFilter({table: ".runs-table", axis: "status", label: "runs"});
+</script>
+{% endif %}
+{% endblock %}

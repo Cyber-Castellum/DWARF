@@ -1,0 +1,94 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Getting started</span>
+<h1>Hello Dwarf</h1>
+<p class="page-hero">A 5-step walkthrough: install the framework, run your first scenario, capture a forensic bundle, write your first assertion, and inspect everything from the dashboard. Reading time ~10 min; copy-paste-and-go.</p>
+
+<hr class="hairline">
+
+<section class="learn-walkthrough">
+  <article class="learn-step">
+    <header><span class="eyebrow">Step 1</span><h2>Install</h2></header>
+
+    <h3>Recommended: Docker deployment</h3>
+    <p>The V3 delivery ships with Docker lifecycle scripts. From an unpacked <code>dwarf-v3/</code>:</p>
+    <pre class="run-payload-pre"><code>cd dwarf-v3/
+delivery/scripts/install.sh
+delivery/scripts/build-image.sh
+delivery/scripts/deploy.sh</code></pre>
+    <p>The deployment starts the <code>dwarf/framework:june-20260604-m2</code> image, mounts <code>runs/</code> · <code>state/</code> · <code>bundles/</code> from the package runtime directory, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites are listed in <code>INSTALL.md</code>.</p>
+    <p>This is the primary deploy path. The container layer pins framework dependencies so installs are reproducible across Docker-capable Linux hosts.</p>
+
+    <h3>Alternative: bare-metal CLI install</h3>
+    <p>If you want to develop on Dwarf itself or skip Docker, use the framework source directly:</p>
+    <pre class="run-payload-pre"><code>git clone https://github.com/dwarf-fw/dwarf
+cd dwarf
+./scripts/setup.sh    # installs python deps + the cardano-profile CLI
+./cardano-profile --version</code></pre>
+    <p>You'll get the same CLI surface, but the framework runs as host processes rather than container processes. The V3 delivery path remains the Docker deployment above.</p>
+  </article>
+
+  <article class="learn-step">
+    <header><span class="eyebrow">Step 2</span><h2>Pick a scenario and run it</h2></header>
+    <p>The honest-baseline scenario composes a 3-node substrate and verifies all three nodes converge on the same chain tip. It's the cheapest scenario that touches every layer (compose → install → observe → assert) so it's the right first run.</p>
+    <p>Inside the Docker container:</p>
+    <pre class="run-payload-pre"><code>docker compose exec dwarf-fw \
+  cardano-profile scenario run \
+  scenarios/runtime-substrate-honest-baseline-example-smoke.yaml</code></pre>
+    <p>Or on a bare-metal install:</p>
+    <pre class="run-payload-pre"><code>./cardano-profile scenario run \
+    dwarf/scenarios/runtime-substrate-honest-baseline-example-smoke.yaml</code></pre>
+    <p>~40s later the framework writes a fresh run bundle to <code>runs/&lt;timestamp&gt;-&lt;hash&gt;/</code> with manifest, log.ndjson, observation outputs, and assertion results.</p>
+  </article>
+
+  <article class="learn-step">
+    <header><span class="eyebrow">Step 3</span><h2>Find your run in the dashboard</h2></header>
+    <p>The bundle is auto-discovered. Open <a href="/operate/runs">/operate/runs</a> and your new run-id will be at the top of the list. Click in to land on the bundle inspector:</p>
+    <ul>
+      <li>Status banner — pass/fail + scenario id + target impl + runtime</li>
+      <li>Tile grid — assertions, tamper-check, wall-time, iteration outcomes</li>
+      <li>Substrate evidence — topology / multi-node observation / hf-boundary tiles when the scenario produces them</li>
+      <li>Recorded assertions + log tail — drill into the per-event detail</li>
+    </ul>
+    <p>The <a href="/operate/runs">Live tail</a> button at the top of the inspector streams <code>log.ndjson</code> via SSE — useful when you re-run and want to watch progress without refreshing.</p>
+  </article>
+
+  <article class="learn-step">
+    <header><span class="eyebrow">Step 4</span><h2>Preserve a forensic bundle</h2></header>
+    <p>The framework keeps every run in <code>runs/</code> by default but bundles you want to keep across cleanup runs go to <code>bundles/</code> as signed tar.gz archives:</p>
+    <pre class="run-payload-pre"><code># Inside Docker
+docker compose exec dwarf-fw cardano-profile bundle &lt;run-id&gt;
+
+# Bare metal
+./cardano-profile bundle &lt;run-id&gt;</code></pre>
+    <p>From the dashboard, the <code>Export bundle (.tar.gz)</code> button on the run inspector header does the same thing. To re-import a bundle on another box, drop it on <a href="/operate/bundles">/operate/bundles</a> via the Import form (or run <code>cardano-profile bundle import &lt;path&gt;</code>).</p>
+  </article>
+
+  <article class="learn-step">
+    <header><span class="eyebrow">Step 5</span><h2>Write your first assertion</h2></header>
+    <p>Scenarios drive primitives; primitives emit observations; assertions check observations. The simplest assertion is <code>assert_equal</code>:</p>
+    <pre class="run-payload-pre"><code>{
+  "primitive": "assert_equal",
+  "params": {
+    "actual": {"$ref": "outputs/multi-node-observation/observation-summary.json#/per_node/node1/tip_state/sample_count"},
+    "expected": 11
+  }
+}</code></pre>
+    <p>Add it to a copy of the honest-baseline scenario, re-run, and the bundle inspector will show your assertion's pass/fail in the Recorded assertions table. From there, <a href="/operate/scenarios/new">/operate/scenarios/new</a> creates a scenario from a template if you'd rather start from one of the 10 bundled patterns.</p>
+  </article>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <h2>Next steps</h2>
+  <ul>
+    <li><a href="/learn/examples">Examples gallery</a> — 10 annotated scenarios across families</li>
+    <li><a href="/learn/walkthroughs">Walkthroughs</a> — deeper deployment + multi-host recipes</li>
+    <li><a href="/learn/cli">CLI reference</a> — every <code>cardano-profile</code> subcommand</li>
+    <li><a href="/learn/architecture">Architecture</a> — how primitives compose into substrates</li>
+    <li><a href="/learn/api">REST API</a> — JSON endpoints for ops integrations</li>
+    <li><a href="/learn/glossary">Glossary</a> · <a href="/learn/faq">FAQ</a> · <a href="/learn/troubleshooting">Troubleshooting</a></li>
+  </ul>
+</section>
+{% endblock %}

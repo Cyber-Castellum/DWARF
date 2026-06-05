@@ -1,0 +1,108 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Audit</span>
+<h1>Retro-classification</h1>
+<p class="page-hero">Heuristic re-classification of every preserved bundle on disk against the item-A thinness rules. <strong>This page is lossless on the run history</strong> — it does not change pass/fail color, does not modify any assertion outcome, does not write anywhere. It surfaces which currently-green bundles would be rejected by the tightened floors landed in the 2026-04-30 audit cascade. Live floor re-evaluation is design-option C and is intentionally NOT done here — classifications below are heuristic, not authoritative.</p>
+
+<hr class="hairline">
+
+<div class="status-tile-grid">
+  <article class="status-tile status-tile--state-error">
+    <span class="eyebrow">Still-broken</span>
+    <span class="status-tile__metric">{{ counts['still-broken'] }}</span>
+    <p class="status-tile__sub">would FAIL under tightened floor</p>
+  </article>
+  <article class="status-tile status-tile--state-stale">
+    <span class="eyebrow">Broken-differently</span>
+    <span class="status-tile__metric">{{ counts['broken-differently'] }}</span>
+    <p class="status-tile__sub">passes today on a different vacuous shape</p>
+  </article>
+  <article class="status-tile">
+    <span class="eyebrow">Unknown</span>
+    <span class="status-tile__metric">{{ counts['unknown'] }}</span>
+    <p class="status-tile__sub">no rule fired, no positive heuristic</p>
+  </article>
+  <article class="status-tile status-tile--state-ok">
+    <span class="eyebrow">Fixed</span>
+    <span class="status-tile__metric">{{ counts['fixed'] }}</span>
+    <p class="status-tile__sub">strong execution signal observed</p>
+  </article>
+</div>
+
+<hr class="hairline">
+
+{% if empty %}
+<p class="empty-section-statement">
+  No preserved bundles in the runs directory.
+  <span class="empty-section-statement__cite">scanned <code>$ADA2_DWARF_RUNS_DIR</code> (or <code>dwarf/runs/</code>)</span>
+</p>
+{% else %}
+
+<form class="filter-bar audit-filter-bar" method="get" action="/operate/audit" role="search">
+  <span class="eyebrow">Classification</span>
+  <div class="filter-pills" role="group" aria-label="Filter by classification">
+    {% for pill in pills %}
+    <a class="pill{% if pill.active %} pill--active{% endif %}"
+       href="/operate/audit?{% if pill.slug %}classification={{ pill.slug }}{% endif %}{% if filter_family %}{% if pill.slug %}&{% endif %}family={{ filter_family }}{% endif %}"
+       aria-pressed="{{ 'true' if pill.active else 'false' }}">{{ pill.label }} ({{ pill.count }})</a>
+    {% endfor %}
+  </div>
+  <label class="audit-filter-bar__search">
+    <span class="eyebrow">Assertion family</span>
+    <input type="search" name="family" value="{{ filter_family or '' }}"
+           placeholder="primitive substring" maxlength="128" autocomplete="off">
+  </label>
+  {% if filter_classification %}<input type="hidden" name="classification" value="{{ filter_classification }}">{% endif %}
+  <button type="submit" class="cta cta--ghost">Filter</button>
+  {% if filter_classification or filter_family %}
+  <a class="filter-clear" href="/operate/audit">clear</a>
+  {% endif %}
+  <p class="filter-count" aria-live="polite">{{ filtered_count }} of {{ all_count }} bundles</p>
+</form>
+
+<table class="config-table audit-table">
+  <thead>
+    <tr>
+      <th>Classification</th>
+      <th>Run</th>
+      <th>Scenario</th>
+      <th>Assertion family</th>
+      <th>Manifest exit</th>
+      <th>Telemetry</th>
+      <th>Rules</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr class="audit-row audit-row--{{ r.classification }}">
+      <td>
+        {% if r.classification == 'still-broken' %}
+        <span class="result-pill result-pill--fail">{{ r.classification }}</span>
+        {% elif r.classification == 'broken-differently' %}
+        <span class="result-pill result-pill--draft">{{ r.classification }}</span>
+        {% elif r.classification == 'fixed' %}
+        <span class="result-pill result-pill--pass">{{ r.classification }}</span>
+        {% else %}
+        <span class="result-pill">{{ r.classification }}</span>
+        {% endif %}
+      </td>
+      <td><a href="{{ r.run_url }}"><code>{{ r.run_id }}</code></a></td>
+      <td><code>{{ r.scenario_id or '—' }}</code></td>
+      <td><code>{{ r.assertion_family }}</code></td>
+      <td>{% if r.exit_status %}<span class="result-pill result-pill--{{ r.exit_status }}">{{ r.exit_status }}</span>{% else %}—{% endif %}</td>
+      <td class="audit-telemetry">{{ r.telemetry_summary or '—' }}</td>
+      <td>
+        {% for rule in r.rules_fired %}
+        <span class="thinness-pill">{{ rule }}</span>
+        {% endfor %}
+        {% if not r.rules_fired and r.classification == 'unknown' %}
+        <span class="audit-row__note" title="no thinness rule fired and no positive heuristic confirmed real execution">no signal</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endif %}
+{% endblock %}

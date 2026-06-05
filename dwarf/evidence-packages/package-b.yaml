@@ -1,0 +1,31 @@
+{
+  "id": "package-b",
+  "label": "Peer Selection, Topology, Bootstrap, And KeepAlive",
+  "runnable": false,
+  "status": "Live connection-churn evidence added; promotion blocked",
+  "candidate_ids": [
+    "CR-M1-DRAFT-005",
+    "CR-M1-DRAFT-006",
+    "CR-M1-DRAFT-007",
+    "CR-M1-DRAFT-008",
+    "CR-M1-DRAFT-014"
+  ],
+  "evidence_paths": [
+    "retained-evidence/testing/milestone-1/package-b/M1-PB-001-devnet-baseline.md",
+    "retained-evidence/testing/milestone-1/package-b/M1-PB-008-managed-profile-reproducibility.md",
+    "retained-evidence/testing/milestone-1/package-b/M1-PB-009-live-connection-churn-fuzz.md",
+    "retained-evidence/testing/fuzz/package-b-live-connection-churn-layer3/20260418T002347Z-run.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-005-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-006-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-007-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-008-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-014-evidence.md"
+  ],
+  "blockers": [
+    "PeerSharing poisoning behavior is not tested.",
+    "Peer diversity, public roots, ledger peers, and Amaru peer-manager behavior are not exercised.",
+    "KeepAlive mismatch, timeout, stall, wraparound, and idle-slot behavior remain untested.",
+    "Connection-churn test is bounded and does not prove fd/backlog/resource exhaustion resistance."
+  ],
+  "read_only_actions": []
+}

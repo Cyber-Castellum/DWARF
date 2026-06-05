@@ -1,0 +1,53 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Notifications</span>
+<h1>Notifications</h1>
+<p class="page-hero">Read-only view of webhook / notification handlers configured in <code>state/config.yaml</code>. Edit via the file directly; restart the dashboard to apply. Outcomes are appended to <code>{{ log_path }}</code> as ndjson.</p>
+
+<hr class="hairline">
+
+<section class="status-summary" aria-labelledby="summary-heading">
+  <h2 id="summary-heading" class="visually-hidden">Notification summary</h2>
+  <div class="status-tile-grid">
+    <article class="status-tile">
+      <span class="eyebrow">Configured rules</span>
+      <span class="status-tile__metric">{{ rules|selectattr('configured')|list|length }}</span>
+      <p class="status-tile__sub">{{ rules|rejectattr('configured')|list|length }} event(s) without a handler</p>
+    </article>
+    <article class="status-tile status-tile--state-{{ 'ok' if smtp_configured else 'stale' }}">
+      <span class="eyebrow">SMTP</span>
+      <span class="status-tile__metric">{{ 'CONFIGURED' if smtp_configured else 'NOT SET' }}</span>
+      {% if smtp_configured %}
+      <p class="status-tile__sub"><code>{{ smtp_host }}:{{ smtp_port or '25' }}</code></p>
+      {% else %}
+      <p class="status-tile__sub">email handlers will skip until smtp.host is set</p>
+      {% endif %}
+    </article>
+  </div>
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="rules-heading">
+  <header><span class="eyebrow">Handlers</span><h2 id="rules-heading">Configured rules</h2></header>
+  <table class="config-table operate-notifications-table">
+    <thead>
+      <tr>
+        <th>Event</th><th>Kind</th><th>Endpoint</th><th>Last fired</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rule in rules %}
+      <tr class="operate-notifications-table__row {{ 'operate-notifications-table__row--unconfigured' if not rule.configured }}">
+        <td><code>{{ rule.event }}</code></td>
+        <td><code>{{ rule.type }}</code></td>
+        <td>{% if rule.summary %}<code>{{ rule.summary }}</code>{% else %}—{% endif %}</td>
+        <td>{% if rule.last_fired %}<code>{{ rule.last_fired }}</code>{% else %}<span class="operate-notifications-table__never">never</span>{% endif %}</td>
+        <td>{% if rule.configured %}<span class="result-pill result-pill--pass">configured</span>{% else %}<span class="result-pill">no handler</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="page-subhero"><small>URLs are masked to host-only so a screenshot of this page can't leak a webhook secret. Full URL lives only in <code>state/config.yaml</code>.</small></p>
+</section>
+{% endblock %}

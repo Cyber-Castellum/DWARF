@@ -1,0 +1,70 @@
+{
+  "bundle_runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+  "compose_project": "dwarf-substrate-20260428T064446Z-efbb7670",
+  "healthy": true,
+  "network": "preview",
+  "network_magic": 2,
+  "node_count": 2,
+  "nodes": [
+    {
+      "effective_peer_address": null,
+      "healthy": true,
+      "id": "node1",
+      "impl": "cardano-node",
+      "listen_address": "127.0.0.1:34611",
+      "peer_addresses": [
+        "127.0.0.1:34612"
+      ],
+      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_version": "10.7.1",
+      "role": "honest",
+      "session": "dwarf-substrate-20260428T064446Z-efbb7670-node1",
+      "unsupported_extra_peer_addresses": [],
+      "version": "10.7.1"
+    },
+    {
+      "effective_peer_address": null,
+      "healthy": true,
+      "id": "node2",
+      "impl": "cardano-node",
+      "listen_address": "127.0.0.1:34612",
+      "peer_addresses": [
+        "127.0.0.1:34611"
+      ],
+      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_version": "10.7.1",
+      "role": "honest",
+      "session": "dwarf-substrate-20260428T064446Z-efbb7670-node2",
+      "unsupported_extra_peer_addresses": [],
+      "version": "10.7.1"
+    }
+  ],
+  "public_network_assets": {
+    "alonzo-genesis.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/alonzo-genesis.json",
+    "byron-genesis.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/byron-genesis.json",
+    "checkpoints.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/checkpoints.json",
+    "config.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/config.json",
+    "conway-genesis.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/conway-genesis.json",
+    "peer-snapshot.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/peer-snapshot.json",
+    "shelley-genesis.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/shelley-genesis.json",
+    "topology.json": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/public-network/preview/topology.json"
+  },
+  "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/runtime.json",
+  "runtime_root": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670",
+  "support_binaries": {
+    "cardano-cli": "/home/nigel/.local/bin/cardano-cli",
+    "cardano-testnet": "/home/nigel/.local/bin/cardano-testnet"
+  },
+  "topology": {
+    "edges": [
+      {
+        "from": "node1",
+        "to": "node2"
+      },
+      {
+        "from": "node2",
+        "to": "node1"
+      }
+    ]
+  }
+}

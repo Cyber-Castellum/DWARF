@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "cbor_fuzz_target params",
+  "type": "object",
+  "required": ["target_id", "manifests_dir"],
+  "properties": {
+    "target_id": { "type": "string", "minLength": 1 },
+    "manifests_dir": { "type": "string", "minLength": 1 },
+    "iterations": { "type": "integer", "minimum": 1 },
+    "min_bytes": { "type": "integer", "minimum": 1 },
+    "max_bytes": { "type": "integer", "minimum": 1 },
+    "per_input_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 }
+  },
+  "additionalProperties": false
+}

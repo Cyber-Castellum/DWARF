@@ -1,0 +1,14 @@
+{
+  "id": "profile-e-haskell-preview-proof",
+  "label": "Haskell preview proof of life",
+  "node_type": "cardano-node",
+  "node_count": 1,
+  "amaru_node_count": 0,
+  "network_magic": 2,
+  "peer_sharing": true,
+  "remote_runtime_root": "/opt/dwarf/cardano-profiles/profile-e-haskell-preview-proof",
+  "compose_project": "cardano-profile-e-haskell-preview",
+  "upstream_peer_address": "preview-node.play.dev.cardano.org:3001",
+  "listen_address": "127.0.0.1:39100",
+  "config_source_dir": "/opt/dwarf/cardano-configs/preview"
+}

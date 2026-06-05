@@ -1,0 +1,100 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<h1>Status</h1>
+<p>Where Dwarf-the-project is right now, derived from current repository state at request time. Combined with <a href="/learn/coverage">coverage</a>, this answers what Dwarf is and where it is at this moment.</p>
+
+{% if data_source_caveat %}
+<aside class="data-source-caveat">
+  <span class="eyebrow">Data source caveat</span>
+  Loaded from worktree filesystem; the canonical <code>main</code>-branch view was unavailable at render time. The displayed state may not reflect the latest <code>main</code>.
+</aside>
+{% endif %}
+
+<hr class="hairline">
+
+<section class="status-section" id="current-phase">
+  <span class="eyebrow">Current phase</span>
+  {% if phase.needs_source %}
+  <p class="empty-section-statement">
+    needs source
+    <span class="empty-section-statement__cite">no currentstatus-*.md found in repo root</span>
+  </p>
+  {% else %}
+  <p>{{ phase.title }} — last modified {{ phase.last_modified }}.</p>
+  <p class="coverage-matrix__anchor">
+    <span class="eyebrow">Anchor</span>
+    <code>{{ phase.anchor_path }}</code>
+  </p>
+  {% endif %}
+</section>
+<hr class="hairline">
+
+<section class="status-section" id="recent-work">
+  <span class="eyebrow">Recent work</span>
+  <p>Last {{ recent_commits|length }} feature commits on <code>main</code>. Dashboard scaffolding (<code>plan:</code> docs and any <code>(dashboard)</code>-scoped commit) is filtered out by commit-message pattern.</p>
+  {% if recent_commits %}
+  <ul class="recent-work-list">
+    {% for row in recent_commits %}
+    <li class="recent-work-row">
+      <code class="recent-work-row__hash">{{ row.hash }}</code>
+      <span class="recent-work-row__msg">{{ row.message }}</span>
+      <span class="recent-work-row__date">{{ row.date }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-section-statement">
+    No commits returned.
+    <span class="empty-section-statement__cite">git log main --oneline -n20</span>
+  </p>
+  {% endif %}
+  <p class="coverage-matrix__anchor">
+    <span class="eyebrow">Anchor</span>
+    <code>git log main --oneline -n20</code>
+  </p>
+</section>
+<hr class="hairline">
+
+<section class="status-section" id="open-candidate-findings">
+  <span class="eyebrow">Open candidate findings</span>
+  <p>Candidate observations are open items under investigation, not validated findings.</p>
+  {% if candidates %}
+  {% for entry in candidates %}
+  {% include "learn/_partials/_candidate_note.j2" %}
+  {% endfor %}
+  {% else %}
+  <p class="empty-section-statement">
+    No open candidates.
+    <span class="empty-section-statement__cite">scanned candidate observations, 0 files</span>
+  </p>
+  {% endif %}
+</section>
+<hr class="hairline">
+
+<section class="status-section" id="open-carry-overs">
+  <span class="eyebrow">Open carry-overs</span>
+  <p>Parsed from <em>Waiting on</em> lines in the latest currentstatus document. Sections whose Waiting-on text begins with <code>No</code> (explicit non-blockers) are filtered out.</p>
+  {% if carry_overs %}
+  <ul class="carry-over-list">
+    {% for item in carry_overs %}
+    <li class="carry-over-item">
+      <span class="eyebrow">{{ item.section }}</span>
+      <p>{{ item.text }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-section-statement">
+    No open carry-overs.
+    <span class="empty-section-statement__cite">scanned latest currentstatus-*.md for Waiting-on lines, 0 unfiltered matches</span>
+  </p>
+  {% endif %}
+  {% if phase.anchor_path %}
+  <p class="coverage-matrix__anchor">
+    <span class="eyebrow">Anchor</span>
+    <code>{{ phase.anchor_path }}</code>
+  </p>
+  {% endif %}
+</section>
+{% endblock %}

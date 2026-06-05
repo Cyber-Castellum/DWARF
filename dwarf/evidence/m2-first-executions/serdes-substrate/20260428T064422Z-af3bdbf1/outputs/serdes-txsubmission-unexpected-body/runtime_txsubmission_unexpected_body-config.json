@@ -1,0 +1,8 @@
+{
+  "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064422Z-af3bdbf1/outputs/serdes-txsubmission-unexpected-body",
+  "receive_bytes": 64,
+  "response_timeout_seconds": 2.0,
+  "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064422Z-af3bdbf1/outputs/substrate-compose/runtime.json",
+  "target_host": "127.0.0.1",
+  "target_node": "node1"
+}

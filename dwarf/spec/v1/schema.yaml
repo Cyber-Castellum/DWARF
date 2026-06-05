@@ -1,0 +1,149 @@
+# Dwarf Scenario v1 — Human-readable schema
+#
+# This file is the human-readable mirror of schema.json. Authors read this; the
+# runner validates against schema.json. Keep them in lockstep.
+#
+# A scenario is data. Primitives are code. The runner instantiates primitives
+# by name from primitives/registry.json. Unknown primitives, or primitives whose
+# declared runtimes do not include this scenario's runtime, are refused.
+
+spec_version: v1                # required, must be "v1"
+id: example-scenario-id         # required, lowercase kebab-case, globally unique
+title: "One-line human title"   # required
+authors: [optional]             # optional list of strings
+tags: [optional, list]          # optional, lowercase kebab-case
+related_milestones: [M2]        # optional trace labels for report/deliverable mapping
+m1_trace:                       # optional Milestone 1 provenance linkage
+  threat_ids: [TS-001]
+  gap_ids: [GAP-013]
+  architecture_ids: [B-006, IF-008]
+  risk_candidate_ids: [CR-M1-001]
+evidence_intent: candidate      # optional: candidate | regression | finding-validation | risk-support
+promotion_blockers: []          # optional human/code/test gates before finding/risk promotion
+testcase_candidate:             # optional auto-ingest into testcase lifecycle state
+  classification: runtime_anomaly
+  triage_reason: partition_rejoin_candidate
+  producer: scenario
+  source_artifact_path: manifest.json
+
+target:                         # required
+  implementation: cardano-node  # required: cardano-node | amaru
+  version: any                  # required: "any" | semver | branch | commit hash
+
+runtime: library                # required: library | single-node | devnet
+                                # library    -> drive a library/binary harness; no node, no devnet
+                                # single-node-> spin up one node process; no devnet
+                                # devnet     -> deploy a multi-node devnet via profile-manager
+
+profile: null                   # required when runtime is devnet, forbidden otherwise
+                                # devnet profile id; resolved profile is captured in the bundle
+
+duration: 10m                   # optional; bounds the load phase. units: s|m|h
+seed: 0xCAFE                    # optional; integer or hex string. auto-generated if omitted; recorded in manifest
+
+# Each list below holds primitive references. A primitive reference is a
+# mapping with a required `primitive:` key naming a primitive registered in
+# primitives/registry.json, plus any parameters that primitive accepts. The
+# parameter shape is validated against the primitive's own params_schema, not
+# this file.
+
+setup: []                       # ordered; failures abort before load
+load: []                        # ordered; first item's duration (or scenario duration) bounds the run
+faults: []                      # optional; runs concurrently with load
+probes: []                      # sampled concurrently with load; each writes probes/<name>.ndjson
+assertions: []                  # evaluated after load completes; record value+data+pass/fail
+teardown: []                    # always runs; failures recorded but do not flip overall result
+
+# FUZZ slots and trial-set runs (engine lands in Slice 8.5)
+# Any primitive parameter value may be:
+#   - a literal value (string, number, bool, list, object), validated against the primitive's params_schema
+#   - the bare keyword FUZZ — runner generates values from the parameter's declared type
+#   - a long-form spec: { fuzz: { type: int|bytes|string|bool|choice|weighted_choice, ...args } }
+#
+# When any FUZZ slot exists, the scenario becomes a trial set: it runs `iterations`
+# times, each iteration with concrete drawn values. Each iteration produces its own
+# child bundle under a parent run id; all are independently verifiable and replayable.
+
+iterations: 100                 # optional; required-at-runtime when any FUZZ slot exists; default 100
+shrink: true                    # optional; default true; failing iterations get minimized to a smaller failing input
+
+
+# ---------------------------------------------------------------------------
+# Two complete examples
+# ---------------------------------------------------------------------------
+
+# Example A — library-tier CBOR fuzz of transaction bodies (no devnet, no node)
+#
+# spec_version: v1
+# id: cbor-tx-roundtrip-fuzz
+# title: "CBOR round-trip fuzz of transaction bodies"
+# authors: [nigel]
+# tags: [ser-deser, parser, fuzz]
+# target:
+#   implementation: cardano-node
+#   version: any
+# runtime: library
+# seed: 0xBEEF
+# load:
+#   - { primitive: cbor_fuzz_tx_body, corpus: corpora/tx-bodies/, iterations: 1000000 }
+# probes:
+#   - { primitive: parser_exit_status, on: every_input }
+# assertions:
+#   - { primitive: parse_succeeds_or_clean_error, on: every_input }
+#   - { primitive: roundtrip_equals_original, on: parsed_inputs }
+# teardown: []
+
+
+# Example A.2 — same library-tier fuzz, with FUZZ slots driving a trial set
+#
+# spec_version: v1
+# id: cbor-tx-roundtrip-fuzz-trial
+# title: "CBOR round-trip trial set with FUZZ-driven mutation strategy and length"
+# target:
+#   implementation: cardano-node
+#   version: any
+# runtime: library
+# seed: 0xBEEF
+# iterations: 1000
+# shrink: true
+# load:
+#   - primitive: cbor_fuzz_tx_body
+#     mutation_strategy: FUZZ                              # bare keyword: pick from the primitive's declared values
+#     payload_length:
+#       fuzz: { type: int, min: 1, max: 65536 }            # long form: integer in a precise range
+# probes:
+#   - { primitive: parser_exit_status, on: every_input }
+# assertions:
+#   - { primitive: parse_succeeds_or_clean_error, on: every_input }
+
+
+# Example B — devnet-tier peer-sharing flood (multi-node, requires profile)
+#
+# spec_version: v1
+# id: peer-sharing-flood
+# title: "Peer sharing flood under disabled peer-sharing profile"
+# authors: [nigel]
+# tags: [networking, peer-selection, abuse]
+# target:
+#   implementation: cardano-node
+#   version: any
+# runtime: devnet
+# profile: profile-a-haskell-peersharing-disabled
+# duration: 10m
+# seed: 0xCAFE
+# iterations: 50                                         # optional; trial set if any FUZZ slot below
+# setup:
+#   - { primitive: deploy_profile, peergroup: FUZZ }     # bare keyword; runner picks from primitive's declared range
+#   - { primitive: wait_for_tip, timeout: 2m }
+# load:
+#   - { primitive: tx_submit_flood, rate: 50/s, duration: 10m }
+# probes:
+#   - { primitive: mempool_depth, interval: 1s }
+#   - { primitive: ram_rss, interval: 5s }
+#   - { primitive: disk_io, interval: 5s }
+# assertions:
+#   - { primitive: ram_rss_max_lt, value: 4GiB }
+#   - { primitive: mempool_depth_max_lt, value: 10000 }
+# teardown:
+#   - { primitive: collect_logs }
+#   - { primitive: snapshot }

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dwarf V3 Delivery</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #111827;
+        background: #f8fafc;
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+      }
+      h2 {
+        margin-top: 32px;
+        font-size: 20px;
+      }
+      p, li {
+        line-height: 1.55;
+      }
+      code {
+        background: #e5e7eb;
+        border-radius: 4px;
+        padding: 2px 5px;
+      }
+      .panel {
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Dwarf V3 Delivery</h1>
+      <p>This is the Milestone 2 delivery for Dwarf serialization/deserialization testing and first execution evidence.</p>
+
+      <section class="panel">
+        <h2>Included</h2>
+        <ul>
+          <li>Current Dwarf framework source with the V3 Milestone 2 primitive registry.</li>
+          <li>CBOR random fuzz, structured CBOR fuzz, edge-case CBOR, and serdes substrate scenarios.</li>
+          <li>Resource first-execution scenarios and selected evidence bundles.</li>
+          <li>Docker lifecycle scripts for image <code>dwarf/framework:june-20260604-m2</code>.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Where To Look</h2>
+        <ul>
+          <li><code>dwarf/scenarios/</code> contains the selected M2 scenario catalog.</li>
+          <li><code>dwarf/primitives/</code> contains the selected primitive schemas and pruned registry.</li>
+          <li><code>dwarf/docs/m2-serdes/</code> contains the retained M2 notes.</li>
+          <li><code>dwarf/evidence/m2-first-executions/</code> contains selected run bundles.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

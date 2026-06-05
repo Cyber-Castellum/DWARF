@@ -1,0 +1,10 @@
+{
+  "id": "profile-i-generated-haskell3",
+  "label": "Generated Haskell runtime, 3 nodes",
+  "haskell_count": 3,
+  "amaru_count": 0,
+  "network_magic": 42,
+  "peer_sharing": false,
+  "topology_pattern": "local-mesh",
+  "shared_genesis": true
+}

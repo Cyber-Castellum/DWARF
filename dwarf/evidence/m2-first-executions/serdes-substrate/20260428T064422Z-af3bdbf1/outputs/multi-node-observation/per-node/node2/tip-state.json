@@ -1,0 +1,105 @@
+{
+  "target_node": "node2",
+  "socket_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/socket/node2.sock",
+  "sample_count": 11,
+  "successful_sample_count": 11,
+  "failed_sample_count": 0,
+  "latest_tip": {
+    "ok": true,
+    "observed_at": "2026-04-28T06:44:46.542796Z",
+    "slot": 0,
+    "block": 0,
+    "hash": "",
+    "syncProgress": "0.00"
+  },
+  "samples": [
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:36.540691Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:37.555564Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:38.570107Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:39.584898Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:40.599433Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:41.614218Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:42.628584Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:43.643675Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:44.658784Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:45.673663Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:46.542796Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    }
+  ]
+}

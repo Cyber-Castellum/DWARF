@@ -1,0 +1,14 @@
+{
+  "id": "profile-d-amaru-preview-proof",
+  "label": "Amaru preview proof-of-life",
+  "node_type": "amaru",
+  "node_count": 0,
+  "amaru_node_count": 1,
+  "network_magic": 2,
+  "peer_sharing": false,
+  "remote_runtime_root": "/opt/dwarf/cardano-profiles/profile-d-amaru-preview-proof",
+  "compose_project": "cardano-profile-d-amaru-preview",
+  "amaru_network": "preview",
+  "upstream_peer_address": "preview-node.play.dev.cardano.org:3001",
+  "listen_address": "127.0.0.1:39000"
+}

@@ -1,0 +1,107 @@
+cabal-version: 3.0
+name:          dwarf-cardano-shims
+version:       0.1.0.0
+synopsis:      Dwarf fuzz-target shim binaries for cardano-ledger Conway decoders.
+license:       Apache-2.0
+build-type:    Simple
+
+-- Each shim reads CBOR from stdin, tries to decode as a specific Conway-era
+-- type via cardano-ledger's real decoder, and emits the Dwarf shim outcome
+-- contract (OK / ERR <reason> / crash). See ../README.md for the contract.
+
+common shared
+    default-language: GHC2021
+    ghc-options:
+        -Wall -Wcompat -Widentities -Wincomplete-record-updates
+        -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+        -Wunused-packages
+    build-depends:
+        , base               >= 4.18  && < 5
+        , bytestring         >= 0.11  && < 0.13
+        , cardano-api        >= 10.0
+        , cardano-ledger-api >= 1.9
+        , cardano-ledger-binary
+        , cardano-ledger-conway >= 1.18
+        , cardano-ledger-core >= 1.13
+        , cardano-ledger-alonzo >= 1.12
+
+executable cardano-node-cbor-decode-tx-body
+    import:         shared
+    main-is:        DecodeTxBody.hs
+    hs-source-dirs: src
+
+executable cardano-node-cbor-decode-block-header
+    import:         shared
+    main-is:        DecodeBlockHeader.hs
+    hs-source-dirs: src
+    build-depends:  ouroboros-consensus-protocol, cardano-protocol-tpraos
+
+executable cardano-node-cbor-decode-certificate
+    import:         shared
+    main-is:        DecodeCertificate.hs
+    hs-source-dirs: src
+
+executable cardano-node-cbor-decode-auxiliary-data
+    import:         shared
+    main-is:        DecodeAuxiliaryData.hs
+    hs-source-dirs: src
+
+executable cardano-node-cbor-decode-block
+    import:         shared
+    main-is:        DecodeBlock.hs
+    hs-source-dirs: src
+    build-depends:  ouroboros-consensus-protocol, cardano-protocol-tpraos
+
+executable cardano-node-mini-protocol-decode-keep-alive
+    import:         shared
+    main-is:        DecodeKeepAlive.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-handshake
+    import:         shared
+    main-is:        DecodeHandshake.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-chainsync
+    import:         shared
+    main-is:        DecodeChainSync.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-blockfetch
+    import:         shared
+    main-is:        DecodeBlockFetch.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-txsubmission
+    import:         shared
+    main-is:        DecodeTxSubmission.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-peersharing
+    import:         shared
+    main-is:        DecodePeerSharing.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-localstatequery
+    import:         shared
+    main-is:        DecodeLocalStateQuery.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-localtxsubmission
+    import:         shared
+    main-is:        DecodeLocalTxSubmission.hs
+    hs-source-dirs: src
+    build-depends:  cborg
+
+executable cardano-node-mini-protocol-decode-localtxmonitor
+    import:         shared
+    main-is:        DecodeLocalTxMonitor.hs
+    hs-source-dirs: src
+    build-depends:  cborg

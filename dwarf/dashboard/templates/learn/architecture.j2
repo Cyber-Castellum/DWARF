@@ -1,0 +1,113 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<h1>Architecture</h1>
+<p>Dwarf is the Cardano-native protocol/client/network/codec fuzzing and differential-testing platform. The closest analogues in the broader software security ecosystem are Mayhem / ForAllSecure (autonomous protocol/binary fuzzing), Defensics (protocol fuzzing harness surface), and Code Intelligence CI Fuzz (general protocol/RPC CI fuzzing engineering shape) — plus a differential-testing dimension that is uniquely Cardano-shaped, leveraging the two-implementation moment (Haskell <code>cardano-node</code> and Rust Amaru).</p>
+
+<hr class="hairline">
+
+{# Coordinates are visual decisions, not data — kept in the template. #}
+{% set node_xy = {
+    'corpora':         {'x': 40,  'y': 40,  'w': 140, 'h': 50},
+    'targets':         {'x': 40,  'y': 110, 'w': 140, 'h': 50},
+    'primitives':      {'x': 40,  'y': 180, 'w': 140, 'h': 50},
+    'scenarios':       {'x': 40,  'y': 250, 'w': 140, 'h': 50},
+    'fault_injection': {'x': 270, 'y': 60,  'w': 160, 'h': 50},
+    'runner':          {'x': 270, 'y': 170, 'w': 160, 'h': 50},
+    'telemetry':       {'x': 270, 'y': 280, 'w': 160, 'h': 50},
+    'bundle_amaru':    {'x': 510, 'y': 110, 'w': 160, 'h': 50},
+    'bundle_cn':       {'x': 510, 'y': 230, 'w': 160, 'h': 50},
+    'lifecycle':       {'x': 510, 'y': 340, 'w': 160, 'h': 40},
+    'dashboard':       {'x': 510, 'y': 10,  'w': 160, 'h': 40}
+} %}
+{% set bundle_layouts = {'amaru': node_xy['bundle_amaru'], 'cardano-node': node_xy['bundle_cn']} %}
+
+<svg class="architecture-diagram" viewBox="0 0 720 400" role="img" aria-labelledby="arch-svg-title">
+  <title id="arch-svg-title">Dwarf data flow: inputs to scenario runner to forensic bundle to dashboard</title>
+
+  {# Edges first so node rectangles render on top. #}
+  {% for edge in edges %}
+    {% set efrom = edge['from'] %}
+    {% set eto = edge['to'] %}
+    {% set ebranch = edge['branch'] %}
+    {% set elabel = edge['label'] %}
+    <g class="architecture-diagram__edge architecture-diagram__edge--{{ ebranch or 'plain' }}" data-from="{{ efrom }}" data-to="{{ eto }}">
+      {% if efrom == 'runner' and eto == 'bundle' %}
+        {% with src=node_xy['runner'], dst=bundle_layouts[ebranch] %}
+        <path d="M {{ src.x + src.w }} {{ src.y + (src.h / 2) }} L {{ dst.x }} {{ dst.y + (dst.h / 2) }}" />
+        {% if elabel %}
+        <text class="architecture-diagram__edge-label" x="{{ ((src.x + src.w) + dst.x) / 2 }}" y="{{ ((src.y + src.h / 2) + (dst.y + dst.h / 2)) / 2 - 4 }}">{{ elabel }}</text>
+        {% endif %}
+        {% endwith %}
+      {% elif eto == 'bundle' %}
+        {# Non-fork inputs to Bundle (e.g., telemetry): route to both instances. #}
+        {% with src=node_xy[efrom], dst_a=bundle_layouts['amaru'], dst_c=bundle_layouts['cardano-node'] %}
+        <path d="M {{ src.x + src.w }} {{ src.y + (src.h / 2) }} L {{ dst_a.x }} {{ dst_a.y + (dst_a.h / 2) }}" />
+        <path d="M {{ src.x + src.w }} {{ src.y + (src.h / 2) }} L {{ dst_c.x }} {{ dst_c.y + (dst_c.h / 2) }}" />
+        {% if elabel %}
+        <text class="architecture-diagram__edge-label" x="{{ src.x + src.w + 16 }}" y="{{ src.y + (src.h / 2) - 4 }}">{{ elabel }}</text>
+        {% endif %}
+        {% endwith %}
+      {% elif efrom == 'bundle' and eto == 'lifecycle' %}
+        {% with src_a=bundle_layouts['amaru'], src_c=bundle_layouts['cardano-node'], dst=node_xy['lifecycle'] %}
+        <path d="M {{ src_a.x + src_a.w }} {{ src_a.y + (src_a.h / 2) }} L {{ dst.x + (dst.w / 2) - 30 }} {{ dst.y + (dst.h / 2) }}" />
+        <path d="M {{ src_c.x + src_c.w }} {{ src_c.y + (src_c.h / 2) }} L {{ dst.x + (dst.w / 2) - 30 }} {{ dst.y + (dst.h / 2) }}" />
+        {% if elabel %}
+        <text class="architecture-diagram__edge-label" x="{{ dst.x - 28 }}" y="{{ dst.y - 4 }}">{{ elabel }}</text>
+        {% endif %}
+        {% endwith %}
+      {% else %}
+        {% with src=node_xy[efrom], dst=node_xy[eto] %}
+        <path d="M {{ src.x + src.w }} {{ src.y + (src.h / 2) }} L {{ dst.x }} {{ dst.y + (dst.h / 2) }}" />
+        {% if elabel %}
+        <text class="architecture-diagram__edge-label" x="{{ ((src.x + src.w) + dst.x) / 2 }}" y="{{ ((src.y + src.h / 2) + (dst.y + dst.h / 2)) / 2 - 4 }}">{{ elabel }}</text>
+        {% endif %}
+        {% endwith %}
+      {% endif %}
+    </g>
+  {% endfor %}
+
+  {# Nodes — bundle rendered twice via the differential-testing fork. #}
+  {% for node in nodes %}
+    {% if node.slug == 'bundle' %}
+      {% for branch_key, layout in bundle_layouts.items() %}
+        <g class="architecture-diagram__node architecture-diagram__node--{{ node.role }}" data-slug="bundle" data-branch="{{ branch_key }}">
+          <a href="#node-bundle">
+            <rect x="{{ layout.x }}" y="{{ layout.y }}" width="{{ layout.w }}" height="{{ layout.h }}" rx="6" />
+            <text class="architecture-diagram__label" x="{{ layout.x + (layout.w / 2) }}" y="{{ layout.y + (layout.h / 2) + 4 }}">{{ node.label }} ({{ branch_key }})</text>
+          </a>
+        </g>
+      {% endfor %}
+    {% else %}
+      {% set layout = node_xy[node.slug] %}
+      <g class="architecture-diagram__node architecture-diagram__node--{{ node.role }}" data-slug="{{ node.slug }}">
+        <a href="#node-{{ node.slug }}">
+          <rect x="{{ layout.x }}" y="{{ layout.y }}" width="{{ layout.w }}" height="{{ layout.h }}" rx="6" />
+          <text class="architecture-diagram__label" x="{{ layout.x + (layout.w / 2) }}" y="{{ layout.y + (layout.h / 2) + 4 }}">{{ node.label }}</text>
+        </a>
+      </g>
+    {% endif %}
+  {% endfor %}
+</svg>
+
+<hr class="hairline">
+
+{% for node in nodes %}
+{% include "learn/_partials/_architecture_node.j2" %}
+{% endfor %}
+
+<hr class="hairline">
+
+<section class="deployment-topology" aria-labelledby="deployment-topology-heading">
+  <span class="eyebrow">Deployment topology</span>
+  <h2 id="deployment-topology-heading">Where the runtime lives</h2>
+  <p>The data-flow diagram above describes how a scenario becomes a forensic bundle. The <em>substrate</em> the scenario runs on is a separate concern: an operator can compose target-node services on the same Linux host or another reachable Linux host, depending on the profile and campaign.</p>
+  <p>The substrate has three zones:</p>
+  <ul>
+    <li><strong>Operator zone</strong> — browser dashboard and local CLI invoking <code>cardano-profile</code>. No Cardano process runs here.</li>
+    <li><strong>Host zone</strong> — the Linux host that owns the managed Cardano runtime. The dashboard never executes mutating commands against a target host without an operator token.</li>
+    <li><strong>Runtime zone</strong> — the <code>node1</code>/<code>node2</code>/<code>node3</code> processes (or single Amaru) that actually serve scenarios. Sockets, logs, and DB state all live here under the profile's <code>remote_runtime_root</code>.</li>
+  </ul>
+  <p class="page-subhero">For the live state of this substrate (process counts, sockets, sync, configuration) see <a href="/operate/status">/operate/status</a>. This page describes the architecture; that page reads the deployment.</p>
+</section>
+{% endblock %}

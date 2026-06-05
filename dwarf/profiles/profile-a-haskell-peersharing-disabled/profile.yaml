@@ -1,0 +1,10 @@
+{
+  "id": "profile-a-haskell-peersharing-disabled",
+  "label": "Haskell baseline, PeerSharingDisabled",
+  "node_type": "cardano-node",
+  "node_count": 3,
+  "network_magic": 42,
+  "peer_sharing": false,
+  "remote_runtime_root": "/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled",
+  "compose_project": "dwarf-profile-a-haskell-peersharing-disabled"
+}

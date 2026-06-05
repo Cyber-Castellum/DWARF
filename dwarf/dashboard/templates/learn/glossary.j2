@@ -1,0 +1,18 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Glossary</span>
+<h1>Glossary (audit-grade)</h1>
+<p class="page-hero">CGPL audit-grade terminology — concise definitions for every term that appears in scenario files, bundle manifests, observation outputs, and operator runbooks.</p>
+
+<hr class="hairline">
+
+<dl class="learn-glossary">
+  {% for t in terms %}
+  <dt id="term-{{ t.term|lower|replace(' ', '-') }}"><code>{{ t.term }}</code></dt>
+  <dd>
+    {{ t.definition|safe }}
+    {% if t.see_also %}<p class="learn-glossary__see"><small>see also <a href="{{ t.see_also }}">{{ t.see_also }}</a></small></p>{% endif %}
+  </dd>
+  {% endfor %}
+</dl>
+{% endblock %}

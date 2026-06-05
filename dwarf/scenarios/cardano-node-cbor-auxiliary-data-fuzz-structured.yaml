@@ -1,0 +1,41 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-node-cbor-auxiliary-data-fuzz-structured",
+  "title": "Structured-CBOR fuzz of cardano-node auxiliary-data parser (Conway tag 259)",
+  "authors": ["dwarf"],
+  "tags": ["ser-deser", "parser", "fuzz", "structured", "cardano-node", "auxiliary-data"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "library",
+  "seed": "0xCAFE0502",
+  "load": [
+    {
+      "primitive": "cbor_fuzz_structured",
+      "target_id": "cardano-node-cbor-decode-auxiliary-data",
+      "manifests_dir": "dwarf/targets/manifests",
+      "iterations": 5000,
+      "mutation_rate": 0.05,
+      "per_input_timeout_seconds": 2,
+      "shape": {
+        "type": "tag",
+        "tag": 259,
+        "inner": {
+          "type": "map",
+          "entries": [
+            [0, {"type": "map", "entries": [
+              [1, {"type": "text", "length": {"min": 1, "max": 32}}]
+            ]}],
+            [1, {"type": "array", "elements": []}],
+            [2, {"type": "array", "elements": []}],
+            [3, {"type": "array", "elements": []}]
+          ]
+        }
+      }
+    }
+  ],
+  "probes": [{"primitive": "parser_exit_status"}],
+  "assertions": [
+    {"primitive": "parse_succeeds_or_clean_error"},
+    {"primitive": "roundtrip_equals_original"}
+  ],
+  "teardown": []
+}

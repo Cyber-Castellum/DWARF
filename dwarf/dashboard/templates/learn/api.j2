@@ -1,0 +1,90 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · API</span>
+<h1>REST API reference</h1>
+<p class="page-hero learn-api-summary">This dashboard exposes <strong>{{ machine_readable_count }}</strong> machine-readable JSON endpoints and <strong>{{ html_count }}</strong> browser-only HTML routes.</p>
+<p>JSON / SSE / binary endpoints below; the HTML routes are listed in the Browser-only surface section. Most dashboard routes return HTML for browser consumption; this page documents only the machine-readable endpoints — the ones your monitoring stack, CI, or downstream tooling will call.</p>
+
+<hr class="hairline">
+
+<section class="status-summary" aria-labelledby="api-summary-heading">
+  <h2 id="api-summary-heading" class="visually-hidden">Endpoint summary</h2>
+  <div class="status-tile-grid">
+    <article class="status-tile">
+      <span class="eyebrow">JSON endpoints</span>
+      <span class="status-tile__metric">{{ json_count }}</span>
+      <p class="status-tile__sub">application/json responses</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">SSE endpoints</span>
+      <span class="status-tile__metric">{{ sse_count }}</span>
+      <p class="status-tile__sub">text/event-stream</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Binary endpoints</span>
+      <span class="status-tile__metric">{{ binary_count }}</span>
+      <p class="status-tile__sub">tar.gz / artifact downloads</p>
+    </article>
+  </div>
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="endpoints-heading">
+  <header><span class="eyebrow">Endpoints</span><h2 id="endpoints-heading">Machine-readable surface</h2></header>
+  {% for ep in endpoints %}
+  <article class="learn-api-endpoint">
+    <header>
+      <code class="learn-api-endpoint__path">{{ ep.method }} {{ ep.path }}</code>
+      <span class="result-pill">{{ ep.kind }}</span>
+    </header>
+    {% if ep.aliases %}<p class="page-subhero"><small>aliases: {% for a in ep.aliases %}<code>{{ a }}</code>{% if not loop.last %} · {% endif %}{% endfor %}</small></p>{% endif %}
+    <p>{{ ep.description }}</p>
+    {% if ep.parameters %}
+    <h3>Parameters</h3>
+    <table class="config-table learn-api-table">
+      <thead><tr><th>name</th><th>kind</th><th>required</th><th>type</th><th>default</th></tr></thead>
+      <tbody>
+        {% for p in ep.parameters %}
+        <tr>
+          <td><code>{{ p.name }}</code></td>
+          <td><code>{{ p.kind }}</code></td>
+          <td>{{ '✓' if p.required else '—' }}</td>
+          <td><code>{{ p.type }}</code></td>
+          <td><code>{{ p.default or '—' }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <details>
+      <summary>Response shape + example</summary>
+      <h3>Schema</h3>
+      <pre class="run-payload-pre"><code>{{ ep.response_schema|tojson(indent=2) }}</code></pre>
+      <h3>Example</h3>
+      <pre class="run-payload-pre"><code>{{ ep.example }}</code></pre>
+    </details>
+  </article>
+  {% endfor %}
+</section>
+
+<hr class="hairline">
+
+<section aria-labelledby="html-heading">
+  <header><span class="eyebrow">HTML routes</span><h2 id="html-heading">Browser-only surface</h2></header>
+  <p class="page-subhero">These routes return HTML and are intended for browser consumption. They are not part of the REST API — scraping them is fragile.</p>
+  <div class="learn-api-html-groups">
+    {% for group in html_route_groups %}
+    <article class="learn-api-html-group">
+      <header>
+        <span class="eyebrow">{{ group.label }}</span>
+        <h3 class="learn-api-html-group__count">{{ group.count }} route{{ '' if group.count == 1 else 's' }}</h3>
+      </header>
+      <ul>
+        {% for r in group.routes %}<li><code>GET {{ r }}</code></li>{% endfor %}
+      </ul>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

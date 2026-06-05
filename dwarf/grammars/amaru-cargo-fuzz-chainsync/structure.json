@@ -1,0 +1,15 @@
+{
+  "format": "cbor",
+  "target": "amaru-cargo-fuzz-chainsync",
+  "decoder_entrypoint": "decode(data) in dwarf/targets/amaru-cargo-fuzz-chainsync/fuzz_targets/chainsync.rs",
+  "shape": {
+    "type": "array",
+    "notes": [
+      "ChainSync messages are CBOR arrays keyed by message id 0..7.",
+      "Points are either [] or [slot, hash32].",
+      "Tips are [point, block_height].",
+      "Intersect requests carry an array of points."
+    ]
+  }
+}
+

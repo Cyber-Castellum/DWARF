@@ -1,0 +1,1 @@
+{"id":"amaru-cbor-decode-block","binary":"dwarf/targets/amaru/target/release/amaru-cbor-decode-block","input_format":"stdin_bytes","implementation":"amaru","language":"rust","upstream_commit":"local","decoder_type":"CBOR codec","invariants":["deserialize-roundtrip preserved","no panic on bounded input","size-bounded output"]}

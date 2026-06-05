@@ -1,0 +1,24 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Compare</span>
+<h1>Compare runs</h1>
+<p class="page-hero">Substrate-aware side-by-side diff for two run-id bundles. Surfaces topology / multi-node / byzantine / hf-boundary / era-transition deltas and flipped assertions, in the same operator-readable language as the bundle inspector.</p>
+
+<hr class="hairline">
+
+<section aria-labelledby="picker-heading">
+  <header><span class="eyebrow">Picker</span><h2 id="picker-heading">Choose two run-ids</h2></header>
+  <form action="/operate/compare/runs" method="get" class="run-compare-form">
+    <label>
+      <span class="eyebrow">left (baseline)</span>
+      <input type="text" name="left" value="{{ left_id or '' }}" placeholder="20260427T154920Z-4bdcb76f" required pattern="[A-Za-z0-9._-]+">
+    </label>
+    <label>
+      <span class="eyebrow">right (variant)</span>
+      <input type="text" name="right" value="{{ right_id or '' }}" placeholder="20260427T151803Z-ec502f75" required pattern="[A-Za-z0-9._-]+">
+    </label>
+    <button type="submit" class="cta">Compare</button>
+  </form>
+  <p class="page-subhero">Run-ids are the directory names under <code>runs/</code>. Find them on the <a href="/operate/runs">recent-runs</a> page or the bundle inspector URL bar.</p>
+</section>
+{% endblock %}

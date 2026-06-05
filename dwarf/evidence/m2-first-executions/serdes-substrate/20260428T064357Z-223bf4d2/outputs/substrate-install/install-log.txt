@@ -1,0 +1,2 @@
+node1	cardano-node	requested=10.7.1	status=present	binary=/home/nigel/.local/bin/cardano-node
+node2	cardano-node	requested=10.7.1	status=present	binary=/home/nigel/.local/bin/cardano-node

@@ -1,0 +1,183 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Timeline</span>
+<h1>Cross-bundle evidence chronology</h1>
+<p class="page-hero">Operator-readable view of <code>runtime_bundle_timeline</code> output: each scenario execution that left a tamper-evident bundle, plotted in time, keyed by signature so recurrence is visible at a glance. Dwarf does not interpret the events — the page mirrors what the harness recorded.</p>
+
+<hr class="hairline">
+
+{% if not latest %}
+<p class="empty-section-statement">
+  No bundles preserved yet.
+  <span class="empty-section-statement__cite">scanned <code>dwarf/runs/</code>, 0 runs with <code>outputs/bundle-timeline/</code></span>
+</p>
+<p>Use <code>cardano-profile bundle export &lt;run-id&gt;</code> to preserve runs into the timeline corpus:</p>
+<pre class="run-payload-pre"><code># Inside Docker
+docker compose exec dwarf-fw cardano-profile bundle export &lt;run-id&gt;
+
+# Bare metal
+cardano-profile bundle export &lt;run-id&gt;</code></pre>
+<p>Or run a <code>runtime_bundle_timeline</code> scenario directly — see the <a href="/learn/cli#cli-primitive">CLI reference</a> for the example smoke and the available filters.</p>
+{% else %}
+
+<section class="timeline-rollup" aria-labelledby="rollup-heading">
+  <header class="timeline-rollup__head">
+    <span class="eyebrow">Latest timeline</span>
+    <h2 id="rollup-heading">Bundle <a href="{{ latest.run_url }}"><code>{{ latest.run_id }}</code></a></h2>
+    <p class="page-subhero">Generated at <code>{{ latest.generated_at_utc or '—' }}</code>{% if latest.summary.applied_scenario_filters or latest.summary.applied_signature_filters %} · filters applied{% endif %}.</p>
+  </header>
+
+  <div class="status-tile-grid timeline-tiles">
+    <article class="status-tile">
+      <span class="eyebrow">Events</span>
+      <span class="status-tile__metric">{{ latest.summary.event_count if latest.summary.event_count is not none else '—' }}</span>
+      <p class="status-tile__sub">scenario executions plotted</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Signatures</span>
+      <span class="status-tile__metric">{{ latest.summary.signature_count if latest.summary.signature_count is not none else '—' }}</span>
+      <p class="status-tile__sub">{{ latest.summary.unique_signatures if latest.summary.unique_signatures is not none else '—' }} unique by composition</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">First seen</span>
+      <span class="status-tile__metric status-tile__metric--label">{{ latest.summary.first_seen_at or '—' }}</span>
+      <p class="status-tile__sub">earliest event in the window</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Last seen</span>
+      <span class="status-tile__metric status-tile__metric--label">{{ latest.summary.last_seen_at or '—' }}</span>
+      <p class="status-tile__sub">latest event in the window</p>
+    </article>
+  </div>
+
+  <p class="page-subhero">
+    Source artifacts:
+    {% if latest.json_url %}<a href="{{ latest.json_url }}"><code>timeline.json</code></a>{% endif %}
+    {% if latest.md_url %} · <a href="{{ latest.md_url }}"><code>timeline-summary.md</code></a>{% endif %}
+  </p>
+</section>
+
+<hr class="hairline">
+
+<section class="timeline-events" aria-labelledby="events-heading">
+  <header class="timeline-rollup__head">
+    <span class="eyebrow">Chronology</span>
+    <h2 id="events-heading">Event timeline</h2>
+    <p class="page-subhero">Newest first. Each row is one bundle's contribution to the chronology, with the signature decomposed into its evidence tokens.</p>
+  </header>
+
+  <ol class="timeline-strip">
+    {% for ev in latest.events %}
+    <li class="timeline-event timeline-event--{{ ev.exit_status or 'unknown' }}">
+      <div class="timeline-event__when">
+        <time datetime="{{ ev.timestamp }}">{{ ev.timestamp or '—' }}</time>
+      </div>
+      <div class="timeline-event__body">
+        <div class="timeline-event__head">
+          {% if ev.exit_status %}
+          <span class="result-pill result-pill--{{ ev.exit_status }}">{{ ev.exit_status }}</span>
+          {% endif %}
+          <code class="timeline-event__scenario">{{ ev.scenario_id or '—' }}</code>
+          {% if ev.bundle_url %}<a class="timeline-event__bundle" href="{{ ev.bundle_url }}"><code>{{ ev.bundle_id }}</code></a>{% endif %}
+        </div>
+        {% if ev.evidence_tokens %}
+        <ul class="timeline-event__tokens">
+          {% for tok in ev.evidence_tokens %}<li><code>{{ tok }}</code></li>{% endfor %}
+        </ul>
+        {% endif %}
+        <p class="timeline-event__signature"><span class="eyebrow">signature</span> <code title="{{ ev.signature_label }}">{{ ev.signature_id[:16] if ev.signature_id else '—' }}…</code></p>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+{% if latest.signatures %}
+<hr class="hairline">
+
+<section class="timeline-signatures" aria-labelledby="signatures-heading">
+  <header class="timeline-rollup__head">
+    <span class="eyebrow">Signatures</span>
+    <h2 id="signatures-heading">Per-signature breakdown</h2>
+    <p class="page-subhero">Each row is one signature (scenario + exit status + evidence-token composition); the sightings_count column shows how many bundles share it across the window.</p>
+  </header>
+  <table class="config-table timeline-signatures__table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Exit</th>
+        <th>Evidence tokens</th>
+        <th>First seen</th>
+        <th>Last seen</th>
+        <th>Sightings</th>
+        <th>Bundles</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in latest.signatures %}
+      <tr>
+        <td><code>{{ s.scenario_id or '—' }}</code></td>
+        <td>{% if s.exit_status %}<span class="result-pill result-pill--{{ s.exit_status }}">{{ s.exit_status }}</span>{% else %}—{% endif %}</td>
+        <td>
+          {% if s.evidence_tokens %}
+          <ul class="timeline-event__tokens">
+            {% for tok in s.evidence_tokens %}<li><code>{{ tok }}</code></li>{% endfor %}
+          </ul>
+          {% else %}—{% endif %}
+        </td>
+        <td><code>{{ s.first_seen_at or '—' }}</code></td>
+        <td><code>{{ s.last_seen_at or '—' }}</code></td>
+        <td>{{ s.sightings_count if s.sightings_count is not none else '—' }}</td>
+        <td>
+          {% if s.sighting_bundle_urls %}
+          <ul class="timeline-event__tokens">
+            {% for b in s.sighting_bundle_urls %}<li><a href="{{ b.url }}"><code>{{ b.id }}</code></a></li>{% endfor %}
+          </ul>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% endif %}
+
+{% if history %}
+<hr class="hairline">
+
+<section class="timeline-history" aria-labelledby="history-heading">
+  <header class="timeline-rollup__head">
+    <span class="eyebrow">History</span>
+    <h2 id="history-heading">Past timeline runs</h2>
+    <p class="page-subhero">Latest {{ history|length }} run{{ '' if history|length == 1 else 's' }} whose bundle contains <code>outputs/bundle-timeline/</code>. Sorted newest first.</p>
+  </header>
+  <table class="config-table timeline-history__table">
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th>Generated</th>
+        <th>Input bundles</th>
+        <th>Events</th>
+        <th>Signatures</th>
+        <th>Window</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in history %}
+      <tr>
+        <td><a href="{{ h.run_url }}"><code>{{ h.run_id }}</code></a></td>
+        <td>{{ h.generated_at_utc or '—' }}</td>
+        <td>{{ h.input_bundle_count if h.input_bundle_count is not none else '—' }}</td>
+        <td>{{ h.event_count if h.event_count is not none else '—' }}</td>
+        <td>{{ h.signature_count if h.signature_count is not none else '—' }}</td>
+        <td>{{ h.first_seen_at or '—' }} → {{ h.last_seen_at or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% endblock %}

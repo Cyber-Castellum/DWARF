@@ -1,0 +1,37 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Examples</span>
+<h1>Examples gallery</h1>
+<p class="page-hero">Ten representative scenarios spanning the substrate / fault / fuzzing axis. Each card carries the YAML body verbatim from <code>dwarf/scenarios/</code> plus prose annotation. Use these as the starting point when authoring your own.</p>
+
+<hr class="hairline">
+
+{% if not examples %}
+<p class="empty-section-statement">No example scenarios on disk.
+  <span class="empty-section-statement__cite">expected <code>dwarf/scenarios/*.yaml</code></span>
+</p>
+{% else %}
+<section class="learn-examples">
+  {% for ex in examples %}
+  <article class="learn-example" id="{{ ex.scenario_id }}">
+    <header>
+      <span class="eyebrow">{{ ex.family }}</span>
+      <h2><code>{{ ex.scenario_id }}</code></h2>
+    </header>
+    <p>{{ ex.demonstrates }}</p>
+    <dl class="learn-example__rows">
+      <div><dt>Expected</dt><dd>{{ ex.expected }}</dd></div>
+      <div><dt>CLI</dt><dd><code>{{ ex.cli_command }}</code></dd></div>
+    </dl>
+    <details>
+      <summary>YAML body ({{ ex.size_bytes }} bytes)</summary>
+      <pre class="run-payload-pre"><code>{{ ex.body }}</code></pre>
+    </details>
+    <p>
+      <a class="cta cta--ghost" href="{{ ex.scenarios_url }}">Find in /operate/scenarios →</a>
+    </p>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

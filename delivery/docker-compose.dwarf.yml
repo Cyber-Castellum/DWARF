@@ -1,0 +1,36 @@
+name: dwarf-june-m2
+
+services:
+  dwarf-fw:
+    image: ${DWARF_IMAGE:-dwarf/framework:june-20260604-m2}
+    container_name: ${DWARF_CONTAINER_NAME:-dwarf-fw-june-m2}
+    command:
+      - dashboard
+      - serve
+      - --bind
+      - 0.0.0.0
+      - --port
+      - "8787"
+      - --token
+      - ${ADA2_DWARF_TOKEN:-dwarf}
+    ports:
+      - "${DWARF_DASHBOARD_BIND:-0.0.0.0}:${DWARF_DASHBOARD_PORT:-8787}:8787"
+    environment:
+      ADA2_DWARF_RUNS_DIR: /var/dwarf/runs
+      ADA2_DWARF_STATE_DIR: /var/dwarf/state
+      ADA2_DWARF_BUNDLES_DIR: /var/dwarf/bundles
+      ADA2_PROFILE_MANAGER_CONFIG: /var/dwarf/state/config.yaml
+      ADA2_DWARF_TOKEN: ${ADA2_DWARF_TOKEN:-dwarf}
+    volumes:
+      - ${DWARF_RUNTIME_ROOT:-../var}/runs:/var/dwarf/runs
+      - ${DWARF_RUNTIME_ROOT:-../var}/state:/var/dwarf/state
+      - ${DWARF_RUNTIME_ROOT:-../var}/bundles:/var/dwarf/bundles
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /run
+    restart: unless-stopped

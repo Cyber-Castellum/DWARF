@@ -1,0 +1,25 @@
+[
+  {
+    "data_points_used": [],
+    "evaluated_value": {
+      "clean_error": 10000,
+      "crash": 0,
+      "ok": 0
+    },
+    "params": {},
+    "primitive": "parse_succeeds_or_clean_error",
+    "result": "pass"
+  },
+  {
+    "data_points_used": [],
+    "evaluated_value": {
+      "matched": 0,
+      "mismatched": 0,
+      "ok": 0
+    },
+    "note": "no parsed inputs to compare; vacuous pass",
+    "params": {},
+    "primitive": "roundtrip_equals_original",
+    "result": "pass"
+  }
+]

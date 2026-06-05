@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "cbor_edge_cases params",
+  "type": "object",
+  "required": ["target_id", "manifests_dir", "edge_cases"],
+  "properties": {
+    "target_id": { "type": "string", "minLength": 1 },
+    "manifests_dir": { "type": "string", "minLength": 1 },
+    "edge_cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "hex"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "hex": { "type": "string", "minLength": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "per_input_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 }
+  },
+  "additionalProperties": false
+}

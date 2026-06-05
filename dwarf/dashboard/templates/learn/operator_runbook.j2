@@ -1,0 +1,198 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn · Operator runbook</span>
+<h1>Operator runbook</h1>
+<p class="page-hero">Deploy, day-2 operations, troubleshooting recipes, backup / restore, and health monitoring for the V3 delivery package.</p>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 1</span><h2>Deploy</h2></header>
+  <h3>Recommended: Docker</h3>
+  <p>The delivery package ships with Docker lifecycle scripts. From an unpacked <code>dwarf-v3/</code>:</p>
+  <pre class="run-payload-pre"><code>cd dwarf-v3/
+delivery/scripts/install.sh
+delivery/scripts/build-image.sh
+delivery/scripts/deploy.sh</code></pre>
+  <p>The deployment starts <code>dwarf/framework:june-20260604-m2</code>, mounts <code>runs</code>, <code>state</code>, and <code>bundles</code> from the package runtime directory into the container, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites are listed in <code>INSTALL.md</code>.</p>
+  <h3>Alternative: bare metal</h3>
+  <pre class="run-payload-pre"><code>git clone https://github.com/dwarf-fw/dwarf
+cd dwarf
+./scripts/setup.sh
+./cardano-profile dashboard serve --bind 0.0.0.0 --port 8787</code></pre>
+  <p>Same CLI, framework runs as host processes via tmux. <code>state/</code> · <code>runs/</code> · <code>bundles/</code> live under the repo root.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 2</span><h2>Common operations</h2></header>
+
+  <h3>Run a scenario</h3>
+  <pre class="run-payload-pre"><code># Inside Docker
+docker compose exec dwarf-fw \
+  cardano-profile scenario run \
+  scenarios/runtime-substrate-honest-baseline-example-smoke.yaml
+
+# Bare metal
+./cardano-profile scenario run \
+  dwarf/scenarios/runtime-substrate-honest-baseline-example-smoke.yaml</code></pre>
+  <p>Output lands in <code>runs/&lt;timestamp&gt;-&lt;hash&gt;/</code>; the dashboard auto-discovers it. <a href="/operate/runs">/operate/runs</a> lists newest-first.</p>
+
+  <h3>View runs &amp; bundles</h3>
+  <ul>
+    <li><a href="/operate/runs">/operate/runs</a> — every run on disk, filterable by outcome / scenario / target.</li>
+    <li><a href="/operate/runs/&lt;id&gt;">/operate/runs/&lt;id&gt;</a> — bundle inspector: manifest, hash chain, substrate evidence tiles, assertions, log tail.</li>
+    <li><a href="/operate/runs/&lt;id&gt;/live">/operate/runs/&lt;id&gt;/live</a> — SSE log tail, useful while a scenario is running.</li>
+    <li><a href="/operate/bundles">/operate/bundles</a> — preserved tar.gz archives + import upload form.</li>
+  </ul>
+
+  <h3>Export a bundle for an audit package</h3>
+  <pre class="run-payload-pre"><code>cardano-profile bundle export &lt;run-id&gt;</code></pre>
+  <p>Or click <strong>Export bundle (.tar.gz)</strong> on the inspector header. The framework verifies the manifest hash chain on its way out so the archive is tamper-proof at unpack time.</p>
+
+  <h3>Import a bundle from another box</h3>
+  <pre class="run-payload-pre"><code>cardano-profile bundle import &lt;path-to.tar.gz&gt;</code></pre>
+  <p>Or drag-drop a tar.gz onto the upload form on <a href="/operate/bundles">/operate/bundles</a>. Existing run-ids are not overwritten.</p>
+
+  <h3>Configure notifications</h3>
+  <p>Edit <code>state/config.yaml</code>:</p>
+  <pre class="run-payload-pre"><code>notifications:
+  on_scenario_fail:
+    - type: webhook
+      url: https://example.com/dwarf-hook
+    - type: slack
+      url: https://hooks.slack.com/services/T0/B0/XXXX
+  on_coverage_regression:
+    - type: email
+      to: ops@example.com
+  smtp:
+    host: smtp.example.com
+    port: 587
+    from: dwarf@example.com</code></pre>
+  <p>Restart the dashboard so the new config is read. Outcomes append to <code>state/notifications.log</code>. View configured rules at <a href="/operate/notifications">/operate/notifications</a>.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 3</span><h2>Troubleshooting</h2></header>
+  <p>Each entry pairs a symptom with the diagnosis and the corrective action.</p>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom"><code>rsync</code> reports "sent N bytes" but the destination md5 is unchanged</h3>
+    <p><strong>Diagnosis:</strong> rsync's delta-transfer optimisations decide a file is "similar enough" and skip the actual rewrite. Hits when deploying to a host that's also being touched by a separate rebuild pipeline.</p>
+    <p><strong>Fix:</strong> Switch to <code>scp</code> for code transfers (always overwrites). Or pass <code>--inplace --no-whole-file</code>. Verify with <code>md5sum</code> post-transfer.</p>
+  </article>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom">Dashboard returns 200 but the page renders unstyled</h3>
+    <p><strong>Diagnosis:</strong> <code>DASHBOARD_ROOT</code> resolution picked the wrong candidate. Common when <code>/home/&lt;user&gt;/dwarf/dashboard/</code> exists as a stale leftover (only an <code>index.html</code>, no <code>static/</code>) — the picker prefers candidates whose <code>static/</code> subdir actually exists, but a totally-empty leftover defeats both code paths.</p>
+    <p><strong>Fix:</strong> <code>rm -rf /home/&lt;user&gt;/dwarf</code> if stale, then <code>mkdir /home/&lt;user&gt;/dwarf-fw/agent</code> so <code>_discover_project_root</code> pins the right candidate. Verify with <code>python3 -c "from profile_manager.dashboard import DASHBOARD_ROOT; print(DASHBOARD_ROOT)"</code>.</p>
+  </article>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom"><code>pgrep -f 'dashboard serve' | head -1</code> returns a PID but <code>kill -9</code> doesn't free port 8787</h3>
+    <p><strong>Diagnosis:</strong> <code>cardano-profile dashboard serve</code> spawns a python child that owns the listening socket; the parent shell wrapper has a different PID. <code>head -1</code> returns the first match in PID order — sometimes the wrapper, not the listener.</p>
+    <p><strong>Fix:</strong> Target the listener directly via <code>ss</code> + the kernel's socket→pid map:</p>
+    <pre class="run-payload-pre"><code>PID=$(ss -tlnp 2&gt;/dev/null | grep 8787 | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2)
+kill -9 $PID</code></pre>
+  </article>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom">Code on <code>/home/&lt;user&gt;/dwarf-fw</code> updated but the running dashboard serves the old version</h3>
+    <p><strong>Diagnosis:</strong> The dashboard runs inside the V3 Docker container (<code>dwarf-fw-june-m2</code>, image <code>dwarf/framework:june-20260604-m2</code>). The framework source inside the image is baked at build time; host-side runtime directories are mounted only for runs, state, and bundles.</p>
+    <p><strong>Fix:</strong></p>
+    <pre class="run-payload-pre"><code>delivery/scripts/build-image.sh
+delivery/scripts/deploy.sh
+# verify
+docker exec dwarf-fw-june-m2 python3 dwarf/cardano-profile dashboard status</code></pre>
+    <p>For source changes, rebuild and redeploy the image rather than copying files into the running container.</p>
+  </article>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom"><code>ImportError: cannot import name 'X' from 'profile_manager.Y'</code></h3>
+    <p><strong>Diagnosis:</strong> The container's <code>profile_manager</code> predates the import the dashboard now needs (e.g. <code>plugin_loader</code> added after the image was built; <code>CONFIG_FIELDS</code> added after, etc.). The image-rebuild pipeline lags head-of-tree.</p>
+    <p><strong>Fix:</strong> Either <code>docker cp</code> the missing module into the container (short-term), or add a graceful fallback in the importer (preferred for code that ships before the next image build):</p>
+    <pre class="run-payload-pre"><code>try:
+    from profile_manager.X import Y
+except ImportError:
+    Y = &lt;fallback&gt;</code></pre>
+  </article>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom">cardano-node socket path 108-byte limit exceeded</h3>
+    <p><strong>Diagnosis:</strong> Unix-domain socket paths max out at 108 bytes (107 chars + null). cardano-node creates its socket under the runtime_root path, so deeply-nested compose layouts can exceed the limit. Symptom: silent connection refused on ChainSync.</p>
+    <p><strong>Fix:</strong> Shorten the runtime_root path. Set <code>remote_base_path</code> to something like <code>/opt/dwarf/&lt;profile&gt;/</code> rather than <code>/home/&lt;user&gt;/cardano-profiles/&lt;profile&gt;/</code>. <code>cardano-profile prereq-check</code> warns when the resolved socket path approaches the limit.</p>
+  </article>
+
+  <article class="learn-trouble__item">
+    <h3 class="learn-trouble__symptom">Caddy returns 502 on <code>/operate/runs/&lt;id&gt;/tail</code> after ~30s</h3>
+    <p><strong>Diagnosis:</strong> Caddy's default proxy timeout closes long-running streams. The /tail endpoint is intentionally long-lived (up to 600s idle).</p>
+    <p><strong>Fix:</strong> In the Caddyfile reverse_proxy block: <code>flush_interval -1</code> + <code>transport http { read_timeout 0 }</code>. Lets Caddy stream SSE chunks immediately without buffering and removes the upstream-read timeout.</p>
+  </article>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 4</span><h2>Backup &amp; restore</h2></header>
+  <p>The framework's substrate state, runs, bundles, and config live under three host-mounted directories:</p>
+  <ul>
+    <li><code>runs/</code> — every recorded scenario execution. Auto-pruned per <code>runs_retention_days</code> in config (default 30).</li>
+    <li><code>bundles/</code> — explicitly-preserved forensic archives. Retained per <code>bundles_retention_days</code> (default 90).</li>
+    <li><code>state/</code> — dashboard config + notifications log + chain head + lifecycle ledger.</li>
+  </ul>
+  <p>Snapshot all three for backup. The framework provides primitives that wrap this:</p>
+  <pre class="run-payload-pre"><code># Capture
+cardano-profile backup --output /backups/dwarf-$(date +%Y%m%d).tar.gz
+
+# Restore (target dir must be empty)
+cardano-profile restore --archive /backups/dwarf-20260429.tar.gz \
+                        --target /home/dwarf/dwarf-fw</code></pre>
+  <p>The backup primitive stops the dashboard, captures the three trees with their hash chain intact, and restarts. Restore is the inverse — verify the chain, unpack, restart.</p>
+</section>
+
+<hr class="hairline">
+
+<section>
+  <header><span class="eyebrow">Step 5</span><h2>Health monitoring</h2></header>
+
+  <h3>Liveness probe</h3>
+  <p><a href="/healthz">/healthz</a> returns lightweight JSON with per-component status:</p>
+  <pre class="run-payload-pre"><code>{
+  "status": "ok",
+  "components": {
+    "dashboard": "ok",
+    "runs_dir": "ok",
+    "state_dir": "ok"
+  },
+  "uptime_seconds": 1283.4
+}</code></pre>
+  <p>200 when overall status is ok; 503 otherwise. Designed for load-balancer / supervisor probes that only need a yes/no signal — distinct from <code>/api/health</code> which carries the full substrate payload.</p>
+
+  <h3>Prometheus scrape</h3>
+  <p><a href="/metrics">/metrics</a> emits text-exposition format with eight metric families:</p>
+  <ul>
+    <li><code>dwarf_dashboard_requests_total{method, path, status}</code></li>
+    <li><code>dwarf_runs_total{outcome}</code> (pass / fail / error)</li>
+    <li><code>dwarf_assertions_pass_total</code> · <code>dwarf_assertions_fail_total</code></li>
+    <li><code>dwarf_substrate_compose_total{mode}</code> (host / docker / multi-host)</li>
+    <li><code>dwarf_bundle_size_bytes</code> · <code>dwarf_bundle_count</code></li>
+    <li><code>dwarf_dashboard_uptime_seconds</code></li>
+  </ul>
+  <p>Path-bucketing collapses ID-bearing routes (e.g. <code>/operate/runs/&lt;id&gt;</code>) so cardinality stays bounded under heavy traffic.</p>
+
+  <h3>Sample Prometheus scrape config</h3>
+  <pre class="run-payload-pre"><code>scrape_configs:
+  - job_name: dwarf
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['<host-lan-ip>:8787']
+    scheme: https</code></pre>
+</section>
+
+<hr class="hairline">
+
+<p class="page-subhero">Cross-reference: <a href="/learn/troubleshooting">troubleshooting (full)</a> · <a href="/learn/api">REST API reference</a> · <a href="/learn/glossary">glossary</a> · <a href="/learn/cli">CLI reference</a></p>
+{% endblock %}

@@ -1,0 +1,32 @@
+{
+  "id": "package-a-parser-protocol-smoke",
+  "label": "Package A Parser/Protocol Smoke",
+  "category": "package-a",
+  "status": "bounded",
+  "source_reference": "codebases/amaru; retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-001-evidence.md",
+  "working_directory": "/opt/dwarf/targets/amaru",
+  "timeout_seconds": 900,
+  "environment": {
+    "PROPTEST_CASES": "8"
+  },
+  "commands": [
+    "source ~/.cargo/env",
+    "cargo test -p amaru-kernel metadatum::tests::decode_malformed -- --nocapture",
+    "cargo test -p amaru-kernel transaction_body::tests::decode_malformed -- --nocapture",
+    "cargo test -p amaru-kernel network_block -- --nocapture",
+    "cargo test -p amaru-protocols handshake -- --nocapture",
+    "cargo test -p amaru-protocols mux -- --nocapture",
+    "cargo test -p amaru-protocols messages::tests -- --nocapture"
+  ],
+  "limitations": [
+    "Package A smoke only; not exhaustive fuzzing or differential testing.",
+    "Does not prove parser parity with Haskell cardano-node.",
+    "Does not establish finding, risk acceptance, or mitigation sufficiency.",
+    "No public Cardano network is contacted."
+  ],
+  "safety_notes": [
+    "Runs selected Amaru parser/protocol, malformed-decode, handshake, mux, and mini-protocol message tests on the Linux target host.",
+    "PROPTEST_CASES is bounded to keep runtime suitable for iteration.",
+    "Evidence remains candidate-only and does not promote Package A risk rows."
+  ]
+}

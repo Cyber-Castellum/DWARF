@@ -1,0 +1,148 @@
+{
+  "amaru_nodes": [],
+  "aux_sessions": [],
+  "compose_project": "dwarf-substrate-20260428T064422Z-af3bdbf1",
+  "era_transition": {},
+  "faults": [],
+  "haskell_nodes": [
+    {
+      "config_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/public-network/preview/config.json",
+      "container_peer_addresses": [
+        "node2:3001"
+      ],
+      "db_dir": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-db/node1",
+      "effective_peer_address": null,
+      "host": null,
+      "host_id": "local",
+      "host_slot_index": 1,
+      "id": "node1",
+      "impl": "cardano-node",
+      "listen_address": "127.0.0.1:35411",
+      "log_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/logs/node1/stdout.log",
+      "peer_addresses": [
+        "127.0.0.1:35412"
+      ],
+      "pid_file": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/pids/node1.pid",
+      "port": 35411,
+      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_version": "10.7.1",
+      "role": "honest",
+      "session": "dwarf-substrate-20260428T064422Z-af3bdbf1-node1",
+      "slot_index": 1,
+      "socket_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/socket/node1.sock",
+      "topology_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-topology/node1.topology.json",
+      "unsupported_extra_peer_addresses": [],
+      "version": "10.7.1"
+    },
+    {
+      "config_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/public-network/preview/config.json",
+      "container_peer_addresses": [
+        "node1:3001"
+      ],
+      "db_dir": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-db/node2",
+      "effective_peer_address": null,
+      "host": null,
+      "host_id": "local",
+      "host_slot_index": 2,
+      "id": "node2",
+      "impl": "cardano-node",
+      "listen_address": "127.0.0.1:35412",
+      "log_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/logs/node2/stdout.log",
+      "peer_addresses": [
+        "127.0.0.1:35411"
+      ],
+      "pid_file": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/pids/node2.pid",
+      "port": 35412,
+      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_version": "10.7.1",
+      "role": "honest",
+      "session": "dwarf-substrate-20260428T064422Z-af3bdbf1-node2",
+      "slot_index": 2,
+      "socket_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/socket/node2.sock",
+      "topology_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-topology/node2.topology.json",
+      "unsupported_extra_peer_addresses": [],
+      "version": "10.7.1"
+    }
+  ],
+  "network": "preview",
+  "network_magic": 2,
+  "nodes": [
+    {
+      "config_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/public-network/preview/config.json",
+      "container_peer_addresses": [
+        "node2:3001"
+      ],
+      "db_dir": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-db/node1",
+      "effective_peer_address": null,
+      "host": null,
+      "host_id": "local",
+      "host_slot_index": 1,
+      "id": "node1",
+      "impl": "cardano-node",
+      "implementation": "cardano-node",
+      "listen_address": "127.0.0.1:35411",
+      "log_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/logs/node1/stdout.log",
+      "name": "node1",
+      "peer_addresses": [
+        "127.0.0.1:35412"
+      ],
+      "pid_file": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/pids/node1.pid",
+      "port": 35411,
+      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_version": "10.7.1",
+      "role": "honest",
+      "session": "dwarf-substrate-20260428T064422Z-af3bdbf1-node1",
+      "slot_index": 1,
+      "socket_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/socket/node1.sock",
+      "topology_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-topology/node1.topology.json",
+      "unsupported_extra_peer_addresses": [],
+      "version": "10.7.1"
+    },
+    {
+      "config_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/public-network/preview/config.json",
+      "container_peer_addresses": [
+        "node1:3001"
+      ],
+      "db_dir": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-db/node2",
+      "effective_peer_address": null,
+      "host": null,
+      "host_id": "local",
+      "host_slot_index": 2,
+      "id": "node2",
+      "impl": "cardano-node",
+      "implementation": "cardano-node",
+      "listen_address": "127.0.0.1:35412",
+      "log_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/logs/node2/stdout.log",
+      "name": "node2",
+      "peer_addresses": [
+        "127.0.0.1:35411"
+      ],
+      "pid_file": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/pids/node2.pid",
+      "port": 35412,
+      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_version": "10.7.1",
+      "role": "honest",
+      "session": "dwarf-substrate-20260428T064422Z-af3bdbf1-node2",
+      "slot_index": 2,
+      "socket_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/socket/node2.sock",
+      "topology_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/cardano-topology/node2.topology.json",
+      "unsupported_extra_peer_addresses": [],
+      "version": "10.7.1"
+    }
+  ],
+  "profile_id": "dwarf-substrate-20260428T064422Z-af3bdbf1",
+  "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/runtime.json",
+  "runtime_root": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1",
+  "topology": {
+    "edges": [
+      {
+        "from": "node1",
+        "to": "node2"
+      },
+      {
+        "from": "node2",
+        "to": "node1"
+      }
+    ]
+  }
+}

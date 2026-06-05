@@ -1,0 +1,132 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Scenarios · Editor</span>
+<h1>{% if scenario_id %}Edit scenario <code>{{ scenario_id }}</code>{% else %}New scenario (editor){% endif %}</h1>
+<p class="page-hero">In-browser editor for the canonical scenario JSON-shaped YAML. Validate-on-blur runs the same schema check <code>cardano-profile scenario validate</code> applies; save persists to <code>{{ scenarios_dir }}/&lt;id&gt;.yaml</code>. The body's own <code>id</code> field drives the filename — pick it carefully because save is overwrite.</p>
+
+<hr class="hairline">
+
+<section class="scenario-editor" aria-labelledby="editor-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Body</span>
+    <h2 id="editor-heading">Scenario YAML</h2>
+  </header>
+
+  <form id="scenario-editor-form" class="scenario-editor__form">
+    <textarea id="scenario-editor-body" name="body" class="scenario-editor__textarea" spellcheck="false" rows="32" cols="120">{{ scenario_body }}</textarea>
+
+    <div class="scenario-editor__row">
+      <label class="scenario-editor__token-label"><span>Token</span><input type="password" id="scenario-editor-token" name="token" required placeholder="dashboard token" autocomplete="off"></label>
+      <button type="button" id="scenario-editor-validate-btn" class="schedule-btn">validate</button>
+      <button type="submit" id="scenario-editor-save-btn" class="schedule-btn schedule-btn--primary" disabled>save</button>
+      <span id="scenario-editor-status" class="scenario-editor__status" aria-live="polite">unvalidated</span>
+    </div>
+  </form>
+
+  <section class="scenario-editor__report" aria-labelledby="report-heading">
+    <h3 id="report-heading" class="visually-hidden">Validation report</h3>
+    <ul id="scenario-editor-errors" class="scenario-editor__errors"></ul>
+    <pre id="scenario-editor-okline" class="scenario-editor__okline"></pre>
+  </section>
+</section>
+
+<script>
+(function() {
+  var body = document.getElementById('scenario-editor-body');
+  var token = document.getElementById('scenario-editor-token');
+  var saveBtn = document.getElementById('scenario-editor-save-btn');
+  var validateBtn = document.getElementById('scenario-editor-validate-btn');
+  var statusEl = document.getElementById('scenario-editor-status');
+  var errEl = document.getElementById('scenario-editor-errors');
+  var okEl = document.getElementById('scenario-editor-okline');
+  var debounceTimer = null;
+  var lastValid = false;
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.dataset.kind = kind || '';
+  }
+
+  function clearReport() {
+    errEl.innerHTML = '';
+    okEl.textContent = '';
+  }
+
+  function showOk(payload) {
+    clearReport();
+    okEl.textContent = 'OK · id: ' + payload.scenario_id +
+                       ' · runtime: ' + payload.runtime +
+                       ' · target: ' + (payload.target.implementation || '?') +
+                       '@' + (payload.target.version || '?');
+    setStatus('valid', 'ok');
+    saveBtn.disabled = false;
+    lastValid = true;
+  }
+
+  function showError(payload) {
+    clearReport();
+    var li = document.createElement('li');
+    li.className = 'scenario-editor__error';
+    var prefix = payload.kind ? ('[' + payload.kind + '] ') : '';
+    var loc = (payload.line && payload.column)
+      ? (' (line ' + payload.line + ', col ' + payload.column + ')') : '';
+    li.textContent = prefix + (payload.error || 'unknown error') + loc;
+    errEl.appendChild(li);
+    setStatus('invalid', 'err');
+    saveBtn.disabled = true;
+    lastValid = false;
+  }
+
+  function validate() {
+    setStatus('validating…', 'pending');
+    var t = token.value || '';
+    if (!t) { setStatus('token required', 'err'); saveBtn.disabled = true; return; }
+    fetch('/api/scenario/validate?token=' + encodeURIComponent(t),
+          {method: 'POST', body: body.value,
+           headers: {'Content-Type': 'application/json; charset=utf-8'}})
+      .then(function(r) { return r.json(); })
+      .then(function(payload) {
+        if (payload.ok) showOk(payload); else showError(payload);
+      })
+      .catch(function(err) {
+        setStatus('network error', 'err');
+        saveBtn.disabled = true;
+      });
+  }
+
+  function debounceValidate() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(validate, 600);
+  }
+
+  body.addEventListener('blur', validate);
+  body.addEventListener('input', function() {
+    saveBtn.disabled = true;
+    setStatus('unvalidated', '');
+    debounceValidate();
+  });
+  validateBtn.addEventListener('click', validate);
+
+  document.getElementById('scenario-editor-form').addEventListener('submit', function(ev) {
+    ev.preventDefault();
+    if (!lastValid) { setStatus('validate first', 'err'); return; }
+    setStatus('saving…', 'pending');
+    var t = token.value || '';
+    fetch('/api/scenario/save?token=' + encodeURIComponent(t),
+          {method: 'POST', body: body.value,
+           headers: {'Content-Type': 'application/json; charset=utf-8'}})
+      .then(function(r) { return r.json().then(function(p) { return [r.ok, p]; }); })
+      .then(function(pair) {
+        var ok = pair[0], payload = pair[1];
+        if (ok && payload.ok) {
+          setStatus('saved → ' + payload.saved_path, 'ok');
+        } else {
+          showError(payload);
+        }
+      })
+      .catch(function() { setStatus('network error', 'err'); });
+  });
+})();
+</script>
+
+{% endblock %}

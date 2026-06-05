@@ -1,0 +1,20 @@
+{
+  "spec_version": "v1",
+  "id": "resource-disk-fill-host-tmpdir",
+  "title": "Host-mode disk-fill smoke: write 256 MB of zeros to /tmp and measure before/after",
+  "authors": ["dwarf"],
+  "tags": ["resource-abuse", "disk-fill", "host", "smoke"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "single-node",
+  "seed": "0xCAFEBA53",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "echo '== before =='; df -h /tmp; TMP=$(mktemp -d /tmp/dwarf-diskfill.XXXXXX); echo \"temp_dir=$TMP\"; echo '== writing 256 MB =='; dd if=/dev/zero of=\"$TMP/fill\" bs=1M count=256 2>&1; echo '== after =='; df -h /tmp; ls -lh \"$TMP\"; echo '== cleanup =='; rm -rf \"$TMP\"; df -h /tmp",
+      "timeout_seconds": 120
+    }
+  ],
+  "probes": [],
+  "assertions": [],
+  "teardown": []
+}

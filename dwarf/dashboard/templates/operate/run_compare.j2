@@ -1,0 +1,263 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Compare</span>
+<h1 class="run-compare-heading">
+  <code>{{ left_id }}</code>
+  <span class="run-compare-arrow" aria-hidden="true">↔</span>
+  <code>{{ right_id }}</code>
+</h1>
+<p class="page-hero">Substrate-aware side-by-side. Left is treated as the baseline; right is the variant. Verdict deltas and flipped assertions get crimson highlights.</p>
+
+{% if not diff.left_present or not diff.right_present %}
+<hr class="hairline">
+<section class="run-compare-missing" aria-labelledby="missing-heading">
+  <header><span class="eyebrow">Not found</span><h2 id="missing-heading">One or both bundles are missing</h2></header>
+  <ul class="run-compare-missing__list">
+    <li>left <code>{{ left_id }}</code> {% if diff.left_present %}<span class="result-pill result-pill--pass">found</span>{% else %}<span class="result-pill result-pill--fail">not on disk</span>{% endif %}</li>
+    <li>right <code>{{ right_id }}</code> {% if diff.right_present %}<span class="result-pill result-pill--pass">found</span>{% else %}<span class="result-pill result-pill--fail">not on disk</span>{% endif %}</li>
+  </ul>
+  <p class="page-subhero"><a href="/operate/compare/runs">Pick a different pair</a> · <a href="/operate/runs">Recent runs</a></p>
+</section>
+{% else %}
+
+<hr class="hairline">
+
+<section class="run-compare-headlines" aria-labelledby="headlines-heading">
+  <h2 id="headlines-heading" class="visually-hidden">Headline summary</h2>
+  <article class="run-compare-headline run-compare-headline--left">
+    <span class="eyebrow">Left · baseline</span>
+    <p class="run-compare-headline__metric">{{ diff.headlines.left.exit_status|upper or '—' }}</p>
+    <dl class="run-compare-headline__rows">
+      <div><dt>scenario</dt><dd><code>{{ diff.headlines.left.scenario_id or '—' }}</code></dd></div>
+      <div><dt>target</dt><dd><code>{{ diff.headlines.left.target_implementation }}{% if diff.headlines.left.target_version %} @ {{ diff.headlines.left.target_version }}{% endif %}</code></dd></div>
+      <div><dt>runtime</dt><dd>{{ diff.headlines.left.runtime or '—' }}</dd></div>
+      <div><dt>assertions</dt><dd>{{ diff.headlines.left.assertion_summary.pass or 0 }} / {{ diff.headlines.left.assertion_summary.total or 0 }} ({{ diff.headlines.left.assertion_summary.fail or 0 }} fail)</dd></div>
+      <div><dt>wall</dt><dd>{% if diff.headlines.left.wall_time_seconds is not none %}{{ '%.2f'|format(diff.headlines.left.wall_time_seconds) }}s{% else %}—{% endif %}</dd></div>
+      <div><dt>verify</dt><dd>{{ 'OK' if diff.headlines.left.verify_ok else 'FAIL' }}</dd></div>
+      <div><dt>bundle</dt><dd><a href="{{ diff.headlines.left.bundle_url }}">inspector →</a></dd></div>
+    </dl>
+  </article>
+  <article class="run-compare-headline run-compare-headline--right">
+    <span class="eyebrow">Right · variant</span>
+    <p class="run-compare-headline__metric">{{ diff.headlines.right.exit_status|upper or '—' }}</p>
+    <dl class="run-compare-headline__rows">
+      <div><dt>scenario</dt><dd><code>{{ diff.headlines.right.scenario_id or '—' }}</code></dd></div>
+      <div><dt>target</dt><dd><code>{{ diff.headlines.right.target_implementation }}{% if diff.headlines.right.target_version %} @ {{ diff.headlines.right.target_version }}{% endif %}</code></dd></div>
+      <div><dt>runtime</dt><dd>{{ diff.headlines.right.runtime or '—' }}</dd></div>
+      <div><dt>assertions</dt><dd>{{ diff.headlines.right.assertion_summary.pass or 0 }} / {{ diff.headlines.right.assertion_summary.total or 0 }} ({{ diff.headlines.right.assertion_summary.fail or 0 }} fail)</dd></div>
+      <div><dt>wall</dt><dd>{% if diff.headlines.right.wall_time_seconds is not none %}{{ '%.2f'|format(diff.headlines.right.wall_time_seconds) }}s{% else %}—{% endif %}</dd></div>
+      <div><dt>verify</dt><dd>{{ 'OK' if diff.headlines.right.verify_ok else 'FAIL' }}</dd></div>
+      <div><dt>bundle</dt><dd><a href="{{ diff.headlines.right.bundle_url }}">inspector →</a></dd></div>
+    </dl>
+  </article>
+</section>
+
+{% if diff.tile_order %}
+<hr class="hairline">
+
+<section aria-labelledby="tile-diff-heading" class="run-compare-tiles">
+  <header><span class="eyebrow">Substrate evidence</span><h2 id="tile-diff-heading">Per-tile delta</h2></header>
+
+  {% if 'topology' in diff.tiles %}
+  {% set t = diff.tiles.topology %}
+  <article class="run-compare-tile{% if t.verdict_changed %} run-compare-tile--flipped{% endif %}">
+    <header><span class="eyebrow">Topology</span><span class="run-compare-tile__verdicts"><code class="result-pill result-pill--{{ 'pass' if t.left_verdict == 'ok' else 'fail' }}">{{ t.left_verdict or '—' }}</code> → <code class="result-pill result-pill--{{ 'pass' if t.right_verdict == 'ok' else 'fail' }}">{{ t.right_verdict or '—' }}</code></span></header>
+    <table class="run-compare-tile__table">
+      <thead><tr><th>node</th><th>left impl</th><th>left role</th><th>left healthy</th><th>right impl</th><th>right role</th><th>right healthy</th></tr></thead>
+      <tbody>
+        {% for n in t.nodes %}
+        <tr class="{% if n.role_changed or n.health_changed or n.only_left or n.only_right %}run-compare-tile__row--changed{% endif %}">
+          <td><code>{{ n.id }}</code></td>
+          <td><code>{{ n.left_impl or '—' }}</code></td>
+          <td><code class="{% if n.role_changed %}run-compare-cell--changed{% endif %}">{{ n.left_role or '—' }}</code></td>
+          <td>{{ '✓' if n.left_healthy else ('—' if n.left_healthy is none else '✗') }}</td>
+          <td><code>{{ n.right_impl or '—' }}</code></td>
+          <td><code class="{% if n.role_changed %}run-compare-cell--changed{% endif %}">{{ n.right_role or '—' }}</code></td>
+          <td>{{ '✓' if n.right_healthy else ('—' if n.right_healthy is none else '✗') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
+  {% endif %}
+
+  {% if 'multi_node_observation' in diff.tiles %}
+  {% set t = diff.tiles.multi_node_observation %}
+  <article class="run-compare-tile{% if t.verdict_changed %} run-compare-tile--flipped{% endif %}">
+    <header><span class="eyebrow">Multi-node observation</span><span class="run-compare-tile__verdicts"><code class="result-pill result-pill--{{ 'pass' if t.left_verdict == 'ok' else 'fail' }}">{{ t.left_verdict or '—' }}</code> → <code class="result-pill result-pill--{{ 'pass' if t.right_verdict == 'ok' else 'fail' }}">{{ t.right_verdict or '—' }}</code></span></header>
+    <table class="run-compare-tile__table">
+      <thead><tr><th>node</th><th>left tip groups</th><th>left latest slot</th><th>right tip groups</th><th>right latest slot</th></tr></thead>
+      <tbody>
+        {% for n in t.nodes %}
+        <tr class="{% if n.diverged_changed %}run-compare-tile__row--changed{% endif %}">
+          <td><code>{{ n.node_id }}</code></td>
+          <td><code class="{% if n.diverged_left %}run-compare-cell--changed{% endif %}">{{ n.left_tip_group_count }}</code></td>
+          <td>{{ n.left_latest_slot if n.left_latest_slot is not none else '—' }}</td>
+          <td><code class="{% if n.diverged_right %}run-compare-cell--changed{% endif %}">{{ n.right_tip_group_count }}</code></td>
+          <td>{{ n.right_latest_slot if n.right_latest_slot is not none else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
+  {% endif %}
+
+  {% if 'byzantine_peer' in diff.tiles %}
+  {% set t = diff.tiles.byzantine_peer %}
+  <article class="run-compare-tile">
+    <header><span class="eyebrow">Byzantine peer</span><span class="run-compare-tile__verdicts"><code class="result-pill result-pill--{{ 'pass' if t.left_verdict == 'ok' else 'fail' }}">{{ t.left_verdict or '—' }}</code> → <code class="result-pill result-pill--{{ 'pass' if t.right_verdict == 'ok' else 'fail' }}">{{ t.right_verdict or '—' }}</code></span></header>
+    <dl class="run-compare-tile__rows">
+      <div><dt>target</dt><dd>left <code>{{ t.left_target or '—' }}</code> · right <code>{{ t.right_target or '—' }}</code></dd></div>
+      <div><dt>intercepted</dt><dd>left {{ t.left_intercepted }} · right {{ t.right_intercepted }}</dd></div>
+      <div><dt>mutated</dt><dd>left {{ t.left_mutated }} · right {{ t.right_mutated }}</dd></div>
+    </dl>
+  </article>
+  {% endif %}
+
+  {% if 'hf_boundary' in diff.tiles %}
+  {% set t = diff.tiles.hf_boundary %}
+  <article class="run-compare-tile">
+    <header><span class="eyebrow">HF boundary</span><span class="run-compare-tile__verdicts"><code class="result-pill result-pill--{{ 'pass' if t.left_verdict == 'ok' else 'fail' }}">{{ t.left_verdict or '—' }}</code> → <code class="result-pill result-pill--{{ 'pass' if t.right_verdict == 'ok' else 'fail' }}">{{ t.right_verdict or '—' }}</code></span></header>
+    <table class="run-compare-tile__table">
+      <thead><tr><th>node</th><th>left protocol</th><th>right protocol</th></tr></thead>
+      <tbody>
+        {% for n in t.nodes %}
+        <tr class="{% if n.version_changed %}run-compare-tile__row--changed{% endif %}">
+          <td><code>{{ n.node_id }}</code></td>
+          <td><code>{{ n.left_version or '—' }}</code></td>
+          <td><code>{{ n.right_version or '—' }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
+  {% endif %}
+
+  {% if 'era_transition' in diff.tiles %}
+  {% set t = diff.tiles.era_transition %}
+  <article class="run-compare-tile">
+    <header><span class="eyebrow">Era transition</span><span class="run-compare-tile__verdicts"><code class="result-pill result-pill--{{ 'pass' if t.left_verdict == 'ok' else 'fail' }}">{{ t.left_verdict or '—' }}</code> → <code class="result-pill result-pill--{{ 'pass' if t.right_verdict == 'ok' else 'fail' }}">{{ t.right_verdict or '—' }}</code></span></header>
+    <dl class="run-compare-tile__rows">
+      <div><dt>pre observed</dt><dd>left <code class="{% if t.pre_changed %}run-compare-cell--changed{% endif %}">{{ t.left_pre_observed or '—' }}</code> · right <code class="{% if t.pre_changed %}run-compare-cell--changed{% endif %}">{{ t.right_pre_observed or '—' }}</code></dd></div>
+      <div><dt>post observed</dt><dd>left <code class="{% if t.post_changed %}run-compare-cell--changed{% endif %}">{{ t.left_post_observed or '—' }}</code> · right <code class="{% if t.post_changed %}run-compare-cell--changed{% endif %}">{{ t.right_post_observed or '—' }}</code></dd></div>
+    </dl>
+  </article>
+  {% endif %}
+
+  {% if 'genesis_mode' in diff.tiles %}
+  {% set t = diff.tiles.genesis_mode %}
+  <article class="run-compare-tile">
+    <header><span class="eyebrow">Genesis mode</span><span class="run-compare-tile__verdicts"><code class="result-pill result-pill--{{ 'pass' if t.left_verdict == 'ok' else 'fail' }}">{{ t.left_verdict or '—' }}</code> → <code class="result-pill result-pill--{{ 'pass' if t.right_verdict == 'ok' else 'fail' }}">{{ t.right_verdict or '—' }}</code></span></header>
+    <dl class="run-compare-tile__rows">
+      <div><dt>final mode</dt><dd>left <code>{{ t.left_final_mode or '—' }}</code> · right <code>{{ t.right_final_mode or '—' }}</code></dd></div>
+      <div><dt>peer-set capture</dt><dd>left {{ 'detected' if t.left_capture else 'not detected' }} · right <span class="{% if t.capture_changed %}run-compare-cell--changed{% endif %}">{{ 'detected' if t.right_capture else 'not detected' }}</span></dd></div>
+    </dl>
+  </article>
+  {% endif %}
+</section>
+{% endif %}
+
+<hr class="hairline">
+
+<section aria-labelledby="assertion-diff-heading">
+  <header><span class="eyebrow">Assertions</span><h2 id="assertion-diff-heading">Assertion diff</h2></header>
+  <p class="page-subhero">
+    <span class="result-pill result-pill--fail">{{ diff.assertions.flipped }} flipped</span>
+    · <span class="result-pill">{{ diff.assertions.both_pass }} both pass</span>
+    · <span class="result-pill">{{ diff.assertions.both_fail }} both fail</span>
+    · <span class="result-pill">{{ diff.assertions.only_left }} only left</span>
+    · <span class="result-pill">{{ diff.assertions.only_right }} only right</span>
+  </p>
+  <table class="config-table run-compare-assertions">
+    <thead><tr><th>primitive</th><th>params</th><th>left</th><th>right</th></tr></thead>
+    <tbody>
+      {% for r in diff.assertions.rows %}
+      <tr class="run-compare-assertions__row run-compare-assertions__row--{{ r.kind }}">
+        <td><code>{{ r.primitive }}</code></td>
+        <td><code>{{ r.params_json }}</code></td>
+        <td><span class="result-pill result-pill--{{ 'pass' if r.left_result == 'pass' else 'fail' }}">{{ r.left_result }}</span></td>
+        <td><span class="result-pill result-pill--{{ 'pass' if r.right_result == 'pass' else 'fail' }}">{{ r.right_result }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if field_diff and field_diff.found %}
+<hr class="hairline">
+
+<section class="field-diff" aria-labelledby="field-diff-heading">
+  <header class="coverage-rollup__head">
+    <span class="eyebrow">Field-level diff · structural overlay</span>
+    <h2 id="field-diff-heading">Per-field side-by-side</h2>
+    <p class="page-subhero">Curated leaves of <code>manifest.json</code>, assertion stats, and AFL/AFL++ telemetry. <span class="field-diff__legend"><span class="field-diff__pill field-diff__pill--added">added</span> <span class="field-diff__pill field-diff__pill--removed">removed</span> <span class="field-diff__pill field-diff__pill--mutated">mutated</span></span> · numeric telemetry drift past ±{{ (field_diff.drift_threshold * 100)|int }}% is flagged.</p>
+  </header>
+
+  {% if field_diff.identical %}
+  <p class="empty-section-statement">
+    Bundles are field-identical across the curated leaves — no additions, removals, or mutations.
+    <span class="empty-section-statement__cite">{{ field_diff.overall.same }} same · 0 differences</span>
+  </p>
+  {% else %}
+  <div class="status-tile-grid">
+    <article class="status-tile">
+      <span class="eyebrow">Mutations</span>
+      <span class="status-tile__metric">{{ field_diff.overall.mutated }}</span>
+      <p class="status-tile__sub">leaves with different values</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Added · removed</span>
+      <span class="status-tile__metric">{{ field_diff.overall.added }} · {{ field_diff.overall.removed }}</span>
+      <p class="status-tile__sub">present on right · only on left</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Telemetry drift</span>
+      <span class="status-tile__metric">{{ field_diff.overall.drift }}</span>
+      <p class="status-tile__sub">numeric Δ past ±{{ (field_diff.drift_threshold * 100)|int }}%</p>
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Semantic flags</span>
+      <span class="status-tile__metric">{{ field_diff.overall.semantic }}</span>
+      <p class="status-tile__sub">pass/fail flips, primitive list, etc.</p>
+    </article>
+  </div>
+
+  {% for s in field_diff.sections %}
+  <section class="field-diff__section" aria-labelledby="field-diff-{{ s.name }}-heading">
+    <header class="field-diff__section-head">
+      <span class="eyebrow">{{ s.label }}</span>
+      <h3 id="field-diff-{{ s.name }}-heading">{{ s.label }} · {{ s.summary.mutated }} mutated · {{ s.summary.added }} added · {{ s.summary.removed }} removed</h3>
+    </header>
+    <table class="config-table field-diff__table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Left · <code>{{ field_diff.left_id }}</code></th>
+          <th>Right · <code>{{ field_diff.right_id }}</code></th>
+          <th>Kind</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in s.rows %}
+        {% if r.kind != 'absent' %}
+        <tr class="field-diff__row field-diff__row--{{ r.kind }}{% if r.threshold_breach %} field-diff__row--drift{% endif %}{% if r.semantic %} field-diff__row--semantic{% endif %}">
+          <td><code>{{ r.path }}</code>{% if r.semantic == 'pass_fail_flip' %} <span class="field-diff__pill field-diff__pill--semantic">pass/fail flip</span>{% elif r.semantic == 'nonzero_event' %} <span class="field-diff__pill field-diff__pill--semantic">nonzero event</span>{% elif r.semantic == 'primitive_list_change' %} <span class="field-diff__pill field-diff__pill--semantic">primitive list change</span>{% endif %}</td>
+          <td>{% if r.kind == 'added' %}<span class="field-diff__missing">—</span>{% else %}<code>{{ r.left }}</code>{% endif %}</td>
+          <td>{% if r.kind == 'removed' %}<span class="field-diff__missing">—</span>{% else %}<code>{{ r.right }}</code>{% endif %}</td>
+          <td>
+            <span class="field-diff__pill field-diff__pill--{{ r.kind }}">{{ r.kind }}</span>
+            {% if r.threshold_breach %}<span class="field-diff__pill field-diff__pill--drift">±{{ (field_diff.drift_threshold * 100)|int }}%+ drift</span>{% endif %}
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endfor %}
+  {% endif %}
+</section>
+{% endif %}
+
+{% endif %}
+{% endblock %}

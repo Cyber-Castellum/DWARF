@@ -1,0 +1,61 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-node-cbor-block-fuzz-structured",
+  "title": "Structured-CBOR fuzz of cardano-node block parser (Conway shape)",
+  "authors": ["dwarf"],
+  "tags": ["ser-deser", "parser", "fuzz", "structured", "cardano-node", "block"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "library",
+  "seed": "0xCAFE0302",
+  "load": [
+    {
+      "primitive": "cbor_fuzz_structured",
+      "target_id": "cardano-node-cbor-decode-block",
+      "manifests_dir": "dwarf/targets/manifests",
+      "iterations": 5000,
+      "mutation_rate": 0.04,
+      "per_input_timeout_seconds": 3,
+      "shape": {
+        "type": "array",
+        "elements": [
+          {"type": "array", "elements": [
+            {"type": "array", "elements": [
+              {"type": "uint", "max": 100000},
+              {"type": "uint", "max": 1000000},
+              {"type": "bytes", "length": 32},
+              {"type": "bytes", "length": 32},
+              {"type": "bytes", "length": 32},
+              {"type": "array", "elements": [
+                {"type": "bytes", "length": 32},
+                {"type": "bytes", "length": 80}
+              ]},
+              {"type": "uint", "max": 90112},
+              {"type": "bytes", "length": 32},
+              {"type": "array", "elements": [
+                {"type": "bytes", "length": 32},
+                {"type": "uint", "max": 100},
+                {"type": "uint", "max": 100},
+                {"type": "bytes", "length": 64}
+              ]},
+              {"type": "array", "elements": [
+                {"type": "uint", "max": 10},
+                {"type": "uint", "max": 1000}
+              ]}
+            ]},
+            {"type": "bytes", "length": 448}
+          ]},
+          {"type": "array", "elements": []},
+          {"type": "array", "elements": []},
+          {"type": "map", "entries": []},
+          {"type": "array", "elements": []}
+        ]
+      }
+    }
+  ],
+  "probes": [{"primitive": "parser_exit_status"}],
+  "assertions": [
+    {"primitive": "parse_succeeds_or_clean_error"},
+    {"primitive": "roundtrip_equals_original"}
+  ],
+  "teardown": []
+}

@@ -1,0 +1,20 @@
+{
+  "spec_version": "v1",
+  "id": "resource-baseline-cardano-nodes",
+  "title": "Baseline RSS + CPU snapshot of running cardano-node devnet processes",
+  "authors": ["dwarf"],
+  "tags": ["resource-abuse", "baseline", "process-rss", "cardano-node", "devnet"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "single-node",
+  "seed": "0xCAFEBA51",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "echo '== ps -o pid,rss,vsz,pcpu,etime,cmd for cardano-node =='; ps -C cardano-node -o pid,rss,vsz,pcpu,etime,cmd --no-headers; echo; echo '== free -m =='; free -m; echo; echo '== df -h /home =='; df -h /home; echo; echo '== /opt/dwarf/cardano-profiles disk usage =='; du -sh /opt/dwarf/cardano-profiles/* 2>/dev/null | head -10",
+      "timeout_seconds": 30
+    }
+  ],
+  "probes": [],
+  "assertions": [],
+  "teardown": []
+}

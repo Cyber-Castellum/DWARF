@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "load_shell_command params",
+  "type": "object",
+  "required": ["command"],
+  "properties": {
+    "command": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer" }
+  },
+  "additionalProperties": false
+}

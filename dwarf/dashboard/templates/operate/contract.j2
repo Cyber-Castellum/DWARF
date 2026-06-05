@@ -1,0 +1,90 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate</span>
+<h1>Contract progress</h1>
+<p>Cardano white-hacking, security assessment &amp; testing engagement covering Amaru and the Haskell Cardano node. Contract scope: April–December 2026 across 9 monthly milestones.</p>
+
+<hr class="hairline">
+
+<section class="contract-section" id="current-milestone">
+  <span class="eyebrow">Current milestone — M1 (April 2026)</span>
+  <p>
+    Target: April 30, 2026.
+    {% if m1_last_updated %}Source last updated: {{ m1_last_updated }}.{% endif %}
+  </p>
+
+  {% if work_goals %}
+  <h2>Work goals ({{ work_goals|length }})</h2>
+  <table class="dense-table contract-table">
+    <thead>
+      <tr><th>ID</th><th>Title</th><th>Status</th><th>Canonical location</th></tr>
+    </thead>
+    <tbody>
+      {% for row in work_goals %}
+      <tr>
+        <td><code>{{ row.id }}</code></td>
+        <td>{{ row.title }}</td>
+        <td><span class="result-pill result-pill--{{ row.status|lower|replace(' ', '-') }}">{{ row.status }}</span></td>
+        <td><code>{{ row.canonical_location }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-section-statement">
+    No work goals available.
+    <span class="empty-section-statement__cite">scanned <code>user/milestones/milestone-1-deliverable-status.md</code></span>
+  </p>
+  {% endif %}
+
+  {% if deliverables %}
+  <h2>Deliverables ({{ deliverables|length }})</h2>
+  <table class="dense-table contract-table">
+    <thead>
+      <tr><th>ID</th><th>Title</th><th>Group</th><th>Status</th><th>Canonical location</th></tr>
+    </thead>
+    <tbody>
+      {% for row in deliverables %}
+      <tr>
+        <td><code>{{ row.id }}</code></td>
+        <td>{{ row.title }}</td>
+        <td>{{ row.group }}</td>
+        <td><span class="result-pill result-pill--{{ row.status|lower|replace(' ', '-') }}">{{ row.status }}</span></td>
+        <td><code>{{ row.canonical_location }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-section-statement">
+    No deliverables available.
+    <span class="empty-section-statement__cite">scanned <code>user/milestones/milestone-1-deliverable-status.md</code></span>
+  </p>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
+<section class="contract-section" id="future-milestones">
+  <span class="eyebrow">Other milestones (M2–M9)</span>
+  {% if future_milestones %}
+    {% for milestone in future_milestones %}
+      {% include "operate/_partials/_milestone.j2" %}
+    {% endfor %}
+  {% else %}
+  <p class="empty-section-statement">
+    No future milestones available.
+    <span class="empty-section-statement__cite">scanned <code>user/milestones/contract-milestones-tasklist.md</code></span>
+  </p>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
+<footer class="contract-section" id="source-citation">
+  <p>Source:
+    <code>user/milestones/milestone-1-deliverable-status.md</code> (M1 work goals + deliverables);
+    <code>user/milestones/contract-milestones-tasklist.md</code> (milestone framing + M2–M9 items).
+  </p>
+</footer>
+{% endblock %}

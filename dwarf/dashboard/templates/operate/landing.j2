@@ -1,0 +1,155 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate</span>
+<h1>Forensic substrate</h1>
+<p class="lede">Adversarial inputs against Amaru and the Haskell Cardano node, recorded as tamper-evident evidence bundles. The substrate is observed, probed, and replayed under fault.</p>
+
+<hr class="hairline">
+
+<section class="landing-section" id="recent-activity">
+  <span class="eyebrow">Recent activity</span>
+  <div class="tile-grid">
+
+    <a class="tile tile--data" href="/operate/runs">
+      <span class="tile__eyebrow">Recent runs · last {{ runs_window }}</span>
+      <span class="tile__metric">{{ runs_total }}</span>
+      <span class="tile__sub">
+        <span class="tile__sub-pass">{{ pass_count }} pass</span>
+        <span class="tile__sub-sep">·</span>
+        <span class="tile__sub-fail">{{ fail_count }} fail</span>
+        {% if other_count %}
+        <span class="tile__sub-sep">·</span>
+        <span class="tile__sub-muted">{{ other_count }} other</span>
+        {% endif %}
+      </span>
+      {% if pass_rate_pct is not none %}
+      <span class="tile__bar" aria-label="pass rate {{ pass_rate_pct }}%">
+        <span class="tile__bar-fill" style="width: {{ pass_rate_pct }}%"></span>
+      </span>
+      <span class="tile__bar-caption">{{ pass_rate_pct }}% pass-rate</span>
+      {% endif %}
+    </a>
+
+    <a class="tile tile--data" href="/operate/bundles">
+      <span class="tile__eyebrow">Bundles preserved</span>
+      <span class="tile__metric">{{ bundles_count }}</span>
+      <span class="tile__sub">
+        {% if bundles_count %}
+          preserved across runs
+        {% else %}
+          none preserved yet
+        {% endif %}
+      </span>
+    </a>
+
+    <a class="tile tile--data" href="/operate/compare">
+      <span class="tile__eyebrow">Cross-impl comparisons</span>
+      <span class="tile__metric">{{ comparisons_count }}</span>
+      <span class="tile__sub">
+        {% if comparisons_count %}
+          {{ divergent_count }} divergent
+        {% else %}
+          no comparisons yet
+        {% endif %}
+      </span>
+    </a>
+
+  </div>
+</section>
+
+<section class="landing-section" id="substrate">
+  <span class="eyebrow">Substrate</span>
+  <div class="tile-grid">
+
+    <a class="tile" href="/operate/scenarios">
+      <span class="tile__eyebrow">Scenario catalog</span>
+      <span class="tile__metric">{{ scenario_count }}</span>
+      <span class="tile__sub">scenarios available to replay</span>
+    </a>
+
+    <a class="tile" href="/operate/targets">
+      <span class="tile__eyebrow">Registered M2 targets</span>
+      <span class="tile__metric">{{ target_count }}</span>
+      <span class="tile__sub">
+        {% for pill in target_pills %}{% if not loop.first %} <span class="tile__sub-sep">·</span> {% endif %}<code>{{ pill.label }}</code> {{ pill.count }}{% endfor %}
+      </span>
+    </a>
+
+    <a class="tile" href="/operate/profiles">
+      <span class="tile__eyebrow">Profile · {{ profile_count }} configured</span>
+      <span class="tile__metric tile__metric--code">
+        {% if profile_id %}<code>{{ profile_id }}</code>{% else %}<span class="tile__metric-empty">no profile</span>{% endif %}
+      </span>
+      <span class="tile__sub">active local devnet profile</span>
+    </a>
+
+    <a class="tile" href="/operate/status">
+      <span class="tile__eyebrow">Substrate status</span>
+      <span class="tile__metric tile__metric--label">deployment health</span>
+      <span class="tile__sub">live + cached health</span>
+    </a>
+
+    <a class="tile" href="/operate/coverage">
+      <span class="tile__eyebrow">Coverage roll-up</span>
+      <span class="tile__metric tile__metric--label">latest report</span>
+      <span class="tile__sub">cross-bundle aggregate</span>
+    </a>
+
+    <a class="tile" href="/operate/crashes">
+      <span class="tile__eyebrow">Crash triage</span>
+      <span class="tile__metric tile__metric--label">deduped signatures</span>
+      <span class="tile__sub">grouped by signal + op</span>
+    </a>
+
+    <a class="tile" href="/operate/schedule">
+      <span class="tile__eyebrow">Schedule</span>
+      <span class="tile__metric tile__metric--label">cron-driven runs</span>
+      <span class="tile__sub">queued + paused entries</span>
+    </a>
+
+    <a class="tile" href="/operate/timeline">
+      <span class="tile__eyebrow">Evidence timeline</span>
+      <span class="tile__metric tile__metric--label">chronology</span>
+      <span class="tile__sub">cross-bundle event stream</span>
+    </a>
+
+    <a class="tile" href="/operate/static-analysis">
+      <span class="tile__eyebrow">Static analysis</span>
+      <span class="tile__metric tile__metric--label">clippy · audit · deny</span>
+      <span class="tile__sub">latest per-tool run</span>
+    </a>
+
+  </div>
+</section>
+
+<section class="landing-section" id="tools">
+  <span class="eyebrow">Tools</span>
+  <div class="tile-grid">
+
+    <a class="tile" href="/operate/plugins">
+      <span class="tile__eyebrow">Plugins</span>
+      <span class="tile__metric tile__metric--label">registry</span>
+      <span class="tile__sub">discovered plugins + primitives</span>
+    </a>
+
+    <a class="tile" href="/operate/config">
+      <span class="tile__eyebrow">Config</span>
+      <span class="tile__metric tile__metric--label">read-only</span>
+      <span class="tile__sub">resolved against defaults + env</span>
+    </a>
+
+    <a class="tile" href="/operate/notifications">
+      <span class="tile__eyebrow">Notifications</span>
+      <span class="tile__metric tile__metric--label">webhooks · slack · email</span>
+      <span class="tile__sub">configured rules per event</span>
+    </a>
+
+    <a class="tile" href="/operate/bundles">
+      <span class="tile__eyebrow">Bundles</span>
+      <span class="tile__metric tile__metric--label">preserved evidence</span>
+      <span class="tile__sub">browse + import</span>
+    </a>
+
+  </div>
+</section>
+{% endblock %}

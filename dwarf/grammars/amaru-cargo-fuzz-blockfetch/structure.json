@@ -1,0 +1,15 @@
+{
+  "format": "cbor",
+  "target": "amaru-cargo-fuzz-blockfetch",
+  "decoder_entrypoint": "decode(data) in dwarf/targets/amaru-cargo-fuzz-blockfetch/fuzz_targets/blockfetch.rs",
+  "shape": {
+    "type": "array",
+    "notes": [
+      "BlockFetch messages are keyed by message id 0..5.",
+      "The range request is [0, point, point].",
+      "Message 4 is [4, tag24(bytes)] carrying a block payload.",
+      "Points are either [] or [slot, hash32]."
+    ]
+  }
+}
+

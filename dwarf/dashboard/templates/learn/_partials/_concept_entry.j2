@@ -1,0 +1,15 @@
+<article class="concept-entry" id="{{ entry.slug }}">
+  <h2 class="concept-term">{{ entry.term }}</h2>
+  <p class="concept-definition">{{ entry.definition | safe }}</p>
+  <p class="concept-anchor">
+    <span class="eyebrow">Anchor</span>
+    {% if entry.needs_source %}
+    <span class="caveat-label">needs source</span>
+    {% else %}
+    <code>{{ entry.anchor_path }}</code>
+    {% if entry.anchor_symbol %}
+    <span class="concept-anchor__symbol">{{ entry.anchor_symbol }}</span>
+    {% endif %}
+    {% endif %}
+  </p>
+</article>

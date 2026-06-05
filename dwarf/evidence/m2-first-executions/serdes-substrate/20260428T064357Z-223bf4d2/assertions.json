@@ -1,0 +1,387 @@
+[
+  {
+    "data_points_used": [
+      {
+        "artifact_summary": {
+          "has_correlated_timeline": true,
+          "has_observation_summary": true,
+          "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/multi-node-observation",
+          "per_node_dir_count": 2
+        },
+        "exit_code": 0,
+        "outcome": "ok",
+        "result": {
+          "network_magic": 2,
+          "node_ids": [
+            "node1",
+            "node2"
+          ],
+          "observation_primitives": [
+            "tip_state",
+            "connection_state"
+          ],
+          "observation_window_seconds": 10.0,
+          "per_node": {
+            "node1": {
+              "connection_state": {
+                "connect_failures": 0,
+                "connect_successes": 2,
+                "lsof_socket_count": 4,
+                "peer_nodes_connected": [],
+                "pid": 3414155,
+                "port": 34041,
+                "responsive": true,
+                "ss_established_count": 0,
+                "ss_lines": [
+                  "LISTEN     0      8                        127.0.0.1:34041         0.0.0.0:*     users:((\"cardano-node\",pid=3414155,fd=22))",
+                  "LISTEN     0      1024                     127.0.0.1:12798         0.0.0.0:*     users:((\"cardano-node\",pid=3414155,fd=15))",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:50022       127.0.0.1:34041",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:50036       127.0.0.1:34041",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34041       127.0.0.1:50022 users:((\"cardano-node\",pid=3414155,fd=25))",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34041       127.0.0.1:50036 users:((\"cardano-node\",pid=3414155,fd=26))"
+                ],
+                "ss_listen_count": 2,
+                "ss_match_count": 6,
+                "target_node": "node1"
+              },
+              "implementation": "cardano-node",
+              "node_id": "node1",
+              "port": 34041,
+              "socket_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/socket/node1.sock",
+              "tip_state": {
+                "failed_sample_count": 1,
+                "latest_tip": {
+                  "block": 0,
+                  "hash": "",
+                  "observed_at": "2026-04-28T06:44:12.122601Z",
+                  "ok": true,
+                  "slot": 0,
+                  "syncProgress": "0.00"
+                },
+                "sample_count": 11,
+                "samples": [
+                  {
+                    "block": null,
+                    "error": "cardano-cli: Network.Socket.connect: <socket: 11>: does not exist (Connection refused)",
+                    "hash": null,
+                    "observed_at": "2026-04-28T06:44:02.121859Z",
+                    "ok": false,
+                    "slot": null,
+                    "syncProgress": null
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:03.136530Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:04.151376Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:05.165688Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:06.180393Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:07.195701Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:08.210206Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:09.225401Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:10.239689Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:11.254344Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:12.122601Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  }
+                ],
+                "socket_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/socket/node1.sock",
+                "successful_sample_count": 10,
+                "target_node": "node1"
+              },
+              "version": "10.7.1"
+            },
+            "node2": {
+              "connection_state": {
+                "connect_failures": 0,
+                "connect_successes": 2,
+                "lsof_socket_count": 3,
+                "peer_nodes_connected": [],
+                "pid": 3414114,
+                "port": 34042,
+                "responsive": true,
+                "ss_established_count": 0,
+                "ss_lines": [
+                  "LISTEN     0      8                        127.0.0.1:34042         0.0.0.0:*     users:((\"cardano-node\",pid=3414114,fd=21))",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34042       127.0.0.1:53184 users:((\"cardano-node\",pid=3414114,fd=25))",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:53182       127.0.0.1:34042",
+                  "FIN-WAIT-2 0      0                        127.0.0.1:53184       127.0.0.1:34042",
+                  "CLOSE-WAIT 0      0                        127.0.0.1:34042       127.0.0.1:53182 users:((\"cardano-node\",pid=3414114,fd=24))"
+                ],
+                "ss_listen_count": 1,
+                "ss_match_count": 5,
+                "target_node": "node2"
+              },
+              "implementation": "cardano-node",
+              "node_id": "node2",
+              "port": 34042,
+              "socket_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/socket/node2.sock",
+              "tip_state": {
+                "failed_sample_count": 0,
+                "latest_tip": {
+                  "block": 0,
+                  "hash": "",
+                  "observed_at": "2026-04-28T06:44:22.201899Z",
+                  "ok": true,
+                  "slot": 0,
+                  "syncProgress": "0.00"
+                },
+                "sample_count": 11,
+                "samples": [
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:12.200264Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:13.215226Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:14.229784Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:15.244821Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:16.259534Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:17.274453Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:18.289433Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:19.304449Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:20.319358Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:21.334066Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  },
+                  {
+                    "block": 0,
+                    "hash": "",
+                    "observed_at": "2026-04-28T06:44:22.201899Z",
+                    "ok": true,
+                    "slot": 0,
+                    "syncProgress": "0.00"
+                  }
+                ],
+                "socket_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/socket/node2.sock",
+                "successful_sample_count": 11,
+                "target_node": "node2"
+              },
+              "version": "10.7.1"
+            }
+          },
+          "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/substrate-compose/runtime.json",
+          "sample_interval_seconds": 1.0,
+          "summary": {
+            "chain_select_consistent": false,
+            "expected_peer_edge_count": 1,
+            "expected_peer_edges": [
+              [
+                "node1",
+                "node2"
+              ]
+            ],
+            "latest_tips": {},
+            "missing_peer_edge_count": 1,
+            "missing_peer_edges": [
+              [
+                "node1",
+                "node2"
+              ]
+            ],
+            "node_count": 2,
+            "observed_peer_edge_count": 0,
+            "observed_peer_edges": [],
+            "quorum_count": 0,
+            "quorum_fraction": 0.0,
+            "quorum_tip": {
+              "hash": null,
+              "nodes": [],
+              "slot": null
+            },
+            "responsive_node_count": 2,
+            "responsive_nodes": [
+              "node1",
+              "node2"
+            ],
+            "tip_group_count": 0,
+            "tip_groups": []
+          }
+        },
+        "stderr": "",
+        "stdout": "node_count=2 responsive_node_count=2 tip_group_count=0 quorum_count=0 quorum_fraction=0.0000 observation_summary_relpath=/home/nigel/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/multi-node-observation/observation-summary.json correlated_timeline_relpath=/home/nigel/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/multi-node-observation/correlated-timeline.json\n"
+      }
+    ],
+    "evaluated_value": {
+      "completed": 1,
+      "node_count": 2,
+      "responsive_node_count": 2
+    },
+    "params": {},
+    "primitive": "all_nodes_responsive",
+    "result": "pass"
+  },
+  {
+    "data_points_used": [
+      {
+        "artifact_summary": {
+          "has_result_report": true
+        },
+        "exit_code": 0,
+        "outcome": "ok",
+        "report": {
+          "healthy": true,
+          "mode": "blockfetch_invalid_block_cbor",
+          "proxy_listen_address": "127.0.0.1:46311",
+          "proxy_session": "dwarf-substrate-20260428T064357Z-223bf4d2-blockfetch_invalid_block_cbor-node1",
+          "proxy_stats": {
+            "connections_seen": 1,
+            "intercepted_segments": 0,
+            "mutated_segments": 0
+          },
+          "result": {
+            "decode_path": "simulated_via_mutated_mux_payload",
+            "invalid_block_rejected": true
+          },
+          "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/runtime.json",
+          "simulation_mode": "mux_proxy_mutation",
+          "target_node": "node1",
+          "upstream_address": "127.0.0.1:34042"
+        },
+        "result": {
+          "decode_path": "simulated_via_mutated_mux_payload",
+          "invalid_block_rejected": true
+        },
+        "stderr": "",
+        "stdout": "mode=blockfetch_invalid_block_cbor target_node=node1 healthy=true intercepted_segments=0 mutated_segments=0\n"
+      }
+    ],
+    "evaluated_value": {
+      "completed": 1,
+      "decode_path": "simulated_via_mutated_mux_payload",
+      "invalid_block_rejected": true
+    },
+    "params": {},
+    "primitive": "blockfetch_invalid_block_rejected",
+    "result": "pass"
+  }
+]

@@ -1,0 +1,327 @@
+{
+  "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+  "node_ids": [
+    "node1",
+    "node2"
+  ],
+  "observation_window_seconds": 10.0,
+  "sample_interval_seconds": 1.0,
+  "observation_primitives": [
+    "tip_state",
+    "connection_state"
+  ],
+  "network_magic": 2,
+  "per_node": {
+    "node1": {
+      "node_id": "node1",
+      "implementation": "cardano-node",
+      "version": "10.7.1",
+      "port": 34611,
+      "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node1.sock",
+      "tip_state": {
+        "target_node": "node1",
+        "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node1.sock",
+        "sample_count": 11,
+        "successful_sample_count": 11,
+        "failed_sample_count": 0,
+        "latest_tip": {
+          "ok": true,
+          "observed_at": "2026-04-28T06:45:00.795734Z",
+          "slot": 0,
+          "block": 0,
+          "hash": "",
+          "syncProgress": "0.00"
+        },
+        "samples": [
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:50.795527Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:51.809384Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:52.823492Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:53.838613Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:54.853546Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:55.867795Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:56.883355Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:57.898119Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:58.912502Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:44:59.926933Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:00.795734Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          }
+        ]
+      },
+      "connection_state": {
+        "target_node": "node1",
+        "pid": 3415102,
+        "port": 34611,
+        "connect_successes": 2,
+        "connect_failures": 0,
+        "ss_match_count": 6,
+        "ss_listen_count": 2,
+        "ss_established_count": 0,
+        "lsof_socket_count": 4,
+        "peer_nodes_connected": [],
+        "responsive": true,
+        "ss_lines": [
+          "LISTEN     0      8                        127.0.0.1:34611         0.0.0.0:*     users:((\"cardano-node\",pid=3415102,fd=22))",
+          "LISTEN     0      1024                     127.0.0.1:12798         0.0.0.0:*     users:((\"cardano-node\",pid=3415102,fd=15))",
+          "CLOSE-WAIT 0      0                        127.0.0.1:34611       127.0.0.1:40438 users:((\"cardano-node\",pid=3415102,fd=26))",
+          "FIN-WAIT-2 0      0                        127.0.0.1:40438       127.0.0.1:34611",
+          "CLOSE-WAIT 0      0                        127.0.0.1:34611       127.0.0.1:40434 users:((\"cardano-node\",pid=3415102,fd=25))",
+          "FIN-WAIT-2 0      0                        127.0.0.1:40434       127.0.0.1:34611"
+        ]
+      }
+    },
+    "node2": {
+      "node_id": "node2",
+      "implementation": "cardano-node",
+      "version": "10.7.1",
+      "port": 34612,
+      "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node2.sock",
+      "tip_state": {
+        "target_node": "node2",
+        "socket_path": "/tmp/dwarf-substrate-20260428T064446Z-efbb7670/socket/node2.sock",
+        "sample_count": 11,
+        "successful_sample_count": 11,
+        "failed_sample_count": 0,
+        "latest_tip": {
+          "ok": true,
+          "observed_at": "2026-04-28T06:45:10.879418Z",
+          "slot": 0,
+          "block": 0,
+          "hash": "",
+          "syncProgress": "0.00"
+        },
+        "samples": [
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:00.878377Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:01.892521Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:02.907613Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:03.923238Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:04.938233Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:05.952360Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:06.967651Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:07.982892Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:08.997171Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:10.012220Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          },
+          {
+            "ok": true,
+            "observed_at": "2026-04-28T06:45:10.879418Z",
+            "slot": 0,
+            "block": 0,
+            "hash": "",
+            "syncProgress": "0.00"
+          }
+        ]
+      },
+      "connection_state": {
+        "target_node": "node2",
+        "pid": 3415116,
+        "port": 34612,
+        "connect_successes": 2,
+        "connect_failures": 0,
+        "ss_match_count": 5,
+        "ss_listen_count": 1,
+        "ss_established_count": 0,
+        "lsof_socket_count": 3,
+        "peer_nodes_connected": [],
+        "responsive": true,
+        "ss_lines": [
+          "LISTEN     0      8                        127.0.0.1:34612         0.0.0.0:*     users:((\"cardano-node\",pid=3415116,fd=21))",
+          "CLOSE-WAIT 0      0                        127.0.0.1:34612       127.0.0.1:41658 users:((\"cardano-node\",pid=3415116,fd=24))",
+          "FIN-WAIT-2 0      0                        127.0.0.1:41658       127.0.0.1:34612",
+          "CLOSE-WAIT 0      0                        127.0.0.1:34612       127.0.0.1:41672 users:((\"cardano-node\",pid=3415116,fd=25))",
+          "FIN-WAIT-2 0      0                        127.0.0.1:41672       127.0.0.1:34612"
+        ]
+      }
+    }
+  },
+  "summary": {
+    "node_count": 2,
+    "responsive_node_count": 2,
+    "responsive_nodes": [
+      "node1",
+      "node2"
+    ],
+    "latest_tips": {
+      "node1": {
+        "block": 0,
+        "hash": "node1-tip",
+        "slot": 0
+      },
+      "node2": {
+        "block": 0,
+        "hash": "node2-tip",
+        "slot": 0
+      }
+    },
+    "tip_groups": [],
+    "tip_group_count": 0,
+    "chain_select_consistent": true,
+    "quorum_count": 0,
+    "quorum_fraction": 0.0,
+    "quorum_tip": {
+      "hash": null,
+      "slot": null,
+      "nodes": []
+    },
+    "expected_peer_edges": [
+      [
+        "node1",
+        "node2"
+      ]
+    ],
+    "observed_peer_edges": [],
+    "missing_peer_edges": [
+      [
+        "node1",
+        "node2"
+      ]
+    ],
+    "expected_peer_edge_count": 1,
+    "observed_peer_edge_count": 0,
+    "missing_peer_edge_count": 1
+  }
+}

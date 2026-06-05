@@ -1,0 +1,2 @@
+{"event": "phase_started", "level": "info", "payload": {"phase_id": "default", "phase_index": 1, "phase_title": "Compare malformed serialization handling against the reference on composed substrate"}, "phase": "framework", "primitive": "framework", "ts": "2026-04-28T06:44:46.871Z"}
+{"event": "phase_completed", "level": "info", "payload": {"phase_id": "default", "phase_index": 1, "phase_title": "Compare malformed serialization handling against the reference on composed substrate"}, "phase": "framework", "primitive": "framework", "ts": "2026-04-28T06:45:11.007Z"}

@@ -1,0 +1,26 @@
+{
+  "id": "amaru-proptest",
+  "label": "Amaru Property-Test Smoke",
+  "category": "property-smoke",
+  "status": "bounded",
+  "source_reference": "codebases/amaru",
+  "working_directory": "/opt/dwarf/targets/amaru",
+  "timeout_seconds": 900,
+  "environment": {
+    "PROPTEST_CASES": "8"
+  },
+  "commands": [
+    "source ~/.cargo/env",
+    "cargo test -p amaru-kernel cardano:: -- --nocapture",
+    "cargo test -p amaru-consensus headers_tree -- --nocapture"
+  ],
+  "limitations": [
+    "Bounded property-test smoke only; not exhaustive fuzzing.",
+    "Does not establish finding, risk acceptance, or mitigation sufficiency.",
+    "No public Cardano network is contacted."
+  ],
+  "safety_notes": [
+    "Runs selected Amaru tests on the Linux target host.",
+    "PROPTEST_CASES is bounded to keep runtime suitable for iteration."
+  ]
+}

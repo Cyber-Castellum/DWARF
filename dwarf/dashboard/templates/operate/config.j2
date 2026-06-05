@@ -1,0 +1,31 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Config</span>
+<h1>Config</h1>
+<p class="page-hero">Read-only view of <code>{{ config_path }}</code>{% if not config_present %} (file missing — every row falls back to its default){% endif %}. Edit via <code>cardano-profile config set &lt;key&gt; &lt;value&gt;</code> from a terminal; the dashboard never mutates config.</p>
+
+<hr class="hairline">
+
+<section aria-labelledby="config-heading">
+  <header><span class="eyebrow">Knobs</span><h2 id="config-heading">Configuration</h2></header>
+  <table class="config-table operate-config-table">
+    <thead>
+      <tr>
+        <th>Key</th><th>Value</th><th>Default</th><th>Source</th><th>Type</th><th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr class="operate-config-table__row operate-config-table__row--{{ row.source.split(' ')[0] }}">
+        <td><code>{{ row.key }}</code></td>
+        <td><code>{{ row.value or '—' }}</code></td>
+        <td><code>{{ row.default or '—' }}</code></td>
+        <td><span class="result-pill">{{ row.source }}</span></td>
+        <td><code>{{ row.type }}</code></td>
+        <td>{{ row.description }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

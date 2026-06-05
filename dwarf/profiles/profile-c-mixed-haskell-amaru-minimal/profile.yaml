@@ -1,0 +1,11 @@
+{
+  "id": "profile-c-mixed-haskell-amaru-minimal",
+  "label": "Minimal mixed runtime, 1 Haskell + 1 Amaru",
+  "node_type": "mixed",
+  "node_count": 1,
+  "amaru_node_count": 1,
+  "network_magic": 42,
+  "peer_sharing": false,
+  "remote_runtime_root": "/opt/dwarf/cardano-profiles/profile-c-mixed-haskell-amaru-minimal",
+  "compose_project": "dwarf-profile-c-mixed-haskell-amaru-minimal"
+}

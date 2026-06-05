@@ -1,0 +1,106 @@
+{
+  "target_node": "node1",
+  "socket_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/socket/node1.sock",
+  "sample_count": 11,
+  "successful_sample_count": 10,
+  "failed_sample_count": 1,
+  "latest_tip": {
+    "ok": true,
+    "observed_at": "2026-04-28T06:44:12.122601Z",
+    "slot": 0,
+    "block": 0,
+    "hash": "",
+    "syncProgress": "0.00"
+  },
+  "samples": [
+    {
+      "ok": false,
+      "observed_at": "2026-04-28T06:44:02.121859Z",
+      "error": "cardano-cli: Network.Socket.connect: <socket: 11>: does not exist (Connection refused)",
+      "slot": null,
+      "block": null,
+      "hash": null,
+      "syncProgress": null
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:03.136530Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:04.151376Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:05.165688Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:06.180393Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:07.195701Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:08.210206Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:09.225401Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:10.239689Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:11.254344Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    },
+    {
+      "ok": true,
+      "observed_at": "2026-04-28T06:44:12.122601Z",
+      "slot": 0,
+      "block": 0,
+      "hash": "",
+      "syncProgress": "0.00"
+    }
+  ]
+}

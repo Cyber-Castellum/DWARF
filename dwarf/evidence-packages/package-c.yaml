@@ -1,0 +1,49 @@
+{
+  "id": "package-c",
+  "label": "ChainSync, Rollback, BlockFetch, And Persistence",
+  "runnable": true,
+  "status": "Executable evidence complete; promotion blocked by deeper instrumentation and policy gates",
+  "candidate_ids": [
+    "CR-M1-DRAFT-009",
+    "CR-M1-DRAFT-010",
+    "CR-M1-DRAFT-011",
+    "CR-M1-DRAFT-015"
+  ],
+  "evidence_paths": [
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-009-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-010-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-011-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-015-evidence.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-001-package-c-baseline.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-002-source-code-review.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-003-pretest-health.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-004-targeted-test-design.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-005-chainsync-intersection-test.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-006-rollback-recovery-test.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-007-blockfetch-timeout-load-test.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-008-persistence-snapshot-recovery-review.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-009-adversarial-pretest-baseline.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-010-adversarial-harness-discovery.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-011-chainsync-resource-harness.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-012-blockfetch-timeout-stale-load-harness.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-013-rollback-fork-restart-design.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-014-persistence-snapshot-recovery-design.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-015-resource-metrics-smoke.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-016-chainsync-copied-state-divergence-runtime.md",
+    "retained-evidence/testing/milestone-1/package-c/M1-PC-017-package-c-runtime-closure.md"
+  ],
+  "blockers": [
+    "No in-process ChainSync or BlockFetch queue, allocator, mailbox, or scheduler instrumentation exists for worst-case pressure claims.",
+    "Numeric-bound policy remains open for timeout values, retry semantics, and limits such as MAX_FETCHED_BLOCKS.",
+    "Recovery-horizon and retention policy remain open for persistence and disaster-recovery sufficiency claims."
+  ],
+  "runtime_profile": "profile-a-haskell-peersharing-disabled",
+  "runtime_root": "/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled",
+  "read_only_actions": [
+    "M1-PC-001 captured Profile A health and tip state.",
+    "M1-PC-002 captured source/code review.",
+    "M1-PC-003 through M1-PC-016 captured pretest health, test design, source review, safe tests, resource smoke, and bounded runtime recovery/divergence evidence.",
+    "M1-PC-017 records Package C closure for the current bounded runtime scope.",
+    "Future Package C work should be framed as deeper instrumentation or policy follow-up without promotion or scoring."
+  ]
+}

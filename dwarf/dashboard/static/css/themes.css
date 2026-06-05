@@ -1,0 +1,82 @@
+/*
+ * Dashboard alternate themes (slice 48).
+ *
+ * The default `forensic-noir` palette lives in tokens.css and applies
+ * unscoped under :root. Alternate themes are scoped under
+ * [data-theme="<slug>"] on <html>, overriding only the tokens that
+ * differ. Anything left untouched falls back to forensic-noir.
+ *
+ * Documented contract: any token under :root in tokens.css MAY be
+ * overridden by an alternate theme. See dwarf/dashboard/static/THEME.md
+ * for the full list and override examples.
+ */
+
+/* ---- light-audit -----------------------------------------------------
+ * Brutalist-print palette: paper-white field, ink-black text,
+ * crimson-only accent. Reads as a printed audit report. Removes the
+ * cyan glow entirely — appropriate for printable / archival contexts. */
+[data-theme="light-audit"] {
+  --obsidian-0: #F4F2EC;
+  --obsidian-1: #FBFAF6;
+  --obsidian-2: #FFFFFF;
+  --obsidian-3: #ECEAE2;
+  --obsidian-4: #DCD8CC;
+
+  --paper:        var(--obsidian-1);
+  --paper-raised: var(--obsidian-2);
+
+  --cyan-primary: #1A4F4F;
+  --cyan-glow:    #0F3535;
+  --cyan-deep:    #062424;
+  --cyan-trace:   rgba(15, 53, 53, 0.18);
+  --cyan-tint:    rgba(15, 53, 53, 0.05);
+
+  --accent:       var(--cyan-primary);
+  --accent-deep:  var(--cyan-deep);
+  --accent-tint:  var(--cyan-tint);
+
+  --crimson:      #B02020;
+  --crimson-glow: #8A1818;
+  --crimson-deep: #5A0E0E;
+
+  --ink-primary:   #14181C;
+  --ink-secondary: #3D454D;
+  --ink-tertiary:  #6E7681;
+
+  --hud-trace-color: rgba(15, 53, 53, 0.05);
+}
+
+/* ---- monochrome-print -----------------------------------------------
+ * Pure greyscale. No accent color at all — every load-bearing color
+ * token collapses to ink. Useful for greyscale printing or accessibility
+ * audits where contrast is the only signal that matters. */
+[data-theme="monochrome-print"] {
+  --obsidian-0: #FFFFFF;
+  --obsidian-1: #FAFAFA;
+  --obsidian-2: #F2F2F2;
+  --obsidian-3: #E6E6E6;
+  --obsidian-4: #D4D4D4;
+
+  --paper:        var(--obsidian-1);
+  --paper-raised: var(--obsidian-2);
+
+  --cyan-primary: #1A1A1A;
+  --cyan-glow:    #000000;
+  --cyan-deep:    #404040;
+  --cyan-trace:   rgba(0, 0, 0, 0.2);
+  --cyan-tint:    rgba(0, 0, 0, 0.04);
+
+  --accent:       var(--cyan-primary);
+  --accent-deep:  var(--cyan-deep);
+  --accent-tint:  var(--cyan-tint);
+
+  --crimson:      #1A1A1A;
+  --crimson-glow: #000000;
+  --crimson-deep: #404040;
+
+  --ink-primary:   #000000;
+  --ink-secondary: #333333;
+  --ink-tertiary:  #666666;
+
+  --hud-trace-color: rgba(0, 0, 0, 0.05);
+}

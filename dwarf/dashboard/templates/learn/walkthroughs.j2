@@ -1,0 +1,19 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<h1>Walkthroughs</h1>
+<p>Narrated paths through real Dwarf workflows. Each step links to a real file or a real <code>/operate</code> page — the dashboard pages and the codebase are the documentation, and these walkthroughs give you a way to traverse them in order.</p>
+
+<hr class="hairline">
+
+{% if empty %}
+<p class="empty-section-statement">
+  No walkthroughs available.
+  <span class="empty-section-statement__cite">walkthrough catalog is empty</span>
+</p>
+{% else %}
+{% for walkthrough in walkthroughs %}
+{% include "learn/_partials/_walkthrough.j2" %}
+{% endfor %}
+{% endif %}
+{% endblock %}

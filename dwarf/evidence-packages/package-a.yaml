@@ -1,0 +1,36 @@
+{
+  "id": "package-a",
+  "label": "Parser, Protocol, And Compatibility Boundary",
+  "runnable": false,
+  "status": "Smoke and Layer 1 fuzz evidence added; promotion blocked",
+  "candidate_ids": [
+    "CR-M1-DRAFT-001",
+    "CR-M1-DRAFT-002",
+    "CR-M1-DRAFT-003",
+    "CR-M1-DRAFT-004",
+    "CR-M1-DRAFT-018"
+  ],
+  "evidence_paths": [
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-001-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-002-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-003-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-004-evidence.md",
+    "retained-evidence/research/risk-register-v1/evidence-packages/CR-M1-DRAFT-018-evidence.md",
+    "devnet/profile-manager/smoke-tests/package-a-parser-protocol-smoke.json",
+    "retained-evidence/testing/smoke-tests/package-a-parser-protocol-smoke/20260417T083729Z-run.md",
+    "retained-evidence/testing/smoke-tests/package-a-parser-protocol-smoke/20260417T083729Z-run.json",
+    "dwarf/evidence/m2-first-executions/random-fuzz/",
+    "retained-evidence/testing/fuzz/package-a-parser-protocol-layer1/20260418T000217Z-run.md",
+    "retained-evidence/testing/fuzz/package-a-parser-protocol-layer1/20260418T000217Z-run.json"
+  ],
+  "blockers": [
+    "Differential or fuzz test evidence is not complete.",
+    "Broader mini-protocol bounds remain split across later packages.",
+    "Compatibility policy and mixed-version test matrix are not approved."
+  ],
+  "read_only_actions": [
+    "Package A parser/protocol smoke ran against Amaru malformed decode, handshake, mux, and mini-protocol message filters.",
+    "Package A Layer 1 fuzz ran bounded offline parser/protocol filters with PROPTEST_CASES=256.",
+    "Smoke and Layer 1 fuzz evidence remain candidate-only and do not promote Package A risk rows."
+  ]
+}

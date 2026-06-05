@@ -1,0 +1,1 @@
+{"type":"object","required":["primitive"],"properties":{"primitive":{"const":"blockfetch_invalid_block_rejected"}},"additionalProperties":true}

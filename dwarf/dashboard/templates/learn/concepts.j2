@@ -1,0 +1,11 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<h1>Concepts</h1>
+<p>The project's working vocabulary. Each term has a one-paragraph definition and a pointer to where it lives in code. Terms marked <span class="caveat-label">needs source</span> are real concepts in project conversation that don't yet have a canonical code anchor; they're surfaced honestly rather than fabricated.</p>
+<hr class="hairline">
+
+{% for entry in concepts %}
+{% include "learn/_partials/_concept_entry.j2" %}
+{% endfor %}
+{% endblock %}

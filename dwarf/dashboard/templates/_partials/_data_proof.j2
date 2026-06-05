@@ -1,0 +1,4 @@
+<li class="data-proof-row">
+  <span class="label">{{ label }}</span>
+  <span class="value"{% if value in (None, '', 0) %} data-empty="true"{% endif %}>{{ value if value not in (None, '') else 'needs source' }}</span>
+</li>
