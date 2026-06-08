@@ -1,0 +1,46 @@
+name: dwarf-profile-c-mixed-haskell-amaru-minimal
+services:
+  cardano-node-1:
+    container_name: cardano-node-1
+    hostname: cardano-node-1
+    platform: linux/amd64
+    init: true
+    image: us-central1-docker.pkg.dev/molten-verve-216720/cardano-repository/cardano-node-devnet:latest
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "bash -c '</dev/tcp/127.0.0.1/3001'"
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  amaru-1:
+    container_name: amaru-1
+    hostname: amaru-1
+    platform: linux/amd64
+    init: true
+    image: us-central1-docker.pkg.dev/molten-verve-216720/cardano-repository/amaru:latest
+    environment:
+      AMARU_NETWORK_MAGIC: "42"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "bash -c '</dev/tcp/127.0.0.1/3001'"
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  workload:
+    container_name: workload
+    hostname: workload
+    platform: linux/amd64
+    init: true
+    image: us-central1-docker.pkg.dev/molten-verve-216720/cardano-repository/dwarf-antithesis-workload:latest
+    environment:
+      WORKLOAD_TARGETS: "cardano-node-1=cardano-node-1:3001,amaru-1=amaru-1:3001"
+      AMARU_NETWORK_MAGIC: "42"
+    depends_on:
+      cardano-node-1:
+        condition: service_healthy
+      amaru-1:
+        condition: service_healthy
+    command:
+      - /antithesis/setup-complete.sh
