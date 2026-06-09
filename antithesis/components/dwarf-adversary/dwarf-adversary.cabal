@@ -1,0 +1,124 @@
+cabal-version:   3.0
+name:            dwarf-adversary
+version:         0.1.0.0
+license:         Apache-2.0
+license-file:    LICENSE
+author:          Dwarf / Cyber-Castellum
+maintainer:      security@cyber-castellum
+category:        Testing
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
+
+common settings
+  ghc-options:
+    -Wall -Wunused-imports -Wunused-packages -Wname-shadowing
+    -Wdeferred-out-of-scope-variables -Wpartial-type-signatures
+    -Wredundant-constraints
+
+  default-extensions:
+    BangPatterns
+    DataKinds
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    LambdaCase
+    MultiParamTypeClasses
+    NamedFieldPuns
+    OverloadedStrings
+    PatternSynonyms
+    RankNTypes
+    RecordWildCards
+    ScopedTypeVariables
+    StandaloneDeriving
+    StrictData
+    TupleSections
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+
+library
+  import:          settings
+  hs-source-dirs:  src
+  build-depends:
+    , aeson
+    , async
+    , base
+    , base16-bytestring
+    , bytestring
+    , cardano-ledger-byron
+    , cborg
+    , contra-tracer
+    , directory
+    , filepath
+    , io-classes
+    , network
+    , network-mux
+    , ouroboros-consensus
+    , ouroboros-consensus-cardano   ^>=0.25
+    , ouroboros-consensus-protocol
+    , ouroboros-network
+    , ouroboros-network-api
+    , ouroboros-network-framework
+    , ouroboros-network-mock
+    , ouroboros-network-protocols
+    , random
+    , serialise
+    , strict-stm
+    , text
+    , typed-protocols
+
+  exposed-modules:
+    DwarfAdversary
+    DwarfAdversary.Application
+    DwarfAdversary.ChainSync.Codec
+    DwarfAdversary.ChainSync.Connection
+    DwarfAdversary.ChainSync.MutatingCodec
+    DwarfAdversary.ChainSync.Server
+    DwarfAdversary.Fuzz
+    DwarfAdversary.HeaderSource
+    DwarfAdversary.SDK
+
+  other-modules:
+
+executable dwarf-adversary
+  import:         settings
+  main-is:        Main.hs
+  build-depends:
+    , dwarf-adversary
+    , aeson
+    , base
+    , bytestring
+    , network
+    , optparse-applicative
+    , ouroboros-network
+    , ouroboros-network-api
+    , random
+    , text
+    , time
+
+  hs-source-dirs: app
+
+test-suite dwarf-adversary-test
+  import:             settings
+  other-modules:      FuzzSpec
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            Main.hs
+  build-depends:
+    , dwarf-adversary
+    , base
+    , bytestring
+    , cborg
+    , hspec
+    , QuickCheck
+    , random
+    , serialise
+
+  build-tool-depends: hspec-discover:hspec-discover

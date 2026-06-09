@@ -1,0 +1,5 @@
+dist-newstyle/
+dist/
+build-task1.log
+test.log
+test.done

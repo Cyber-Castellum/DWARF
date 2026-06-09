@@ -111,9 +111,43 @@ services:
     hostname: relay2.example
     volumes:
       - p1-configs:/configs:ro
-      - ./relay-topology.json:/configs/configs/topology.json:ro
+      # relay2 uses the dwarf topology: it lists dwarf-adversary.example
+      # as a trustable local root, so relay2 chain-syncs from the fuzz
+      # server and runs its header decoder on the mutated header CBOR.
+      - ./relay-dwarf-topology.json:/configs/configs/topology.json:ro
       - relay2-state:/state
       - tracer:/tracer
+
+  # Dwarf CBOR-fuzz adversary — a chain-sync UPSTREAM SERVER. relay2's
+  # topology lists it as a trustable local root, so relay2 syncs from it
+  # and decodes structurally-mutated header CBOR. It first captures a
+  # real base header from p1 (in-bundle; never external), then serves
+  # seeded mutations of it. Seeded solely by --seed (sourced from
+  # antithesis_random at launch) for deterministic recreation. Excluded
+  # from faults so the harness itself isn't the thing being chaos-tested.
+  dwarf-adversary:
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.1.0
+    container_name: dwarf-adversary
+    hostname: dwarf-adversary.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "--network-magic"
+      - "42"
+      - "--listen-port"
+      - "3001"
+      - "--mutation-rate"
+      - "0.5"
+      - "--upstream"
+      - "p1.example:3001"
+      - "--seed"
+      - "0x1"
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      p1:
+        condition: service_started
+    restart: always
 
   # Tx-generator workload — promoted from cardano_node_tx_generator
   # after a 0-findings 1h Antithesis validation run on commit
