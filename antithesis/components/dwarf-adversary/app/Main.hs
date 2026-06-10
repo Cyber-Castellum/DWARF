@@ -186,7 +186,10 @@ runServe logMsg args magic port = do
                     ]
                 )
     SDK.reachable "dwarf_fuzz_server_listening" (object ["port" .= argPort args])
-    _ <- runChainSyncServer magic port codec (chainSyncServer logMsg onServe headers tip)
+    let onAccept peerAddr = do
+            logMsg ("inbound connection accepted from " <> peerAddr)
+            SDK.reachable "dwarf_node_connected" (object ["peer" .= peerAddr])
+    _ <- runChainSyncServer magic port onAccept codec (chainSyncServer logMsg onServe headers tip)
     pure ()
 
 -- | Selftest: prove the server completes the N2N handshake and a real
@@ -200,6 +203,7 @@ runSelftest logMsg magic port = do
                 runChainSyncServer
                     magic
                     port
+                    (\p -> logMsg ("inbound connection accepted from " <> p))
                     codecChainSync
                     (chainSyncServer logMsg (\_ -> pure ()) [] (tipFromHeaders []))
             pure ()

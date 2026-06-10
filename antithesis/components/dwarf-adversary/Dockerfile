@@ -27,9 +27,11 @@ RUN ldconfig
 COPY dist/dwarf-adversary /usr/local/bin/dwarf-adversary
 RUN chmod 0755 /usr/local/bin/dwarf-adversary
 
-# Antithesis composer scripts (finally_/eventually_ live under here).
-COPY composer /opt/antithesis/test/v1/
-RUN chmod 0755 /opt/antithesis/test/v1/*/* 2>/dev/null || true
+# No Antithesis composer scripts: dwarf-adversary is a self-driving
+# daemon and emits all its SDK assertions itself (dwarf_fuzz_server_*,
+# dwarf_base_header_obtained, dwarf_node_connected, dwarf_served_mutated_header).
+# A lone finally_ command was flagged "not started/finished" by the test
+# templates, so we ship none — the testnet's other components drive the test.
 
 # Run the chain-sync fuzz server as the container command; the compose
 # service supplies the args (--serve --fuzz --network-magic N
