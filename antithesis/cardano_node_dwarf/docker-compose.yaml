@@ -126,7 +126,7 @@ services:
   # antithesis_random at launch) for deterministic recreation. Excluded
   # from faults so the harness itself isn't the thing being chaos-tested.
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.3.0
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.4.0
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
@@ -143,9 +143,9 @@ services:
       - "--seed"
       - "0x1"
       - "--protocol"
-      - "txsubmission"
+      - "blockfetch"
       - "--cbor-shape"
-      - "tx-body"
+      - "block"
     depends_on:
       configurator:
         condition: service_completed_successfully
