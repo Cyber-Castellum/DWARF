@@ -126,7 +126,7 @@ services:
   # antithesis_random at launch) for deterministic recreation. Excluded
   # from faults so the harness itself isn't the thing being chaos-tested.
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.5.0
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.5.1
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
