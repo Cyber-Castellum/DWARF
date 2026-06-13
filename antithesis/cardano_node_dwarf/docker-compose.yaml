@@ -120,7 +120,7 @@ services:
       # header with VRFKeyBadProof (see workbench obj_5b2d700a). Once CaughtUp,
       # relay2 chain-syncs/block-fetches/tx-submits with the adversary too and
       # runs its decoders on the mutated header/block/tx CBOR.
-      - ./relay-dwarf-topology.json:/configs/configs/topology.json:ro
+      - ./relay-eclipse-topology.json:/configs/configs/topology.json:ro
       - relay2-state:/state
       - tracer:/tracer
     # Start relay2 AFTER the adversary is up so its first local-root dial to
@@ -172,9 +172,9 @@ services:
       - "--seed"
       - "0x1"
       - "--protocol"
-      - "txsubmission"
+      - "blockfetch"
       - "--cbor-shape"
-      - "tx-body"
+      - "block"
     depends_on:
       configurator:
         condition: service_completed_successfully
