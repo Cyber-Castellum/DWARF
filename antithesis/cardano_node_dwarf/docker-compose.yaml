@@ -111,22 +111,51 @@ services:
     hostname: relay2.example
     volumes:
       - p1-configs:/configs:ro
-      # relay2 uses the dwarf topology: it lists dwarf-adversary.example
-      # as a trustable local root, so relay2 chain-syncs from the fuzz
-      # server and runs its header decoder on the mutated header CBOR.
+      # relay2 uses the dwarf topology: TWO trustable local-root groups —
+      # (1) the real producers p1/p2/p3, (2) dwarf-adversary.example.
+      # The producers bootstrap relay2 to GSM CaughtUp and seed the real
+      # Praos epoch nonce (established at the Byron->Shelley era transition);
+      # without them a fresh node fed only the adversary's from-origin
+      # headers stays on the pre-transition genesis nonce and rejects every
+      # header with VRFKeyBadProof (see workbench obj_5b2d700a). Once CaughtUp,
+      # relay2 chain-syncs/block-fetches/tx-submits with the adversary too and
+      # runs its decoders on the mutated header/block/tx CBOR.
       - ./relay-dwarf-topology.json:/configs/configs/topology.json:ro
       - relay2-state:/state
       - tracer:/tracer
+    # Start relay2 AFTER the adversary is up so its first local-root dial to
+    # dwarf-adversary.example succeeds. If relay2 starts first, that dial is
+    # refused (adversary not yet listening) and relay2 backs the local root
+    # off for the rest of the run — it then never establishes the adversary
+    # (a relay2 restart was needed to recover). (Overrides the *cardano-relay
+    # anchor's depends_on, so configurator + tracer-sidecar are repeated.)
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      tracer-sidecar:
+        condition: service_started
+      dwarf-adversary:
+        condition: service_started
 
-  # Dwarf CBOR-fuzz adversary — a chain-sync UPSTREAM SERVER. relay2's
-  # topology lists it as a trustable local root, so relay2 syncs from it
-  # and decodes structurally-mutated header CBOR. It first captures a
-  # real base header from p1 (in-bundle; never external), then serves
-  # seeded mutations of it. Seeded solely by --seed (sourced from
-  # antithesis_random at launch) for deterministic recreation. Excluded
-  # from faults so the harness itself isn't the thing being chaos-tested.
+  # Dwarf CBOR-fuzz adversary — an UPSTREAM SERVER and ADVANCING CaughtUp peer
+  # (SP3-foundation, image 0.9.0: listens immediately; producer client runs
+  # keep-alive + resets chainVar per reconnect; tx provider serves a
+  # continuously-refreshed batch; blockfetch mode now advancing too — serves a
+  # continuous stream of mutated bodies, validated under eclipse). relay2's
+  # topology lists it as a trustable
+  # local root. A background producer continuously chain-syncs the in-bundle
+  # upstream (p1) into a shared chain; the advancing chain-sync server (#2)
+  # rolls that RECENT, growing chain forward to relay2 and serves real block
+  # bodies on demand (#3) so relay2 ADOPTS the chain and reaches GSM CaughtUp —
+  # the precondition for it to run block-fetch / tx-submission with us. Then
+  # the targeted decoder is fuzzed: in --protocol blockfetch it serves a
+  # structurally-mutated BLOCK; in --protocol txsubmission (#4) it offers
+  # mutated txs. Seeded solely by --seed (from antithesis_random) for
+  # deterministic recreation. Excluded from faults so the harness itself isn't
+  # the thing being chaos-tested. (Tag/protocol/shape are overridden per-run by
+  # the generator + tools/sp3*_repro.sh.)
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.5.1
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.10.0
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
