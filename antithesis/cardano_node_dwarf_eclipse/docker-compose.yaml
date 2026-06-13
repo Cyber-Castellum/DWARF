@@ -1,0 +1,271 @@
+x-cardano-node: &cardano-node
+  image: ghcr.io/intersectmbo/cardano-node@sha256:5ae211f92eac18ed27b9e2f73c190b56bf4c1a7145d282e78ca58597a385d19f
+  environment:
+    CARDANO_BLOCK_PRODUCER: true
+  command: >
+    run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --shelley-operational-certificate /configs/keys/opcert.cert
+      --shelley-kes-key /configs/keys/kes.skey
+      --shelley-vrf-key /configs/keys/vrf.skey
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+  restart: always
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+    tracer-sidecar:
+      condition: service_started
+
+x-cardano-relay: &cardano-relay
+  environment:
+    CARDANO_BLOCK_PRODUCER: false
+  command: >
+    run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+  restart: always
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+    tracer-sidecar:
+      condition: service_started
+
+services:
+  configurator:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/configurator@sha256:6e6ba428838bf754ad286b62a151c63c683ef27fbdd5dd1bb5bab11ec9a6a34d
+    container_name: configurator
+    volumes:
+      - ./testnet.yaml:/testnet.yaml #  source of configurations
+      - p1-configs:/configs/1 # configs for p1
+      - p2-configs:/configs/2 # configs for p2
+      - p3-configs:/configs/3 # configs for p3
+      - utxo-keys:/utxo-keys # funded address keys for tx-generator
+
+  tracer:
+    image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
+
+    hostname: tracer.example
+    container_name: tracer
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    volumes:
+      - tracer:/opt/cardano-tracer
+      - ./tracer-config.yaml:/tracer-config.yaml:ro
+    entrypoint: cardano-tracer
+    command:
+      - "--config"
+      - "/tracer-config.yaml"
+    restart: always
+
+  p1:
+    <<: *cardano-node
+    container_name: p1
+    hostname: p1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - tracer:/tracer
+
+  p2:
+    <<: *cardano-node
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    container_name: p2
+    hostname: p2.example
+    volumes:
+      - p2-configs:/configs:ro
+      - tracer:/tracer
+
+  p3:
+    <<: *cardano-node
+    image: ghcr.io/intersectmbo/cardano-node@sha256:45857be8d86b314a05cd46d310b74b24e5f5870469f90c6464994a7f78142271
+    container_name: p3
+    hostname: p3.example
+    volumes:
+      - p3-configs:/configs:ro
+      - tracer:/tracer
+
+  relay1:
+    <<: *cardano-relay
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    container_name: relay1
+    hostname: relay1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - ./relay-topology.json:/configs/configs/topology.json:ro
+      - relay1-state:/state
+      - tracer:/tracer
+
+  relay2:
+    <<: *cardano-relay
+    image: ghcr.io/intersectmbo/cardano-node@sha256:45857be8d86b314a05cd46d310b74b24e5f5870469f90c6464994a7f78142271
+    container_name: relay2
+    hostname: relay2.example
+    networks:
+      - eclipse
+    volumes:
+      - p1-configs:/configs:ro
+      # relay2 uses the dwarf topology: TWO trustable local-root groups —
+      # (1) the real producers p1/p2/p3, (2) dwarf-adversary.example.
+      # The producers bootstrap relay2 to GSM CaughtUp and seed the real
+      # Praos epoch nonce (established at the Byron->Shelley era transition);
+      # without them a fresh node fed only the adversary's from-origin
+      # headers stays on the pre-transition genesis nonce and rejects every
+      # header with VRFKeyBadProof (see workbench obj_5b2d700a). Once CaughtUp,
+      # relay2 chain-syncs/block-fetches/tx-submits with the adversary too and
+      # runs its decoders on the mutated header/block/tx CBOR.
+      - ./relay-eclipse-topology.json:/configs/configs/topology.json:ro
+      - relay2-state:/state
+      - tracer:/tracer
+    # Start relay2 AFTER the adversary is up so its first local-root dial to
+    # dwarf-adversary.example succeeds. If relay2 starts first, that dial is
+    # refused (adversary not yet listening) and relay2 backs the local root
+    # off for the rest of the run — it then never establishes the adversary
+    # (a relay2 restart was needed to recover). (Overrides the *cardano-relay
+    # anchor's depends_on, so configurator + tracer-sidecar are repeated.)
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      tracer-sidecar:
+        condition: service_started
+      dwarf-adversary:
+        condition: service_started
+
+  # Dwarf CBOR-fuzz adversary — an UPSTREAM SERVER and ADVANCING CaughtUp peer
+  # (SP3-foundation, image 0.9.0: listens immediately; producer client runs
+  # keep-alive + resets chainVar per reconnect; tx provider serves a
+  # continuously-refreshed batch; blockfetch mode now advancing too — serves a
+  # continuous stream of mutated bodies, validated under eclipse). relay2's
+  # topology lists it as a trustable
+  # local root. A background producer continuously chain-syncs the in-bundle
+  # upstream (p1) into a shared chain; the advancing chain-sync server (#2)
+  # rolls that RECENT, growing chain forward to relay2 and serves real block
+  # bodies on demand (#3) so relay2 ADOPTS the chain and reaches GSM CaughtUp —
+  # the precondition for it to run block-fetch / tx-submission with us. Then
+  # the targeted decoder is fuzzed: in --protocol blockfetch it serves a
+  # structurally-mutated BLOCK; in --protocol txsubmission (#4) it offers
+  # mutated txs. Seeded solely by --seed (from antithesis_random) for
+  # deterministic recreation. Excluded from faults so the harness itself isn't
+  # the thing being chaos-tested. (Tag/protocol/shape are overridden per-run by
+  # the generator + tools/sp3*_repro.sh.)
+  # Tx-generator workload — promoted from cardano_node_tx_generator
+  # after a 0-findings 1h Antithesis validation run on commit
+  # 4687a09. The daemon connects to relay1 via N2C and the
+  # composer fires short `transact`, `refill`, `eventually`, and
+  # `finally` control-socket probes. Tag 69bf815 contains the
+  # bounded socket-probe wrapper that cleared the four previous
+  # "Commands finish with zero exit code" findings.
+  # Sleep-forever container holding the cardano-adversary CLI plus
+  # its driver scripts under /opt/antithesis/test/v1/. Antithesis
+  # composer `docker exec`s into here per tick to fire one
+  # initiator-only chain-sync session against a randomly-chosen
+  # target node (any of p1/p2/p3/relay1/relay2). The container
+  # itself never receives the request and holds no shared state —
+  # if Antithesis chaos kills it, restart: always brings back an
+  # idempotent host.
+  tracer-sidecar:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/tracer-sidecar:8dbf509
+    container_name: tracer-sidecar
+    hostname: tracer-sidecar.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "/opt/cardano-tracer/logs"
+    environment:
+      POOLS: "3"
+      CHAINPOINT_FILEPATH: "/opt/cardano-tracer/chainPoints.log"
+    volumes:
+      - tracer:/opt/cardano-tracer
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  log-tailer:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/log-tailer@sha256:a5d23c42408a1003bb14208fd97dd2bdda102e7002e4e2a2804e71a80df56484
+    container_name: log-tailer
+    hostname: log-tailer.example
+    volumes:
+      - tracer:/tracer:ro
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  # Asteria game workload — promoted from testnets/asteria_game/ on
+  # the strength of the 0-findings 1h Antithesis run on commit
+  # 9984a1e (PR #100). Long-lived utxo-indexer follows relay1's
+  # chain via N2C, exposes ready/utxos_at/await on /tmp/idx.sock;
+  # composer scripts at /opt/antithesis/test/v1/asteria-game/ drive
+  # bootstrap (one-shot serial driver), the player loop, and the
+  # admin-singleton / consistency invariant snapshots. The player
+  # parallel_driver_ is the workload generator: builds + signs +
+  # submits spawnShip txs against relay1 every tick, providing
+  # sustained tx pressure under fault injection.
+  #
+  # Built from upstream PR #98 (035-indexer-n2c-reconnect) —
+  # supervisor with exponential-backoff reconnect handles N2C peer
+  # close in-process, so the daemon stays up across relay restarts.
+  # RocksDB persistence at /idx-db keeps state across full process
+  # restarts too. /utxo-keys is mounted so the bootstrap binary
+  # can read the genesis wallet skey; /asteria-deploy holds the
+  # per-deploy seed TxIn so player + invariant binaries see the
+  # same applied validators.
+  dwarf-adversary:
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.9.0
+    container_name: dwarf-adversary
+    hostname: dwarf-adversary.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "--network-magic"
+      - "42"
+      - "--listen-port"
+      - "3001"
+      - "--mutation-rate"
+      - "0.5"
+      - "--upstream"
+      - "p1.example:3001"
+      - "--seed"
+      - "0x1"
+      - "--protocol"
+      - "blockfetch"
+      - "--cbor-shape"
+      - "block"
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      p1:
+        condition: service_started
+    restart: always
+    networks:
+      default: {}
+      eclipse:
+        aliases:
+          - dwarf-adversary.example
+volumes:
+  tracer:
+  p1-configs:
+  p2-configs:
+  p3-configs:
+  relay1-state:
+  relay2-state:
+  utxo-keys:
+  asteria-game-db:
+  asteria-deploy:
+
+networks:
+  default:
+    name: cardano-node-testnet
+    driver: bridge
+    internal: ${INTERNAL_NETWORK}
+  eclipse:
+    driver: bridge
