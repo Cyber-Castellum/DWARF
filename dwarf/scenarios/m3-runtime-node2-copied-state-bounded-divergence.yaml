@@ -1,0 +1,41 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-node2-copied-state-bounded-divergence",
+  "title": "Runtime node2 copied-state replay creates bounded divergence from node3, then restores cleanly after remediation",
+  "authors": ["dwarf"],
+  "tags": ["m3", "runtime", "copied-state", "divergence", "recovery", "blockfetch", "profile-a", "package-c"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-016", "GAP-018", "GAP-014"],
+    "architecture_ids": ["B-004", "B-007", "IF-004", "IF-005"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-010", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded stale-state divergence evidence on the local devnet only, not proof of fork-choice correctness or rollback-horizon safety.",
+    "It does not prove eventual copied-state recovery without remediation.",
+    "It does not prove production disaster-recovery policy, database integrity under corruption, or public-network convergence."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "copied_state_divergence_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3615",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py copied-state-divergence",
+      "timeout_seconds": 540,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

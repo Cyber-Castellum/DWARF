@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "local_query_amplification_bounded"}
+  },
+  "additionalProperties": true
+}

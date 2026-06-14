@@ -1,0 +1,29 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-forensic-snapshot-example-smoke",
+  "title": "Capture a frozen audit handoff snapshot for selected Dwarf bundles",
+  "authors": ["dwarf"],
+  "tags": ["bundle", "forensic", "snapshot", "candidate"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "library",
+  "seed": "0xF04E451C",
+  "load": [
+    {
+      "primitive": "runtime_forensic_snapshot",
+      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "run_ids": [
+        "20260427T092200Z-audittraildemo",
+        "20260427T074053Z-ba7c46cc"
+      ],
+      "output_dir": "outputs/forensic-snapshot",
+      "output_format": "tar.gz",
+      "timeout_seconds": 180,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "forensic_snapshot_emitted_clean"}
+  ],
+  "teardown": []
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_resource_abuse_fault params",
+  "type": "object",
+  "required": ["output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "from_node": { "type": "string", "minLength": 1 },
+    "to_node": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "kilobits_per_second": { "type": "integer", "minimum": 1 },
+    "bytes_per_second": { "type": "integer", "minimum": 1 },
+    "target_usage_percent": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "fill_target_free_bytes": { "type": "integer", "minimum": 0 },
+    "duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "max_fill_bytes": { "type": "integer", "minimum": 1 },
+    "healthy_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false,
+  "anyOf": [
+    { "required": ["from_node", "to_node"] },
+    { "required": ["target_node"] }
+  ]
+}

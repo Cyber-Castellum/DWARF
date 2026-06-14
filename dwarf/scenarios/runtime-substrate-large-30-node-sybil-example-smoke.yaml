@@ -1,0 +1,3839 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-large-30-node-sybil-example-smoke",
+  "title": "Large-N 30-node Sybil pressure on two-host SSH fan-out (18 honest + 12 sybil, cardano-box + brabox, 30 GiB aggregate)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "substrate",
+    "large-n",
+    "adversarial",
+    "sybil",
+    "two-host-fanout",
+    "runnable-today",
+    "ram-30gib"
+  ],
+  "related_milestones": [
+    "M2"
+  ],
+  "evidence_intent": "risk-support",
+  "promotion_blockers": [],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "compose_mode": "docker",
+    "host_strategy": "explicit",
+    "network": "preview",
+    "hosts": [
+      {
+        "id": "cardano-box",
+        "ssh_target": "cardano-box",
+        "remote_runtime_base": "/home/nigel/cardano-profiles",
+        "published_host": "192.168.30.16"
+      },
+      {
+        "id": "brabox",
+        "ssh_target": "brabox",
+        "remote_runtime_base": "/home/nigel/cardano-profiles",
+        "published_host": "192.168.30.15"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node3",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node4",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node5",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node6",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node7",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node8",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node9",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node10",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node11",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node12",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node13",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node14",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node15",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "cardano-box"
+      },
+      {
+        "id": "node16",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "brabox"
+      },
+      {
+        "id": "node17",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "brabox"
+      },
+      {
+        "id": "node18",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest",
+        "host": "brabox"
+      },
+      {
+        "id": "node19",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node20",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node21",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node22",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node23",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node24",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node25",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node26",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node27",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node28",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node29",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      },
+      {
+        "id": "node30",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil",
+        "host": "brabox"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node1",
+          "to": "node3"
+        },
+        {
+          "from": "node1",
+          "to": "node4"
+        },
+        {
+          "from": "node1",
+          "to": "node5"
+        },
+        {
+          "from": "node1",
+          "to": "node6"
+        },
+        {
+          "from": "node1",
+          "to": "node7"
+        },
+        {
+          "from": "node1",
+          "to": "node8"
+        },
+        {
+          "from": "node1",
+          "to": "node9"
+        },
+        {
+          "from": "node1",
+          "to": "node10"
+        },
+        {
+          "from": "node1",
+          "to": "node11"
+        },
+        {
+          "from": "node1",
+          "to": "node12"
+        },
+        {
+          "from": "node1",
+          "to": "node13"
+        },
+        {
+          "from": "node1",
+          "to": "node14"
+        },
+        {
+          "from": "node1",
+          "to": "node15"
+        },
+        {
+          "from": "node1",
+          "to": "node16"
+        },
+        {
+          "from": "node1",
+          "to": "node17"
+        },
+        {
+          "from": "node1",
+          "to": "node18"
+        },
+        {
+          "from": "node1",
+          "to": "node19"
+        },
+        {
+          "from": "node1",
+          "to": "node20"
+        },
+        {
+          "from": "node1",
+          "to": "node21"
+        },
+        {
+          "from": "node1",
+          "to": "node22"
+        },
+        {
+          "from": "node1",
+          "to": "node23"
+        },
+        {
+          "from": "node1",
+          "to": "node24"
+        },
+        {
+          "from": "node1",
+          "to": "node25"
+        },
+        {
+          "from": "node1",
+          "to": "node26"
+        },
+        {
+          "from": "node1",
+          "to": "node27"
+        },
+        {
+          "from": "node1",
+          "to": "node28"
+        },
+        {
+          "from": "node1",
+          "to": "node29"
+        },
+        {
+          "from": "node1",
+          "to": "node30"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        },
+        {
+          "from": "node2",
+          "to": "node3"
+        },
+        {
+          "from": "node2",
+          "to": "node4"
+        },
+        {
+          "from": "node2",
+          "to": "node5"
+        },
+        {
+          "from": "node2",
+          "to": "node6"
+        },
+        {
+          "from": "node2",
+          "to": "node7"
+        },
+        {
+          "from": "node2",
+          "to": "node8"
+        },
+        {
+          "from": "node2",
+          "to": "node9"
+        },
+        {
+          "from": "node2",
+          "to": "node10"
+        },
+        {
+          "from": "node2",
+          "to": "node11"
+        },
+        {
+          "from": "node2",
+          "to": "node12"
+        },
+        {
+          "from": "node2",
+          "to": "node13"
+        },
+        {
+          "from": "node2",
+          "to": "node14"
+        },
+        {
+          "from": "node2",
+          "to": "node15"
+        },
+        {
+          "from": "node2",
+          "to": "node16"
+        },
+        {
+          "from": "node2",
+          "to": "node17"
+        },
+        {
+          "from": "node2",
+          "to": "node18"
+        },
+        {
+          "from": "node2",
+          "to": "node19"
+        },
+        {
+          "from": "node2",
+          "to": "node20"
+        },
+        {
+          "from": "node2",
+          "to": "node21"
+        },
+        {
+          "from": "node2",
+          "to": "node22"
+        },
+        {
+          "from": "node2",
+          "to": "node23"
+        },
+        {
+          "from": "node2",
+          "to": "node24"
+        },
+        {
+          "from": "node2",
+          "to": "node25"
+        },
+        {
+          "from": "node2",
+          "to": "node26"
+        },
+        {
+          "from": "node2",
+          "to": "node27"
+        },
+        {
+          "from": "node2",
+          "to": "node28"
+        },
+        {
+          "from": "node2",
+          "to": "node29"
+        },
+        {
+          "from": "node2",
+          "to": "node30"
+        },
+        {
+          "from": "node3",
+          "to": "node1"
+        },
+        {
+          "from": "node3",
+          "to": "node2"
+        },
+        {
+          "from": "node3",
+          "to": "node4"
+        },
+        {
+          "from": "node3",
+          "to": "node5"
+        },
+        {
+          "from": "node3",
+          "to": "node6"
+        },
+        {
+          "from": "node3",
+          "to": "node7"
+        },
+        {
+          "from": "node3",
+          "to": "node8"
+        },
+        {
+          "from": "node3",
+          "to": "node9"
+        },
+        {
+          "from": "node3",
+          "to": "node10"
+        },
+        {
+          "from": "node3",
+          "to": "node11"
+        },
+        {
+          "from": "node3",
+          "to": "node12"
+        },
+        {
+          "from": "node3",
+          "to": "node13"
+        },
+        {
+          "from": "node3",
+          "to": "node14"
+        },
+        {
+          "from": "node3",
+          "to": "node15"
+        },
+        {
+          "from": "node3",
+          "to": "node16"
+        },
+        {
+          "from": "node3",
+          "to": "node17"
+        },
+        {
+          "from": "node3",
+          "to": "node18"
+        },
+        {
+          "from": "node3",
+          "to": "node19"
+        },
+        {
+          "from": "node3",
+          "to": "node20"
+        },
+        {
+          "from": "node3",
+          "to": "node21"
+        },
+        {
+          "from": "node3",
+          "to": "node22"
+        },
+        {
+          "from": "node3",
+          "to": "node23"
+        },
+        {
+          "from": "node3",
+          "to": "node24"
+        },
+        {
+          "from": "node3",
+          "to": "node25"
+        },
+        {
+          "from": "node3",
+          "to": "node26"
+        },
+        {
+          "from": "node3",
+          "to": "node27"
+        },
+        {
+          "from": "node3",
+          "to": "node28"
+        },
+        {
+          "from": "node3",
+          "to": "node29"
+        },
+        {
+          "from": "node3",
+          "to": "node30"
+        },
+        {
+          "from": "node4",
+          "to": "node1"
+        },
+        {
+          "from": "node4",
+          "to": "node2"
+        },
+        {
+          "from": "node4",
+          "to": "node3"
+        },
+        {
+          "from": "node4",
+          "to": "node5"
+        },
+        {
+          "from": "node4",
+          "to": "node6"
+        },
+        {
+          "from": "node4",
+          "to": "node7"
+        },
+        {
+          "from": "node4",
+          "to": "node8"
+        },
+        {
+          "from": "node4",
+          "to": "node9"
+        },
+        {
+          "from": "node4",
+          "to": "node10"
+        },
+        {
+          "from": "node4",
+          "to": "node11"
+        },
+        {
+          "from": "node4",
+          "to": "node12"
+        },
+        {
+          "from": "node4",
+          "to": "node13"
+        },
+        {
+          "from": "node4",
+          "to": "node14"
+        },
+        {
+          "from": "node4",
+          "to": "node15"
+        },
+        {
+          "from": "node4",
+          "to": "node16"
+        },
+        {
+          "from": "node4",
+          "to": "node17"
+        },
+        {
+          "from": "node4",
+          "to": "node18"
+        },
+        {
+          "from": "node4",
+          "to": "node19"
+        },
+        {
+          "from": "node4",
+          "to": "node20"
+        },
+        {
+          "from": "node4",
+          "to": "node21"
+        },
+        {
+          "from": "node4",
+          "to": "node22"
+        },
+        {
+          "from": "node4",
+          "to": "node23"
+        },
+        {
+          "from": "node4",
+          "to": "node24"
+        },
+        {
+          "from": "node4",
+          "to": "node25"
+        },
+        {
+          "from": "node4",
+          "to": "node26"
+        },
+        {
+          "from": "node4",
+          "to": "node27"
+        },
+        {
+          "from": "node4",
+          "to": "node28"
+        },
+        {
+          "from": "node4",
+          "to": "node29"
+        },
+        {
+          "from": "node4",
+          "to": "node30"
+        },
+        {
+          "from": "node5",
+          "to": "node1"
+        },
+        {
+          "from": "node5",
+          "to": "node2"
+        },
+        {
+          "from": "node5",
+          "to": "node3"
+        },
+        {
+          "from": "node5",
+          "to": "node4"
+        },
+        {
+          "from": "node5",
+          "to": "node6"
+        },
+        {
+          "from": "node5",
+          "to": "node7"
+        },
+        {
+          "from": "node5",
+          "to": "node8"
+        },
+        {
+          "from": "node5",
+          "to": "node9"
+        },
+        {
+          "from": "node5",
+          "to": "node10"
+        },
+        {
+          "from": "node5",
+          "to": "node11"
+        },
+        {
+          "from": "node5",
+          "to": "node12"
+        },
+        {
+          "from": "node5",
+          "to": "node13"
+        },
+        {
+          "from": "node5",
+          "to": "node14"
+        },
+        {
+          "from": "node5",
+          "to": "node15"
+        },
+        {
+          "from": "node5",
+          "to": "node16"
+        },
+        {
+          "from": "node5",
+          "to": "node17"
+        },
+        {
+          "from": "node5",
+          "to": "node18"
+        },
+        {
+          "from": "node5",
+          "to": "node19"
+        },
+        {
+          "from": "node5",
+          "to": "node20"
+        },
+        {
+          "from": "node5",
+          "to": "node21"
+        },
+        {
+          "from": "node5",
+          "to": "node22"
+        },
+        {
+          "from": "node5",
+          "to": "node23"
+        },
+        {
+          "from": "node5",
+          "to": "node24"
+        },
+        {
+          "from": "node5",
+          "to": "node25"
+        },
+        {
+          "from": "node5",
+          "to": "node26"
+        },
+        {
+          "from": "node5",
+          "to": "node27"
+        },
+        {
+          "from": "node5",
+          "to": "node28"
+        },
+        {
+          "from": "node5",
+          "to": "node29"
+        },
+        {
+          "from": "node5",
+          "to": "node30"
+        },
+        {
+          "from": "node6",
+          "to": "node1"
+        },
+        {
+          "from": "node6",
+          "to": "node2"
+        },
+        {
+          "from": "node6",
+          "to": "node3"
+        },
+        {
+          "from": "node6",
+          "to": "node4"
+        },
+        {
+          "from": "node6",
+          "to": "node5"
+        },
+        {
+          "from": "node6",
+          "to": "node7"
+        },
+        {
+          "from": "node6",
+          "to": "node8"
+        },
+        {
+          "from": "node6",
+          "to": "node9"
+        },
+        {
+          "from": "node6",
+          "to": "node10"
+        },
+        {
+          "from": "node6",
+          "to": "node11"
+        },
+        {
+          "from": "node6",
+          "to": "node12"
+        },
+        {
+          "from": "node6",
+          "to": "node13"
+        },
+        {
+          "from": "node6",
+          "to": "node14"
+        },
+        {
+          "from": "node6",
+          "to": "node15"
+        },
+        {
+          "from": "node6",
+          "to": "node16"
+        },
+        {
+          "from": "node6",
+          "to": "node17"
+        },
+        {
+          "from": "node6",
+          "to": "node18"
+        },
+        {
+          "from": "node6",
+          "to": "node19"
+        },
+        {
+          "from": "node6",
+          "to": "node20"
+        },
+        {
+          "from": "node6",
+          "to": "node21"
+        },
+        {
+          "from": "node6",
+          "to": "node22"
+        },
+        {
+          "from": "node6",
+          "to": "node23"
+        },
+        {
+          "from": "node6",
+          "to": "node24"
+        },
+        {
+          "from": "node6",
+          "to": "node25"
+        },
+        {
+          "from": "node6",
+          "to": "node26"
+        },
+        {
+          "from": "node6",
+          "to": "node27"
+        },
+        {
+          "from": "node6",
+          "to": "node28"
+        },
+        {
+          "from": "node6",
+          "to": "node29"
+        },
+        {
+          "from": "node6",
+          "to": "node30"
+        },
+        {
+          "from": "node7",
+          "to": "node1"
+        },
+        {
+          "from": "node7",
+          "to": "node2"
+        },
+        {
+          "from": "node7",
+          "to": "node3"
+        },
+        {
+          "from": "node7",
+          "to": "node4"
+        },
+        {
+          "from": "node7",
+          "to": "node5"
+        },
+        {
+          "from": "node7",
+          "to": "node6"
+        },
+        {
+          "from": "node7",
+          "to": "node8"
+        },
+        {
+          "from": "node7",
+          "to": "node9"
+        },
+        {
+          "from": "node7",
+          "to": "node10"
+        },
+        {
+          "from": "node7",
+          "to": "node11"
+        },
+        {
+          "from": "node7",
+          "to": "node12"
+        },
+        {
+          "from": "node7",
+          "to": "node13"
+        },
+        {
+          "from": "node7",
+          "to": "node14"
+        },
+        {
+          "from": "node7",
+          "to": "node15"
+        },
+        {
+          "from": "node7",
+          "to": "node16"
+        },
+        {
+          "from": "node7",
+          "to": "node17"
+        },
+        {
+          "from": "node7",
+          "to": "node18"
+        },
+        {
+          "from": "node7",
+          "to": "node19"
+        },
+        {
+          "from": "node7",
+          "to": "node20"
+        },
+        {
+          "from": "node7",
+          "to": "node21"
+        },
+        {
+          "from": "node7",
+          "to": "node22"
+        },
+        {
+          "from": "node7",
+          "to": "node23"
+        },
+        {
+          "from": "node7",
+          "to": "node24"
+        },
+        {
+          "from": "node7",
+          "to": "node25"
+        },
+        {
+          "from": "node7",
+          "to": "node26"
+        },
+        {
+          "from": "node7",
+          "to": "node27"
+        },
+        {
+          "from": "node7",
+          "to": "node28"
+        },
+        {
+          "from": "node7",
+          "to": "node29"
+        },
+        {
+          "from": "node7",
+          "to": "node30"
+        },
+        {
+          "from": "node8",
+          "to": "node1"
+        },
+        {
+          "from": "node8",
+          "to": "node2"
+        },
+        {
+          "from": "node8",
+          "to": "node3"
+        },
+        {
+          "from": "node8",
+          "to": "node4"
+        },
+        {
+          "from": "node8",
+          "to": "node5"
+        },
+        {
+          "from": "node8",
+          "to": "node6"
+        },
+        {
+          "from": "node8",
+          "to": "node7"
+        },
+        {
+          "from": "node8",
+          "to": "node9"
+        },
+        {
+          "from": "node8",
+          "to": "node10"
+        },
+        {
+          "from": "node8",
+          "to": "node11"
+        },
+        {
+          "from": "node8",
+          "to": "node12"
+        },
+        {
+          "from": "node8",
+          "to": "node13"
+        },
+        {
+          "from": "node8",
+          "to": "node14"
+        },
+        {
+          "from": "node8",
+          "to": "node15"
+        },
+        {
+          "from": "node8",
+          "to": "node16"
+        },
+        {
+          "from": "node8",
+          "to": "node17"
+        },
+        {
+          "from": "node8",
+          "to": "node18"
+        },
+        {
+          "from": "node8",
+          "to": "node19"
+        },
+        {
+          "from": "node8",
+          "to": "node20"
+        },
+        {
+          "from": "node8",
+          "to": "node21"
+        },
+        {
+          "from": "node8",
+          "to": "node22"
+        },
+        {
+          "from": "node8",
+          "to": "node23"
+        },
+        {
+          "from": "node8",
+          "to": "node24"
+        },
+        {
+          "from": "node8",
+          "to": "node25"
+        },
+        {
+          "from": "node8",
+          "to": "node26"
+        },
+        {
+          "from": "node8",
+          "to": "node27"
+        },
+        {
+          "from": "node8",
+          "to": "node28"
+        },
+        {
+          "from": "node8",
+          "to": "node29"
+        },
+        {
+          "from": "node8",
+          "to": "node30"
+        },
+        {
+          "from": "node9",
+          "to": "node1"
+        },
+        {
+          "from": "node9",
+          "to": "node2"
+        },
+        {
+          "from": "node9",
+          "to": "node3"
+        },
+        {
+          "from": "node9",
+          "to": "node4"
+        },
+        {
+          "from": "node9",
+          "to": "node5"
+        },
+        {
+          "from": "node9",
+          "to": "node6"
+        },
+        {
+          "from": "node9",
+          "to": "node7"
+        },
+        {
+          "from": "node9",
+          "to": "node8"
+        },
+        {
+          "from": "node9",
+          "to": "node10"
+        },
+        {
+          "from": "node9",
+          "to": "node11"
+        },
+        {
+          "from": "node9",
+          "to": "node12"
+        },
+        {
+          "from": "node9",
+          "to": "node13"
+        },
+        {
+          "from": "node9",
+          "to": "node14"
+        },
+        {
+          "from": "node9",
+          "to": "node15"
+        },
+        {
+          "from": "node9",
+          "to": "node16"
+        },
+        {
+          "from": "node9",
+          "to": "node17"
+        },
+        {
+          "from": "node9",
+          "to": "node18"
+        },
+        {
+          "from": "node9",
+          "to": "node19"
+        },
+        {
+          "from": "node9",
+          "to": "node20"
+        },
+        {
+          "from": "node9",
+          "to": "node21"
+        },
+        {
+          "from": "node9",
+          "to": "node22"
+        },
+        {
+          "from": "node9",
+          "to": "node23"
+        },
+        {
+          "from": "node9",
+          "to": "node24"
+        },
+        {
+          "from": "node9",
+          "to": "node25"
+        },
+        {
+          "from": "node9",
+          "to": "node26"
+        },
+        {
+          "from": "node9",
+          "to": "node27"
+        },
+        {
+          "from": "node9",
+          "to": "node28"
+        },
+        {
+          "from": "node9",
+          "to": "node29"
+        },
+        {
+          "from": "node9",
+          "to": "node30"
+        },
+        {
+          "from": "node10",
+          "to": "node1"
+        },
+        {
+          "from": "node10",
+          "to": "node2"
+        },
+        {
+          "from": "node10",
+          "to": "node3"
+        },
+        {
+          "from": "node10",
+          "to": "node4"
+        },
+        {
+          "from": "node10",
+          "to": "node5"
+        },
+        {
+          "from": "node10",
+          "to": "node6"
+        },
+        {
+          "from": "node10",
+          "to": "node7"
+        },
+        {
+          "from": "node10",
+          "to": "node8"
+        },
+        {
+          "from": "node10",
+          "to": "node9"
+        },
+        {
+          "from": "node10",
+          "to": "node11"
+        },
+        {
+          "from": "node10",
+          "to": "node12"
+        },
+        {
+          "from": "node10",
+          "to": "node13"
+        },
+        {
+          "from": "node10",
+          "to": "node14"
+        },
+        {
+          "from": "node10",
+          "to": "node15"
+        },
+        {
+          "from": "node10",
+          "to": "node16"
+        },
+        {
+          "from": "node10",
+          "to": "node17"
+        },
+        {
+          "from": "node10",
+          "to": "node18"
+        },
+        {
+          "from": "node10",
+          "to": "node19"
+        },
+        {
+          "from": "node10",
+          "to": "node20"
+        },
+        {
+          "from": "node10",
+          "to": "node21"
+        },
+        {
+          "from": "node10",
+          "to": "node22"
+        },
+        {
+          "from": "node10",
+          "to": "node23"
+        },
+        {
+          "from": "node10",
+          "to": "node24"
+        },
+        {
+          "from": "node10",
+          "to": "node25"
+        },
+        {
+          "from": "node10",
+          "to": "node26"
+        },
+        {
+          "from": "node10",
+          "to": "node27"
+        },
+        {
+          "from": "node10",
+          "to": "node28"
+        },
+        {
+          "from": "node10",
+          "to": "node29"
+        },
+        {
+          "from": "node10",
+          "to": "node30"
+        },
+        {
+          "from": "node11",
+          "to": "node1"
+        },
+        {
+          "from": "node11",
+          "to": "node2"
+        },
+        {
+          "from": "node11",
+          "to": "node3"
+        },
+        {
+          "from": "node11",
+          "to": "node4"
+        },
+        {
+          "from": "node11",
+          "to": "node5"
+        },
+        {
+          "from": "node11",
+          "to": "node6"
+        },
+        {
+          "from": "node11",
+          "to": "node7"
+        },
+        {
+          "from": "node11",
+          "to": "node8"
+        },
+        {
+          "from": "node11",
+          "to": "node9"
+        },
+        {
+          "from": "node11",
+          "to": "node10"
+        },
+        {
+          "from": "node11",
+          "to": "node12"
+        },
+        {
+          "from": "node11",
+          "to": "node13"
+        },
+        {
+          "from": "node11",
+          "to": "node14"
+        },
+        {
+          "from": "node11",
+          "to": "node15"
+        },
+        {
+          "from": "node11",
+          "to": "node16"
+        },
+        {
+          "from": "node11",
+          "to": "node17"
+        },
+        {
+          "from": "node11",
+          "to": "node18"
+        },
+        {
+          "from": "node11",
+          "to": "node19"
+        },
+        {
+          "from": "node11",
+          "to": "node20"
+        },
+        {
+          "from": "node11",
+          "to": "node21"
+        },
+        {
+          "from": "node11",
+          "to": "node22"
+        },
+        {
+          "from": "node11",
+          "to": "node23"
+        },
+        {
+          "from": "node11",
+          "to": "node24"
+        },
+        {
+          "from": "node11",
+          "to": "node25"
+        },
+        {
+          "from": "node11",
+          "to": "node26"
+        },
+        {
+          "from": "node11",
+          "to": "node27"
+        },
+        {
+          "from": "node11",
+          "to": "node28"
+        },
+        {
+          "from": "node11",
+          "to": "node29"
+        },
+        {
+          "from": "node11",
+          "to": "node30"
+        },
+        {
+          "from": "node12",
+          "to": "node1"
+        },
+        {
+          "from": "node12",
+          "to": "node2"
+        },
+        {
+          "from": "node12",
+          "to": "node3"
+        },
+        {
+          "from": "node12",
+          "to": "node4"
+        },
+        {
+          "from": "node12",
+          "to": "node5"
+        },
+        {
+          "from": "node12",
+          "to": "node6"
+        },
+        {
+          "from": "node12",
+          "to": "node7"
+        },
+        {
+          "from": "node12",
+          "to": "node8"
+        },
+        {
+          "from": "node12",
+          "to": "node9"
+        },
+        {
+          "from": "node12",
+          "to": "node10"
+        },
+        {
+          "from": "node12",
+          "to": "node11"
+        },
+        {
+          "from": "node12",
+          "to": "node13"
+        },
+        {
+          "from": "node12",
+          "to": "node14"
+        },
+        {
+          "from": "node12",
+          "to": "node15"
+        },
+        {
+          "from": "node12",
+          "to": "node16"
+        },
+        {
+          "from": "node12",
+          "to": "node17"
+        },
+        {
+          "from": "node12",
+          "to": "node18"
+        },
+        {
+          "from": "node12",
+          "to": "node19"
+        },
+        {
+          "from": "node12",
+          "to": "node20"
+        },
+        {
+          "from": "node12",
+          "to": "node21"
+        },
+        {
+          "from": "node12",
+          "to": "node22"
+        },
+        {
+          "from": "node12",
+          "to": "node23"
+        },
+        {
+          "from": "node12",
+          "to": "node24"
+        },
+        {
+          "from": "node12",
+          "to": "node25"
+        },
+        {
+          "from": "node12",
+          "to": "node26"
+        },
+        {
+          "from": "node12",
+          "to": "node27"
+        },
+        {
+          "from": "node12",
+          "to": "node28"
+        },
+        {
+          "from": "node12",
+          "to": "node29"
+        },
+        {
+          "from": "node12",
+          "to": "node30"
+        },
+        {
+          "from": "node13",
+          "to": "node1"
+        },
+        {
+          "from": "node13",
+          "to": "node2"
+        },
+        {
+          "from": "node13",
+          "to": "node3"
+        },
+        {
+          "from": "node13",
+          "to": "node4"
+        },
+        {
+          "from": "node13",
+          "to": "node5"
+        },
+        {
+          "from": "node13",
+          "to": "node6"
+        },
+        {
+          "from": "node13",
+          "to": "node7"
+        },
+        {
+          "from": "node13",
+          "to": "node8"
+        },
+        {
+          "from": "node13",
+          "to": "node9"
+        },
+        {
+          "from": "node13",
+          "to": "node10"
+        },
+        {
+          "from": "node13",
+          "to": "node11"
+        },
+        {
+          "from": "node13",
+          "to": "node12"
+        },
+        {
+          "from": "node13",
+          "to": "node14"
+        },
+        {
+          "from": "node13",
+          "to": "node15"
+        },
+        {
+          "from": "node13",
+          "to": "node16"
+        },
+        {
+          "from": "node13",
+          "to": "node17"
+        },
+        {
+          "from": "node13",
+          "to": "node18"
+        },
+        {
+          "from": "node13",
+          "to": "node19"
+        },
+        {
+          "from": "node13",
+          "to": "node20"
+        },
+        {
+          "from": "node13",
+          "to": "node21"
+        },
+        {
+          "from": "node13",
+          "to": "node22"
+        },
+        {
+          "from": "node13",
+          "to": "node23"
+        },
+        {
+          "from": "node13",
+          "to": "node24"
+        },
+        {
+          "from": "node13",
+          "to": "node25"
+        },
+        {
+          "from": "node13",
+          "to": "node26"
+        },
+        {
+          "from": "node13",
+          "to": "node27"
+        },
+        {
+          "from": "node13",
+          "to": "node28"
+        },
+        {
+          "from": "node13",
+          "to": "node29"
+        },
+        {
+          "from": "node13",
+          "to": "node30"
+        },
+        {
+          "from": "node14",
+          "to": "node1"
+        },
+        {
+          "from": "node14",
+          "to": "node2"
+        },
+        {
+          "from": "node14",
+          "to": "node3"
+        },
+        {
+          "from": "node14",
+          "to": "node4"
+        },
+        {
+          "from": "node14",
+          "to": "node5"
+        },
+        {
+          "from": "node14",
+          "to": "node6"
+        },
+        {
+          "from": "node14",
+          "to": "node7"
+        },
+        {
+          "from": "node14",
+          "to": "node8"
+        },
+        {
+          "from": "node14",
+          "to": "node9"
+        },
+        {
+          "from": "node14",
+          "to": "node10"
+        },
+        {
+          "from": "node14",
+          "to": "node11"
+        },
+        {
+          "from": "node14",
+          "to": "node12"
+        },
+        {
+          "from": "node14",
+          "to": "node13"
+        },
+        {
+          "from": "node14",
+          "to": "node15"
+        },
+        {
+          "from": "node14",
+          "to": "node16"
+        },
+        {
+          "from": "node14",
+          "to": "node17"
+        },
+        {
+          "from": "node14",
+          "to": "node18"
+        },
+        {
+          "from": "node14",
+          "to": "node19"
+        },
+        {
+          "from": "node14",
+          "to": "node20"
+        },
+        {
+          "from": "node14",
+          "to": "node21"
+        },
+        {
+          "from": "node14",
+          "to": "node22"
+        },
+        {
+          "from": "node14",
+          "to": "node23"
+        },
+        {
+          "from": "node14",
+          "to": "node24"
+        },
+        {
+          "from": "node14",
+          "to": "node25"
+        },
+        {
+          "from": "node14",
+          "to": "node26"
+        },
+        {
+          "from": "node14",
+          "to": "node27"
+        },
+        {
+          "from": "node14",
+          "to": "node28"
+        },
+        {
+          "from": "node14",
+          "to": "node29"
+        },
+        {
+          "from": "node14",
+          "to": "node30"
+        },
+        {
+          "from": "node15",
+          "to": "node1"
+        },
+        {
+          "from": "node15",
+          "to": "node2"
+        },
+        {
+          "from": "node15",
+          "to": "node3"
+        },
+        {
+          "from": "node15",
+          "to": "node4"
+        },
+        {
+          "from": "node15",
+          "to": "node5"
+        },
+        {
+          "from": "node15",
+          "to": "node6"
+        },
+        {
+          "from": "node15",
+          "to": "node7"
+        },
+        {
+          "from": "node15",
+          "to": "node8"
+        },
+        {
+          "from": "node15",
+          "to": "node9"
+        },
+        {
+          "from": "node15",
+          "to": "node10"
+        },
+        {
+          "from": "node15",
+          "to": "node11"
+        },
+        {
+          "from": "node15",
+          "to": "node12"
+        },
+        {
+          "from": "node15",
+          "to": "node13"
+        },
+        {
+          "from": "node15",
+          "to": "node14"
+        },
+        {
+          "from": "node15",
+          "to": "node16"
+        },
+        {
+          "from": "node15",
+          "to": "node17"
+        },
+        {
+          "from": "node15",
+          "to": "node18"
+        },
+        {
+          "from": "node15",
+          "to": "node19"
+        },
+        {
+          "from": "node15",
+          "to": "node20"
+        },
+        {
+          "from": "node15",
+          "to": "node21"
+        },
+        {
+          "from": "node15",
+          "to": "node22"
+        },
+        {
+          "from": "node15",
+          "to": "node23"
+        },
+        {
+          "from": "node15",
+          "to": "node24"
+        },
+        {
+          "from": "node15",
+          "to": "node25"
+        },
+        {
+          "from": "node15",
+          "to": "node26"
+        },
+        {
+          "from": "node15",
+          "to": "node27"
+        },
+        {
+          "from": "node15",
+          "to": "node28"
+        },
+        {
+          "from": "node15",
+          "to": "node29"
+        },
+        {
+          "from": "node15",
+          "to": "node30"
+        },
+        {
+          "from": "node16",
+          "to": "node1"
+        },
+        {
+          "from": "node16",
+          "to": "node2"
+        },
+        {
+          "from": "node16",
+          "to": "node3"
+        },
+        {
+          "from": "node16",
+          "to": "node4"
+        },
+        {
+          "from": "node16",
+          "to": "node5"
+        },
+        {
+          "from": "node16",
+          "to": "node6"
+        },
+        {
+          "from": "node16",
+          "to": "node7"
+        },
+        {
+          "from": "node16",
+          "to": "node8"
+        },
+        {
+          "from": "node16",
+          "to": "node9"
+        },
+        {
+          "from": "node16",
+          "to": "node10"
+        },
+        {
+          "from": "node16",
+          "to": "node11"
+        },
+        {
+          "from": "node16",
+          "to": "node12"
+        },
+        {
+          "from": "node16",
+          "to": "node13"
+        },
+        {
+          "from": "node16",
+          "to": "node14"
+        },
+        {
+          "from": "node16",
+          "to": "node15"
+        },
+        {
+          "from": "node16",
+          "to": "node17"
+        },
+        {
+          "from": "node16",
+          "to": "node18"
+        },
+        {
+          "from": "node16",
+          "to": "node19"
+        },
+        {
+          "from": "node16",
+          "to": "node20"
+        },
+        {
+          "from": "node16",
+          "to": "node21"
+        },
+        {
+          "from": "node16",
+          "to": "node22"
+        },
+        {
+          "from": "node16",
+          "to": "node23"
+        },
+        {
+          "from": "node16",
+          "to": "node24"
+        },
+        {
+          "from": "node16",
+          "to": "node25"
+        },
+        {
+          "from": "node16",
+          "to": "node26"
+        },
+        {
+          "from": "node16",
+          "to": "node27"
+        },
+        {
+          "from": "node16",
+          "to": "node28"
+        },
+        {
+          "from": "node16",
+          "to": "node29"
+        },
+        {
+          "from": "node16",
+          "to": "node30"
+        },
+        {
+          "from": "node17",
+          "to": "node1"
+        },
+        {
+          "from": "node17",
+          "to": "node2"
+        },
+        {
+          "from": "node17",
+          "to": "node3"
+        },
+        {
+          "from": "node17",
+          "to": "node4"
+        },
+        {
+          "from": "node17",
+          "to": "node5"
+        },
+        {
+          "from": "node17",
+          "to": "node6"
+        },
+        {
+          "from": "node17",
+          "to": "node7"
+        },
+        {
+          "from": "node17",
+          "to": "node8"
+        },
+        {
+          "from": "node17",
+          "to": "node9"
+        },
+        {
+          "from": "node17",
+          "to": "node10"
+        },
+        {
+          "from": "node17",
+          "to": "node11"
+        },
+        {
+          "from": "node17",
+          "to": "node12"
+        },
+        {
+          "from": "node17",
+          "to": "node13"
+        },
+        {
+          "from": "node17",
+          "to": "node14"
+        },
+        {
+          "from": "node17",
+          "to": "node15"
+        },
+        {
+          "from": "node17",
+          "to": "node16"
+        },
+        {
+          "from": "node17",
+          "to": "node18"
+        },
+        {
+          "from": "node17",
+          "to": "node19"
+        },
+        {
+          "from": "node17",
+          "to": "node20"
+        },
+        {
+          "from": "node17",
+          "to": "node21"
+        },
+        {
+          "from": "node17",
+          "to": "node22"
+        },
+        {
+          "from": "node17",
+          "to": "node23"
+        },
+        {
+          "from": "node17",
+          "to": "node24"
+        },
+        {
+          "from": "node17",
+          "to": "node25"
+        },
+        {
+          "from": "node17",
+          "to": "node26"
+        },
+        {
+          "from": "node17",
+          "to": "node27"
+        },
+        {
+          "from": "node17",
+          "to": "node28"
+        },
+        {
+          "from": "node17",
+          "to": "node29"
+        },
+        {
+          "from": "node17",
+          "to": "node30"
+        },
+        {
+          "from": "node18",
+          "to": "node1"
+        },
+        {
+          "from": "node18",
+          "to": "node2"
+        },
+        {
+          "from": "node18",
+          "to": "node3"
+        },
+        {
+          "from": "node18",
+          "to": "node4"
+        },
+        {
+          "from": "node18",
+          "to": "node5"
+        },
+        {
+          "from": "node18",
+          "to": "node6"
+        },
+        {
+          "from": "node18",
+          "to": "node7"
+        },
+        {
+          "from": "node18",
+          "to": "node8"
+        },
+        {
+          "from": "node18",
+          "to": "node9"
+        },
+        {
+          "from": "node18",
+          "to": "node10"
+        },
+        {
+          "from": "node18",
+          "to": "node11"
+        },
+        {
+          "from": "node18",
+          "to": "node12"
+        },
+        {
+          "from": "node18",
+          "to": "node13"
+        },
+        {
+          "from": "node18",
+          "to": "node14"
+        },
+        {
+          "from": "node18",
+          "to": "node15"
+        },
+        {
+          "from": "node18",
+          "to": "node16"
+        },
+        {
+          "from": "node18",
+          "to": "node17"
+        },
+        {
+          "from": "node18",
+          "to": "node19"
+        },
+        {
+          "from": "node18",
+          "to": "node20"
+        },
+        {
+          "from": "node18",
+          "to": "node21"
+        },
+        {
+          "from": "node18",
+          "to": "node22"
+        },
+        {
+          "from": "node18",
+          "to": "node23"
+        },
+        {
+          "from": "node18",
+          "to": "node24"
+        },
+        {
+          "from": "node18",
+          "to": "node25"
+        },
+        {
+          "from": "node18",
+          "to": "node26"
+        },
+        {
+          "from": "node18",
+          "to": "node27"
+        },
+        {
+          "from": "node18",
+          "to": "node28"
+        },
+        {
+          "from": "node18",
+          "to": "node29"
+        },
+        {
+          "from": "node18",
+          "to": "node30"
+        },
+        {
+          "from": "node19",
+          "to": "node1"
+        },
+        {
+          "from": "node19",
+          "to": "node2"
+        },
+        {
+          "from": "node19",
+          "to": "node3"
+        },
+        {
+          "from": "node19",
+          "to": "node4"
+        },
+        {
+          "from": "node19",
+          "to": "node5"
+        },
+        {
+          "from": "node19",
+          "to": "node6"
+        },
+        {
+          "from": "node19",
+          "to": "node7"
+        },
+        {
+          "from": "node19",
+          "to": "node8"
+        },
+        {
+          "from": "node19",
+          "to": "node9"
+        },
+        {
+          "from": "node19",
+          "to": "node10"
+        },
+        {
+          "from": "node19",
+          "to": "node11"
+        },
+        {
+          "from": "node19",
+          "to": "node12"
+        },
+        {
+          "from": "node19",
+          "to": "node13"
+        },
+        {
+          "from": "node19",
+          "to": "node14"
+        },
+        {
+          "from": "node19",
+          "to": "node15"
+        },
+        {
+          "from": "node19",
+          "to": "node16"
+        },
+        {
+          "from": "node19",
+          "to": "node17"
+        },
+        {
+          "from": "node19",
+          "to": "node18"
+        },
+        {
+          "from": "node19",
+          "to": "node20"
+        },
+        {
+          "from": "node19",
+          "to": "node21"
+        },
+        {
+          "from": "node19",
+          "to": "node22"
+        },
+        {
+          "from": "node19",
+          "to": "node23"
+        },
+        {
+          "from": "node19",
+          "to": "node24"
+        },
+        {
+          "from": "node19",
+          "to": "node25"
+        },
+        {
+          "from": "node19",
+          "to": "node26"
+        },
+        {
+          "from": "node19",
+          "to": "node27"
+        },
+        {
+          "from": "node19",
+          "to": "node28"
+        },
+        {
+          "from": "node19",
+          "to": "node29"
+        },
+        {
+          "from": "node19",
+          "to": "node30"
+        },
+        {
+          "from": "node20",
+          "to": "node1"
+        },
+        {
+          "from": "node20",
+          "to": "node2"
+        },
+        {
+          "from": "node20",
+          "to": "node3"
+        },
+        {
+          "from": "node20",
+          "to": "node4"
+        },
+        {
+          "from": "node20",
+          "to": "node5"
+        },
+        {
+          "from": "node20",
+          "to": "node6"
+        },
+        {
+          "from": "node20",
+          "to": "node7"
+        },
+        {
+          "from": "node20",
+          "to": "node8"
+        },
+        {
+          "from": "node20",
+          "to": "node9"
+        },
+        {
+          "from": "node20",
+          "to": "node10"
+        },
+        {
+          "from": "node20",
+          "to": "node11"
+        },
+        {
+          "from": "node20",
+          "to": "node12"
+        },
+        {
+          "from": "node20",
+          "to": "node13"
+        },
+        {
+          "from": "node20",
+          "to": "node14"
+        },
+        {
+          "from": "node20",
+          "to": "node15"
+        },
+        {
+          "from": "node20",
+          "to": "node16"
+        },
+        {
+          "from": "node20",
+          "to": "node17"
+        },
+        {
+          "from": "node20",
+          "to": "node18"
+        },
+        {
+          "from": "node20",
+          "to": "node19"
+        },
+        {
+          "from": "node20",
+          "to": "node21"
+        },
+        {
+          "from": "node20",
+          "to": "node22"
+        },
+        {
+          "from": "node20",
+          "to": "node23"
+        },
+        {
+          "from": "node20",
+          "to": "node24"
+        },
+        {
+          "from": "node20",
+          "to": "node25"
+        },
+        {
+          "from": "node20",
+          "to": "node26"
+        },
+        {
+          "from": "node20",
+          "to": "node27"
+        },
+        {
+          "from": "node20",
+          "to": "node28"
+        },
+        {
+          "from": "node20",
+          "to": "node29"
+        },
+        {
+          "from": "node20",
+          "to": "node30"
+        },
+        {
+          "from": "node21",
+          "to": "node1"
+        },
+        {
+          "from": "node21",
+          "to": "node2"
+        },
+        {
+          "from": "node21",
+          "to": "node3"
+        },
+        {
+          "from": "node21",
+          "to": "node4"
+        },
+        {
+          "from": "node21",
+          "to": "node5"
+        },
+        {
+          "from": "node21",
+          "to": "node6"
+        },
+        {
+          "from": "node21",
+          "to": "node7"
+        },
+        {
+          "from": "node21",
+          "to": "node8"
+        },
+        {
+          "from": "node21",
+          "to": "node9"
+        },
+        {
+          "from": "node21",
+          "to": "node10"
+        },
+        {
+          "from": "node21",
+          "to": "node11"
+        },
+        {
+          "from": "node21",
+          "to": "node12"
+        },
+        {
+          "from": "node21",
+          "to": "node13"
+        },
+        {
+          "from": "node21",
+          "to": "node14"
+        },
+        {
+          "from": "node21",
+          "to": "node15"
+        },
+        {
+          "from": "node21",
+          "to": "node16"
+        },
+        {
+          "from": "node21",
+          "to": "node17"
+        },
+        {
+          "from": "node21",
+          "to": "node18"
+        },
+        {
+          "from": "node21",
+          "to": "node19"
+        },
+        {
+          "from": "node21",
+          "to": "node20"
+        },
+        {
+          "from": "node21",
+          "to": "node22"
+        },
+        {
+          "from": "node21",
+          "to": "node23"
+        },
+        {
+          "from": "node21",
+          "to": "node24"
+        },
+        {
+          "from": "node21",
+          "to": "node25"
+        },
+        {
+          "from": "node21",
+          "to": "node26"
+        },
+        {
+          "from": "node21",
+          "to": "node27"
+        },
+        {
+          "from": "node21",
+          "to": "node28"
+        },
+        {
+          "from": "node21",
+          "to": "node29"
+        },
+        {
+          "from": "node21",
+          "to": "node30"
+        },
+        {
+          "from": "node22",
+          "to": "node1"
+        },
+        {
+          "from": "node22",
+          "to": "node2"
+        },
+        {
+          "from": "node22",
+          "to": "node3"
+        },
+        {
+          "from": "node22",
+          "to": "node4"
+        },
+        {
+          "from": "node22",
+          "to": "node5"
+        },
+        {
+          "from": "node22",
+          "to": "node6"
+        },
+        {
+          "from": "node22",
+          "to": "node7"
+        },
+        {
+          "from": "node22",
+          "to": "node8"
+        },
+        {
+          "from": "node22",
+          "to": "node9"
+        },
+        {
+          "from": "node22",
+          "to": "node10"
+        },
+        {
+          "from": "node22",
+          "to": "node11"
+        },
+        {
+          "from": "node22",
+          "to": "node12"
+        },
+        {
+          "from": "node22",
+          "to": "node13"
+        },
+        {
+          "from": "node22",
+          "to": "node14"
+        },
+        {
+          "from": "node22",
+          "to": "node15"
+        },
+        {
+          "from": "node22",
+          "to": "node16"
+        },
+        {
+          "from": "node22",
+          "to": "node17"
+        },
+        {
+          "from": "node22",
+          "to": "node18"
+        },
+        {
+          "from": "node22",
+          "to": "node19"
+        },
+        {
+          "from": "node22",
+          "to": "node20"
+        },
+        {
+          "from": "node22",
+          "to": "node21"
+        },
+        {
+          "from": "node22",
+          "to": "node23"
+        },
+        {
+          "from": "node22",
+          "to": "node24"
+        },
+        {
+          "from": "node22",
+          "to": "node25"
+        },
+        {
+          "from": "node22",
+          "to": "node26"
+        },
+        {
+          "from": "node22",
+          "to": "node27"
+        },
+        {
+          "from": "node22",
+          "to": "node28"
+        },
+        {
+          "from": "node22",
+          "to": "node29"
+        },
+        {
+          "from": "node22",
+          "to": "node30"
+        },
+        {
+          "from": "node23",
+          "to": "node1"
+        },
+        {
+          "from": "node23",
+          "to": "node2"
+        },
+        {
+          "from": "node23",
+          "to": "node3"
+        },
+        {
+          "from": "node23",
+          "to": "node4"
+        },
+        {
+          "from": "node23",
+          "to": "node5"
+        },
+        {
+          "from": "node23",
+          "to": "node6"
+        },
+        {
+          "from": "node23",
+          "to": "node7"
+        },
+        {
+          "from": "node23",
+          "to": "node8"
+        },
+        {
+          "from": "node23",
+          "to": "node9"
+        },
+        {
+          "from": "node23",
+          "to": "node10"
+        },
+        {
+          "from": "node23",
+          "to": "node11"
+        },
+        {
+          "from": "node23",
+          "to": "node12"
+        },
+        {
+          "from": "node23",
+          "to": "node13"
+        },
+        {
+          "from": "node23",
+          "to": "node14"
+        },
+        {
+          "from": "node23",
+          "to": "node15"
+        },
+        {
+          "from": "node23",
+          "to": "node16"
+        },
+        {
+          "from": "node23",
+          "to": "node17"
+        },
+        {
+          "from": "node23",
+          "to": "node18"
+        },
+        {
+          "from": "node23",
+          "to": "node19"
+        },
+        {
+          "from": "node23",
+          "to": "node20"
+        },
+        {
+          "from": "node23",
+          "to": "node21"
+        },
+        {
+          "from": "node23",
+          "to": "node22"
+        },
+        {
+          "from": "node23",
+          "to": "node24"
+        },
+        {
+          "from": "node23",
+          "to": "node25"
+        },
+        {
+          "from": "node23",
+          "to": "node26"
+        },
+        {
+          "from": "node23",
+          "to": "node27"
+        },
+        {
+          "from": "node23",
+          "to": "node28"
+        },
+        {
+          "from": "node23",
+          "to": "node29"
+        },
+        {
+          "from": "node23",
+          "to": "node30"
+        },
+        {
+          "from": "node24",
+          "to": "node1"
+        },
+        {
+          "from": "node24",
+          "to": "node2"
+        },
+        {
+          "from": "node24",
+          "to": "node3"
+        },
+        {
+          "from": "node24",
+          "to": "node4"
+        },
+        {
+          "from": "node24",
+          "to": "node5"
+        },
+        {
+          "from": "node24",
+          "to": "node6"
+        },
+        {
+          "from": "node24",
+          "to": "node7"
+        },
+        {
+          "from": "node24",
+          "to": "node8"
+        },
+        {
+          "from": "node24",
+          "to": "node9"
+        },
+        {
+          "from": "node24",
+          "to": "node10"
+        },
+        {
+          "from": "node24",
+          "to": "node11"
+        },
+        {
+          "from": "node24",
+          "to": "node12"
+        },
+        {
+          "from": "node24",
+          "to": "node13"
+        },
+        {
+          "from": "node24",
+          "to": "node14"
+        },
+        {
+          "from": "node24",
+          "to": "node15"
+        },
+        {
+          "from": "node24",
+          "to": "node16"
+        },
+        {
+          "from": "node24",
+          "to": "node17"
+        },
+        {
+          "from": "node24",
+          "to": "node18"
+        },
+        {
+          "from": "node24",
+          "to": "node19"
+        },
+        {
+          "from": "node24",
+          "to": "node20"
+        },
+        {
+          "from": "node24",
+          "to": "node21"
+        },
+        {
+          "from": "node24",
+          "to": "node22"
+        },
+        {
+          "from": "node24",
+          "to": "node23"
+        },
+        {
+          "from": "node24",
+          "to": "node25"
+        },
+        {
+          "from": "node24",
+          "to": "node26"
+        },
+        {
+          "from": "node24",
+          "to": "node27"
+        },
+        {
+          "from": "node24",
+          "to": "node28"
+        },
+        {
+          "from": "node24",
+          "to": "node29"
+        },
+        {
+          "from": "node24",
+          "to": "node30"
+        },
+        {
+          "from": "node25",
+          "to": "node1"
+        },
+        {
+          "from": "node25",
+          "to": "node2"
+        },
+        {
+          "from": "node25",
+          "to": "node3"
+        },
+        {
+          "from": "node25",
+          "to": "node4"
+        },
+        {
+          "from": "node25",
+          "to": "node5"
+        },
+        {
+          "from": "node25",
+          "to": "node6"
+        },
+        {
+          "from": "node25",
+          "to": "node7"
+        },
+        {
+          "from": "node25",
+          "to": "node8"
+        },
+        {
+          "from": "node25",
+          "to": "node9"
+        },
+        {
+          "from": "node25",
+          "to": "node10"
+        },
+        {
+          "from": "node25",
+          "to": "node11"
+        },
+        {
+          "from": "node25",
+          "to": "node12"
+        },
+        {
+          "from": "node25",
+          "to": "node13"
+        },
+        {
+          "from": "node25",
+          "to": "node14"
+        },
+        {
+          "from": "node25",
+          "to": "node15"
+        },
+        {
+          "from": "node25",
+          "to": "node16"
+        },
+        {
+          "from": "node25",
+          "to": "node17"
+        },
+        {
+          "from": "node25",
+          "to": "node18"
+        },
+        {
+          "from": "node25",
+          "to": "node19"
+        },
+        {
+          "from": "node25",
+          "to": "node20"
+        },
+        {
+          "from": "node25",
+          "to": "node21"
+        },
+        {
+          "from": "node25",
+          "to": "node22"
+        },
+        {
+          "from": "node25",
+          "to": "node23"
+        },
+        {
+          "from": "node25",
+          "to": "node24"
+        },
+        {
+          "from": "node25",
+          "to": "node26"
+        },
+        {
+          "from": "node25",
+          "to": "node27"
+        },
+        {
+          "from": "node25",
+          "to": "node28"
+        },
+        {
+          "from": "node25",
+          "to": "node29"
+        },
+        {
+          "from": "node25",
+          "to": "node30"
+        },
+        {
+          "from": "node26",
+          "to": "node1"
+        },
+        {
+          "from": "node26",
+          "to": "node2"
+        },
+        {
+          "from": "node26",
+          "to": "node3"
+        },
+        {
+          "from": "node26",
+          "to": "node4"
+        },
+        {
+          "from": "node26",
+          "to": "node5"
+        },
+        {
+          "from": "node26",
+          "to": "node6"
+        },
+        {
+          "from": "node26",
+          "to": "node7"
+        },
+        {
+          "from": "node26",
+          "to": "node8"
+        },
+        {
+          "from": "node26",
+          "to": "node9"
+        },
+        {
+          "from": "node26",
+          "to": "node10"
+        },
+        {
+          "from": "node26",
+          "to": "node11"
+        },
+        {
+          "from": "node26",
+          "to": "node12"
+        },
+        {
+          "from": "node26",
+          "to": "node13"
+        },
+        {
+          "from": "node26",
+          "to": "node14"
+        },
+        {
+          "from": "node26",
+          "to": "node15"
+        },
+        {
+          "from": "node26",
+          "to": "node16"
+        },
+        {
+          "from": "node26",
+          "to": "node17"
+        },
+        {
+          "from": "node26",
+          "to": "node18"
+        },
+        {
+          "from": "node26",
+          "to": "node19"
+        },
+        {
+          "from": "node26",
+          "to": "node20"
+        },
+        {
+          "from": "node26",
+          "to": "node21"
+        },
+        {
+          "from": "node26",
+          "to": "node22"
+        },
+        {
+          "from": "node26",
+          "to": "node23"
+        },
+        {
+          "from": "node26",
+          "to": "node24"
+        },
+        {
+          "from": "node26",
+          "to": "node25"
+        },
+        {
+          "from": "node26",
+          "to": "node27"
+        },
+        {
+          "from": "node26",
+          "to": "node28"
+        },
+        {
+          "from": "node26",
+          "to": "node29"
+        },
+        {
+          "from": "node26",
+          "to": "node30"
+        },
+        {
+          "from": "node27",
+          "to": "node1"
+        },
+        {
+          "from": "node27",
+          "to": "node2"
+        },
+        {
+          "from": "node27",
+          "to": "node3"
+        },
+        {
+          "from": "node27",
+          "to": "node4"
+        },
+        {
+          "from": "node27",
+          "to": "node5"
+        },
+        {
+          "from": "node27",
+          "to": "node6"
+        },
+        {
+          "from": "node27",
+          "to": "node7"
+        },
+        {
+          "from": "node27",
+          "to": "node8"
+        },
+        {
+          "from": "node27",
+          "to": "node9"
+        },
+        {
+          "from": "node27",
+          "to": "node10"
+        },
+        {
+          "from": "node27",
+          "to": "node11"
+        },
+        {
+          "from": "node27",
+          "to": "node12"
+        },
+        {
+          "from": "node27",
+          "to": "node13"
+        },
+        {
+          "from": "node27",
+          "to": "node14"
+        },
+        {
+          "from": "node27",
+          "to": "node15"
+        },
+        {
+          "from": "node27",
+          "to": "node16"
+        },
+        {
+          "from": "node27",
+          "to": "node17"
+        },
+        {
+          "from": "node27",
+          "to": "node18"
+        },
+        {
+          "from": "node27",
+          "to": "node19"
+        },
+        {
+          "from": "node27",
+          "to": "node20"
+        },
+        {
+          "from": "node27",
+          "to": "node21"
+        },
+        {
+          "from": "node27",
+          "to": "node22"
+        },
+        {
+          "from": "node27",
+          "to": "node23"
+        },
+        {
+          "from": "node27",
+          "to": "node24"
+        },
+        {
+          "from": "node27",
+          "to": "node25"
+        },
+        {
+          "from": "node27",
+          "to": "node26"
+        },
+        {
+          "from": "node27",
+          "to": "node28"
+        },
+        {
+          "from": "node27",
+          "to": "node29"
+        },
+        {
+          "from": "node27",
+          "to": "node30"
+        },
+        {
+          "from": "node28",
+          "to": "node1"
+        },
+        {
+          "from": "node28",
+          "to": "node2"
+        },
+        {
+          "from": "node28",
+          "to": "node3"
+        },
+        {
+          "from": "node28",
+          "to": "node4"
+        },
+        {
+          "from": "node28",
+          "to": "node5"
+        },
+        {
+          "from": "node28",
+          "to": "node6"
+        },
+        {
+          "from": "node28",
+          "to": "node7"
+        },
+        {
+          "from": "node28",
+          "to": "node8"
+        },
+        {
+          "from": "node28",
+          "to": "node9"
+        },
+        {
+          "from": "node28",
+          "to": "node10"
+        },
+        {
+          "from": "node28",
+          "to": "node11"
+        },
+        {
+          "from": "node28",
+          "to": "node12"
+        },
+        {
+          "from": "node28",
+          "to": "node13"
+        },
+        {
+          "from": "node28",
+          "to": "node14"
+        },
+        {
+          "from": "node28",
+          "to": "node15"
+        },
+        {
+          "from": "node28",
+          "to": "node16"
+        },
+        {
+          "from": "node28",
+          "to": "node17"
+        },
+        {
+          "from": "node28",
+          "to": "node18"
+        },
+        {
+          "from": "node28",
+          "to": "node19"
+        },
+        {
+          "from": "node28",
+          "to": "node20"
+        },
+        {
+          "from": "node28",
+          "to": "node21"
+        },
+        {
+          "from": "node28",
+          "to": "node22"
+        },
+        {
+          "from": "node28",
+          "to": "node23"
+        },
+        {
+          "from": "node28",
+          "to": "node24"
+        },
+        {
+          "from": "node28",
+          "to": "node25"
+        },
+        {
+          "from": "node28",
+          "to": "node26"
+        },
+        {
+          "from": "node28",
+          "to": "node27"
+        },
+        {
+          "from": "node28",
+          "to": "node29"
+        },
+        {
+          "from": "node28",
+          "to": "node30"
+        },
+        {
+          "from": "node29",
+          "to": "node1"
+        },
+        {
+          "from": "node29",
+          "to": "node2"
+        },
+        {
+          "from": "node29",
+          "to": "node3"
+        },
+        {
+          "from": "node29",
+          "to": "node4"
+        },
+        {
+          "from": "node29",
+          "to": "node5"
+        },
+        {
+          "from": "node29",
+          "to": "node6"
+        },
+        {
+          "from": "node29",
+          "to": "node7"
+        },
+        {
+          "from": "node29",
+          "to": "node8"
+        },
+        {
+          "from": "node29",
+          "to": "node9"
+        },
+        {
+          "from": "node29",
+          "to": "node10"
+        },
+        {
+          "from": "node29",
+          "to": "node11"
+        },
+        {
+          "from": "node29",
+          "to": "node12"
+        },
+        {
+          "from": "node29",
+          "to": "node13"
+        },
+        {
+          "from": "node29",
+          "to": "node14"
+        },
+        {
+          "from": "node29",
+          "to": "node15"
+        },
+        {
+          "from": "node29",
+          "to": "node16"
+        },
+        {
+          "from": "node29",
+          "to": "node17"
+        },
+        {
+          "from": "node29",
+          "to": "node18"
+        },
+        {
+          "from": "node29",
+          "to": "node19"
+        },
+        {
+          "from": "node29",
+          "to": "node20"
+        },
+        {
+          "from": "node29",
+          "to": "node21"
+        },
+        {
+          "from": "node29",
+          "to": "node22"
+        },
+        {
+          "from": "node29",
+          "to": "node23"
+        },
+        {
+          "from": "node29",
+          "to": "node24"
+        },
+        {
+          "from": "node29",
+          "to": "node25"
+        },
+        {
+          "from": "node29",
+          "to": "node26"
+        },
+        {
+          "from": "node29",
+          "to": "node27"
+        },
+        {
+          "from": "node29",
+          "to": "node28"
+        },
+        {
+          "from": "node29",
+          "to": "node30"
+        },
+        {
+          "from": "node30",
+          "to": "node1"
+        },
+        {
+          "from": "node30",
+          "to": "node2"
+        },
+        {
+          "from": "node30",
+          "to": "node3"
+        },
+        {
+          "from": "node30",
+          "to": "node4"
+        },
+        {
+          "from": "node30",
+          "to": "node5"
+        },
+        {
+          "from": "node30",
+          "to": "node6"
+        },
+        {
+          "from": "node30",
+          "to": "node7"
+        },
+        {
+          "from": "node30",
+          "to": "node8"
+        },
+        {
+          "from": "node30",
+          "to": "node9"
+        },
+        {
+          "from": "node30",
+          "to": "node10"
+        },
+        {
+          "from": "node30",
+          "to": "node11"
+        },
+        {
+          "from": "node30",
+          "to": "node12"
+        },
+        {
+          "from": "node30",
+          "to": "node13"
+        },
+        {
+          "from": "node30",
+          "to": "node14"
+        },
+        {
+          "from": "node30",
+          "to": "node15"
+        },
+        {
+          "from": "node30",
+          "to": "node16"
+        },
+        {
+          "from": "node30",
+          "to": "node17"
+        },
+        {
+          "from": "node30",
+          "to": "node18"
+        },
+        {
+          "from": "node30",
+          "to": "node19"
+        },
+        {
+          "from": "node30",
+          "to": "node20"
+        },
+        {
+          "from": "node30",
+          "to": "node21"
+        },
+        {
+          "from": "node30",
+          "to": "node22"
+        },
+        {
+          "from": "node30",
+          "to": "node23"
+        },
+        {
+          "from": "node30",
+          "to": "node24"
+        },
+        {
+          "from": "node30",
+          "to": "node25"
+        },
+        {
+          "from": "node30",
+          "to": "node26"
+        },
+        {
+          "from": "node30",
+          "to": "node27"
+        },
+        {
+          "from": "node30",
+          "to": "node28"
+        },
+        {
+          "from": "node30",
+          "to": "node29"
+        }
+      ]
+    }
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose",
+      "healthy_timeout_seconds": 600,
+      "timeout_seconds": 1800
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_simulate_peer_set_capture",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node3",
+      "sybil_node_ids": [
+        "node19",
+        "node20",
+        "node21",
+        "node22",
+        "node23",
+        "node24",
+        "node25",
+        "node26",
+        "node27",
+        "node28",
+        "node29",
+        "node30"
+      ],
+      "output_dir": "outputs/peer-set-capture"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3",
+        "node4",
+        "node5",
+        "node6",
+        "node7",
+        "node8",
+        "node9",
+        "node10",
+        "node11",
+        "node12"
+      ],
+      "observation_window_seconds": 14,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": [
+        "tip_state",
+        "connection_state"
+      ],
+      "output_dir": "outputs/multi-node-observation",
+      "timeout_seconds": 360
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "all_nodes_started_clean",
+      "min_completed": 1,
+      "min_node_count": 30
+    },
+    {
+      "primitive": "honest_peer_set_uncompromised",
+      "honest_node_ids": [
+        "node1",
+        "node2",
+        "node3",
+        "node4",
+        "node5",
+        "node6",
+        "node7",
+        "node8",
+        "node9",
+        "node10",
+        "node11",
+        "node12"
+      ],
+      "minimum_honest_peers": 4
+    },
+    {
+      "primitive": "substrate_quorum_observed",
+      "minimum_fraction": 0.67
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

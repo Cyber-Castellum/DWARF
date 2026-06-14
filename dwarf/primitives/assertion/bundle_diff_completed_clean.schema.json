@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bundle_diff_completed_clean params",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

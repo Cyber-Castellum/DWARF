@@ -1,0 +1,152 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-eclipse-topology-example-smoke",
+  "title": "Compose a substrate topology stress scenario with eclipse and Sybil baseline assertions",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "substrate",
+    "eclipse",
+    "sybil",
+    "topology",
+    "rr-018"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node3",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node4",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil"
+      },
+      {
+        "id": "node5",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "sybil"
+      }
+    ]
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_simulate_peer_set_capture",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "sybil_node_ids": [
+        "node4",
+        "node5"
+      ],
+      "output_dir": "outputs/peer-set-capture"
+    },
+    {
+      "primitive": "runtime_inject_hot_warm_churn",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "events_per_hour": 8,
+      "output_dir": "outputs/hot-warm-churn"
+    },
+    {
+      "primitive": "runtime_perturb_ledger_peer_weights",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node3",
+      "output_dir": "outputs/ledger-peer-weights"
+    },
+    {
+      "primitive": "runtime_substitute_big_ledger_peers",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/big-ledger-subset"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3",
+        "node4",
+        "node5"
+      ],
+      "observation_window_seconds": 15,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": [
+        "tip_state",
+        "connection_state",
+        "resource_profile"
+      ],
+      "output_dir": "outputs/multi-node-observation",
+      "timeout_seconds": 240
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "all_nodes_started_clean",
+      "min_completed": 1,
+      "min_node_count": 5
+    },
+    {
+      "primitive": "honest_peer_set_uncompromised",
+      "honest_node_ids": [
+        "node1",
+        "node2",
+        "node3"
+      ],
+      "minimum_honest_peers": 2
+    },
+    {
+      "primitive": "hot_warm_churn_within_bounds",
+      "maximum_events_per_hour": 8
+    },
+    {
+      "primitive": "ledger_peer_stake_weight_preserved",
+      "maximum_absolute_delta": 0.05
+    },
+    {
+      "primitive": "big_ledger_peer_quorum_intact",
+      "minimum_expected_matches": 3
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

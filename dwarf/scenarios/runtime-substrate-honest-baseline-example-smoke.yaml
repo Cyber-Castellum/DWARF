@@ -1,0 +1,49 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-honest-baseline-example-smoke",
+  "title": "Compose an honest three-node substrate and assert the clean baseline",
+  "authors": ["dwarf"],
+  "tags": ["substrate", "observation", "baseline"],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1",
+    "profile": "honest-substrate-baseline",
+    "invariants": [
+      "honest nodes converge to one tip",
+      "honest nodes establish peer edges",
+      "honest nodes remain responsive",
+      "honest nodes chain-select consistently"
+    ]
+  },
+  "runtime": "library",
+  "seed": "0xFACEB00C",
+  "load": [
+    {
+      "primitive": "runtime_compose_substrate",
+      "implementation": "cardano-node",
+      "version": "10.7.1",
+      "node_count": 3,
+      "output_dir": "outputs/compose-substrate"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/compose-substrate/runtime.json",
+      "node_ids": ["node1", "node2", "node3"],
+      "observation_window_seconds": 10,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": ["tip_state", "connection_state", "resource_profile"],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1},
+    {"primitive": "tip_convergence_clean", "tolerance_slots": 0, "deadline_seconds": 10},
+    {"primitive": "peer_connectivity_observed", "timeout_seconds": 10},
+    {"primitive": "all_nodes_responsive"},
+    {"primitive": "chain_select_consistent"},
+    {"primitive": "substrate_quorum_observed", "minimum_fraction": 1.0}
+  ],
+  "teardown": []
+}

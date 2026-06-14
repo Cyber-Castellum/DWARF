@@ -1,0 +1,95 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-connection-state-freeze-rollup-capability-demo",
+  "title": "Phase 3 generated-haskell3 connection-state freeze rollup capability demo",
+  "authors": ["dwarf"],
+  "tags": [
+    "phase3",
+    "devnet",
+    "runtime",
+    "generated-haskell3",
+    "connection-state",
+    "freeze",
+    "capability-demo",
+    "multi-phase"
+  ],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE5A09",
+  "phases": [
+    {
+      "id": "before-freeze",
+      "title": "Capture baseline node2 connection state before freeze",
+      "load": [
+        {
+          "primitive": "runtime_connection_state",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2",
+          "snapshot_name": "before-freeze",
+          "connect_attempts": 2,
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "freeze-node2",
+      "title": "Freeze node2 and capture in-fault connection state",
+      "faults": [
+        {
+          "primitive": "fault_node_freeze",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2"
+        }
+      ],
+      "load": [
+        {
+          "primitive": "runtime_generated_node_freeze_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "blocked_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        },
+        {
+          "primitive": "runtime_connection_state",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2",
+          "snapshot_name": "during-freeze",
+          "connect_attempts": 2,
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 2}]
+    },
+    {
+      "id": "after-freeze",
+      "title": "Verify node2 recovery and capture restored connection state",
+      "load": [
+        {
+          "primitive": "runtime_generated_node_recovery_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "recovered_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "required_phase_id": "freeze-node2",
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        },
+        {
+          "primitive": "runtime_connection_state",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2",
+          "snapshot_name": "after-freeze",
+          "connect_attempts": 2,
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 2}]
+    }
+  ]
+}

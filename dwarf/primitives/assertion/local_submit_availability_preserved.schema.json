@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "local_submit_availability_preserved"}
+  },
+  "additionalProperties": true
+}

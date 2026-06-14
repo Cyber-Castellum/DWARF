@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": { "const": "chainsync_responder_rollback_then_forward_clean" },
+    "min_rollback_then_forward_count": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "min_chainsync_messages_observed": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3
+    }
+  },
+  "additionalProperties": true
+}

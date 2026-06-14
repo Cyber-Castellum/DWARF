@@ -724,6 +724,65 @@ def run_scenario(path, *, runs_dir, state_dir, registry_path=None,
     return handle
 
 
+def verify_gate(exit_status, assertions):
+    """Pure local-behavioral gate predicate. Returns (state, reason).
+
+    'pass' iff the run finished cleanly (exit_status == 'pass') AND at least
+    one assertion passed AND none failed. Zero assertions is a failure: it
+    means the scenario did not actually exercise the target (the silent
+    'looked clean but never ran' trap)."""
+    if exit_status != "pass":
+        return "fail", f"run exit_status={exit_status!r}"
+    assertions = assertions or {}
+    if assertions.get("fail", 0) > 0:
+        return "fail", f"{assertions['fail']} assertion(s) failed"
+    if assertions.get("pass", 0) <= 0:
+        return "fail", "no assertions passed (scenario did not exercise the target)"
+    return "pass", ""
+
+
+def verify_scenario(path, *, runs_dir, state_dir, registry_path=None):
+    """Run a scenario locally and apply verify_gate to its manifest result.
+    Returns {state, reason, run_id, exit_status, assertions}."""
+    import json as _json
+
+    handle = run_scenario(
+        path, runs_dir=runs_dir, state_dir=state_dir, registry_path=registry_path
+    )
+    manifest = _json.loads((handle.run_dir / "manifest.json").read_text())
+    exit_status = manifest.get("exit_status")
+    assertions = manifest.get("assertion_summary") or {}
+    state, reason = verify_gate(exit_status, assertions)
+    return {
+        "state": state,
+        "reason": reason,
+        "run_id": handle.run_id,
+        "exit_status": exit_status,
+        "assertions": assertions,
+    }
+
+
+def run_scenario_backend(path, *, backend, runs_dir, state_dir, registry_path=None,
+                         out_dir=None, registry=None, tag="latest"):
+    """Dispatch a scenario to a backend. local-devnet = the existing executor;
+    antithesis = generate + statically verify a native bundle (launch is a
+    separate Moog step)."""
+    if backend == "local-devnet":
+        return {"backend": "local-devnet",
+                "result": run_scenario(path, runs_dir=runs_dir, state_dir=state_dir,
+                                       registry_path=registry_path)}
+    if backend == "antithesis":
+        from profile_manager import antithesis_generator as gen
+        if not out_dir:
+            raise ValueError("antithesis backend requires --out")
+        default_registry = gen.ADVERSARY_IMAGE.rsplit("/", 1)[0]
+        return {"backend": "antithesis",
+                "result": gen.generate_native_test(
+                    path, out_dir=out_dir, registry=registry or default_registry,
+                    tag=tag, registry_path=registry_path)}
+    raise ValueError(f"unknown backend: {backend!r}")
+
+
 @dataclass
 class CompareResult:
     runs: dict  # {"amaru": RunHandle, "cardano-node": RunHandle}

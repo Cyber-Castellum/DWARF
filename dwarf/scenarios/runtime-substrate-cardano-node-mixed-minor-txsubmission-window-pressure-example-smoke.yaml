@@ -1,0 +1,59 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-cardano-node-mixed-minor-txsubmission-window-pressure-example-smoke",
+  "title": "Mixed-minor cardano-node TxSubmission window enforcement across 10.7.1 and 10.6.1",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "compose_mode": "docker",
+    "network": "testnet_42",
+    "nodes": [
+      { "id": "node1", "impl": "cardano-node", "version": "10.7.1", "role": "honest" },
+      { "id": "node2", "impl": "cardano-node", "version": "10.6.1", "role": "honest" }
+    ],
+    "topology": {
+      "edges": [
+        { "from": "node1", "to": "node2" },
+        { "from": "node2", "to": "node1" }
+      ]
+    }
+  },
+  "setup": [
+    { "primitive": "runtime_install_version", "output_dir": "outputs/substrate-install" },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose",
+      "healthy_timeout_seconds": 180,
+      "timeout_seconds": 420
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_txsubmission_window_pressure",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/txsubmission-window"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": ["node1", "node2"],
+      "network_magic": 42,
+      "observation_window_seconds": 20,
+      "sample_interval_seconds": 1,
+      "observation_primitives": ["tip_state", "connection_state"],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "assertions": [
+    { "primitive": "all_nodes_responsive" },
+    { "primitive": "peer_connectivity_observed", "expected_edges": [["node1", "node2"], ["node2", "node1"]] },
+    { "primitive": "txsubmission_window_enforced" }
+  ],
+  "teardown": [
+    { "primitive": "runtime_teardown_substrate", "output_dir": "outputs/substrate-teardown" }
+  ]
+}

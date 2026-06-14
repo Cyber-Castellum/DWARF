@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "blockfetch_range_pressure_bounded"},
+    "min_blocks_fetched": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Minimum number of BlockFetch block messages that must be observed."
+    },
+    "min_block_range_requests_observed": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Minimum number of BlockFetch RequestRange messages that must be observed."
+    }
+  },
+  "additionalProperties": true
+}

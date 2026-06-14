@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "tolerance_slots": {"type": "integer", "minimum": 0},
+    "deadline_seconds": {"type": "number", "exclusiveMinimum": 0}
+  },
+  "additionalProperties": false
+}

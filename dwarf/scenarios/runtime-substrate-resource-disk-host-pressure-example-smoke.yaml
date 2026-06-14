@@ -1,0 +1,105 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-resource-disk-host-pressure-example-smoke",
+  "title": "Compose a substrate scenario that keeps nodes responsive during host-managed disk write pressure",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "substrate",
+    "resource-abuse",
+    "milestone-2",
+    "disk",
+    "host-pressure"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        }
+      ]
+    }
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "timeout_seconds": 15,
+      "command": "OUT=\"$ADA2_DWARF_RUN_DIR/outputs/disk-pressure\"; mkdir -p \"$OUT\"; python3 - <<'PY' >\"$OUT/fill.log\" 2>&1 &\nimport os, time\npath = os.path.join(os.environ['ADA2_DWARF_RUN_DIR'], 'outputs', 'disk-pressure', 'fill.bin')\nchunk = b'0' * (2 * 1024 * 1024)\nend = time.time() + 18\nwith open(path, 'wb', buffering=0) as fh:\n    while time.time() < end:\n        fh.write(chunk)\n        fh.flush()\n        os.fsync(fh.fileno())\n        time.sleep(0.1)\nprint(os.path.getsize(path))\ntime.sleep(2)\nPY\nPID=$!; echo \"$PID\" > \"$OUT/stressor.pid\"; sleep 1; df -h \"$ADA2_DWARF_RUN_DIR\""
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2"
+      ],
+      "observation_window_seconds": 12,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": [
+        "tip_state",
+        "connection_state",
+        "resource_profile"
+      ],
+      "output_dir": "outputs/multi-node-observation"
+    },
+    {
+      "primitive": "load_shell_command",
+      "timeout_seconds": 20,
+      "command": "OUT=\"$ADA2_DWARF_RUN_DIR/outputs/disk-pressure\"; PIDFILE=\"$OUT/stressor.pid\"; if [ -f \"$PIDFILE\" ]; then kill \"$(cat \"$PIDFILE\")\" 2>/dev/null || true; rm -f \"$PIDFILE\"; fi; rm -f \"$OUT/fill.bin\"; df -h \"$ADA2_DWARF_RUN_DIR\"; echo cleanup-complete"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "all_nodes_started_clean",
+      "min_completed": 1,
+      "min_node_count": 2
+    },
+    {
+      "primitive": "all_nodes_responsive"
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

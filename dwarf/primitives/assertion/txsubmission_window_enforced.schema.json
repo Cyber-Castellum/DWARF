@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "txsubmission_window_enforced"},
+    "min_txids_processed": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Minimum number of txids or tx bodies that must be observed in a truthful counted session before the overflow check."
+    },
+    "min_txsubmission_messages_observed": {
+      "type": "integer",
+      "minimum": 3,
+      "default": 3,
+      "description": "Minimum number of TxSubmission messages that must be observed across the valid prelude and overflow attempt."
+    }
+  },
+  "additionalProperties": true
+}

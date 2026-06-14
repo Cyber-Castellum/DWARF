@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "validation_path_parity_preserved"}
+  },
+  "additionalProperties": true
+}

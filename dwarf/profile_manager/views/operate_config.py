@@ -5,7 +5,7 @@ from profile_manager.data.operate_config import operate_config_payload
 from profile_manager.templating import render
 
 
-def render_operate_config() -> str:
+def render_operate_config(token: str | None = None) -> str:
     payload = operate_config_payload()
     return render(
         "operate/config.j2",
@@ -16,4 +16,6 @@ def render_operate_config() -> str:
         config_path=payload["config_path"],
         config_present=payload["config_present"],
         rows=payload["rows"],
+        moog_setup=payload["moog_setup"],
+        token=token,
     )

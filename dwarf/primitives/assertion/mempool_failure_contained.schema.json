@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "mempool_failure_contained"}
+  },
+  "additionalProperties": true
+}

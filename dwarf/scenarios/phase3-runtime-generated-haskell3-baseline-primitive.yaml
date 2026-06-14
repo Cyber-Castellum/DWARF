@@ -1,0 +1,21 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-baseline-primitive",
+  "title": "Declarative runtime primitive for generated Haskell live baseline",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "generated-profile", "baseline"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "load": [
+    {
+      "primitive": "runtime_live_implementation_baseline",
+      "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

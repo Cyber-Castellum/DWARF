@@ -1,0 +1,27 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-bundle-promote-primitive",
+  "title": "Declarative runtime primitive for structured bundle promotion records on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "promotion", "bundle", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5A0B",
+  "faults": [],
+  "load": [
+    {
+      "primitive": "runtime_bundle_promote",
+      "reason_code": "divergence",
+      "reason_text": "promote runtime bundle for operator review",
+      "operator_notes": "primitive exercise path",
+      "actor": "dwarf",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

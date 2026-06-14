@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "epoch_boundary_timing_within_bounds"}
+  },
+  "additionalProperties": true
+}

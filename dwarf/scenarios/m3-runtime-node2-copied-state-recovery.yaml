@@ -1,0 +1,41 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-node2-copied-state-recovery",
+  "title": "Runtime node2 fails to recover within a bounded window after older copied-state DB replay, then restores cleanly",
+  "authors": ["dwarf"],
+  "tags": ["m3", "runtime", "copied-state", "recovery", "profile-a", "package-c"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-016", "GAP-018"],
+    "architecture_ids": ["B-004", "B-007", "IF-004", "IF-005"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-010", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded negative copied-state replay evidence on the local devnet only, not proof of corruption handling or production disaster-recovery policy.",
+    "It does not prove fork-state convergence under adversarial rollback or chain split conditions.",
+    "It does not prove database integrity after partial writes or deliberate corruption.",
+    "It does not prove eventual recovery beyond the bounded window."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "copied_state_non_recovery_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3611",
+  "load": [
+    {
+      "primitive": "runtime_profile_copied_state_recovery",
+      "timeout_seconds": 420,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

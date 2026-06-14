@@ -1,0 +1,51 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-blockfetch-port-delay-timeout",
+  "title": "Runtime BlockFetch exceeds a bounded scenario timeout under severe per-port loopback delay",
+  "authors": ["dwarf"],
+  "tags": ["blockfetch", "m3", "devnet", "runtime", "delayed-response", "timeout"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-014", "GAP-016", "GAP-020"],
+    "architecture_ids": ["B-004", "IF-005", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-003", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded delayed-response timeout evidence only; it does not prove the node's internal retry policy or stale-response rejection behavior.",
+    "The observed timeout is the Dwarf scenario runner timeout bound, not a proof of the client's internal timeout path.",
+    "The fault injects fixed loopback latency into one listener path rather than a full arbitrary network model.",
+    "Persistence, restart, and recovery behavior remain follow-up work."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "blockfetch_delay_timeout_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3608",
+  "faults": [
+    {
+      "primitive": "fault_local_port_delay",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "target_node": "node1",
+      "host": "127.0.0.1",
+      "delay_ms": 4000,
+      "jitter_ms": 0
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_blockfetch_delay_timeout",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

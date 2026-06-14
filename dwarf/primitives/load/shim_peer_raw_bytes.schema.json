@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "shim_peer_raw_bytes params",
+  "type": "object",
+  "required": ["runtime_metadata_path", "target_node", "payload_hex"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "payload_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]*$"
+    },
+    "target_host": { "type": "string", "minLength": 1 },
+    "response_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "receive_bytes": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

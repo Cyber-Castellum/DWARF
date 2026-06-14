@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "runtime_bundle_chain params",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "runs_dir": {"type": "string", "minLength": 1},
+    "target_run_id": {"type": "string", "minLength": 1},
+    "reason_code": {"type": "string", "minLength": 1},
+    "reason_text": {"type": "string", "minLength": 1},
+    "operator_notes": {"type": "string"},
+    "actor": {"type": "string", "minLength": 1},
+    "signing_actor": {"type": "string", "minLength": 1},
+    "source_surface": {"type": "string", "minLength": 1},
+    "signature_primitive": {"type": "string", "minLength": 1},
+    "key_path": {"type": "string", "minLength": 1}
+  },
+  "required": ["reason_code", "reason_text"]
+}

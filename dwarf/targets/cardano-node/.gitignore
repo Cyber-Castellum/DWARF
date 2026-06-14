@@ -1,0 +1,4 @@
+dist-newstyle/
+bin/
+shims-build.log
+shims-build.done

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "shim_peer_malformed_handshake params",
+  "type": "object",
+  "required": ["runtime_metadata_path", "target_node", "malformation_id"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "malformation_id": { "type": "string", "minLength": 1 },
+    "target_host": { "type": "string", "minLength": 1 },
+    "response_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "receive_bytes": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

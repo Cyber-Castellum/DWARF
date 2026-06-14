@@ -213,6 +213,62 @@ export ADA2_DWARF_TOKEN=dwarf
 
 Most operators only need `DWARF_DASHBOARD_PORT`. Set `DWARF_DASHBOARD_BIND=127.0.0.1` only when you want loopback-only access.
 
+## Moog, GitHub, And Antithesis Setup Values
+
+The dashboard exposes a browser-based setup form at:
+
+```text
+/operate/config
+```
+
+Values can be entered through that form and saved into `var/state/config.yaml`, or provided as Docker environment variables at startup. The delivery scripts source a package-local `.env` file before running Compose, and the Compose file passes through Moog/GitHub/Antithesis variables including:
+
+```bash
+MOOG_GITHUB_USER=
+MOOG_GITHUB_REPO=
+MOOG_GITHUB_PAT=
+MOOG_TARGET_DIRECTORY=
+MOOG_TARGET_COMMIT=
+MOOG_ANTITHESIS_LAUNCH_URL=
+MOOG_ANTITHESIS_USER=
+MOOG_ANTITHESIS_PASSWORD=
+MOOG_REGISTRY=
+MOOG_ANTITHESIS_API_KEY=
+MOOG_AGENT_EMAIL_USER=
+MOOG_AGENT_EMAIL_PASSWORD=
+```
+
+Environment values take display precedence over saved config. Secret fields are masked after save; leave a secret field blank in the form to keep the current saved value. In this client-prep mode, PATs and Antithesis credentials may be saved, so treat `var/state/config.yaml` as private.
+
+## Optional Moog Bootstrap
+
+Moog setup is not automatic. The delivery scripts deploy Dwarf by default and leave Moog binaries, wallets, PATs, Antithesis credentials, and services untouched.
+
+To preview the Moog bootstrap plan from inside the running Dwarf container:
+
+```bash
+DWARF_MOOG_BOOTSTRAP=plan delivery/scripts/deploy.sh
+```
+
+To apply the safe skeleton setup, both variables are required:
+
+```bash
+DWARF_MOOG_BOOTSTRAP=approve \
+DWARF_MOOG_BOOTSTRAP_APPROVE=1 \
+delivery/scripts/deploy.sh
+```
+
+The approved path creates only Moog deploy/state/ops and requester/oracle secret directories, then writes an operator plan file. It does not download Moog release artifacts, create wallet files, read wallet JSON, store GitHub PATs, write Antithesis credentials, enable services, or start oracle/agent processes.
+
+After any bootstrap or manual Moog change, run:
+
+```bash
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile wallet healthcheck moog-requester --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog readiness --repo <org/repo> --github-user <user> --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json
+```
+
 ## SSH Keys
 
 The V3 delivery stack does not mount SSH keys by default. That is deliberate.

@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "mempool_relay_pressure_bounded"}
+  },
+  "additionalProperties": true
+}

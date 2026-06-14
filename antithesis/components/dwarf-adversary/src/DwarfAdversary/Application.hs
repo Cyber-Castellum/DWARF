@@ -4,12 +4,14 @@
 module DwarfAdversary.Application
     ( Limit (..)
     , adversaryApplication
+    , runChainProducerInto
     , syncHeaders
     , ChainSyncApplication
     , repeatedDwarfAdversaryApplication
     )
 where
 
+import DwarfAdversary (originPoint)
 import DwarfAdversary.ChainSync.Codec (Header, Point, Tip)
 import DwarfAdversary.ChainSync.Connection
     ( ChainSyncApplication
@@ -25,6 +27,7 @@ import Control.Concurrent.Class.MonadSTM.Strict
     , modifyTVar
     , newTVarIO
     , readTVar
+    , writeTVar
     )
 import Control.Exception (SomeException, try)
 import Control.Tracer (Tracer, traceWith)
@@ -241,6 +244,67 @@ adversaryApplication magic peerName peerPort startingPoint limit = do
     case res of
         Left e -> return $ Left e
         Right _ -> pure . Chain.headPoint <$> readChainVarIO stateVar
+
+-- | Run the chain-sync CLIENT against @(host,port)@ that NEVER terminates: it
+-- keeps receiving roll-forwards into the caller-supplied @chainVar@ as the
+-- upstream chain grows (and applies roll-backs), so a server reading @chainVar@
+-- can present a RECENT, advancing tip — the precondition for the downstream
+-- node to reach + hold GSM CaughtUp. Returns only on connection error; the
+-- caller restarts it. Unlike 'adversaryApplication' there is no 'Limit' and no
+-- stop-on-tip: at the tip it blocks in MsgRequestNext awaiting new headers.
+runChainProducerInto
+    :: StrictTVar IO (Chain Header)
+    -> NetworkMagic
+    -> String
+    -> PortNumber
+    -> IO (Either SomeException ())
+runChainProducerInto chainVar magic host port = do
+    -- Reset to Genesis on every (re)connect. We FindIntersect from origin and
+    -- rebuild via roll-forward; reusing a stale, non-empty chainVar would make
+    -- the first roll-forward 'addBlock' a block whose predecessor is not the
+    -- current head, which errors and pins the chain (the "stuck at 1 block"
+    -- warmup stall). A fresh Genesis makes each reconnect rebuild cleanly.
+    atomically $ writeTVar chainVar Chain.Genesis
+    let stateVar = State{chainVar}
+    res <-
+        try
+            $ runChainSyncApplication
+                magic
+                host
+                port
+                (const $ foreverChainSyncApplication stateVar originPoint)
+    pure $ case res of
+        Left e -> Left (e :: SomeException)
+        Right _ -> Right ()
+
+-- | A chain-sync client application that syncs forever (no 'Limit', no
+-- stop-on-tip): fills @chainVar@ with every roll-forward and tracks roll-backs.
+foreverChainSyncApplication :: State -> Point -> ChainSyncApplication
+foreverChainSyncApplication stateVar startingPoint =
+    ChainSyncClient
+        $ pure
+        $ SendMsgFindIntersect [startingPoint]
+        $ ClientStIntersect
+            { recvMsgIntersectFound = \_point _tip ->
+                ChainSyncClient (pure (requestNextForever stateVar))
+            , recvMsgIntersectNotFound = \_tip ->
+                ChainSyncClient (pure (requestNextForever stateVar))
+            }
+
+-- | Request the next header forever, never sending MsgDone (so the node treats
+-- us as a live, advancing upstream peer).
+requestNextForever :: State -> ChainSyncIdle
+requestNextForever stateVar =
+    SendMsgRequestNext
+        (pure ())
+        ClientStNext
+            { recvMsgRollForward = \header _tip -> ChainSyncClient $ do
+                rollForward stateVar header
+                pure (requestNextForever stateVar)
+            , recvMsgRollBackward = \pIntersect _tip -> ChainSyncClient $ do
+                rollBackward stateVar pIntersect
+                pure (requestNextForever stateVar)
+            }
 
 -- | Like 'adversaryApplication', but return the synced headers
 -- (oldest-first) instead of just the head point. Used by HeaderSource

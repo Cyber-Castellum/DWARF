@@ -1,0 +1,82 @@
+# cardano_node_dwarf_baked — producer-less ECLIPSE bundle (SP3a block-fetch).
+# No producers, no configurator: the node under test (relay2) has ONLY the
+# dwarf-adversary as a peer, so it is eclipsed by construction on a single
+# network (no custom docker network — which Antithesis rejects). The adversary
+# serves a BAKED chain (embedded baked-blocks.cbor, captured by --capture-to)
+# paired with the FIXED genesis in ./configs it was forged under; relay2 boots
+# from origin (valid headers) and block-fetches MUTATED bodies -> the block
+# decoder runs on adversarial CBOR (dwarf_served_mutated_block).
+services:
+  tracer:
+    image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
+    hostname: tracer.example
+    container_name: tracer
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    volumes:
+      - tracer:/opt/cardano-tracer
+      - ./tracer-config.yaml:/tracer-config.yaml:ro
+    entrypoint: cardano-tracer
+    command: ["--config", "/tracer-config.yaml"]
+    restart: always
+
+  relay2:
+    image: ghcr.io/intersectmbo/cardano-node@sha256:45857be8d86b314a05cd46d310b74b24e5f5870469f90c6464994a7f78142271
+    container_name: relay2
+    hostname: relay2.example
+    environment:
+      CARDANO_BLOCK_PRODUCER: "false"
+    command: >
+      run --topology /configs/configs/topology.json
+        --config /configs/configs/config.json
+        --database-path /state
+        --socket-path /state/node.socket
+        --tracer-socket-path-connect /tracer/tracer.socket
+        --port 3001
+        --host-addr 0.0.0.0
+        +RTS -N -A16m -qg -qb -RTS
+    volumes:
+      - ./configs:/configs/configs:ro
+      - ./relay-baked-topology.json:/configs/configs/topology.json:ro
+      - relay2-state:/state
+      - tracer:/tracer
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+      dwarf-adversary:
+        condition: service_started
+
+  dwarf-adversary:
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.10.0
+    container_name: dwarf-adversary
+    hostname: dwarf-adversary.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "--network-magic"
+      - "42"
+      - "--listen-port"
+      - "3001"
+      - "--mutation-rate"
+      - "0.5"
+      - "--seed"
+      - "0x1"
+      - "--protocol"
+      - "blockfetch"
+      - "--cbor-shape"
+      - "block"
+      - "--baked-chain"
+      - "/baked/baked-blocks.cbor"
+    volumes:
+      - ./baked-blocks.cbor:/baked/baked-blocks.cbor:ro
+    restart: always
+
+volumes:
+  tracer:
+  relay2-state:
+
+networks:
+  default:
+    name: cardano-node-baked
+    driver: bridge

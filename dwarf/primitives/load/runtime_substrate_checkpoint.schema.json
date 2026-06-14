@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_substrate_checkpoint params",
+  "type": "object",
+  "required": ["output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "checkpoint_path": { "type": "string", "minLength": 1 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "stop_nodes_during_capture": { "type": "boolean" },
+    "healthy_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

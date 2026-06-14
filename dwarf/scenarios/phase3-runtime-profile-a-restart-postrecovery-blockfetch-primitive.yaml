@@ -1,0 +1,22 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-restart-postrecovery-blockfetch-primitive",
+  "title": "Declarative runtime restart postrecovery BlockFetch on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "devnet", "runtime", "restart", "recovery", "blockfetch", "primitive"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3B20",
+  "load": [
+    {
+      "primitive": "runtime_profile_restart_postrecovery_blockfetch",
+      "timeout_seconds": 420,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

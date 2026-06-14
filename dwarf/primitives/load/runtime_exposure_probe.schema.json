@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_exposure_probe params",
+  "type": "object",
+  "required": ["target_node", "output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "reference_node": { "type": "string", "minLength": 1 },
+    "minimum_required_trustable_peers": { "type": "integer", "minimum": 1 },
+    "cpu_ceiling_pct": { "type": "number", "minimum": 0 },
+    "submit_queue_depth_limit": { "type": "integer", "minimum": 1 },
+    "hard_limit": { "type": "integer", "minimum": 1 },
+    "max_keepalive_failures": { "type": "integer", "minimum": 1 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

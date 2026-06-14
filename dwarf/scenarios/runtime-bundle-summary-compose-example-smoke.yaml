@@ -1,0 +1,35 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-bundle-summary-compose-example-smoke",
+  "title": "Compose an executive evidence rollup across captured Dwarf bundles",
+  "authors": ["dwarf"],
+  "tags": ["bundle", "summary", "executive", "candidate"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "library",
+  "seed": "0xB00A1E55",
+  "load": [
+    {
+      "primitive": "runtime_bundle_summary_compose",
+      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "bundle_ids": [
+        "20260427T074053Z-ba7c46cc",
+        "20260427T085937Z-8e388072",
+        "20260427T105341Z-0b24e9a8",
+        "20260427T095705Z-e51bf913",
+        "20260427T101446Z-289d4fbb",
+        "20260427T101446Z-977cfbf5",
+        "20260427T091106Z-3bce7cb4",
+        "20260427T110547Z-419db366",
+        "20260427T120147Z-8f9884ec"
+      ],
+      "output_dir": "outputs/bundle-summary",
+      "timeout_seconds": 180,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "bundle_summary_compose_completed_clean"}
+  ],
+  "teardown": []
+}

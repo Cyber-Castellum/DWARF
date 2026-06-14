@@ -1,0 +1,102 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-capability-demo",
+  "title": "Phase 3 generated Haskell profile capability demo",
+  "authors": ["dwarf"],
+  "tags": [
+    "phase3",
+    "runtime",
+    "generated-profile",
+    "haskell-profile",
+    "capability-demo",
+    "multi-phase",
+    "node-freeze",
+    "shim-peer",
+    "null-bytes"
+  ],
+  "related_milestones": ["M1"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves first-slice composition of the Phase 3 substrate only.",
+    "It does not yet prove mixed Haskell+Amaru deployment, protocol-aware malformed traffic, or branching scenario control flow."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE5007",
+  "phases": [
+    {
+      "id": "baseline-all-nodes",
+      "title": "Verify all generated Haskell nodes are healthy before faults",
+      "load": [
+        {
+          "primitive": "load_shell_command",
+          "command": "python3 - <<'PY'\nimport json\nimport socket\nimport sys\nimport time\nfrom pathlib import Path\n\nsys.path.insert(0, '/home/nigel/dwarf-fw/scripts')\nfrom runtime_telemetry import emit_runtime_metric, emit_target_event\n\nruntime_root = Path('/home/nigel/cardano-profiles/profile-i-generated-haskell3')\nruntime = json.loads((runtime_root / 'runtime.json').read_text(encoding='utf-8'))\nnodes = runtime['haskell_nodes']\nstarts = {}\nfor node in nodes:\n    starts[node['name']] = Path(node['log_path']).stat().st_size\n\ntime.sleep(2)\nlistener_passes = 0\nprogress_passes = 0\nfor node in nodes:\n    listener_ok = False\n    try:\n        with socket.create_connection(('127.0.0.1', int(node['port'])), timeout=2):\n            listener_ok = True\n    except OSError:\n        listener_ok = False\n    log_delta_bytes = Path(node['log_path']).stat().st_size - starts[node['name']]\n    emit_target_event(\n        primitive='phase3_capability_demo',\n        event='baseline_probe',\n        payload={\n            'node': node['name'],\n            'port': int(node['port']),\n            'listener_ok': listener_ok,\n            'log_delta_bytes': log_delta_bytes,\n        },\n    )\n    if listener_ok:\n        listener_passes += 1\n    if log_delta_bytes > 0:\n        progress_passes += 1\nif listener_passes != len(nodes):\n    raise SystemExit(f'listener baseline failed: {listener_passes}/{len(nodes)}')\nif progress_passes != len(nodes):\n    raise SystemExit(f'log progress baseline failed: {progress_passes}/{len(nodes)}')\nemit_runtime_metric('phase3_capability_demo_baseline_listener_passes', value=listener_passes)\nemit_runtime_metric('phase3_capability_demo_baseline_progress_passes', value=progress_passes)\nemit_target_event(\n    primitive='phase3_capability_demo',\n    event='baseline_summary',\n    payload={\n        'nodes': [node['name'] for node in nodes],\n        'listener_passes': listener_passes,\n        'progress_passes': progress_passes,\n    },\n)\nprint(f'nodes={len(nodes)} listener_passes={listener_passes} progress_passes={progress_passes}')\nPY",
+          "timeout_seconds": 60,
+          "expect_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "freeze-node2-and-inject-node1",
+      "title": "Freeze node2 while a shim peer sends null bytes to node1",
+      "faults": [
+        {
+          "primitive": "fault_node_freeze",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2"
+        }
+      ],
+      "load": [
+        {
+          "primitive": "shim_peer_raw_bytes",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node1",
+          "payload_hex": "00000000",
+          "response_timeout_seconds": 2,
+          "receive_bytes": 64
+        },
+        {
+          "primitive": "runtime_generated_node_freeze_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "blocked_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "sample_seconds": 2,
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 2}]
+    },
+    {
+      "id": "recover-all-nodes",
+      "title": "Verify recovery after the freeze and shim phases complete",
+      "load": [
+        {
+          "primitive": "runtime_generated_node_recovery_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "recovered_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "required_phase_id": "freeze-node2-and-inject-node1",
+          "sample_seconds": 2,
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        },
+        {
+          "primitive": "load_shell_command",
+          "command": "python3 - <<'PY'\nimport json\nimport socket\nimport sys\nimport time\nfrom pathlib import Path\n\nsys.path.insert(0, '/home/nigel/dwarf-fw/scripts')\nfrom runtime_telemetry import emit_runtime_metric, emit_target_event\n\nruntime_root = Path('/home/nigel/cardano-profiles/profile-i-generated-haskell3')\nruntime = json.loads((runtime_root / 'runtime.json').read_text(encoding='utf-8'))\nnodes = runtime['haskell_nodes']\nstarts = {}\nfor node in nodes:\n    starts[node['name']] = Path(node['log_path']).stat().st_size\n\ntime.sleep(2)\nlistener_passes = 0\nprogress_passes = 0\nfor node in nodes:\n    listener_ok = False\n    try:\n        with socket.create_connection(('127.0.0.1', int(node['port'])), timeout=2):\n            listener_ok = True\n    except OSError:\n        listener_ok = False\n    log_delta_bytes = Path(node['log_path']).stat().st_size - starts[node['name']]\n    emit_target_event(\n        primitive='phase3_capability_demo',\n        event='recovery_probe',\n        payload={\n            'node': node['name'],\n            'port': int(node['port']),\n            'listener_ok': listener_ok,\n            'log_delta_bytes': log_delta_bytes,\n        },\n    )\n    if listener_ok:\n        listener_passes += 1\n    if log_delta_bytes > 0:\n        progress_passes += 1\nif listener_passes != len(nodes):\n    raise SystemExit(f'listener recovery failed: {listener_passes}/{len(nodes)}')\nif progress_passes != len(nodes):\n    raise SystemExit(f'log progress recovery failed: {progress_passes}/{len(nodes)}')\nemit_runtime_metric('phase3_capability_demo_recovery_listener_passes', value=listener_passes)\nemit_runtime_metric('phase3_capability_demo_recovery_progress_passes', value=progress_passes)\nemit_target_event(\n    primitive='phase3_capability_demo',\n    event='recovery_summary',\n    payload={\n        'nodes': [node['name'] for node in nodes],\n        'listener_passes': listener_passes,\n        'progress_passes': progress_passes,\n        'required_phase_id': 'freeze-node2-and-inject-node1',\n    },\n)\nprint(f'nodes={len(nodes)} listener_passes={listener_passes} progress_passes={progress_passes}')\nPY",
+          "timeout_seconds": 60,
+          "expect_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 2}]
+    }
+  ]
+}

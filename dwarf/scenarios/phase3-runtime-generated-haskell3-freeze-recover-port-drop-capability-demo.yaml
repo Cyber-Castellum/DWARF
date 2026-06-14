@@ -1,0 +1,100 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-freeze-recover-port-drop-capability-demo",
+  "title": "Phase 3 generated Haskell freeze, recover, then targeted port-drop capability demo",
+  "authors": ["dwarf"],
+  "tags": [
+    "phase3",
+    "runtime",
+    "generated-profile",
+    "haskell-profile",
+    "capability-demo",
+    "multi-phase",
+    "node-freeze",
+    "node-recovery",
+    "port-drop"
+  ],
+  "related_milestones": ["M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves sequential composition of generated-profile process-state and targeted listener-fault controls only.",
+    "It does not yet prove overlapping faults, mixed Haskell plus Amaru recovery, or branching orchestration."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE5021",
+  "phases": [
+    {
+      "id": "freeze-node2",
+      "title": "Freeze node2 and verify node1 and node3 stay healthy",
+      "faults": [
+        {
+          "primitive": "fault_node_freeze",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2"
+        }
+      ],
+      "load": [
+        {
+          "primitive": "runtime_generated_node_freeze_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "blocked_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "sample_seconds": 2,
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "recover-node2",
+      "title": "Verify node2 resumes cleanly after the freeze phase",
+      "load": [
+        {
+          "primitive": "runtime_generated_node_recovery_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "recovered_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "required_phase_id": "freeze-node2",
+          "sample_seconds": 2,
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "drop-node2-port",
+      "title": "Drop node2's listener port and verify node1 and node3 remain reachable",
+      "faults": [
+        {
+          "primitive": "fault_local_port_drop",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+          "target_node": "node2",
+          "drop_output": true,
+          "drop_input": true
+        }
+      ],
+      "load": [
+        {
+          "primitive": "runtime_generated_node_port_drop_check",
+          "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+          "blocked_node": "node2",
+          "healthy_nodes": ["node1", "node3"],
+          "sample_seconds": 2,
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    }
+  ]
+}

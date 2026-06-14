@@ -1,0 +1,28 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-pcap-capture-primitive",
+  "title": "Declarative runtime primitive for bounded pcap capture on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "observability", "pcap", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5A06",
+  "faults": [],
+  "load": [
+    {
+      "primitive": "runtime_pcap_capture",
+      "interface": "lo",
+      "workload_mode": "tcp-connect-burst",
+      "target_host": "127.0.0.1",
+      "target_ports": [33001, 33002, 33003],
+      "connect_attempts": 3,
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

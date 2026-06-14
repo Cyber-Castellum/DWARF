@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "duplex_promotion_slot_limit_enforced"}
+  },
+  "additionalProperties": true
+}

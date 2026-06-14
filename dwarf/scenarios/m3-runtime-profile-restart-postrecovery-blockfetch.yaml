@@ -1,0 +1,35 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-profile-restart-postrecovery-blockfetch",
+  "title": "Runtime Profile A restart preserves bounded tip recovery and supports post-restart BlockFetch on node2/node3",
+  "authors": ["dwarf"],
+  "tags": ["m3", "runtime", "restart", "recovery", "blockfetch", "profile-a", "package-c"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-016", "GAP-018", "GAP-014"],
+    "architecture_ids": ["B-004", "B-007", "IF-004", "IF-005"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-010", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is local devnet restart-plus-postrecovery-BlockFetch evidence only, not fork-divergence or chain-rollback correctness evidence.",
+    "It does not prove read-pointer safety, rollback-horizon policy, or persistence integrity under corruption.",
+    "It does not prove multi-implementation runtime parity."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3613",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py restart-fetch",
+      "timeout_seconds": 420,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

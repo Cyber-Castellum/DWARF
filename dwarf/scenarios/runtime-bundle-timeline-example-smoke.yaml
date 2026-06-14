@@ -1,0 +1,37 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-bundle-timeline-example-smoke",
+  "title": "Assemble a chronological evidence timeline across captured bundles",
+  "authors": ["dwarf"],
+  "tags": ["bundle", "timeline", "forensic", "amaru"],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "any"
+  },
+  "runtime": "library",
+  "seed": "0xCAFE0A04",
+  "load": [
+    {
+      "primitive": "runtime_bundle_timeline",
+      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "bundle_ids": [
+        "20260427T074053Z-ba7c46cc",
+        "20260427T075930Z-8a754454",
+        "20260427T082605Z-98e8aae2",
+        "20260427T083724Z-176c5cf7",
+        "20260427T091106Z-3bce7cb4",
+        "20260427T094439Z-5b4d3858",
+        "20260427T105341Z-0b24e9a8"
+      ],
+      "output_dir": "outputs/bundle-timeline",
+      "timeout_seconds": 120
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "bundle_timeline_emitted_clean"
+    }
+  ],
+  "teardown": []
+}

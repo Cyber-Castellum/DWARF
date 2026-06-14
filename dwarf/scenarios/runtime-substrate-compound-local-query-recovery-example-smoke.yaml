@@ -1,0 +1,165 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-compound-local-query-recovery-example-smoke",
+  "title": "Exercise rollback and restart recovery while local-query pressure is active",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "substrate",
+    "compound",
+    "local-query",
+    "recovery",
+    "rollback",
+    "tm-018",
+    "tm-029"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node3",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        },
+        {
+          "from": "node1",
+          "to": "node3"
+        },
+        {
+          "from": "node3",
+          "to": "node1"
+        },
+        {
+          "from": "node2",
+          "to": "node3"
+        },
+        {
+          "from": "node3",
+          "to": "node2"
+        }
+      ]
+    }
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_local_query_stress",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/local-query-stress"
+    },
+    {
+      "primitive": "runtime_force_rollback",
+      "target_node": "node2",
+      "requested_rollback_slots": 5,
+      "security_parameter_k": 10,
+      "output_dir": "outputs/rollback"
+    },
+    {
+      "primitive": "runtime_chain_switch_inject",
+      "target_node": "node3",
+      "output_dir": "outputs/chain-switch"
+    },
+    {
+      "primitive": "runtime_kill_node",
+      "target_node": "node3",
+      "output_dir": "outputs/kill-node"
+    },
+    {
+      "primitive": "runtime_restart_node",
+      "target_node": "node3",
+      "output_dir": "outputs/restart-node"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3"
+      ],
+      "observation_window_seconds": 10,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": [
+        "tip_state",
+        "connection_state"
+      ],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "assertions": [
+    {
+      "primitive": "all_nodes_started_clean",
+      "min_completed": 1,
+      "min_node_count": 3
+    },
+    {
+      "primitive": "local_query_amplification_bounded"
+    },
+    {
+      "primitive": "k_bound_rollback_recovered"
+    },
+    {
+      "primitive": "chain_switch_consistent",
+      "honest_node_ids": [
+        "node1",
+        "node2",
+        "node3"
+      ]
+    },
+    {
+      "primitive": "reconnection_clean",
+      "reconnected_node_id": "node3",
+      "honest_node_ids": [
+        "node1",
+        "node2"
+      ]
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

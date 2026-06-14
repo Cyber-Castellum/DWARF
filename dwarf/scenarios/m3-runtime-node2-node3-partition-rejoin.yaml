@@ -1,0 +1,40 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-node2-node3-partition-rejoin",
+  "title": "Runtime node2/node3 listener partition produces bounded BlockFetch timeouts and succeeds again after rejoin",
+  "authors": ["dwarf"],
+  "tags": ["m3", "runtime", "partition", "rejoin", "profile-a", "package-c", "blockfetch"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-018", "GAP-014"],
+    "architecture_ids": ["B-001", "B-004", "IF-004", "IF-005"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-010", "CR-M1-DRAFT-011"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is transport partition and rejoin evidence on the local devnet only, not proof of chain convergence or rollback safety.",
+    "It does not prove eventual node-to-node peer-manager recovery beyond the bounded listener partition exercised here.",
+    "It does not prove public-network routing, BGP resilience, or whole-network partition handling."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "partition_rejoin_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3612",
+  "load": [
+    {
+      "primitive": "runtime_partition_rejoin",
+      "timeout_seconds": 240,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

@@ -1,0 +1,83 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-compound-time-skew-epoch-boundary-example-smoke",
+  "title": "Compose a substrate scenario that preserves epoch-boundary accounting under bounded clock skew",
+  "authors": ["dwarf"],
+  "tags": ["substrate", "compound", "time-skew", "epoch-boundary", "rr-029"],
+  "target": {"implementation": "cardano-node", "version": "10.7.1"},
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {"id": "node1", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node2", "impl": "cardano-node", "version": "10.7.1", "role": "honest"}
+    ],
+    "topology": {
+      "edges": [
+        {"from": "node1", "to": "node2"},
+        {"from": "node2", "to": "node1"}
+      ]
+    }
+  },
+  "setup": [
+    {"primitive": "runtime_install_version", "output_dir": "outputs/substrate-install"},
+    {"primitive": "runtime_compose_substrate", "output_dir": "outputs/substrate-compose"}
+  ],
+  "load": [
+    {
+      "primitive": "runtime_time_skew",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "skew_seconds": 600,
+      "duration_seconds": 20,
+      "output_dir": "outputs/time-skew"
+    },
+    {
+      "primitive": "runtime_force_epoch_boundary",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "expected_boundary_slot": 1000,
+      "window_tolerance_slots": 5,
+      "output_dir": "outputs/epoch-boundary"
+    },
+    {
+      "primitive": "runtime_simulate_stake_snapshot_update",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/stake-snapshot-update"
+    },
+    {
+      "primitive": "runtime_recompute_leadership_schedule",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/leadership-schedule"
+    },
+    {
+      "primitive": "runtime_trigger_rupd_pulse",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/rupd-pulse"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": ["node1", "node2"],
+      "observation_window_seconds": 20,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": ["tip_state", "connection_state"],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "peer_connectivity_observed", "timeout_seconds": 20},
+    {"primitive": "all_nodes_responsive"},
+    {"primitive": "epoch_boundary_timing_within_bounds"},
+    {"primitive": "leadership_schedule_recomputes_clean"},
+    {"primitive": "reward_calculation_boundary_invariant"}
+  ],
+  "teardown": [
+    {"primitive": "runtime_teardown_substrate", "output_dir": "outputs/substrate-teardown"}
+  ]
+}

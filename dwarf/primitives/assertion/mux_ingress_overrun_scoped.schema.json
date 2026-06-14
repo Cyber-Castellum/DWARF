@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "mux_ingress_overrun_scoped"}
+  },
+  "additionalProperties": true
+}

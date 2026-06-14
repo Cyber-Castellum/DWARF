@@ -30,6 +30,8 @@ class Profile:
     upstream_peer_address: str | None = None
     listen_address: str | None = None
     config_source_dir: str | None = None
+    public_network: str | None = None
+    testbed: str | None = None
 
     @classmethod
     def from_dict(cls, data):
@@ -50,6 +52,8 @@ class Profile:
             upstream_peer_address=data.get("upstream_peer_address"),
             listen_address=data.get("listen_address"),
             config_source_dir=data.get("config_source_dir"),
+            public_network=data.get("public_network"),
+            testbed=data.get("testbed"),
         )
 
 
@@ -97,6 +101,8 @@ def profile_diff_text(left_id, right_id):
         "upstream_peer_address",
         "listen_address",
         "config_source_dir",
+        "public_network",
+        "testbed",
     )
     lines = [
         "Profile diff",
@@ -157,6 +163,14 @@ def _is_generated_haskell_local_profile(profile):
         and profile.topology_pattern == "local-mesh"
         and profile.node_count > 1
     )
+
+
+def _public_network(profile):
+    return profile.public_network or profile.amaru_network or "preview"
+
+
+def _public_testbed(profile):
+    return profile.testbed or f"public-{_public_network(profile)}"
 
 
 def _profile_as_custom_bundle(profile):
@@ -258,18 +272,20 @@ def deploy_dry_run_text(profile):
             "No remote state changed.\n"
         )
     if _profile_deploy_mode(profile) == "haskell-only" and profile.config_source_dir:
+        network = _public_network(profile)
         return (
             f"DRY RUN deploy for {profile.id}\n"
             f"Would create remote runtime root: {profile.remote_runtime_root}\n"
             f"Would fail fast if upstream peer {profile.upstream_peer_address} is unreachable.\n"
-            f"Would copy the official preview config set from {profile.config_source_dir}.\n"
+            f"Would copy the official {network} config set from {profile.config_source_dir}.\n"
             f"Would rewrite topology.json under the runtime root to use {profile.upstream_peer_address} as the bootstrap peer.\n"
             f"Would start one Haskell cardano-node from /home/nigel/.local/bin/cardano-node listening on {profile.listen_address}.\n"
             "Would write runtime metadata under runtime.json and keep logs under logs/node1/.\n"
-            "This profile depends on public preview connectivity and is not a self-contained local devnet.\n"
+            f"This profile depends on public {network} connectivity and is not a self-contained local devnet.\n"
             "No remote state changed.\n"
         )
     if _profile_deploy_mode(profile) == "amaru-only":
+        network = _public_network(profile)
         return (
             f"DRY RUN deploy for {profile.id}\n"
             f"Would create remote runtime root: {profile.remote_runtime_root}\n"
@@ -277,7 +293,7 @@ def deploy_dry_run_text(profile):
             f"Would bootstrap Amaru for network {profile.amaru_network} using the bundled upstream bootstrap config.\n"
             f"Would start one Amaru node from /home/nigel/amaru-verification/target/debug/amaru listening on {profile.listen_address}.\n"
             "Would write runtime metadata under runtime.json and keep logs under logs/amaru1/.\n"
-            "This profile depends on public preview connectivity and is not a self-contained local devnet.\n"
+            f"This profile depends on public {network} connectivity and is not a self-contained local devnet.\n"
             "No remote state changed.\n"
         )
     return (
@@ -406,6 +422,8 @@ tmux ls | grep "$project" || true
         runtime = shlex.quote(profile.remote_runtime_root)
         session = shlex.quote(profile.compose_project)
         node_bin = shlex.quote("/home/nigel/.local/bin/cardano-node")
+        public_network = _public_network(profile)
+        testbed = _public_testbed(profile)
         listen_address_raw = profile.listen_address or "127.0.0.1:39100"
         listen_host, listen_port_text = listen_address_raw.rsplit(":", 1)
         listen_port = int(listen_port_text)
@@ -452,8 +470,9 @@ cp "$config_source_dir"/byron-genesis.json "$config_root"/
 cp "$config_source_dir"/shelley-genesis.json "$config_root"/
 cp "$config_source_dir"/alonzo-genesis.json "$config_root"/
 cp "$config_source_dir"/conway-genesis.json "$config_root"/
-cp "$config_source_dir"/checkpoints.json "$config_root"/
-cp "$config_source_dir"/peer-snapshot.json "$config_root"/
+for optional_file in checkpoints.json peer-snapshot.json; do
+  [ -f "$config_source_dir/$optional_file" ] && cp "$config_source_dir/$optional_file" "$config_root"/
+done
 python3 - "$peer_address" "$config_root/topology.json" <<'PY'
 import json
 import pathlib
@@ -471,7 +490,7 @@ cat > "$metadata_path" <<JSON
 {{
   "profile_id": "{profile.id}",
   "target_implementation": "cardano-node",
-  "network": "preview",
+  "network": "{public_network}",
   "upstream_peer_address": "{profile.upstream_peer_address or 'preview-node.play.dev.cardano.org:3001'}",
   "listen_address": "{profile.listen_address or '127.0.0.1:39100'}",
   "session": "{profile.compose_project}",
@@ -481,7 +500,7 @@ cat > "$metadata_path" <<JSON
   "pid_file": "$pid_file",
   "socket_path": "$socket_path",
   "config_root": "$config_root",
-  "testbed": "public-preview"
+  "testbed": "{testbed}"
 }}
 JSON
 tmux new-session -d -s "$session" "bash -lc 'cd $config_root; echo \\$$ > $pid_file; exec $node_bin run --config config.json --topology topology.json --database-path $db_dir --socket-path $socket_path --port {listen_port} --host-addr {listen_host_q} 2>&1 | tee -a $log_path'"
@@ -493,6 +512,8 @@ tmux ls
         session = shlex.quote(profile.compose_project)
         amaru_bin = shlex.quote("/home/nigel/amaru-verification/target/debug/amaru")
         amaru_network = shlex.quote(profile.amaru_network or "preview")
+        public_network = _public_network(profile)
+        testbed = _public_testbed(profile)
         peer_address = shlex.quote(profile.upstream_peer_address or "preview-node.play.dev.cardano.org:3001")
         listen_address = shlex.quote(profile.listen_address or "127.0.0.1:39000")
         return f"""set -e
@@ -533,7 +554,7 @@ cat > "$metadata_path" <<JSON
 {{
   "profile_id": "{profile.id}",
   "target_implementation": "amaru",
-  "network": "{profile.amaru_network or 'preview'}",
+  "network": "{public_network}",
   "upstream_peer_address": "{profile.upstream_peer_address or 'preview-node.play.dev.cardano.org:3001'}",
   "listen_address": "{profile.listen_address or '127.0.0.1:39000'}",
   "session": "{profile.compose_project}",
@@ -542,7 +563,7 @@ cat > "$metadata_path" <<JSON
   "ledger_dir": "$state_root/ledger.{profile.amaru_network or 'preview'}.db",
   "log_path": "$log_dir/stdout.log",
   "pid_file": "$state_root/amaru.pid",
-  "testbed": "public-preview"
+  "testbed": "{testbed}"
 }}
 JSON
 cd "$runtime"

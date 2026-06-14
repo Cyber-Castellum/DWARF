@@ -1,0 +1,23 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-stale-blockfetch-responder",
+  "title": "Phase 3 hostile stale BlockFetch responder primitive on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "blockfetch", "behavioral-primitive", "hostile-responder", "devnet"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DEFACE",
+  "load": [
+    {
+      "primitive": "shim_responder_stale_blockfetch",
+      "timeout_seconds": 30,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1}
+  ],
+  "teardown": []
+}

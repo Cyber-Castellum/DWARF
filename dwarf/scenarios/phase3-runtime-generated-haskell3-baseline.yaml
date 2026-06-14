@@ -1,0 +1,34 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-baseline",
+  "title": "Phase 3 generated Haskell-only profile baseline",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "generated-profile", "haskell-profile", "baseline"],
+  "related_milestones": ["M1"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves generated Haskell-only multi-node deploy and runtime access substrate only.",
+    "It does not prove protocol parity, persistence safety, or per-node fault targeting."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE5002",
+  "load": [
+    {
+      "primitive": "runtime_live_implementation_baseline",
+      "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

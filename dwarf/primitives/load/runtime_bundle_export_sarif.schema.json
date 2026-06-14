@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_bundle_export_sarif params",
+  "type": "object",
+  "required": [
+    "target_run_id"
+  ],
+  "properties": {
+    "runs_dir": { "type": "string", "minLength": 1 },
+    "target_run_id": { "type": "string", "minLength": 1 },
+    "schema_path": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expected_helper_exit": { "type": "integer" },
+    "helper_script": { "type": "string", "minLength": 1 },
+    "python_bin": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

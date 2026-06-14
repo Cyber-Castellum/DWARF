@@ -1,0 +1,34 @@
+{
+  "spec_version": "v1",
+  "id": "m3-observability-log-baseline",
+  "title": "Observability log baseline for Profile A",
+  "authors": ["dwarf"],
+  "tags": ["observability", "m3", "devnet", "runtime", "logs"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": ["TH-CAND-005"],
+    "gap_ids": ["GAP-022"],
+    "architecture_ids": ["B-009", "IF-012", "A-OBSERVABILITY-DATA", "A-INCIDENT-EVIDENCE", "A-NODE-LIVENESS", "C-012"],
+    "risk_candidate_ids": ["CR-M1-005", "CR-M1-DRAFT-016"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "Runtime baseline evidence only; no claim about alert thresholds, retention adequacy, or field sensitivity.",
+    "This scenario checks current log presence and readability only.",
+    "Incident-reconstruction completeness remains blocked on policy and higher-volume tests."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3501",
+  "load": [
+    {
+      "primitive": "runtime_observability_log_baseline",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

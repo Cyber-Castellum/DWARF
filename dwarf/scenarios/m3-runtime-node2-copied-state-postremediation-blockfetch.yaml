@@ -1,0 +1,36 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-node2-copied-state-postremediation-blockfetch",
+  "title": "Runtime node2 copied-state remediation restores bounded tip alignment and supports post-remediation BlockFetch on node2/node3",
+  "authors": ["dwarf"],
+  "tags": ["m3", "runtime", "copied-state", "recovery", "blockfetch", "profile-a", "package-c"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-016", "GAP-018", "GAP-014"],
+    "architecture_ids": ["B-004", "B-007", "IF-004", "IF-005"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-010", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded copied-state remediation-plus-postrecovery-BlockFetch evidence on the local devnet only, not proof of corruption handling or production disaster-recovery policy.",
+    "It does not prove fork-state convergence under adversarial rollback or chain split conditions.",
+    "It does not prove database integrity after partial writes or deliberate corruption.",
+    "It does not prove eventual recovery beyond the bounded remediation and postrecovery fetch window."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3614",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py copied-state-fetch",
+      "timeout_seconds": 540,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

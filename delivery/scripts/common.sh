@@ -19,6 +19,8 @@ DWARF_DASHBOARD_BIND=${DWARF_DASHBOARD_BIND:-0.0.0.0}
 DWARF_DASHBOARD_PORT=${DWARF_DASHBOARD_PORT:-8787}
 DWARF_RUNTIME_ROOT=${DWARF_RUNTIME_ROOT:-${PACKAGE_ROOT}/var}
 ADA2_DWARF_TOKEN=${ADA2_DWARF_TOKEN:-dwarf}
+DWARF_MOOG_BOOTSTRAP=${DWARF_MOOG_BOOTSTRAP:-off}
+DWARF_MOOG_BOOTSTRAP_APPROVE=${DWARF_MOOG_BOOTSTRAP_APPROVE:-0}
 
 export DWARF_IMAGE
 export DWARF_CONTAINER_NAME
@@ -26,6 +28,8 @@ export DWARF_DASHBOARD_BIND
 export DWARF_DASHBOARD_PORT
 export DWARF_RUNTIME_ROOT
 export ADA2_DWARF_TOKEN
+export DWARF_MOOG_BOOTSTRAP
+export DWARF_MOOG_BOOTSTRAP_APPROVE
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -104,6 +108,31 @@ container_running() {
   docker inspect -f '{{.State.Running}}' "${DWARF_CONTAINER_NAME}" 2>/dev/null | grep -qx true
 }
 
+optional_moog_bootstrap() {
+  case "${DWARF_MOOG_BOOTSTRAP}" in
+    off|0|false|no|"")
+      return 0
+      ;;
+    plan)
+      echo "Moog bootstrap plan requested (no remote state change)"
+      docker exec -i "${DWARF_CONTAINER_NAME}" /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --json
+      ;;
+    approve)
+      if [[ "${DWARF_MOOG_BOOTSTRAP_APPROVE}" != "1" ]]; then
+        echo "DWARF_MOOG_BOOTSTRAP=approve requires DWARF_MOOG_BOOTSTRAP_APPROVE=1" >&2
+        exit 1
+      fi
+      echo "Moog bootstrap approve requested"
+      docker exec -i "${DWARF_CONTAINER_NAME}" /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --approve --json
+      docker exec -i "${DWARF_CONTAINER_NAME}" /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
+      ;;
+    *)
+      echo "invalid DWARF_MOOG_BOOTSTRAP value: ${DWARF_MOOG_BOOTSTRAP} (use off, plan, or approve)" >&2
+      exit 1
+      ;;
+  esac
+}
+
 print_delivery_config() {
   cat <<EOF
 Package root: ${PACKAGE_ROOT}
@@ -112,5 +141,6 @@ Image: ${DWARF_IMAGE}
 Container: ${DWARF_CONTAINER_NAME}
 Dashboard: ${DWARF_DASHBOARD_BIND}:${DWARF_DASHBOARD_PORT}
 Runtime root: ${DWARF_RUNTIME_ROOT}
+Moog bootstrap: ${DWARF_MOOG_BOOTSTRAP}
 EOF
 }

@@ -119,11 +119,99 @@
 
 <hr class="hairline">
 
+<section class="status-moog" aria-labelledby="moog-heading">
+  <header><span class="eyebrow">Moog</span><h2 id="moog-heading">Deployment health</h2>
+    <p class="page-subhero">Read-only Moog deployment checks on cardano-box. Public metadata only; wallet secrets and PATs are not inspected here.</p>
+  </header>
+  <div class="status-tile-grid">
+    <article class="status-tile status-tile--state-{{ 'stale' if moog.state == 'warn' else moog.state }}">
+      <span class="eyebrow">Moog status</span>
+      <span class="status-tile__metric">{{ moog.metric }}</span>
+      <dl class="status-tile__rows">
+        <div><dt>checks</dt><dd>{{ moog.ok_count }} ok · {{ moog.warn_count }} warn · {{ moog.error_count }} error</dd></div>
+        <div><dt>deploy root</dt><dd><code>{{ moog.deploy_root }}</code></dd></div>
+        <div><dt>mpfs host</dt><dd><code>{{ moog.mpfs_host }}</code></dd></div>
+        <div><dt>oracle service</dt><dd><code>{{ moog.oracle_service }}</code></dd></div>
+      </dl>
+      {% if moog.error %}<p class="status-tile__caption">{{ moog.error }}</p>{% endif %}
+    </article>
+    <article class="status-tile">
+      <span class="eyebrow">Preprod linkage</span>
+      <span class="status-tile__metric"><code>token</code></span>
+      <dl class="status-tile__rows">
+        <div><dt>asset id</dt><dd><code>{{ moog.token_id }}</code></dd></div>
+        <div><dt>requester</dt><dd><code>{{ moog.requester_address }}</code></dd></div>
+        <div><dt>oracle</dt><dd><code>{{ moog.oracle_address }}</code></dd></div>
+      </dl>
+    </article>
+  </div>
+  {% if moog.checks %}
+  <div class="responsive-table status-profiles__table-wrap">
+    <table class="config-table">
+      <thead><tr><th>Check</th><th>State</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for check in moog.checks %}
+        <tr>
+          <td><code>{{ check.id }}</code></td>
+          <td><span class="result-pill result-pill--{{ 'pass' if check.state == 'ok' else 'fail' }}">{{ check.state }}</span></td>
+          <td><code>{{ check.detail }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
+<section class="status-wallets" aria-labelledby="wallets-heading">
+  <header><span class="eyebrow">Wallet</span><h2 id="wallets-heading">Connected wallet</h2>
+    <p class="page-subhero">Public wallet telemetry for Moog/Cardano operations. Wallet secrets never appear here.</p>
+  </header>
+  {% if wallets %}
+  <div class="status-tile-grid">
+    {% for wallet in wallets %}
+    <article class="status-tile status-wallet-card status-tile--state-{{ wallet.state }}">
+      <span class="eyebrow">{{ wallet.role }} · {{ wallet.network }}</span>
+      <span class="status-tile__metric"><code class="wallet-identifier">{{ wallet.id }}</code></span>
+      <p class="status-tile__sub">{{ wallet.label }}</p>
+      <dl class="status-tile__rows">
+        <div><dt>state</dt><dd><span class="result-pill result-pill--{{ 'pass' if wallet.state in ['ok', 'empty'] else 'fail' }}">{{ wallet.state }}</span></dd></div>
+        <div><dt>balance</dt><dd>{{ wallet.balance_tada }} tADA</dd></div>
+        <div><dt>utxos</dt><dd>{{ wallet.utxo_count if wallet.utxo_count is not none else '—' }}</dd></div>
+        <div><dt>queried</dt><dd>{{ wallet.queried_at }}</dd></div>
+      </dl>
+      <p class="status-tile__path wallet-address-row" title="{{ wallet.address }}"><code class="wallet-identifier wallet-address">{{ wallet.address }}</code></p>
+      {% if wallet.error %}<p class="status-tile__caption">{{ wallet.error }}</p>{% endif %}
+      {% if wallet.recent_transactions %}
+      <div class="wallet-tx-list" role="list" aria-label="Recent wallet transactions">
+        {% for tx in wallet.recent_transactions[:5] %}
+        <div class="wallet-tx-row" role="listitem">
+          <code class="wallet-identifier wallet-tx-hash">{{ tx.tx_hash }}</code>
+          <span class="wallet-tx-meta">block {{ tx.block_height if tx.block_height is not none else '—' }} · {{ tx.block_time if tx.block_time is not none else '—' }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="page-subhero">No recent transactions returned by the query provider.</p>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="page-subhero">No wallets are configured. Add one with <code>cardano-profile wallet add &lt;id&gt; --address &lt;addr&gt; --network preprod --role requester</code>.</p>
+  {% endif %}
+</section>
+
+<hr class="hairline">
+
 <section class="flask-runes" aria-labelledby="runes-heading">
   <header><span class="eyebrow">Inscriptions</span><h2 id="runes-heading">Configuration runes</h2>
     <p class="page-subhero">Etched into the chamber walls. Click a value to copy. To re-write the inscriptions, run <code>cardano-profile intake</code> from a terminal.</p>
   </header>
 
+  <div class="responsive-table flask-runes__table-wrap">
   <table class="config-table flask-runes__table">
     <thead><tr><th>Key</th><th>Value</th></tr></thead>
     <tbody>
@@ -139,6 +227,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </section>
 
 {% if profiles %}
@@ -148,6 +237,7 @@
   <header><span class="eyebrow">Profiles</span><h2 id="profiles-heading">Catalogued profiles</h2>
     <p class="page-subhero">Every profile <code>cardano-profile</code> can deploy. The active row glows.</p>
   </header>
+  <div class="responsive-table status-profiles__table-wrap">
   <table class="config-table profiles-table">
     <thead>
       <tr>
@@ -167,6 +257,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </section>
 {% endif %}
 

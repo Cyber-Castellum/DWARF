@@ -1,0 +1,31 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-node2-port-drop-primitive",
+  "title": "Declarative runtime primitive for generated-profile node2 port-drop verification",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "generated-profile", "port-drop", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "faults": [
+    {
+      "primitive": "fault_local_port_drop",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "target_node": "node2",
+      "host": "127.0.0.1"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_generated_node_port_drop_check",
+      "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+      "blocked_node": "node2",
+      "healthy_nodes": ["node1", "node3"],
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

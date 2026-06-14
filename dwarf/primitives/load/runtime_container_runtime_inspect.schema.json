@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_container_runtime_inspect params",
+  "type": "object",
+  "required": ["output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "runtime_bundle_export params",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": {"type": "string"},
+    "python_bin": {"type": "string"},
+    "timeout_seconds": {"type": "number", "minimum": 1},
+    "expected_helper_exit": {"type": "integer"},
+    "target_run_id": {"type": "string"},
+    "signing_actor": {"type": "string"},
+    "key_path": {"type": "string"}
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-compound-keepalive-topology-capture-example-smoke",
+  "title": "Exercise keepalive failure handling while peer-set capture pressure is active",
+  "authors": ["dwarf"],
+  "tags": ["substrate", "compound", "keepalive", "topology", "eclipse", "tm-024", "tm-026"],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {"id": "node1", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node2", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node3", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node4", "impl": "cardano-node", "version": "10.7.1", "role": "sybil"},
+      {"id": "node5", "impl": "cardano-node", "version": "10.7.1", "role": "sybil"}
+    ],
+    "topology": {
+      "edges": [
+        {"from": "node1", "to": "node2"},
+        {"from": "node2", "to": "node1"},
+        {"from": "node1", "to": "node3"},
+        {"from": "node3", "to": "node1"},
+        {"from": "node2", "to": "node3"},
+        {"from": "node3", "to": "node2"},
+        {"from": "node2", "to": "node4"},
+        {"from": "node4", "to": "node2"},
+        {"from": "node2", "to": "node5"},
+        {"from": "node5", "to": "node2"}
+      ]
+    }
+  },
+  "setup": [
+    {"primitive": "runtime_install_version", "output_dir": "outputs/substrate-install"},
+    {"primitive": "runtime_compose_substrate", "output_dir": "outputs/substrate-compose"}
+  ],
+  "load": [
+    {
+      "primitive": "runtime_simulate_peer_set_capture",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "sybil_node_ids": ["node4", "node5"],
+      "output_dir": "outputs/peer-set-capture"
+    },
+    {
+      "primitive": "runtime_keepalive_failure_cascade",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/keepalive-failure"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": ["node1", "node2", "node3", "node4", "node5"],
+      "observation_window_seconds": 12,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": ["tip_state", "connection_state"],
+      "output_dir": "outputs/multi-node-observation",
+      "timeout_seconds": 180
+    }
+  ],
+  "assertions": [
+    {"primitive": "all_nodes_responsive"},
+    {"primitive": "keepalive_failure_budget_bounded"},
+    {
+      "primitive": "honest_peer_set_uncompromised",
+      "honest_node_ids": ["node1", "node2", "node3"],
+      "minimum_honest_peers": 2
+    },
+    {"primitive": "substrate_quorum_observed", "minimum_fraction": 1.0}
+  ],
+  "teardown": [
+    {"primitive": "runtime_teardown_substrate", "output_dir": "outputs/substrate-teardown"}
+  ]
+}

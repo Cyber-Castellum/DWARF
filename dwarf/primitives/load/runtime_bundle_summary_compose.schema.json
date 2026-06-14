@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_bundle_summary_compose params",
+  "type": "object",
+  "required": ["runs_dir", "bundle_ids", "output_dir"],
+  "properties": {
+    "runs_dir": { "type": "string", "minLength": 1 },
+    "bundle_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expected_helper_exit": { "type": "integer" },
+    "helper_script": { "type": "string", "minLength": 1 },
+    "python_bin": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

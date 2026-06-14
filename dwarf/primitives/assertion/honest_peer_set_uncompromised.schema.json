@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["primitive", "honest_node_ids", "minimum_honest_peers"],
+  "properties": {
+    "primitive": {
+      "const": "honest_peer_set_uncompromised",
+      "description": "Asserts that each configured honest node retains the minimum honest-peer count without peer-set capture and with real non-zero tip evidence."
+    },
+    "honest_node_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1,
+      "description": "Honest node ids that must remain connected to enough honest peers and emit real non-zero tip observations."
+    },
+    "minimum_honest_peers": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Minimum number of honest peers each configured honest node must retain."
+    }
+  },
+  "additionalProperties": true
+}

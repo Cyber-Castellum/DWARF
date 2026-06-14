@@ -1,0 +1,22 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-preview-upstream-drop-haskell-primitive",
+  "title": "Declarative runtime primitive for preview upstream drop on Haskell preview",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "preview", "upstream", "drop", "cardano-node"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-preview-runtime-parity",
+  "load": [
+    {
+      "primitive": "runtime_preview_upstream_drop",
+      "fault_seconds": 15,
+      "recovery_seconds": 20,
+      "timeout_seconds": 90,
+      "expected_helper_exit": 0
+    }
+  ],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

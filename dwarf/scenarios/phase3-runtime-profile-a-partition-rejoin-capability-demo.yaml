@@ -1,0 +1,59 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-partition-rejoin-capability-demo",
+  "title": "Phase 3 Profile A partition and rejoin capability demo",
+  "authors": ["dwarf"],
+  "tags": [
+    "phase3",
+    "devnet",
+    "runtime",
+    "profile-a",
+    "partition",
+    "rejoin",
+    "capability-demo",
+    "multi-phase",
+    "blockfetch"
+  ],
+  "related_milestones": ["M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-018", "GAP-014"],
+    "architecture_ids": ["B-001", "B-004", "IF-004", "IF-005"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-010", "CR-M1-DRAFT-011"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves sequential composition of the repaired Profile A partition and client-history substrates only.",
+    "It does not yet prove reverse-direction partitioning, chained remediation, or mixed transport plus process-state faults."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3B1E",
+  "phases": [
+    {
+      "id": "partition-node2-node3",
+      "title": "Partition node2 and node3, observe bounded BlockFetch timeouts, then rejoin",
+      "load": [
+        {
+          "primitive": "runtime_partition_rejoin",
+          "timeout_seconds": 240,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "post-rejoin-multi-peer-chainsync",
+      "title": "Verify historical ChainSync succeeds again across all Profile A peers after rejoin",
+      "load": [
+        {
+          "primitive": "runtime_client_chainsync_multi_peer",
+          "timeout_seconds": 180,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_forensic_snapshot params",
+  "type": "object",
+  "required": ["runs_dir", "run_ids", "output_dir"],
+  "properties": {
+    "runs_dir": { "type": "string", "minLength": 1 },
+    "run_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "tag_filters": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "output_format": {
+      "type": "string",
+      "enum": ["tar.gz"]
+    },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expected_helper_exit": { "type": "integer" },
+    "helper_script": { "type": "string", "minLength": 1 },
+    "python_bin": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

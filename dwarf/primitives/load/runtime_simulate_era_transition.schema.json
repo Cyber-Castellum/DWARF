@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_simulate_era_transition params",
+  "type": "object",
+  "required": ["window_start_slot", "window_end_slot", "output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "window_start_slot": { "type": "integer", "minimum": 0 },
+    "window_end_slot": { "type": "integer", "minimum": 0 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "byzantine_cardano_node_recorded_clean params",
+  "type": "object",
+  "properties": {
+    "min_completed": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

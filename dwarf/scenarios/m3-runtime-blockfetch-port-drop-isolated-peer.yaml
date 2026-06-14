@@ -1,0 +1,48 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-blockfetch-port-drop-isolated-peer",
+  "title": "Runtime BlockFetch survives one blackholed peer by using the remaining Profile A peers",
+  "authors": ["dwarf"],
+  "tags": ["blockfetch", "m3", "devnet", "runtime", "adversarial", "partial-isolation", "port-drop"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-014", "GAP-016", "GAP-020"],
+    "architecture_ids": ["B-004", "IF-005", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-003", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded peer-isolation runtime evidence only; it does not prove automatic retry logic or stale-response handling inside the node.",
+    "One listener is blackholed by host port rules while the remaining peers are queried directly by the harness.",
+    "Persistence, restart, and recovery behavior remain follow-up work."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "blockfetch_isolated_peer_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3606",
+  "faults": [
+    {
+      "primitive": "fault_local_port_drop",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "target_node": "node1",
+      "host": "127.0.0.1"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_blockfetch_drop_isolated_peer",
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

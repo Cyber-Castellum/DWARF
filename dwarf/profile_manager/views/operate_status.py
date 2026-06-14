@@ -7,7 +7,9 @@ from profile_manager.data.operate_status import (
     configuration_rows,
     dashboard_serving_tile,
     last_sync_tile,
+    moog_status_tile,
     substrate_health,
+    wallet_status_rows,
 )
 from profile_manager.templating import render
 
@@ -34,4 +36,6 @@ def render_operate_status(*, port: int | None = None, bind: str | None = None,
         serving=dashboard_serving_tile(port=port, bind=bind, token=token),
         config_rows=configuration_rows(payload),
         profiles=all_profiles(payload),
+        wallets=wallet_status_rows(payload),
+        moog=moog_status_tile(payload),
     )

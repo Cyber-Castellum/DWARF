@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "bootstrap_assumptions_safe"}
+  },
+  "additionalProperties": true
+}

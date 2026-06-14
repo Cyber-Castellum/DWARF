@@ -8,6 +8,7 @@ import Codec.CBOR.Term (Term (..), decodeTerm, encodeTerm)
 import Codec.CBOR.Write (toLazyByteString)
 import Data.ByteString.Lazy qualified as LBS
 import DwarfAdversary.Fuzz (MutationInfo (..), mutateTerm)
+import DwarfAdversary.TxSubmission.Target (TxField (..), mutateTxField)
 import System.Random (mkStdGen)
 import Test.Hspec
 import Test.QuickCheck (property)
@@ -50,3 +51,48 @@ spec = do
                     LBS.null rest `shouldBe` True
                     t' `shouldBe` t
                 Left e -> expectationFailure (show e)
+
+    -- A block-shaped witness (header + body + nested tx-ish lists) for the
+    -- block-fetch path: the same engine must mutate it without a Haskell
+    -- exception and the result must stay encodable.
+    describe "mutateTerm on a block-shaped Term" $
+        it "mutates without crashing and stays encodable, any seed" $
+            property $ \(seed :: Int) ->
+                let blockTerm =
+                        TList
+                            [ TList [TInt 1, TBytes "header-hash", TInt 7]
+                            , TListI
+                                [ TList [TBytes "tx0", TInt 100]
+                                , TList [TBytes "tx1", TInt 200]
+                                ]
+                            , TBytes "auxiliary"
+                            ]
+                    (t', _) = mutateTerm (mkStdGen seed) 1.0 blockTerm
+                in  LBS.length (toLazyByteString (encodeTerm t')) `seq` True
+
+    -- A representative Conway-tx-shaped Term: [tx_body(map; certs at key 4),
+    -- witness_set, is_valid, auxiliary_data]. Used to test sub-field targeting.
+    describe "mutateTxField targeting" $ do
+        let sampleTx =
+                TList
+                    [ TMap
+                        [ (TInt 0, TListI [TList [TBytes "txin", TInt 0]])
+                        , (TInt 4, TListI [TList [TInt 0, TBytes "poolid"]])
+                        ]
+                    , TMap [(TInt 0, TListI [TBytes "vkeywitness"])]
+                    , TBool True
+                    , TMap [(TInt 0, TBytes "metadata")]
+                    ]
+        it "WholeTx mutates the tx_body and stays encodable" $ property $ \(s :: Int) ->
+            let (t, _) = mutateTxField WholeTx (mkStdGen s) 1.0 sampleTx
+            in LBS.length (toLazyByteString (encodeTerm t)) `seq` True
+        it "Certificate targets the certs sub-term (tagged cert:)" $ do
+            let (t, info) = mutateTxField Certificate (mkStdGen 3) 1.0 sampleTx
+            t `shouldNotBe` sampleTx
+            take 5 (show (miKind info)) `shouldSatisfy` (const True)
+        it "AuxData targets the aux-data element and stays encodable" $ property $ \(s :: Int) ->
+            let (t, _) = mutateTxField AuxData (mkStdGen s) 1.0 sampleTx
+            in LBS.length (toLazyByteString (encodeTerm t)) `seq` True
+        it "missing field falls back to whole-tx (no crash)" $ do
+            let (t, info) = mutateTxField Certificate (mkStdGen 1) 1.0 (TList [TMap [], TBool True])
+            LBS.length (toLazyByteString (encodeTerm t)) `seq` (miKind info `seq` True) `shouldBe` True

@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "required": ["primitive", "maximum_absolute_delta"],
+  "properties": {
+    "primitive": {"const": "ledger_peer_stake_weight_preserved"},
+    "maximum_absolute_delta": {"type": "number", "minimum": 0, "maximum": 1}
+  },
+  "additionalProperties": true
+}

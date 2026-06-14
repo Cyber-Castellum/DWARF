@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "leadership_schedule_recomputes_clean"}
+  },
+  "additionalProperties": true
+}

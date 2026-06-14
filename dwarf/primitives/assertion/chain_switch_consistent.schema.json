@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {
+      "const": "chain_switch_consistent",
+      "description": "Asserts that a chain-switch converged to the injected target with real peer connectivity and observed slot transitions."
+    },
+    "honest_node_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "additionalProperties": false
+}

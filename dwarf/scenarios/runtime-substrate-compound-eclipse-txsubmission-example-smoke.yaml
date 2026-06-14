@@ -1,0 +1,85 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-compound-eclipse-txsubmission-example-smoke",
+  "title": "Compose a substrate scenario that combines peer-set capture pressure with TxSubmission limits",
+  "authors": ["dwarf"],
+  "tags": ["substrate", "compound", "eclipse", "txsubmission", "rr-018", "rr-009", "rr-010"],
+  "target": {"implementation": "cardano-node", "version": "10.7.1"},
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {"id": "node1", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node2", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node3", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node4", "impl": "cardano-node", "version": "10.7.1", "role": "sybil"},
+      {"id": "node5", "impl": "cardano-node", "version": "10.7.1", "role": "sybil"}
+    ],
+    "topology": {
+      "edges": [
+        {"from": "node1", "to": "node2"},
+        {"from": "node2", "to": "node1"},
+        {"from": "node1", "to": "node3"},
+        {"from": "node3", "to": "node1"},
+        {"from": "node2", "to": "node3"},
+        {"from": "node3", "to": "node2"},
+        {"from": "node4", "to": "node2"},
+        {"from": "node5", "to": "node2"}
+      ]
+    }
+  },
+  "setup": [
+    {"primitive": "runtime_install_version", "output_dir": "outputs/substrate-install"},
+    {"primitive": "runtime_compose_substrate", "output_dir": "outputs/substrate-compose"}
+  ],
+  "load": [
+    {
+      "primitive": "runtime_simulate_peer_set_capture",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "sybil_node_ids": ["node4", "node5"],
+      "output_dir": "outputs/peer-set-capture"
+    },
+    {
+      "primitive": "runtime_inject_hot_warm_churn",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "events_per_hour": 8,
+      "output_dir": "outputs/hot-warm-churn"
+    },
+    {
+      "primitive": "runtime_txsubmission_window_pressure",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/txsubmission-window"
+    },
+    {
+      "primitive": "runtime_txsubmission_batch_pressure",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/txsubmission-batch"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": ["node1", "node2", "node3", "node4", "node5"],
+      "observation_window_seconds": 12,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": ["tip_state", "connection_state"],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "all_nodes_responsive"},
+    {"primitive": "honest_peer_set_uncompromised", "honest_node_ids": ["node1", "node2", "node3"], "minimum_honest_peers": 2},
+    {"primitive": "hot_warm_churn_within_bounds", "maximum_events_per_hour": 8},
+    {"primitive": "txsubmission_window_enforced"},
+    {"primitive": "txsubmission_batch_enforced"},
+    {"primitive": "substrate_quorum_observed"}
+  ],
+  "teardown": [
+    {"primitive": "runtime_teardown_substrate", "output_dir": "outputs/substrate-teardown"}
+  ]
+}

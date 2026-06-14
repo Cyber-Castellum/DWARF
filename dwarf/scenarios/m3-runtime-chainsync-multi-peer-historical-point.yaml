@@ -1,0 +1,34 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-chainsync-multi-peer-historical-point",
+  "title": "Runtime ChainSync repeated fetch across all Profile A peers from a recent historical point",
+  "authors": ["dwarf"],
+  "tags": ["chainsync", "m3", "devnet", "runtime", "historical-point", "multi-peer"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-012", "GAP-013", "GAP-018"],
+    "architecture_ids": ["B-004", "IF-004", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-003", "CR-M1-DRAFT-009", "CR-M1-DRAFT-010"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded live ChainSync evidence only; it does not prove peer-manager policy, partition recovery, or scheduler fairness.",
+    "The harness reuses a recent historical point from the local Haskell logs and checks each local-only devnet peer independently.",
+    "No fork, restart, persistence, or destructive state manipulation occurs in this scenario."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3602",
+  "load": [
+    {
+      "primitive": "runtime_client_chainsync_multi_peer",
+      "timeout_seconds": 180,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

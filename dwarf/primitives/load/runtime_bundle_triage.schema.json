@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_bundle_triage params",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": { "type": "string" },
+    "python_bin": { "type": "string" },
+    "timeout_seconds": { "type": "number", "minimum": 1 },
+    "expected_helper_exit": { "type": "integer" },
+    "runs_dir": { "type": "string" },
+    "target_run_id": { "type": "string" },
+    "reason_code": { "type": "string" },
+    "reason_text": { "type": "string" },
+    "operator_notes": { "type": "string" },
+    "actor": { "type": "string" },
+    "source_surface": { "type": "string" },
+    "signature_primitive": { "type": "string" }
+  }
+}

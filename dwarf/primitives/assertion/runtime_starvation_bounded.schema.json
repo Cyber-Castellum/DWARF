@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "runtime_starvation_bounded"}
+  },
+  "additionalProperties": true
+}

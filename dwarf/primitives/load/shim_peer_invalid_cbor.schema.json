@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gainsec.io/dwarf/primitives/load/shim_peer_invalid_cbor.schema.json",
+  "title": "shim_peer_invalid_cbor params",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runtime_metadata_path", "target_node", "invalid_cbor_id"],
+  "properties": {
+    "runtime_metadata_path": {"type": "string", "minLength": 1},
+    "target_node": {"type": "string", "minLength": 1},
+    "invalid_cbor_id": {"type": "string", "minLength": 1},
+    "target_host": {"type": "string", "minLength": 1},
+    "response_timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "receive_bytes": {"type": "integer", "minimum": 1}
+  }
+}

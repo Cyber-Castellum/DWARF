@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "all_nodes_started_clean params",
+  "type": "object",
+  "properties": {
+    "min_completed": { "type": "integer", "minimum": 1 },
+    "min_node_count": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Minimum number of nodes the compose report must contain before the assertion can pass."
+    }
+  },
+  "additionalProperties": false
+}

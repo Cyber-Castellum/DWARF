@@ -54,6 +54,7 @@ library
     , bytestring
     , cardano-ledger-byron
     , cborg
+    , containers
     , contra-tracer
     , directory
     , filepath
@@ -77,13 +78,19 @@ library
   exposed-modules:
     DwarfAdversary
     DwarfAdversary.Application
+    DwarfAdversary.BlockFetch.MutatingCodec
+    DwarfAdversary.BlockSource
     DwarfAdversary.ChainSync.Codec
     DwarfAdversary.ChainSync.Connection
     DwarfAdversary.ChainSync.MutatingCodec
     DwarfAdversary.ChainSync.Server
     DwarfAdversary.Fuzz
+    DwarfAdversary.TxSubmission.Client
+    DwarfAdversary.TxSubmission.MutatingCodec
+    DwarfAdversary.TxSubmission.Target
     DwarfAdversary.HeaderSource
     DwarfAdversary.SDK
+    DwarfAdversary.TxSource
 
   other-modules:
 
@@ -95,11 +102,14 @@ executable dwarf-adversary
     , aeson
     , base
     , bytestring
+    , io-classes
     , network
     , optparse-applicative
     , ouroboros-network
     , ouroboros-network-api
+    , ouroboros-network-mock
     , random
+    , strict-stm
     , text
     , time
 

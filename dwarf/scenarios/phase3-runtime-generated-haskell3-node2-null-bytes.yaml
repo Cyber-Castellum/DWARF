@@ -1,0 +1,36 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-node2-null-bytes",
+  "title": "Phase 3 generated Haskell profile node2 null-byte shim peer",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "generated-profile", "haskell-profile", "behavior-primitive", "shim-peer", "null-bytes"],
+  "related_milestones": ["M1"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves one raw-bytes shim-peer primitive only.",
+    "It does not yet prove malformed handshake semantics, protocol-aware injection, or mixed-profile behavioral composition."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE5006",
+  "load": [
+    {
+      "primitive": "shim_peer_raw_bytes",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "target_node": "node2",
+      "payload_hex": "00000000",
+      "response_timeout_seconds": 2,
+      "receive_bytes": 64
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

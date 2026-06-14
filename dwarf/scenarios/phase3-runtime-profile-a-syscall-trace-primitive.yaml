@@ -1,0 +1,26 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-syscall-trace-primitive",
+  "title": "Declarative runtime primitive for bounded syscall tracing on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "observability", "syscall-trace", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5A08",
+  "faults": [],
+  "load": [
+    {
+      "primitive": "runtime_syscall_trace",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "target_node": "node1",
+      "connect_attempts": 3,
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

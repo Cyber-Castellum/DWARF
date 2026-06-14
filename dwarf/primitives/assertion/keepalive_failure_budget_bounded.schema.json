@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "keepalive_failure_budget_bounded"}
+  },
+  "additionalProperties": true
+}

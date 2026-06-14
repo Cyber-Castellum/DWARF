@@ -1,0 +1,28 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-bundle-diff-example-divergence",
+  "title": "Diff two live LSQ extraction bundles and preserve the structured divergence",
+  "authors": ["dwarf"],
+  "tags": ["bundle", "diff", "candidate", "divergence"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "single-node",
+  "seed": "0xD1FF0002",
+  "load": [
+    {
+      "primitive": "runtime_bundle_diff",
+      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "left_run_id": "20260427T064030Z-33297ed4",
+      "right_run_id": "20260427T075729Z-9262386a",
+      "compare_relpaths": [
+        "outputs/runtime-cardano-lsq-extract/result.json"
+      ],
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "bundle_diff_completed_clean"}
+  ],
+  "teardown": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "profile-l-amaru-closed-devnet",
+  "label": "Amaru closed devnet (Antithesis Phase 1)",
+  "node_type": "amaru",
+  "node_count": 0,
+  "amaru_node_count": 1,
+  "network_magic": 42,
+  "peer_sharing": false,
+  "remote_runtime_root": "/opt/dwarf/cardano-profiles/profile-l-amaru-closed-devnet",
+  "compose_project": "dwarf-profile-l-amaru-closed-devnet",
+  "testbed": "antithesis-closed"
+}

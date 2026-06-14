@@ -1,0 +1,90 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-observability-port-drop-timeout-rollup-capability-demo",
+  "title": "Phase 3 Profile A observability plus port-drop timeout rollup capability demo",
+  "authors": ["dwarf"],
+  "tags": [
+    "phase3",
+    "runtime",
+    "profile-a",
+    "observability",
+    "port-drop",
+    "blockfetch",
+    "capability-demo",
+    "multi-phase"
+  ],
+  "related_milestones": ["M3"],
+  "m1_trace": {
+    "threat_ids": ["TH-CAND-005"],
+    "gap_ids": ["GAP-014", "GAP-022"],
+    "architecture_ids": ["B-004", "IF-005", "A-OBSERVABILITY-DATA", "A-INCIDENT-EVIDENCE"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-011", "CR-M1-005"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves sequential composition of log baseline, trace-settings baseline, one bounded port-drop timeout, and post-fault log recheck only.",
+    "It does not prove alert thresholds, retention policy adequacy, or log-field completeness during sustained stress."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5031",
+  "phases": [
+    {
+      "id": "observability-log-baseline-before-fault",
+      "title": "Capture the pre-fault log baseline",
+      "load": [
+        {
+          "primitive": "runtime_observability_log_baseline",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "observability-trace-settings-before-fault",
+      "title": "Capture the pre-fault trace settings baseline",
+      "load": [
+        {
+          "primitive": "runtime_observability_trace_settings_baseline",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "blockfetch-port-drop-timeout",
+      "title": "Blackhole node1 and observe a bounded BlockFetch timeout",
+      "faults": [
+        {
+          "primitive": "fault_local_port_drop",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+          "target_node": "node1",
+          "host": "127.0.0.1"
+        }
+      ],
+      "load": [
+        {
+          "primitive": "runtime_blockfetch_drop_timeout",
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "observability-log-baseline-after-fault",
+      "title": "Recheck log baseline after fault cleanup",
+      "load": [
+        {
+          "primitive": "runtime_observability_log_baseline",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    }
+  ]
+}

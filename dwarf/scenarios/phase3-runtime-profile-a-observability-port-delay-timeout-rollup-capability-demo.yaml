@@ -1,0 +1,92 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-observability-port-delay-timeout-rollup-capability-demo",
+  "title": "Phase 3 Profile A observability plus port-delay timeout rollup capability demo",
+  "authors": ["dwarf"],
+  "tags": [
+    "phase3",
+    "runtime",
+    "profile-a",
+    "observability",
+    "port-delay",
+    "blockfetch",
+    "capability-demo",
+    "multi-phase"
+  ],
+  "related_milestones": ["M3"],
+  "m1_trace": {
+    "threat_ids": ["TH-CAND-005"],
+    "gap_ids": ["GAP-014", "GAP-022"],
+    "architecture_ids": ["B-004", "IF-005", "A-OBSERVABILITY-DATA", "A-INCIDENT-EVIDENCE"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-011", "CR-M1-005"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves sequential composition of log baseline, trace-settings baseline, one bounded severe-delay timeout, and post-fault log recheck only.",
+    "It does not prove alert thresholds, retention policy adequacy, or observability behavior under mixed delay and loss."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5032",
+  "phases": [
+    {
+      "id": "observability-log-baseline-before-fault",
+      "title": "Capture the pre-fault log baseline",
+      "load": [
+        {
+          "primitive": "runtime_observability_log_baseline",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "observability-trace-settings-before-fault",
+      "title": "Capture the pre-fault trace settings baseline",
+      "load": [
+        {
+          "primitive": "runtime_observability_trace_settings_baseline",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "blockfetch-port-delay-timeout",
+      "title": "Severely delay node1 and observe a bounded BlockFetch timeout",
+      "faults": [
+        {
+          "primitive": "fault_local_port_delay",
+          "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+          "target_node": "node1",
+          "host": "127.0.0.1",
+          "delay_ms": 9000,
+          "jitter_ms": 0
+        }
+      ],
+      "load": [
+        {
+          "primitive": "runtime_blockfetch_delay_timeout",
+          "timeout_seconds": 60,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "observability-log-baseline-after-fault",
+      "title": "Recheck log baseline after fault cleanup",
+      "load": [
+        {
+          "primitive": "runtime_observability_log_baseline",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    }
+  ]
+}

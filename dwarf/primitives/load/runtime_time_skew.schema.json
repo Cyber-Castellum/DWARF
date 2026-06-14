@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_time_skew params",
+  "type": "object",
+  "required": ["target_node", "skew_seconds", "output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "skew_seconds": { "type": "integer" },
+    "duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "healthy_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "libfaketime_path": { "type": "string", "minLength": 1 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

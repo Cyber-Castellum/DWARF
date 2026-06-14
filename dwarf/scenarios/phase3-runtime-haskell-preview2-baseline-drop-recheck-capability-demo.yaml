@@ -1,0 +1,23 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-haskell-preview2-baseline-drop-recheck-capability-demo",
+  "title": "Phase 3 Haskell preview2 baseline, upstream-drop, then baseline recheck capability demo",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "preview", "preview2", "cardano-node", "capability-demo", "multi-phase", "baseline", "upstream-drop", "recheck"],
+  "related_milestones": ["M3"],
+  "m1_trace": {"threat_ids": [], "gap_ids": [], "architecture_ids": ["B-001"], "risk_candidate_ids": []},
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves sequential composition of Haskell preview2 proof-of-life sampling, upstream-drop faulting, and post-fault proof-of-life recheck only.",
+    "It does not yet prove compare-mode parity, overlapping preview2 faults, or persistence across redeploy."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-g-haskell-preview2-proof",
+  "seed": "0xC0DE7121",
+  "phases": [
+    {"id": "preview2-baseline-before-drop", "title": "Confirm preview2 proof-of-life before fault injection", "load": [{"primitive": "runtime_preview_parity_baseline", "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof", "sample_seconds": 20, "timeout_seconds": 60, "expected_helper_exit": 0}], "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]},
+    {"id": "preview2-upstream-drop", "title": "Drop the upstream preview2 peer and observe bounded degradation", "load": [{"primitive": "runtime_preview_upstream_drop", "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof", "fault_seconds": 15, "recovery_seconds": 20, "timeout_seconds": 90, "expected_helper_exit": 0}], "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]},
+    {"id": "preview2-baseline-after-drop", "title": "Recheck preview2 proof-of-life after fault cleanup", "load": [{"primitive": "runtime_preview_parity_baseline", "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof", "sample_seconds": 20, "timeout_seconds": 60, "expected_helper_exit": 0}], "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]}
+  ]
+}

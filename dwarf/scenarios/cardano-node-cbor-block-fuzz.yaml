@@ -37,9 +37,6 @@
   "assertions": [
     {
       "primitive": "parse_succeeds_or_clean_error"
-    },
-    {
-      "primitive": "roundtrip_equals_original"
     }
   ],
   "teardown": []

@@ -70,9 +70,11 @@ from profile_manager.data.files import (
 from profile_manager.evidence_packages import load_evidence_packages
 from profile_manager.fuzz import load_fuzz_tests
 from profile_manager.inspect import inspect_health_command
+from profile_manager.moog import moog_health_summary, query_moog_health
 from profile_manager.profiles import load_profiles
 from profile_manager.remote import ssh_command
 from profile_manager.smoke import load_smoke_tests
+from profile_manager.wallets import wallet_statuses
 from profile_manager.views.concepts import render_learn_concepts
 from profile_manager.views.coverage import render_learn_coverage
 from profile_manager.views.learn_cli import render_learn_cli
@@ -176,6 +178,8 @@ def build_dashboard_status_payload(live=True, profile_id="profile-a-haskell-peer
         "deliverables": _deliverable_rows(),
         "commands": _command_rows(),
         "latest_evidence": _latest_evidence_rows(),
+        "wallets": _wallet_status_rows_for_payload(),
+        "moog": _moog_status_for_payload(),
         "testcase_lifecycle": _live_testcase_lifecycle_summary() if live else _local_testcase_lifecycle_summary(),
         "last_local_health": _health_from_body(health_body, evidence_path=health_path),
         "live": {"enabled": False, "profile_id": profile_id},
@@ -183,6 +187,52 @@ def build_dashboard_status_payload(live=True, profile_id="profile-a-haskell-peer
     if live:
         payload["live"] = _live_health(profile_id)
     return payload
+
+
+def _moog_status_for_payload():
+    if not config_exists():
+        return {
+            "state": "unknown",
+            "summary": {"state": "unknown", "check_count": 0, "ok_count": 0, "warn_count": 0, "error_count": 0},
+            "checks": [],
+            "wallets": {},
+            "error": "Dwarf config is missing.",
+        }
+    try:
+        health = query_moog_health(load_config(), timeout=10)
+        return {
+            **health,
+            "summary": moog_health_summary(health),
+        }
+    except Exception as exc:
+        return {
+            "state": "error",
+            "summary": {"state": "error", "check_count": 0, "ok_count": 0, "warn_count": 0, "error_count": 1},
+            "checks": [],
+            "wallets": {},
+            "error": str(exc),
+        }
+
+
+def _wallet_status_rows_for_payload():
+    if not config_exists():
+        return []
+    try:
+        return wallet_statuses(load_config(), timeout=10)
+    except Exception as exc:
+        return [{
+            "id": "wallet-config",
+            "label": "Wallet config",
+            "role": "unknown",
+            "network": "unknown",
+            "address": "unknown",
+            "state": "error",
+            "balance_lovelace": None,
+            "balance_tada": "unknown",
+            "recent_transactions": [],
+            "queried_at": None,
+            "error": str(exc),
+        }]
 
 
 def dashboard_status_text(output_dir=None):
@@ -2354,6 +2404,23 @@ def serve_dashboard_handler_factory(expected_token, *, serving_port=None, servin
         def do_POST(self):
             length = int(self.headers.get("Content-Length") or 0)
             body_bytes = self.rfile.read(length) if length > 0 else b""
+            if self.path.split("?", 1)[0] == "/api/moog/setup":
+                ok, err = check_token(self.path, expected=expected_token)
+                if not ok:
+                    self._send(403, "text/plain; charset=utf-8", f"{err}\n".encode("utf-8"))
+                    return
+                from profile_manager.config import DeploymentConfig, config_exists, load_config, save_config
+                from profile_manager.data.operate_config import apply_moog_setup_form
+                form = parse_qs(body_bytes.decode("utf-8", errors="replace"), keep_blank_values=True)
+                try:
+                    current_config = load_config() if config_exists() else DeploymentConfig.from_dict({})
+                    updated = apply_moog_setup_form(current_config, form)
+                    save_config(updated)
+                except Exception as exc:
+                    self._send(500, "text/plain; charset=utf-8", f"failed to save Moog setup: {exc}\n".encode("utf-8"))
+                    return
+                self._send(303, "text/plain; charset=utf-8", b"", extra_headers={"Location": "/operate/config?saved=moog"})
+                return
             # Slice 3 of dispatch 7 — multipart bundle import.
             if self.path.split("?", 1)[0] == "/api/bundle/import":
                 from profile_manager.data.bundle_import import handle_bundle_import_post
@@ -2416,6 +2483,10 @@ def serve_dashboard_handler_factory(expected_token, *, serving_port=None, servin
                     bind=serving_bind,
                     token=expected_token,
                 )
+                self._send(200, "text/html; charset=utf-8", html_body.encode("utf-8"))
+                return
+            if path_only == "/operate/config":
+                html_body = render_operate_config(token=expected_token)
                 self._send(200, "text/html; charset=utf-8", html_body.encode("utf-8"))
                 return
             html_body = render_route_html(self.path)

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {
+      "const": "k_bound_rollback_recovered",
+      "description": "Asserts that a within-k rollback recovered with real peer connectivity and observed slot transitions."
+    }
+  },
+  "additionalProperties": false
+}

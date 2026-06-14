@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "runtime_pcap_capture params",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "interface": {"type": "string", "minLength": 1},
+    "workload_mode": {"type": "string", "minLength": 1},
+    "target_host": {"type": "string", "minLength": 1},
+    "target_ports": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "integer", "minimum": 1, "maximum": 65535}
+    },
+    "connect_attempts": {"type": "integer", "minimum": 1},
+    "startup_seconds": {"type": "number", "minimum": 0},
+    "settle_seconds": {"type": "number", "minimum": 0}
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "runtime_syscall_trace params",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runtime_metadata_path"],
+  "properties": {
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "runtime_metadata_path": {"type": "string", "minLength": 1},
+    "target_node": {"type": "string", "minLength": 1},
+    "connect_attempts": {"type": "integer", "minimum": 1},
+    "target_host": {"type": "string", "minLength": 1},
+    "startup_seconds": {"type": "number", "minimum": 0},
+    "settle_seconds": {"type": "number", "minimum": 0}
+  }
+}

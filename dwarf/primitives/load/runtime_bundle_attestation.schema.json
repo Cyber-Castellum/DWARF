@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["output_dir", "signing_actor"],
+  "properties": {
+    "output_dir": {"type": "string", "minLength": 1},
+    "signing_actor": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

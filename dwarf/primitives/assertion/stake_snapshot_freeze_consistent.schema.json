@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "stake_snapshot_freeze_consistent"}
+  },
+  "additionalProperties": true
+}

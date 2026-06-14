@@ -1,0 +1,28 @@
+# Eclipse override (SP3a / SP2-header / consensus-family). Puts the node under
+# test (relay2) on an ISOLATED network so it can reach ONLY the dwarf-adversary
+# — a TRUE eclipse, which topology alone cannot achieve (ledger peers via
+# useLedgerAfterSlot + the producer mesh's inbound dials both leak the real
+# producers). relay2 lives solely on `eclipse`; the adversary bridges BOTH the
+# default testnet net (to chain-sync its upstream p1) and `eclipse` (to serve
+# relay2). Validated: eclipsed relay2 bootstraps to CaughtUp from origin via the
+# adversary alone (0 VRFKeyBadProof), and in --protocol blockfetch it
+# block-fetches MUTATED bodies from its sole peer (dwarf_served_mutated_block).
+# Use: docker compose -f docker-compose.yaml -f docker-compose.eclipse.yml up -d
+networks:
+  eclipse:
+    driver: bridge
+services:
+  relay2:
+    networks:
+      - eclipse
+    volumes:
+      - p1-configs:/configs:ro
+      - ./relay-eclipse-topology.json:/configs/configs/topology.json:ro
+      - relay2-state:/state
+      - tracer:/tracer
+  dwarf-adversary:
+    networks:
+      default: {}
+      eclipse:
+        aliases:
+          - dwarf-adversary.example

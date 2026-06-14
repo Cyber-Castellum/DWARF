@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "container_runtime_hardening_observed params",
+  "type": "object",
+  "properties": {
+    "source_primitive": { "type": "string", "minLength": 1 },
+    "expected_node_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "minimum_container_count": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

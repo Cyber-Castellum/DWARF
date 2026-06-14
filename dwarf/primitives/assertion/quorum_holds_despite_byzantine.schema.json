@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "quorum_holds_despite_byzantine params",
+  "type": "object",
+  "properties": {
+    "honest_node_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "byzantine_node_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "minimum_quorum_fraction": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "minimum_honest_consensus_count": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "min_completed": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": ["honest_node_ids", "byzantine_node_ids"],
+  "additionalProperties": false
+}

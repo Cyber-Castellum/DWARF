@@ -68,6 +68,33 @@ from profile_manager.inspect import (
     logs_command,
     resolve_runtime,
 )
+from profile_manager.moog import (
+    build_moog_bootstrap_command,
+    build_moog_bootstrap_plan,
+    build_moog_facts_command,
+    build_moog_create_test_plan,
+    build_moog_health_command,
+    build_moog_preflight_report,
+    build_moog_readiness,
+    build_moog_registration_plan,
+    build_moog_registration_submit_command,
+    moog_asset_summary,
+    moog_bootstrap_summary,
+    moog_create_test_summary,
+    moog_health_summary,
+    moog_preflight_summary,
+    moog_registration_summary,
+    moog_readiness_summary,
+    normalize_moog_config,
+    parse_moog_bootstrap_result,
+    query_moog_health,
+    query_moog_registration_plan,
+    query_moog_readiness,
+    scaffold_moog_asset,
+    set_moog_config,
+    validate_moog_asset,
+)
+from profile_manager.wallets import add_wallet, query_wallet_status, remove_wallet, wallet_rows
 from profile_manager.prereqs import format_check_results, install_command, run_checks
 from profile_manager.profiles import (
     active_profile_command,
@@ -108,6 +135,7 @@ CONFIG_COMMANDS = {
     "evidence",
     "package",
     "fuzz",
+    "moog",
     "dashboard",
 }
 BANNER = r"""
@@ -138,6 +166,10 @@ def print_banner():
     print()
 
 
+def should_suppress_banner(args):
+    return args.command in {"wallet", "moog", "antithesis"} and getattr(args, "json", False)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="cardano-profile")
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -159,6 +191,144 @@ def build_parser():
     config_set = config_sub.add_parser("set")
     config_set.add_argument("key")
     config_set.add_argument("value")
+
+    wallet = subcommands.add_parser("wallet")
+    wallet_sub = wallet.add_subparsers(dest="wallet_command", required=True)
+    wallet_add = wallet_sub.add_parser("add")
+    wallet_add.add_argument("wallet_id")
+    wallet_add.add_argument("--address", required=True)
+    wallet_add.add_argument("--network", default="preprod")
+    wallet_add.add_argument("--role", default="unknown")
+    wallet_add.add_argument("--label")
+    wallet_add.add_argument("--query-base-url")
+    wallet_remove = wallet_sub.add_parser("remove")
+    wallet_remove.add_argument("wallet_id")
+    wallet_list = wallet_sub.add_parser("list")
+    wallet_list.add_argument("--json", action="store_true")
+    wallet_health = wallet_sub.add_parser("healthcheck")
+    wallet_health.add_argument("wallet_id")
+    wallet_health.add_argument("--json", action="store_true")
+    wallet_test = wallet_sub.add_parser("test")
+    wallet_test.add_argument("wallet_id")
+    wallet_test.add_argument("--json", action="store_true")
+
+    moog = subcommands.add_parser("moog")
+    moog_sub = moog.add_subparsers(dest="moog_command", required=True)
+    moog_config = moog_sub.add_parser("config")
+    moog_config.add_argument("--json", action="store_true")
+    moog_status = moog_sub.add_parser("status")
+    moog_status.add_argument("--json", action="store_true")
+    moog_status.add_argument("--dry-run", action="store_true")
+    moog_check = moog_sub.add_parser("healthcheck")
+    moog_check.add_argument("--json", action="store_true")
+    moog_check.add_argument("--dry-run", action="store_true")
+    moog_bootstrap = moog_sub.add_parser("bootstrap")
+    moog_bootstrap.add_argument("--approve", action="store_true", help="Apply the safe remote Moog directory bootstrap.")
+    moog_bootstrap.add_argument("--dry-run", action="store_true", help="Alias for the default plan-only behavior.")
+    moog_bootstrap.add_argument("--json", action="store_true")
+    moog_ready = moog_sub.add_parser("readiness")
+    moog_ready.add_argument("--repo", help="GitHub repository to test through Moog, in org/repo form.")
+    moog_ready.add_argument("--github-user", help="GitHub user registered as the Moog requester.")
+    moog_ready.add_argument(
+        "--github-token-env",
+        default="MOOG_GITHUB_PAT",
+        help="Environment variable holding a GitHub PAT for private repo/profile checks.",
+    )
+    moog_ready.add_argument("--json", action="store_true")
+    moog_ready.add_argument("--dry-run", action="store_true")
+    moog_registration_plan = moog_sub.add_parser("registration-plan")
+    moog_registration_plan.add_argument("--repo", required=True, help="GitHub repository to register, in org/repo form.")
+    moog_registration_plan.add_argument("--github-user", required=True, help="GitHub user to register as Moog requester.")
+    moog_registration_plan.add_argument(
+        "--github-token-env",
+        default="MOOG_GITHUB_PAT",
+        help="Environment variable holding a GitHub PAT for private repo/profile checks.",
+    )
+    moog_registration_plan.add_argument("--json", action="store_true")
+    moog_registration_plan.add_argument("--dry-run", action="store_true")
+    moog_registration_submit = moog_sub.add_parser("registration-submit")
+    moog_registration_submit.add_argument("--repo", required=True, help="GitHub repository to register, in org/repo form.")
+    moog_registration_submit.add_argument("--github-user", required=True, help="GitHub user to register as Moog requester.")
+    moog_registration_submit.add_argument(
+        "--github-token-env",
+        default="MOOG_GITHUB_PAT",
+        help="Environment variable holding a GitHub PAT for private repo/profile checks.",
+    )
+    moog_registration_submit.add_argument("--approve", action="store_true")
+    moog_registration_submit.add_argument("--json", action="store_true")
+    moog_registration_submit.add_argument("--dry-run", action="store_true")
+    moog_create_test_plan = moog_sub.add_parser("create-test-plan")
+    moog_create_test_plan.add_argument("--repo", help="GitHub repository to test through Moog, in org/repo form.")
+    moog_create_test_plan.add_argument("--github-user", help="GitHub user registered as the Moog requester.")
+    moog_create_test_plan.add_argument("--directory", help="Repository-relative Moog test asset directory.")
+    moog_create_test_plan.add_argument("--commit", help="Target repository commit SHA or ref.")
+    moog_create_test_plan.add_argument("--try", dest="try_number", type=int, default=1, help="Moog create-test attempt number.")
+    moog_create_test_plan.add_argument("--duration-hours", type=int, default=1, help="Requested Antithesis run duration in hours.")
+    moog_create_test_plan.add_argument("--asset-dir", help="Local test asset directory to validate before submission.")
+    moog_create_test_plan.add_argument("--no-faults", action="store_true", help="Plan create-test with Moog fault injection disabled.")
+    moog_create_test_plan.add_argument(
+        "--no-instrumentation",
+        action="store_true",
+        help="Plan create-test with Moog instrumentation disabled.",
+    )
+    moog_create_test_plan.add_argument("--json", action="store_true")
+    moog_preflight = moog_sub.add_parser("preflight")
+    moog_preflight.add_argument("--repo", help="GitHub repository to test through Moog, in org/repo form.")
+    moog_preflight.add_argument("--github-user", help="GitHub user registered as the Moog requester.")
+    moog_preflight.add_argument("--directory", help="Repository-relative Moog test asset directory.")
+    moog_preflight.add_argument("--commit", help="Target repository commit SHA or ref.")
+    moog_preflight.add_argument("--try", dest="try_number", type=int, default=1, help="Moog create-test attempt number.")
+    moog_preflight.add_argument("--duration-hours", type=int, default=1, help="Requested Antithesis run duration in hours.")
+    moog_preflight.add_argument("--asset-dir", help="Local Moog test asset directory to validate.")
+    moog_preflight.add_argument("--no-faults", action="store_true", help="Plan create-test with Moog fault injection disabled.")
+    moog_preflight.add_argument(
+        "--no-instrumentation",
+        action="store_true",
+        help="Plan create-test with Moog instrumentation disabled.",
+    )
+    moog_preflight.add_argument(
+        "--github-token-env",
+        default="MOOG_GITHUB_PAT",
+        help="Environment variable holding a GitHub PAT for private repo/profile checks.",
+    )
+    moog_preflight.add_argument("--dry-run", action="store_true")
+    moog_preflight.add_argument("--json", action="store_true")
+    moog_asset = moog_sub.add_parser("asset")
+    moog_asset_sub = moog_asset.add_subparsers(dest="asset_command", required=True)
+    moog_asset_scaffold = moog_asset_sub.add_parser("scaffold")
+    moog_asset_scaffold.add_argument("--to", required=True, help="Directory to create a target-agnostic Moog asset scaffold in.")
+    moog_asset_scaffold.add_argument("--force", action="store_true", help="Overwrite existing scaffold files.")
+    moog_asset_scaffold.add_argument("--json", action="store_true")
+    moog_asset_validate = moog_asset_sub.add_parser("validate")
+    moog_asset_validate.add_argument("--asset-dir", required=True, help="Local Moog test asset directory to validate.")
+    moog_asset_validate.add_argument("--json", action="store_true")
+    moog_set = moog_sub.add_parser("set")
+    moog_set.add_argument("value", help="JSON object with non-secret Moog config values.")
+
+    moog_create_test = moog_sub.add_parser("create-test")
+    moog_create_test.add_argument("--repo", help="GitHub repository to test through Moog, in org/repo form.")
+    moog_create_test.add_argument("--github-user", help="GitHub user registered as the Moog requester.")
+    moog_create_test.add_argument("--directory", help="Repository-relative Antithesis test directory.")
+    moog_create_test.add_argument("--commit", help="Target repository commit SHA or ref.")
+    moog_create_test.add_argument("--try", dest="try_number", default=None, help="Attempt number (default: auto-count from facts, else 1).")
+    moog_create_test.add_argument("--duration", default="1", help="Requested Antithesis run duration in hours.")
+    moog_create_test.add_argument("--no-faults", action="store_true", help="Submit with Moog fault injection disabled.")
+    moog_create_test.add_argument("--approve", action="store_true", help="Submit the live on-chain create-test (omit for dry-run).")
+    moog_create_test.add_argument("--json", action="store_true")
+
+    moog_test_status = moog_sub.add_parser("test-status")
+    moog_test_status.add_argument("test_run_id", help="Moog test-run id returned by create-test.")
+    moog_test_status.add_argument("--json", action="store_true")
+
+    antithesis_p = subcommands.add_parser("antithesis")
+    antithesis_sub = antithesis_p.add_subparsers(dest="antithesis_command", required=True)
+    antithesis_build = antithesis_sub.add_parser("build")
+    antithesis_build.add_argument("profile_id")
+    antithesis_build.add_argument("--scenario", default=None)
+    antithesis_build.add_argument("--out", default="antithesis/amaru-single")
+    antithesis_build.add_argument("--registry", default=None)
+    antithesis_build.add_argument("--tag", default="latest")
+    antithesis_build.add_argument("--json", action="store_true")
 
     status = subcommands.add_parser("status")
     status.add_argument("--dry-run", action="store_true")
@@ -454,6 +624,22 @@ def build_parser():
     scenario_run.add_argument("--runs-dir")
     scenario_run.add_argument("--state-dir")
     scenario_run.add_argument("--registry-path")
+    scenario_run.add_argument("--backend", choices=("local-devnet", "antithesis"),
+                              default="local-devnet",
+                              help="Where to run: the local DWARF executor or a native Antithesis test.")
+    scenario_run.add_argument("--out", default=None,
+                              help="Output dir for the generated antithesis bundle.")
+    scenario_run.add_argument("--registry", default=None,
+                              help="Container registry for the antithesis bundle image refs.")
+    scenario_run.add_argument("--tag", default="latest")
+    scenario_run.add_argument("--json", action="store_true")
+
+    scenario_verify = scenario_sub.add_parser("verify")
+    scenario_verify.add_argument("path")
+    scenario_verify.add_argument("--runs-dir")
+    scenario_verify.add_argument("--state-dir")
+    scenario_verify.add_argument("--registry-path")
+    scenario_verify.add_argument("--json", action="store_true")
 
     profile_p = subcommands.add_parser("profile")
     profile_sub = profile_p.add_subparsers(dest="profile_command", required=True)
@@ -542,6 +728,487 @@ def cmd_config(args):
     return 2
 
 
+def cmd_wallet(args):
+    config = _load_or_intake("wallet")
+    if args.wallet_command == "add":
+        wallet = {
+            "id": args.wallet_id,
+            "label": args.label or args.wallet_id,
+            "role": args.role,
+            "network": args.network,
+            "address": args.address,
+        }
+        if args.query_base_url:
+            wallet["query_base_url"] = args.query_base_url
+        updated = add_wallet(config, wallet)
+        path = save_config(updated)
+        print(f"Updated wallet {args.wallet_id} in {path}")
+        return 0
+    if args.wallet_command == "remove":
+        updated = remove_wallet(config, args.wallet_id)
+        path = save_config(updated)
+        print(f"Removed wallet {args.wallet_id} from {path}")
+        return 0
+    if args.wallet_command == "list":
+        print(json.dumps(wallet_rows(config), indent=2, sort_keys=True))
+        return 0
+    if args.wallet_command in {"healthcheck", "test"}:
+        wallets = {wallet["id"]: wallet for wallet in wallet_rows(config)}
+        wallet = wallets.get(args.wallet_id)
+        if wallet is None:
+            print(f"unknown wallet: {args.wallet_id}", file=sys.stderr)
+            return 1
+        status = query_wallet_status(wallet)
+        print(json.dumps(status, indent=2, sort_keys=True))
+        return 0 if status.get("state") in {"ok", "empty"} else 1
+    return 2
+
+
+def cmd_moog(args):
+    config = _load_or_intake("moog")
+    moog_config = normalize_moog_config(getattr(config, "moog", None))
+    if args.moog_command == "config":
+        if args.json:
+            print(json.dumps(moog_config, indent=2, sort_keys=True))
+        else:
+            print("Moog config")
+            for key, value in sorted(moog_config.items()):
+                print(f"{key}: {value}")
+        return 0
+    if args.moog_command == "set":
+        try:
+            values = json.loads(args.value)
+        except json.JSONDecodeError as exc:
+            print(f"invalid Moog config JSON: {exc}", file=sys.stderr)
+            return 1
+        if not isinstance(values, dict):
+            print("Moog config value must be a JSON object.", file=sys.stderr)
+            return 1
+        updated = set_moog_config(config, values)
+        path = save_config(updated)
+        print(f"Updated moog in {path}")
+        return 0
+    if args.moog_command == "bootstrap":
+        plan = build_moog_bootstrap_plan(moog_config)
+        command = build_moog_bootstrap_command(moog_config, apply=True)
+        if not args.approve or args.dry_run:
+            payload = {
+                "approved": False,
+                "dry_run": True,
+                "summary": moog_bootstrap_summary(plan),
+                "bootstrap": plan,
+                "command": command,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print("Moog bootstrap plan: planned")
+                print("No remote state changed. Re-run with --approve to create the safe directory skeleton.")
+                print(f"Deploy root: {plan['deploy_root']}")
+                print(f"Secrets root: {plan['secrets_root']}")
+                print("Actions:")
+                for action in plan.get("actions") or []:
+                    print(f"- {action.get('id')}: {action.get('state')} ({action.get('detail')})")
+                print("Healthcheck plan:")
+                for step in plan.get("healthcheck_plan") or []:
+                    print(f"- {step.get('order')}: {step.get('command')}")
+                print("Approved command:")
+                print(command)
+            return 0
+        result = ssh_command(config, command, timeout=60)
+        bootstrap = parse_moog_bootstrap_result(result)
+        summary = moog_bootstrap_summary(bootstrap)
+        payload = {
+            "approved": True,
+            "summary": summary,
+            "bootstrap": bootstrap,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Moog bootstrap: {summary['state']}")
+            print(f"Applied: {summary['applied']}")
+            print(f"Deploy root: {summary.get('deploy_root') or 'unknown'}")
+            print(f"Secrets root: {summary.get('secrets_root') or 'unknown'}")
+            print(
+                "Checks: "
+                f"{summary['ok_count']} ok, {summary['warn_count']} warn, {summary['error_count']} error"
+            )
+            for check in bootstrap.get("checks") or []:
+                print(f"- {check.get('id')}: {check.get('state')} ({check.get('detail')})")
+            print("Next healthchecks:")
+            for step in bootstrap.get("healthcheck_plan") or []:
+                print(f"- {step.get('command')}")
+            if bootstrap.get("error"):
+                print(f"Error: {bootstrap['error']}", file=sys.stderr)
+        return 0 if summary.get("state") in {"ok", "warn"} else 1
+    if args.moog_command in {"status", "healthcheck"}:
+        if args.dry_run:
+            command = build_moog_health_command(moog_config)
+            if args.json:
+                print(json.dumps({"dry_run": True, "command": command}, indent=2, sort_keys=True))
+            else:
+                print("DRY RUN")
+                print(command)
+            return 0
+        health = query_moog_health(config)
+        summary = moog_health_summary(health)
+        if args.json:
+            print(json.dumps({"summary": summary, "health": health}, indent=2, sort_keys=True))
+        else:
+            print(f"Moog: {summary['state']}")
+            print(f"Deploy root: {summary.get('deploy_root') or 'unknown'}")
+            print(f"MPFS host: {summary.get('mpfs_host') or 'unknown'}")
+            print(f"Token id: {summary.get('token_id') or 'unknown'}")
+            print(f"Oracle service: {summary.get('oracle_service') or 'unknown'}")
+            print(
+                "Checks: "
+                f"{summary['ok_count']} ok, {summary['warn_count']} warn, {summary['error_count']} error"
+            )
+            if summary.get("requester_address"):
+                print(f"Requester address: {summary['requester_address']}")
+            if summary.get("oracle_address"):
+                print(f"Oracle address: {summary['oracle_address']}")
+            for check in health.get("checks") or []:
+                print(f"- {check.get('id')}: {check.get('state')} ({check.get('detail')})")
+            if health.get("error"):
+                print(f"Error: {health['error']}", file=sys.stderr)
+        return 0 if summary.get("state") in {"ok", "warn"} else 1
+    if args.moog_command == "readiness":
+        github_token = os.environ.get(args.github_token_env) or os.environ.get("GITHUB_TOKEN")
+        if args.dry_run:
+            readiness = build_moog_readiness(
+                moog_config=moog_config,
+                health={"state": "warn", "checks": [], "wallets": {}},
+                wallet_status_rows=[],
+                github={},
+                facts={},
+                repo=args.repo,
+                github_user=args.github_user,
+            )
+            payload = {
+                "dry_run": True,
+                "health_command": build_moog_health_command(moog_config),
+                "facts_command": build_moog_facts_command(moog_config),
+                "github_token_env": args.github_token_env,
+                "readiness": readiness,
+                "summary": moog_readiness_summary(readiness),
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print("DRY RUN")
+                print(f"Health command:\n{payload['health_command']}")
+                print(f"Facts command:\n{payload['facts_command']}")
+                print(f"GitHub token env: {args.github_token_env}")
+                for check in readiness.get("checks") or []:
+                    print(f"- {check.get('id')}: {check.get('state')} ({check.get('detail')})")
+            return 0
+        readiness = query_moog_readiness(
+            config,
+            repo=args.repo,
+            github_user=args.github_user,
+            github_token=github_token,
+        )
+        summary = moog_readiness_summary(readiness)
+        if args.json:
+            print(json.dumps({"summary": summary, "readiness": readiness}, indent=2, sort_keys=True))
+        else:
+            print(f"Moog readiness: {summary['state']}")
+            print(f"Repo: {summary.get('repo') or 'unknown'}")
+            print(f"GitHub user: {summary.get('github_user') or 'unknown'}")
+            print(f"Requester wallet: {summary.get('requester_wallet_id') or 'unknown'}")
+            print(f"Requester address: {summary.get('requester_address') or 'unknown'}")
+            print(f"Requester balance: {summary.get('requester_balance_tada') or 'unknown'} tADA")
+            print(
+                "Checks: "
+                f"{summary['ok_count']} ok, {summary['warn_count']} warn, {summary['error_count']} error"
+            )
+            for check in readiness.get("checks") or []:
+                line = f"- {check.get('id')}: {check.get('state')} ({check.get('detail')})"
+                if check.get("action") and check.get("state") != "ok":
+                    line += f" -> {check['action']}"
+                print(line)
+        return 0 if summary.get("state") in {"ok", "warn"} else 1
+    if args.moog_command == "registration-plan":
+        github_token = os.environ.get(args.github_token_env) or os.environ.get("GITHUB_TOKEN")
+        if args.dry_run:
+            plan = build_moog_registration_plan(
+                moog_config=moog_config,
+                health={"state": "warn", "checks": [], "wallets": {}},
+                github={},
+                facts={},
+                repo=args.repo,
+                github_user=args.github_user,
+            )
+        else:
+            plan = query_moog_registration_plan(
+                config,
+                repo=args.repo,
+                github_user=args.github_user,
+                github_token=github_token,
+            )
+        summary = moog_registration_summary(plan)
+        if args.json:
+            print(json.dumps({"summary": summary, "registration": plan}, indent=2, sort_keys=True))
+        else:
+            print(f"Moog registration plan: {summary['state']}")
+            print(f"Repo: {summary.get('repo') or 'unknown'}")
+            print(f"GitHub user: {summary.get('github_user') or 'unknown'}")
+            print(f"Requester address: {summary.get('requester_address') or 'unknown'}")
+            print(f"Requester vkey: {summary.get('requester_public_key') or 'unknown'}")
+            print(
+                "Actions: "
+                f"{summary['satisfied_count']} satisfied, {summary['needed_count']} needed, "
+                f"{summary['blocked_count']} blocked"
+            )
+            for action in plan.get("actions") or []:
+                print(f"- {action.get('id')}: {action.get('state')} ({action.get('detail')})")
+                if action.get("required_content") and action.get("state") != "satisfied":
+                    print(f"  required content: {action['required_content']}")
+                if action.get("required_line") and action.get("state") != "satisfied":
+                    print(f"  required line: {action['required_line']}")
+                if action.get("command") and action.get("state") != "satisfied":
+                    print(f"  command: {action['command']}")
+        return 0
+    if args.moog_command == "registration-submit":
+        github_token = os.environ.get(args.github_token_env) or os.environ.get("GITHUB_TOKEN")
+        plan = query_moog_registration_plan(
+            config,
+            repo=args.repo,
+            github_user=args.github_user,
+            github_token=github_token,
+        )
+        summary = moog_registration_summary(plan)
+        command = build_moog_registration_submit_command(plan, moog_config)
+        blockers = list(plan.get("blocking") or [])
+        if not args.approve and not args.dry_run:
+            payload = {
+                "approved": False,
+                "error": "registration-submit requires --approve or --dry-run",
+                "summary": summary,
+                "registration": plan,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print("registration-submit requires --approve or --dry-run", file=sys.stderr)
+                print("Run registration-plan first, then retry with --approve when ready.", file=sys.stderr)
+            return 1
+        if blockers:
+            payload = {
+                "approved": bool(args.approve),
+                "blocked": True,
+                "blockers": blockers,
+                "summary": summary,
+                "registration": plan,
+                "command": command,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print(f"Moog registration is blocked: {', '.join(blockers)}", file=sys.stderr)
+                for action in plan.get("actions") or []:
+                    if action.get("state") == "blocked" or action.get("blocked_by"):
+                        print(f"- {action.get('id')}: {action.get('state')} ({action.get('detail')})", file=sys.stderr)
+            return 1
+        if args.dry_run:
+            payload = {"dry_run": True, "summary": summary, "registration": plan, "command": command}
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print("DRY RUN")
+                print(command)
+            return 0
+        result = ssh_command(config, command, timeout=180)
+        payload = {
+            "approved": True,
+            "summary": summary,
+            "registration": plan,
+            "result": {
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "rendered_command": result.rendered_command,
+            },
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Moog registration submit exited {result.returncode}")
+            if result.stdout:
+                print(result.stdout.rstrip())
+            if result.stderr:
+                print(result.stderr.rstrip(), file=sys.stderr)
+        return 0 if result.returncode == 0 else 1
+    if args.moog_command == "asset":
+        if args.asset_command == "scaffold":
+            result = scaffold_moog_asset(args.to, force=args.force)
+            if args.json:
+                print(json.dumps({"asset": result}, indent=2, sort_keys=True))
+            else:
+                print(f"Moog asset scaffold: {result['state']}")
+                print(f"Path: {result.get('path')}")
+                for created in result.get("created_files") or []:
+                    print(f"- created: {created}")
+                for existing in result.get("existing_files") or []:
+                    print(f"- existing: {existing}")
+                if result.get("detail"):
+                    print(result["detail"])
+            return 0 if result.get("state") == "created" else 1
+        if args.asset_command == "validate":
+            validation = validate_moog_asset(args.asset_dir)
+            summary = moog_asset_summary(validation)
+            if args.json:
+                print(json.dumps({"summary": summary, "asset": validation}, indent=2, sort_keys=True))
+            else:
+                print(f"Moog asset validation: {summary['state']}")
+                print(f"Path: {summary.get('path') or 'unknown'}")
+                print(f"Docker compose: {summary.get('docker_compose') or 'missing'}")
+                print(
+                    "Checks: "
+                    f"{summary['ok_count']} ok, {summary['warn_count']} warn, {summary['error_count']} error"
+                )
+                for check in validation.get("checks") or []:
+                    line = f"- {check.get('id')}: {check.get('state')} ({check.get('detail')})"
+                    if check.get("action") and check.get("state") != "ok":
+                        line += f" -> {check['action']}"
+                    print(line)
+            return 0 if summary.get("state") in {"ready", "warn"} else 1
+        return 2
+    if args.moog_command == "preflight":
+        github_token = os.environ.get(args.github_token_env) or os.environ.get("GITHUB_TOKEN")
+        if args.dry_run:
+            health = {"state": "warn", "checks": [], "wallets": {}}
+            readiness = build_moog_readiness(
+                moog_config=moog_config,
+                health=health,
+                wallet_status_rows=[],
+                github={},
+                facts={},
+                repo=args.repo,
+                github_user=args.github_user,
+            )
+        else:
+            health = query_moog_health(config)
+            readiness = query_moog_readiness(
+                config,
+                repo=args.repo,
+                github_user=args.github_user,
+                github_token=github_token,
+            )
+        asset_validation = validate_moog_asset(args.asset_dir)
+        create_test = build_moog_create_test_plan(
+            moog_config=moog_config,
+            repo=args.repo,
+            github_user=args.github_user,
+            directory=args.directory,
+            commit=args.commit,
+            try_number=args.try_number,
+            duration_hours=args.duration_hours,
+            asset_dir=args.asset_dir,
+            no_faults=args.no_faults,
+            no_instrumentation=args.no_instrumentation,
+        )
+        report = build_moog_preflight_report(
+            health=health,
+            readiness=readiness,
+            asset_validation=asset_validation,
+            create_test=create_test,
+        )
+        summary = moog_preflight_summary(report)
+        if args.json:
+            print(json.dumps({"summary": summary, "preflight": report}, indent=2, sort_keys=True))
+        else:
+            print(f"Moog preflight: {summary['state']}")
+            print(
+                "Stages: "
+                f"{summary['ready_count']} ready, {summary['warn_count']} warn, {summary['blocked_count']} blocked"
+            )
+            for stage in report.get("stages") or []:
+                print(f"- {stage.get('id')}: {stage.get('state')}")
+            command = create_test.get("command") if isinstance(create_test, dict) else None
+            if command:
+                print("Create-test command:")
+                print(command)
+        return 0 if summary.get("state") in {"ready", "warn"} else 1
+    if args.moog_command == "create-test-plan":
+        plan = build_moog_create_test_plan(
+            moog_config=moog_config,
+            repo=args.repo,
+            github_user=args.github_user,
+            directory=args.directory,
+            commit=args.commit,
+            try_number=args.try_number,
+            duration_hours=args.duration_hours,
+            asset_dir=args.asset_dir,
+            no_faults=args.no_faults,
+            no_instrumentation=args.no_instrumentation,
+        )
+        summary = moog_create_test_summary(plan)
+        if args.json:
+            print(json.dumps({"summary": summary, "create_test": plan}, indent=2, sort_keys=True))
+        else:
+            print(f"Moog create-test plan: {summary['state']}")
+            print(f"Repo: {summary.get('repo') or 'unknown'}")
+            print(f"GitHub user: {summary.get('github_user') or 'unknown'}")
+            print(f"Directory: {summary.get('directory') or 'unknown'}")
+            print(f"Commit: {summary.get('commit') or 'unknown'}")
+            print(f"Try: {summary.get('try') or 'unknown'}")
+            print(f"Duration: {summary.get('duration_hours') or 'unknown'} hour(s)")
+            print(
+                "Checks: "
+                f"{summary['ok_count']} ok, {summary['warn_count']} warn, {summary['error_count']} error"
+            )
+            for check in plan.get("checks") or []:
+                line = f"- {check.get('id')}: {check.get('state')} ({check.get('detail')})"
+                if check.get("action") and check.get("state") != "ok":
+                    line += f" -> {check['action']}"
+                print(line)
+            print("Command:")
+            print(plan["command"])
+        return 0 if summary.get("state") == "ready" else 1
+    if args.moog_command == "create-test":
+        from profile_manager import remote as _remote
+        from profile_manager.moog import build_moog_create_test_command
+        try_number = args.try_number or 1
+        command = build_moog_create_test_command(
+            moog_config,
+            repo=args.repo,
+            github_user=args.github_user,
+            directory=args.directory,
+            commit=args.commit,
+            try_number=try_number,
+            duration_hours=args.duration,
+            no_faults=args.no_faults,
+        )
+        if not args.approve:
+            if args.json:
+                print(json.dumps({"state": "dry-run", "try": try_number, "command": command}, indent=2))
+            else:
+                print(command)
+            return 0
+        result = _remote.run_moog_create_test(config, moog_config, command)
+        state = "submitted" if result.returncode == 0 else "error"
+        if args.json:
+            print(json.dumps({"state": state, "returncode": result.returncode,
+                              "stdout": result.stdout, "stderr": result.stderr}, indent=2))
+        else:
+            print(result.stdout or result.stderr)
+        return result.returncode
+    if args.moog_command == "test-status":
+        from profile_manager import remote as _remote
+        from profile_manager.moog import parse_test_run_phase
+        facts = _remote.fetch_test_run_facts(config, moog_config, args.test_run_id)
+        phase = parse_test_run_phase(facts)
+        if args.json:
+            print(json.dumps({"test_run_id": args.test_run_id, "phase": phase}, indent=2))
+        else:
+            print(f"phase: {phase}")
+        return 0
+    return 2
+
+
 def cmd_backup(args):
     result = dwarf_backup_script.export_backup(
         dwarf_root=DWARF_ROOT,
@@ -604,6 +1271,31 @@ def cmd_prereq_install(args):
     if result.stderr:
         print(result.stderr, file=sys.stderr, end="")
     return result.returncode
+
+
+def cmd_antithesis(args):
+    import json as _json
+    from profile_manager.profiles import find_profile
+    from profile_manager.antithesis import build_antithesis_bundle, DEFAULT_REGISTRY
+
+    if args.antithesis_command == "build":
+        profile = find_profile(args.profile_id)
+        registry = args.registry or DEFAULT_REGISTRY
+        written = build_antithesis_bundle(profile, args.out, registry=registry, tag=args.tag)
+        payload = {
+            "state": "ok",
+            "profile": profile.id,
+            "out": args.out,
+            "registry": registry,
+            "tag": args.tag,
+            "written": written,
+        }
+        if args.json:
+            print(_json.dumps(payload, indent=2))
+        else:
+            print(f"Wrote {len(written)} files to {args.out} (profile {profile.id})")
+        return 0
+    return 1
 
 
 def cmd_deploy(args):
@@ -1880,9 +2572,24 @@ def cmd_scenario(args):
         print(f"OK: {s.id} (runtime={s.runtime}, target={s.target['implementation']})")
         return 0
     if args.scenario_command == "run":
+        registry_path = Path(args.registry_path) if args.registry_path else None
+        if args.backend == "antithesis":
+            res = scenario_module.run_scenario_backend(
+                args.path, backend="antithesis",
+                runs_dir=None, state_dir=None, registry_path=registry_path,
+                out_dir=args.out, registry=args.registry, tag=args.tag,
+            )["result"]
+            verify = res["verify"]
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(f"bundle: {res['bundle_dir']}")
+                print(f"VERIFY: {verify['state'].upper()}")
+                for reason in verify["reasons"]:
+                    print(f"  - {reason}")
+            return 0 if verify["state"] == "pass" else 1
         runs_dir = _forensic_runs_dir(args)
         state_dir = _forensic_state_dir(args)
-        registry_path = Path(args.registry_path) if args.registry_path else None
         handle = scenario_module.run_scenario(
             args.path,
             runs_dir=runs_dir,
@@ -1897,6 +2604,24 @@ def cmd_scenario(args):
         print(f"assertions: {manifest['assertion_summary']}")
         print(f"bundle: {handle.run_dir}")
         return 0 if manifest["exit_status"] == "pass" else 1
+    if args.scenario_command == "verify":
+        runs_dir = _forensic_runs_dir(args)
+        state_dir = _forensic_state_dir(args)
+        payload = scenario_module.verify_scenario(
+            args.path,
+            runs_dir=runs_dir,
+            state_dir=state_dir,
+            registry_path=Path(args.registry_path) if args.registry_path else None,
+        )
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            tag = "OK" if payload["state"] == "pass" else "FAIL"
+            line = f"{tag}: {args.path} (exit={payload['exit_status']}, assertions={payload['assertions']})"
+            if payload["reason"]:
+                line += f" — {payload['reason']}"
+            print(line)
+        return 0 if payload["state"] == "pass" else 1
     return 2
 
 
@@ -2627,7 +3352,8 @@ def cmd_bundle(args):
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    print_banner()
+    if not should_suppress_banner(args):
+        print_banner()
     if args.command == "intake":
         return run_intake()
     if args.command == "list-profiles":
@@ -2641,6 +3367,12 @@ def main(argv=None):
         return cmd_status(args)
     if args.command == "config":
         return cmd_config(args)
+    if args.command == "wallet":
+        return cmd_wallet(args)
+    if args.command == "moog":
+        return cmd_moog(args)
+    if args.command == "antithesis":
+        return cmd_antithesis(args)
     if args.command == "prereq-check":
         return cmd_prereq_check(args)
     if args.command == "prereq-install":

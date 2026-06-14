@@ -1,0 +1,35 @@
+{
+  "spec_version": "v1",
+  "id": "phase1-runtime-live-amaru-parity-baseline",
+  "title": "Phase 1 minimal live-runtime parity baseline for mixed Haskell and Amaru profile",
+  "authors": ["dwarf"],
+  "tags": ["phase1", "runtime", "amaru", "cardano-node", "mixed-profile", "parity"],
+  "related_milestones": ["M1"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves minimal mixed-runtime deploy and compare substrate only.",
+    "Compare success means both bundles normalize into the same compare shape; runtime divergence is signal, not failure.",
+    "It does not prove protocol parity, performance parity, persistence safety, or whole-topology equivalence."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-c-mixed-haskell-amaru-minimal",
+  "seed": "0xC0DE4001",
+  "load": [
+    {
+      "primitive": "runtime_live_implementation_baseline",
+      "runtime_root": "/home/nigel/cardano-profiles/profile-c-mixed-haskell-amaru-minimal",
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

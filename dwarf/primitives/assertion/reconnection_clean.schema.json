@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "primitive": {
+      "const": "reconnection_clean",
+      "description": "Asserts that the reconnected node regained real peer connectivity, emitted successful reconnect telemetry, and matched the honest quorum tip."
+    },
+    "reconnected_node_id": {"type": "string", "minLength": 1},
+    "honest_node_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "required": ["primitive", "honest_node_ids"],
+  "additionalProperties": false
+}

@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "required": ["primitive", "minimum_expected_matches"],
+  "properties": {
+    "primitive": {"const": "big_ledger_peer_quorum_intact"},
+    "minimum_expected_matches": {"type": "integer", "minimum": 1}
+  },
+  "additionalProperties": true
+}

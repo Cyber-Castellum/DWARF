@@ -1,0 +1,21 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-preview-parity-baseline-haskell-primitive",
+  "title": "Declarative runtime primitive for preview parity baseline on Haskell preview",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "preview", "parity", "cardano-node"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-preview-runtime-parity",
+  "load": [
+    {
+      "primitive": "runtime_preview_parity_baseline",
+      "sample_seconds": 20,
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

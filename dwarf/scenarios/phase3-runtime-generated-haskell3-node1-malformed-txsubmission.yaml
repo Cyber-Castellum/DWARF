@@ -1,0 +1,36 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-node1-malformed-txsubmission",
+  "title": "Phase 3 generated Haskell profile node1 malformed TxSubmission shim peer",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "generated-profile", "haskell-profile", "behavior-primitive", "shim-peer", "txsubmission", "malformed"],
+  "related_milestones": ["M1"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves one malformed TxSubmission injection primitive only.",
+    "It does not yet prove live mempool admission behavior, multi-turn TxSubmission state-machine coverage, or mixed-profile behavioral composition."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE500B",
+  "load": [
+    {
+      "primitive": "shim_peer_malformed_txsubmission",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "target_node": "node1",
+      "malformation_id": "bad-requesttxids-shape",
+      "response_timeout_seconds": 2,
+      "receive_bytes": 64
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

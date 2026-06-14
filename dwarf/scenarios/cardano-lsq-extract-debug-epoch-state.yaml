@@ -1,0 +1,28 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-lsq-extract-debug-epoch-state",
+  "title": "Extract CBOR DebugEpochState from a live cardano-node socket",
+  "authors": ["dwarf"],
+  "tags": ["cardano-node", "lsq", "debug-epoch-state", "cbor", "candidate"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "single-node",
+  "seed": "0xA6A30042",
+  "load": [
+    {
+      "primitive": "runtime_cardano_lsq_extract",
+      "socket_path": "/tmp/ada2-testnet42-socket/node1.sock",
+      "network_magic": 42,
+      "era": 6,
+      "output_path": "outputs/runtime-cardano-lsq-extract/debug-epoch-state.cbor",
+      "debug_raw_response_path": "outputs/runtime-cardano-lsq-extract/raw-response.bin",
+      "result_json_path": "outputs/runtime-cardano-lsq-extract/result.json",
+      "timeout_seconds": 180,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1}
+  ],
+  "teardown": []
+}

@@ -22,6 +22,8 @@ CONFIG_FIELDS = {
     "runs_retention_days": {"type": "integer", "default": 30, "description": "Suggested local run retention window."},
     "bundles_retention_days": {"type": "integer", "default": 90, "description": "Suggested retained export/archive window."},
     "sarif_rules": {"type": "array[string]", "default": [], "description": "Optional SARIF rule filters or preferred rule identifiers."},
+    "wallets": {"type": "array[object]", "default": [], "description": "Public wallet metadata shown on dashboard status; never store secrets here."},
+    "moog": {"type": "object", "default": {}, "description": "Moog deployment, GitHub, Antithesis, and requester setup values."},
 }
 
 
@@ -40,6 +42,8 @@ class DeploymentConfig:
     runs_retention_days: int = 30
     bundles_retention_days: int = 90
     sarif_rules: list[str] = None
+    wallets: list[dict[str, Any]] = None
+    moog: dict[str, Any] = None
 
     @classmethod
     def from_dict(cls, data):
@@ -60,6 +64,8 @@ class DeploymentConfig:
             runs_retention_days=int(normalized["runs_retention_days"]),
             bundles_retention_days=int(normalized["bundles_retention_days"]),
             sarif_rules=list(normalized["sarif_rules"] or []),
+            wallets=[dict(item) for item in (normalized["wallets"] or []) if isinstance(item, dict)],
+            moog=dict(normalized["moog"] or {}) if isinstance(normalized["moog"], dict) else {},
         )
 
     def to_dict(self):
@@ -77,6 +83,8 @@ class DeploymentConfig:
             "runs_retention_days": self.runs_retention_days,
             "bundles_retention_days": self.bundles_retention_days,
             "sarif_rules": list(self.sarif_rules or []),
+            "wallets": [dict(item) for item in (self.wallets or [])],
+            "moog": dict(self.moog or {}),
         }
 
 
@@ -132,6 +140,22 @@ def parse_config_value(key: str, raw: str) -> Any:
                 raise ValueError(f"invalid array[string] for {key}")
             return parsed
         return [item.strip() for item in value.split(",") if item.strip()]
+    if type_name == "array[object]":
+        value = raw.strip()
+        if not value:
+            return []
+        parsed = json.loads(value)
+        if not isinstance(parsed, list) or not all(isinstance(item, dict) for item in parsed):
+            raise ValueError(f"invalid array[object] for {key}")
+        return parsed
+    if type_name == "object":
+        value = raw.strip()
+        if not value:
+            return {}
+        parsed = json.loads(value)
+        if not isinstance(parsed, dict):
+            raise ValueError(f"invalid object for {key}")
+        return parsed
     raise ValueError(f"unsupported config type for {key}: {type_name}")
 
 

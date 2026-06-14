@@ -1,0 +1,30 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-blockfetch-drop-isolated-peer-primitive",
+  "title": "Declarative runtime BlockFetch isolated-peer fallback on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "devnet", "runtime", "blockfetch", "port-fault", "drop-isolated-peer", "primitive"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3B1E",
+  "faults": [
+    {
+      "primitive": "fault_local_port_drop",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "target_node": "node1",
+      "host": "127.0.0.1"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_blockfetch_drop_isolated_peer",
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

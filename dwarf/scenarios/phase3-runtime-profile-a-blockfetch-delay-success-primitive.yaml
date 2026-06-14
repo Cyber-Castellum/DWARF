@@ -1,0 +1,31 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-blockfetch-delay-success-primitive",
+  "title": "Declarative runtime primitive for bounded BlockFetch success under local port delay",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "blockfetch", "delay", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5A03",
+  "faults": [
+    {
+      "primitive": "fault_local_port_delay",
+      "target_port_file": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/env/node-data/node1/port",
+      "host": "127.0.0.1",
+      "delay_ms": 100,
+      "jitter_ms": 0
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_blockfetch_delay_success",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

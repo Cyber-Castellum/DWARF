@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {
+      "const": "substrate_quorum_observed",
+      "description": "Asserts that a quorum of observed nodes agrees on one real non-zero tip group."
+    },
+    "minimum_fraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Minimum fraction of observed nodes that must agree on a real non-zero tip with non-empty hashes."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "runtime_haskell_gc_capture params",
+  "type": "object",
+  "required": ["runtime_metadata_path", "target_node"],
+  "properties": {
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "runtime_metadata_path": {"type": "string", "minLength": 1},
+    "target_node": {"type": "string", "minLength": 1},
+    "target_host": {"type": "string", "minLength": 1},
+    "connect_attempts": {"type": "integer", "minimum": 0},
+    "sample_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "startup_timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "restore_timeout_seconds": {"type": "number", "exclusiveMinimum": 0}
+  },
+  "additionalProperties": true
+}

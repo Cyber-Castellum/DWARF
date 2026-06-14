@@ -1,0 +1,25 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-bundle-attestation-example-smoke",
+  "title": "Emit a signed provenance attestation for a live devnet run bundle",
+  "authors": ["dwarf"],
+  "tags": ["bundle", "attestation", "candidate"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xA771357A",
+  "load": [
+    {
+      "primitive": "runtime_bundle_attestation",
+      "output_dir": "outputs/attestation",
+      "signing_actor": "dwarf",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "bundle_attestation_signature_valid"}
+  ],
+  "teardown": []
+}

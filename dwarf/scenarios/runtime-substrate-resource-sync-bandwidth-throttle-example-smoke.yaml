@@ -1,0 +1,55 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-resource-sync-bandwidth-throttle-example-smoke",
+  "title": "Compose a substrate scenario that throttles sync bandwidth between honest nodes",
+  "authors": ["dwarf"],
+  "tags": ["substrate", "resource-abuse", "milestone-2", "sync", "bandwidth-throttle", "stub"],
+  "target": {"implementation": "cardano-node", "version": "10.7.1"},
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {"id": "node1", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node2", "impl": "cardano-node", "version": "10.7.1", "role": "honest"}
+    ],
+    "topology": {
+      "edges": [
+        {"from": "node1", "to": "node2"},
+        {"from": "node2", "to": "node1"}
+      ]
+    }
+  },
+  "setup": [
+    {"primitive": "runtime_install_version", "output_dir": "outputs/substrate-install"},
+    {"primitive": "runtime_compose_substrate", "output_dir": "outputs/substrate-compose"}
+  ],
+  "load": [
+    {
+      "primitive": "runtime_bandwidth_throttle",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "from_node": "node1",
+      "to_node": "node2",
+      "kilobits_per_second": 128,
+      "output_dir": "outputs/bandwidth-throttle"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": ["node1", "node2"],
+      "observation_window_seconds": 20,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": ["tip_state", "connection_state"],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "peer_connectivity_observed", "timeout_seconds": 20},
+    {"primitive": "all_nodes_responsive"},
+    {"primitive": "substrate_quorum_observed", "minimum_fraction": 1.0}
+  ],
+  "teardown": [
+    {"primitive": "runtime_teardown_substrate", "output_dir": "outputs/substrate-teardown"}
+  ]
+}

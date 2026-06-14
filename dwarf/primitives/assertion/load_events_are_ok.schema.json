@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "load_events_are_ok params",
+  "type": "object",
+  "properties": {
+    "min_completed": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "min_event_count": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 2,
+      "description": "Minimum number of outcome-bearing load completed events required before the assertion can pass."
+    }
+  },
+  "additionalProperties": false
+}

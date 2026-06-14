@@ -1,0 +1,48 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-blockfetch-port-drop-timeout",
+  "title": "Runtime BlockFetch timeout when one live peer port is blackholed",
+  "authors": ["dwarf"],
+  "tags": ["blockfetch", "m3", "devnet", "runtime", "adversarial", "timeout", "port-drop"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-014", "GAP-016", "GAP-020"],
+    "architecture_ids": ["B-004", "IF-005", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-003", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is a bounded timeout-path runtime harness only; it does not prove retry policy adequacy, stale-response resilience, or scheduler fairness.",
+    "The fault is a host-local port blackhole against one listener, not a full network partition or delayed-response model.",
+    "Persistence, restart, and recovery behavior remain follow-up work."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "blockfetch_timeout_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3605",
+  "faults": [
+    {
+      "primitive": "fault_local_port_drop",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "target_node": "node1",
+      "host": "127.0.0.1"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_blockfetch_drop_timeout",
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "reward_calculation_boundary_invariant"}
+  },
+  "additionalProperties": true
+}

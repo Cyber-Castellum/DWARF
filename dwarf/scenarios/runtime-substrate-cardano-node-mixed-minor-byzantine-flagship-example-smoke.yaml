@@ -1,0 +1,286 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-cardano-node-mixed-minor-byzantine-flagship-example-smoke",
+  "title": "Mixed-minor Cardano + Amaru substrate with a byzantine cardano-node handshake downgrade attempt",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "substrate",
+    "docker",
+    "mixed-version",
+    "amaru",
+    "byzantine",
+    "handshake"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "compose_mode": "docker",
+    "network": "testnet_42",
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.6.1",
+        "role": "byzantine"
+      },
+      {
+        "id": "node3",
+        "impl": "amaru",
+        "version": "0.1.2",
+        "role": "honest"
+      },
+      {
+        "id": "node4",
+        "impl": "amaru",
+        "version": "0.1.2",
+        "role": "honest"
+      },
+      {
+        "id": "node5",
+        "impl": "amaru",
+        "version": "0.1.2",
+        "role": "honest"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        },
+        {
+          "from": "node1",
+          "to": "node3"
+        },
+        {
+          "from": "node1",
+          "to": "node4"
+        },
+        {
+          "from": "node1",
+          "to": "node5"
+        },
+        {
+          "from": "node2",
+          "to": "node3"
+        },
+        {
+          "from": "node2",
+          "to": "node4"
+        },
+        {
+          "from": "node2",
+          "to": "node5"
+        },
+        {
+          "from": "node3",
+          "to": "node1"
+        },
+        {
+          "from": "node3",
+          "to": "node2"
+        },
+        {
+          "from": "node4",
+          "to": "node1"
+        },
+        {
+          "from": "node4",
+          "to": "node2"
+        },
+        {
+          "from": "node5",
+          "to": "node1"
+        },
+        {
+          "from": "node5",
+          "to": "node2"
+        }
+      ]
+    }
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose",
+      "healthy_timeout_seconds": 240,
+      "timeout_seconds": 420
+    },
+    {
+      "primitive": "runtime_substrate_tip_warmup",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2"
+      ],
+      "minimum_ready_nodes": 2,
+      "minimum_slot": 1,
+      "sample_interval_seconds": 2,
+      "timeout_seconds": 180,
+      "output_dir": "outputs/substrate-tip-warmup"
+    }
+  ],
+  "faults": [
+    {
+      "primitive": "runtime_byzantine_cardano_node",
+      "output_dir": "outputs/byzantine-cardano-node",
+      "target_node_id": "node2",
+      "upstream_node_id": "node1",
+      "behavior": "handshake_version_downgrade_attempt",
+      "healthy_timeout_seconds": 120,
+      "timeout_seconds": 240
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3",
+        "node4",
+        "node5"
+      ],
+      "observation_window_seconds": 60,
+      "sample_interval_seconds": 2,
+      "network_magic": 42,
+      "observation_primitives": [
+        "connection_state",
+        "tip_state"
+      ],
+      "timeout_seconds": 420,
+      "output_dir": "outputs/multi-node-observation"
+    },
+    {
+      "primitive": "runtime_container_runtime_inspect",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "output_dir": "outputs/container-runtime-inspect",
+      "timeout_seconds": 120
+    }
+  ],
+  "assertions": [
+    {
+      "primitive": "all_nodes_started_clean",
+      "min_completed": 1,
+      "min_node_count": 5
+    },
+    {
+      "primitive": "container_runtime_hardening_observed",
+      "minimum_container_count": 5,
+      "expected_node_ids": [
+        "node1",
+        "node2",
+        "node3",
+        "node4",
+        "node5"
+      ]
+    },
+    {
+      "primitive": "byzantine_cardano_node_recorded_clean",
+      "min_completed": 1
+    },
+    {
+      "primitive": "all_nodes_responsive",
+      "responsive_node_ids": [
+        "node1",
+        "node2",
+        "node3",
+        "node4",
+        "node5"
+      ]
+    },
+    {
+      "primitive": "peer_connectivity_observed",
+      "expected_edges": [
+        [
+          "node1",
+          "node3"
+        ],
+        [
+          "node1",
+          "node4"
+        ],
+        [
+          "node1",
+          "node5"
+        ],
+        [
+          "node2",
+          "node3"
+        ],
+        [
+          "node2",
+          "node4"
+        ],
+        [
+          "node2",
+          "node5"
+        ],
+        [
+          "node3",
+          "node1"
+        ],
+        [
+          "node3",
+          "node2"
+        ],
+        [
+          "node4",
+          "node1"
+        ],
+        [
+          "node4",
+          "node2"
+        ],
+        [
+          "node5",
+          "node1"
+        ],
+        [
+          "node5",
+          "node2"
+        ]
+      ]
+    },
+    {
+      "primitive": "quorum_holds_despite_byzantine",
+      "honest_node_ids": [
+        "node1",
+        "node3",
+        "node4",
+        "node5"
+      ],
+      "byzantine_node_ids": [
+        "node2"
+      ],
+      "minimum_quorum_fraction": 0.6,
+      "minimum_honest_consensus_count": 3
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

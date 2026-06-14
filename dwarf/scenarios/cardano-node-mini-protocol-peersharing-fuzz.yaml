@@ -1,0 +1,24 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-node-mini-protocol-peersharing-fuzz",
+  "title": "Random-byte fuzz of cardano-node PeerSharing mini-protocol decoder",
+  "authors": ["dwarf"],
+  "tags": ["mini-protocol", "fuzz", "cardano-node", "peersharing", "T2"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "library",
+  "seed": "0xCAFE2502",
+  "load": [
+    {
+      "primitive": "cbor_fuzz_target",
+      "target_id": "cardano-node-mini-protocol-decode-peersharing",
+      "manifests_dir": "dwarf/targets/manifests",
+      "iterations": 5000,
+      "min_bytes": 1,
+      "max_bytes": 512,
+      "per_input_timeout_seconds": 1
+    }
+  ],
+  "probes": [{"primitive": "parser_exit_status"}],
+  "assertions": [{"primitive": "parse_succeeds_or_clean_error"}],
+  "teardown": []
+}

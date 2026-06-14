@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "praos_header_assertion_rejected"}
+  },
+  "additionalProperties": true
+}

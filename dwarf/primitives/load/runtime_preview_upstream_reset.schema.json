@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RuntimePreviewUpstreamReset",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1},
+    "scenario_path": {"type": "string", "minLength": 1},
+    "fault_seconds": {"type": "integer", "minimum": 1},
+    "recovery_seconds": {"type": "integer", "minimum": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "preview_amaru_root": {"type": "string", "minLength": 1},
+    "preview_cardano_node_root": {"type": "string", "minLength": 1}
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "shim_responder_stale_blockfetch params",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": {
+      "type": "string",
+      "description": "Optional path to the stale BlockFetch runtime helper. Defaults to the canonical dwarf-fw helper path."
+    },
+    "python_bin": {
+      "type": "string",
+      "description": "Optional Python interpreter to launch the helper. Defaults to python3."
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Outer timeout for the hostile responder helper invocation."
+    },
+    "expected_helper_exit": {
+      "type": "integer",
+      "description": "Expected helper process exit status. Defaults to 0."
+    }
+  }
+}

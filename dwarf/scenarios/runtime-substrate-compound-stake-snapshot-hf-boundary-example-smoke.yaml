@@ -1,0 +1,170 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-compound-stake-snapshot-hf-boundary-example-smoke",
+  "title": "Compose a substrate scenario that combines epoch-boundary stake snapshot pressure with a hard-fork transition window",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "substrate",
+    "compound",
+    "epoch-boundary",
+    "stake-snapshot",
+    "hard-fork",
+    "rr-028",
+    "rr-029"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node3",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        },
+        {
+          "from": "node1",
+          "to": "node3"
+        },
+        {
+          "from": "node3",
+          "to": "node1"
+        },
+        {
+          "from": "node2",
+          "to": "node3"
+        },
+        {
+          "from": "node3",
+          "to": "node2"
+        }
+      ]
+    }
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_force_hf_boundary",
+      "target_slot": 500,
+      "output_dir": "outputs/hf-boundary"
+    },
+    {
+      "primitive": "runtime_simulate_era_transition",
+      "window_start_slot": 498,
+      "window_end_slot": 502,
+      "output_dir": "outputs/era-transition"
+    },
+    {
+      "primitive": "runtime_force_epoch_boundary",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_slot": 500,
+      "output_dir": "outputs/epoch-boundary"
+    },
+    {
+      "primitive": "runtime_simulate_stake_snapshot_update",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/stake-snapshot"
+    },
+    {
+      "primitive": "runtime_recompute_leadership_schedule",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "output_dir": "outputs/leadership-schedule"
+    },
+    {
+      "primitive": "runtime_trigger_rupd_pulse",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node3",
+      "output_dir": "outputs/rupd-pulse"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3"
+      ],
+      "observation_window_seconds": 15,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": [
+        "tip_state",
+        "connection_state",
+        "resource_profile"
+      ],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "all_nodes_started_clean",
+      "min_completed": 1,
+      "min_node_count": 3
+    },
+    {
+      "primitive": "hf_boundary_rule_consistent"
+    },
+    {
+      "primitive": "transition_window_validated"
+    },
+    {
+      "primitive": "stake_snapshot_freeze_consistent"
+    },
+    {
+      "primitive": "epoch_boundary_timing_within_bounds"
+    },
+    {
+      "primitive": "leadership_schedule_recomputes_clean"
+    },
+    {
+      "primitive": "reward_calculation_boundary_invariant"
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

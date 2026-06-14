@@ -1,0 +1,23 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-haskell-preview-baseline-delay-recheck-capability-demo",
+  "title": "Phase 3 Haskell preview baseline, upstream-delay, then baseline recheck capability demo",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "preview", "cardano-node", "capability-demo", "multi-phase", "baseline", "upstream-delay", "recheck"],
+  "related_milestones": ["M3"],
+  "m1_trace": {"threat_ids": [], "gap_ids": [], "architecture_ids": ["B-001"], "risk_candidate_ids": []},
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves sequential composition of Haskell preview proof-of-life sampling, upstream-delay faulting, and post-fault proof-of-life recheck only.",
+    "It does not yet prove compare-mode parity, overlapping preview faults, or persistence across redeploy."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-e-haskell-preview-proof",
+  "seed": "0xC0DE7023",
+  "phases": [
+    {"id": "preview-baseline-before-delay", "title": "Confirm preview proof-of-life before delay injection", "load": [{"primitive": "runtime_preview_parity_baseline", "sample_seconds": 20, "timeout_seconds": 60, "expected_helper_exit": 0}], "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]},
+    {"id": "preview-upstream-delay", "title": "Delay the upstream preview peer and observe bounded degradation", "load": [{"primitive": "runtime_preview_upstream_delay", "fault_seconds": 15, "recovery_seconds": 20, "delay_ms": 400, "jitter_ms": 100, "timeout_seconds": 90, "expected_helper_exit": 0}], "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]},
+    {"id": "preview-baseline-after-delay", "title": "Recheck preview proof-of-life after fault cleanup", "load": [{"primitive": "runtime_preview_parity_baseline", "sample_seconds": 20, "timeout_seconds": 60, "expected_helper_exit": 0}], "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]}
+  ]
+}

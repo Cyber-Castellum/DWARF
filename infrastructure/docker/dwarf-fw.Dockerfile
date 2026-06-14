@@ -47,7 +47,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --uid 1000 dwarf \
-    && mkdir -p /home/dwarf/dwarf-fw /var/dwarf/runs /var/dwarf/state /var/dwarf/bundles \
+    && mkdir -p /home/dwarf/.ssh /home/dwarf/dwarf-fw /var/dwarf/runs /var/dwarf/state /var/dwarf/bundles \
+    && chmod 700 /home/dwarf/.ssh \
     && chown -R dwarf:dwarf /home/dwarf /var/dwarf
 
 WORKDIR /home/dwarf/dwarf-fw

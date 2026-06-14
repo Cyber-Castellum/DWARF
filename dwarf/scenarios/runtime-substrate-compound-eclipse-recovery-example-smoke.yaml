@@ -1,0 +1,72 @@
+{
+  "spec_version": "v1",
+  "id": "runtime-substrate-compound-eclipse-recovery-example-smoke",
+  "title": "Compose a substrate scenario that combines peer-set capture pressure with rollback and fork-switch recovery",
+  "authors": ["dwarf"],
+  "tags": ["substrate", "compound", "eclipse", "recovery", "rr-018", "rr-020", "rr-035"],
+  "target": {"implementation": "cardano-node", "version": "10.7.1"},
+  "runtime": "devnet",
+  "substrate": {
+    "network": "preview",
+    "nodes": [
+      {"id": "node1", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node2", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node3", "impl": "cardano-node", "version": "10.7.1", "role": "honest"},
+      {"id": "node4", "impl": "cardano-node", "version": "10.7.1", "role": "byzantine"}
+    ]
+  },
+  "setup": [
+    {"primitive": "runtime_install_version", "output_dir": "outputs/substrate-install"},
+    {"primitive": "runtime_compose_substrate", "output_dir": "outputs/substrate-compose"}
+  ],
+  "load": [
+    {
+      "primitive": "runtime_simulate_peer_set_capture",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "adversary_node": "node4",
+      "output_dir": "outputs/peer-set-capture"
+    },
+    {
+      "primitive": "runtime_force_rollback",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node2",
+      "output_dir": "outputs/force-rollback"
+    },
+    {
+      "primitive": "runtime_chainsync_responder_fork_switch",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node3",
+      "output_dir": "outputs/fork-switch"
+    },
+    {
+      "primitive": "runtime_restart_node",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node3",
+      "output_dir": "outputs/restart-node"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": ["node1", "node2", "node3", "node4"],
+      "observation_window_seconds": 20,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": ["tip_state", "connection_state", "resource_profile"],
+      "output_dir": "outputs/multi-node-observation",
+      "timeout_seconds": 240
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "all_nodes_responsive"},
+    {"primitive": "honest_peer_set_uncompromised", "honest_node_ids": ["node1", "node2", "node3"], "minimum_honest_peers": 1},
+    {"primitive": "peer_connectivity_observed"},
+    {"primitive": "reconnection_clean", "reconnected_node_id": "node3", "honest_node_ids": ["node1", "node2"]},
+    {"primitive": "chainsync_responder_rollback_then_forward_clean"},
+    {"primitive": "substrate_quorum_observed"}
+  ],
+  "teardown": [
+    {"primitive": "runtime_teardown_substrate", "output_dir": "outputs/substrate-teardown"}
+  ]
+}

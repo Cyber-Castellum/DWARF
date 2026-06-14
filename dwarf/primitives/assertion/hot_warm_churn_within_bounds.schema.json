@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "required": ["primitive", "maximum_events_per_hour"],
+  "properties": {
+    "primitive": {"const": "hot_warm_churn_within_bounds"},
+    "maximum_events_per_hour": {"type": "number", "minimum": 0}
+  },
+  "additionalProperties": true
+}

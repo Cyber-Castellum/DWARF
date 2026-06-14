@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "overlay_slot_forging_rejected"}
+  },
+  "additionalProperties": true
+}

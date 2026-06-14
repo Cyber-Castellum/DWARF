@@ -1,0 +1,43 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-node2-copied-state-chainsync-divergence",
+  "title": "Copied-state bounded divergence with live ChainSync before and after remediation on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["chainsync", "m3", "devnet", "runtime", "copied-state", "divergence", "recovery"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-012", "GAP-013", "GAP-016", "GAP-018"],
+    "architecture_ids": ["B-004", "B-007", "IF-004", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-003", "CR-M1-DRAFT-009", "CR-M1-DRAFT-010", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded local runtime evidence only; it does not prove fork-choice correctness, rollback-horizon safety, or public-network convergence.",
+    "The harness intentionally creates stale copied-state on node2, observes bounded divergence against node3, then restores node2 from node3 and rechecks live ChainSync behavior.",
+    "No risk promotion, scoring, or finding language is permitted from this scenario alone."
+  ],
+  "testcase_candidate": {
+    "classification": "runtime_anomaly",
+    "triage_reason": "copied_state_chainsync_divergence_candidate",
+    "producer": "scenario",
+    "source_artifact_path": "manifest.json"
+  },
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3621",
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py copied-state-chainsync-divergence",
+      "timeout_seconds": 420,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1}
+  ],
+  "teardown": []
+}

@@ -1,0 +1,1 @@
+{"type":"object","required":["primitive"],"properties":{"primitive":{"const":"chainsync_slot_monotonicity_enforced"}},"additionalProperties":true}

@@ -1,0 +1,29 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-bundle-chain-primitive",
+  "title": "Declarative runtime primitive for sign promote dedupe bundle chaining on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "signature", "promotion", "dedupe", "bundle", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5A11",
+  "faults": [],
+  "load": [
+    {
+      "primitive": "runtime_bundle_chain",
+      "reason_code": "divergence",
+      "reason_text": "promote runtime bundle for operator review",
+      "operator_notes": "primitive exercise path",
+      "actor": "dwarf",
+      "signing_actor": "dwarf",
+      "signature_primitive": "runtime_bundle_promote",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

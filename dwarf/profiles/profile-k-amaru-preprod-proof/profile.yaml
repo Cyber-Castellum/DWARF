@@ -1,0 +1,16 @@
+{
+  "id": "profile-k-amaru-preprod-proof",
+  "label": "Amaru preprod proof of life",
+  "node_type": "amaru",
+  "node_count": 0,
+  "amaru_node_count": 1,
+  "network_magic": 1,
+  "peer_sharing": false,
+  "remote_runtime_root": "/home/nigel/cardano-profiles/profile-k-amaru-preprod-proof",
+  "compose_project": "cardano-profile-k-amaru-preprod",
+  "amaru_network": "preprod",
+  "upstream_peer_address": "preprod-node.play.dev.cardano.org:3001",
+  "listen_address": "127.0.0.1:39040",
+  "public_network": "preprod",
+  "testbed": "public-preprod"
+}

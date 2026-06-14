@@ -26,7 +26,7 @@ for _ in $(seq 1 30); do
   if docker exec -i "${DWARF_CONTAINER_NAME}" python3 - <<'PY' >/dev/null 2>&1
 import urllib.request
 
-with urllib.request.urlopen("http://127.0.0.1:8787/api/status", timeout=2) as response:
+with urllib.request.urlopen("http://127.0.0.1:8787/api/status", timeout=20) as response:
     raise SystemExit(0 if response.status == 200 else 1)
 PY
   then
@@ -42,4 +42,5 @@ if [[ "${ready}" != true ]]; then
   exit 1
 fi
 
+optional_moog_bootstrap
 compose ps

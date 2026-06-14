@@ -2,7 +2,55 @@
 {% block main %}
 <span class="eyebrow">Operate · Config</span>
 <h1>Config</h1>
-<p class="page-hero">Read-only view of <code>{{ config_path }}</code>{% if not config_present %} (file missing — every row falls back to its default){% endif %}. Edit via <code>cardano-profile config set &lt;key&gt; &lt;value&gt;</code> from a terminal; the dashboard never mutates config.</p>
+<p class="page-hero">Config view for <code>{{ config_path }}</code>{% if not config_present %} (file missing — every row falls back to its default){% endif %}. The general table remains read-only. The Moog + Antithesis setup panel below can save values into the Dwarf <code>moog</code> config block.</p>
+
+<hr class="hairline">
+
+<section aria-labelledby="moog-setup-heading">
+  <header>
+    <span class="eyebrow">Moog</span>
+    <h2 id="moog-setup-heading">Moog + Antithesis setup</h2>
+  </header>
+  <p>Values can come from Docker environment variables, including entries loaded from the package <code>.env</code> file at deploy time, or from this form. Environment values take display precedence over saved config. Secret fields are saved when entered, but are not echoed back into the form; leave a secret field blank to keep the current value.</p>
+  <form class="moog-setup-form" method="post" action="/api/moog/setup?token={{ token or 'dwarf' }}">
+    {% for group in moog_setup.groups %}
+    <fieldset class="moog-setup-form__group">
+      <legend>{{ group.name }}</legend>
+      <div class="moog-setup-form__grid">
+        {% for field in group.fields %}
+        <label class="moog-setup-form__field">
+          <span class="moog-setup-form__label">{{ field.label }}</span>
+          {% if field.kind == 'checkbox' %}
+          <input type="checkbox" name="{{ field.key }}" value="true"{% if field.value %} checked{% endif %}>
+          {% else %}
+          <input
+            type="{{ 'password' if field.secret else 'text' }}"
+            name="{{ field.key }}"
+            value="{{ field.value }}"
+            placeholder="{{ field.placeholder }}"
+            autocomplete="off">
+          {% endif %}
+          <span class="moog-setup-form__meta">
+            <code>{{ field.source }}</code>{% if field.secret and field.configured %} · configured{% endif %}
+          </span>
+          <span class="moog-setup-form__help">{{ field.help }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endfor %}
+    <div class="moog-setup-form__actions">
+      <button type="submit">Save Moog setup</button>
+      <a class="button-link" href="/operate/status">Open status</a>
+      <a class="button-link" href="/learn/operator-runbook#moog-security-testing">Open runbook</a>
+    </div>
+  </form>
+  <div class="moog-setup-form__commands">
+    <h3>Next checks</h3>
+    <pre class="run-payload-pre"><code>{{ moog_setup.commands.readiness }}
+{{ moog_setup.commands.preflight }}</code></pre>
+  </div>
+</section>
 
 <hr class="hairline">
 

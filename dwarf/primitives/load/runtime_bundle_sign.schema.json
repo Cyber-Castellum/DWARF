@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "runtime_bundle_sign params",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "helper_script": {"type": "string", "minLength": 1},
+    "python_bin": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "expected_helper_exit": {"type": "integer"},
+    "target_run_id": {"type": "string", "minLength": 1},
+    "key_path": {"type": "string", "minLength": 1},
+    "signing_actor": {"type": "string", "minLength": 1}
+  },
+  "required": []
+}

@@ -117,6 +117,40 @@ DWARF_DASHBOARD_PORT=8877 delivery/scripts/status.sh
 
 The container still listens internally on `8787`; only the host port changes.
 
+## Moog Setup Form
+
+Open `/operate/config` to enter Moog, GitHub, target repository, and Antithesis values from the dashboard. The form saves to the Dwarf `moog` config block and reads Docker environment variables as effective overrides. Values from `.env` are available when `delivery/scripts/deploy.sh` starts the container.
+
+Client-prep mode allows saving GitHub PATs, Antithesis passwords/API keys, and agent email passwords in `var/state/config.yaml`. Secret inputs are masked after save, and a blank secret submission preserves the existing saved value.
+
+## Optional Moog Bootstrap And Healthchecks
+
+Dwarf does not set up Moog during normal install or deploy. To keep wallet/secrets/service changes explicit, the deploy script only runs Moog setup when requested:
+
+```bash
+DWARF_MOOG_BOOTSTRAP=plan delivery/scripts/deploy.sh
+```
+
+The plan mode prints the Moog bootstrap plan and changes no remote state. The approved mode requires a second confirmation variable:
+
+```bash
+DWARF_MOOG_BOOTSTRAP=approve \
+DWARF_MOOG_BOOTSTRAP_APPROVE=1 \
+delivery/scripts/deploy.sh
+```
+
+Approved bootstrap creates only the Moog directory skeleton and a remote operator plan file. It does not fetch binaries, create wallet files, read secrets, write PATs, write Antithesis credentials, enable systemd units, or start Moog services.
+
+Use this healthcheck sequence after bootstrap or manual Moog changes:
+
+```bash
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile wallet healthcheck moog-requester --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog readiness --repo <org/repo> --github-user <user> --json
+docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json
+```
+
 ## Runtime Data Layout
 
 Host paths:

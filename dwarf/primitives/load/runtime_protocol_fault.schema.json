@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "required": ["runtime_metadata_path", "target_node", "output_dir"],
+  "properties": {
+    "runtime_metadata_path": {"type": "string"},
+    "target_node": {"type": "string"},
+    "reference_node": {"type": "string"},
+    "output_dir": {"type": "string"},
+    "timeout_seconds": {"type": "number"},
+    "network_magic": {"type": "integer"},
+    "peersharing_decoder_path": {"type": "string"},
+    "peersharing_state_corpus": {"type": "string"},
+    "localtxmonitor_decoder_path": {"type": "string"},
+    "localtxmonitor_state_corpus": {"type": "string"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "plutus_phase2_differential_equivalent"}
+  },
+  "additionalProperties": true
+}

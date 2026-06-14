@@ -1,0 +1,34 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-chainsync-historical-point-burst",
+  "title": "Runtime ChainSync repeated fetch from a recent historical point on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["chainsync", "m3", "devnet", "runtime", "historical-point", "burst"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-012", "GAP-013", "GAP-018"],
+    "architecture_ids": ["B-004", "IF-004", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-003", "CR-M1-DRAFT-009", "CR-M1-DRAFT-010"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded live ChainSync evidence only; it does not prove worst-case intersection-set handling, partition recovery, or convergence.",
+    "The harness uses a recent historical point extracted from local Haskell node logs and a read-only Amaru client against the local-only devnet.",
+    "Rollback, fork, restart, persistence, and cross-implementation runtime claims remain blocked on separate approved harnesses."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3601",
+  "load": [
+    {
+      "primitive": "runtime_client_chainsync_burst",
+      "timeout_seconds": 180,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

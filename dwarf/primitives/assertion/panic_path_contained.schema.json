@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": {"const": "panic_path_contained"}
+  },
+  "additionalProperties": true
+}

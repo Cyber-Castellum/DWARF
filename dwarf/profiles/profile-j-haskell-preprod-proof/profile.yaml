@@ -1,0 +1,16 @@
+{
+  "id": "profile-j-haskell-preprod-proof",
+  "label": "Haskell preprod proof of life",
+  "node_type": "cardano-node",
+  "node_count": 1,
+  "amaru_node_count": 0,
+  "network_magic": 1,
+  "peer_sharing": true,
+  "remote_runtime_root": "/home/nigel/cardano-profiles/profile-j-haskell-preprod-proof",
+  "compose_project": "cardano-profile-j-haskell-preprod",
+  "upstream_peer_address": "preprod-node.play.dev.cardano.org:3001",
+  "listen_address": "192.168.30.16:39140",
+  "config_source_dir": "/home/nigel/cardano-configs/preprod",
+  "public_network": "preprod",
+  "testbed": "public-preprod"
+}

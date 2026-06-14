@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fault_node_freeze params",
+  "type": "object",
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "freeze_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "resume_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 }
+  },
+  "required": ["runtime_metadata_path", "target_node"],
+  "additionalProperties": true
+}

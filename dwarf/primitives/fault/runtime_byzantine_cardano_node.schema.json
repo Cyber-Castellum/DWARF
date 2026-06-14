@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_byzantine_cardano_node params",
+  "type": "object",
+  "required": ["output_dir", "target_node_id"],
+  "properties": {
+    "output_dir": { "type": "string", "minLength": 1 },
+    "target_node_id": { "type": "string", "minLength": 1 },
+    "upstream_node_id": { "type": "string", "minLength": 1 },
+    "upstream_address": { "type": "string", "minLength": 1 },
+    "behavior": {
+      "type": "string",
+      "enum": ["handshake_version_downgrade_attempt"]
+    },
+    "mutation_mode": { "type": "string", "enum": ["flip_payload_byte", "pass_through"] },
+    "mutation_direction": { "type": "string", "enum": ["outbound", "inbound", "both"] },
+    "mutation_protocol": { "type": "integer", "minimum": 0 },
+    "mutate_after_segments": { "type": "integer", "minimum": 1 },
+    "healthy_timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "anyOf": [
+        { "required": ["upstream_node_id"] },
+        { "required": ["upstream_address"] }
+      ]
+    }
+  ]
+}

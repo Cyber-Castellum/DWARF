@@ -229,3 +229,55 @@ def all_profiles(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "is_active": p.get("id") == live_id,
         })
     return rows
+
+
+def wallet_status_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for wallet in payload.get("wallets") or []:
+        txs = wallet.get("recent_transactions") or []
+        rows.append({
+            "id": wallet.get("id") or _DASH,
+            "label": wallet.get("label") or wallet.get("id") or _DASH,
+            "role": wallet.get("role") or _DASH,
+            "network": wallet.get("network") or _DASH,
+            "address": wallet.get("address") or _DASH,
+            "state": wallet.get("state") or "unknown",
+            "balance_tada": wallet.get("balance_tada") or _UNKNOWN,
+            "balance_lovelace": wallet.get("balance_lovelace"),
+            "utxo_count": wallet.get("utxo_count"),
+            "queried_at": wallet.get("queried_at") or _DASH,
+            "error": wallet.get("error"),
+            "recent_transactions": txs,
+        })
+    return rows
+
+
+def moog_status_tile(payload: dict[str, Any]) -> dict[str, Any]:
+    moog = payload.get("moog") or {}
+    summary = moog.get("summary") or {}
+    state = str(summary.get("state") or moog.get("state") or "unknown")
+    metric = state.upper() if state else "UNKNOWN"
+    return {
+        "state": state,
+        "metric": metric,
+        "check_count": summary.get("check_count") or 0,
+        "ok_count": summary.get("ok_count") or 0,
+        "warn_count": summary.get("warn_count") or 0,
+        "error_count": summary.get("error_count") or 0,
+        "deploy_root": summary.get("deploy_root") or _DASH,
+        "mpfs_host": summary.get("mpfs_host") or _DASH,
+        "token_id": summary.get("token_id") or _DASH,
+        "oracle_service": summary.get("oracle_service") or _DASH,
+        "requester_address": summary.get("requester_address") or _DASH,
+        "oracle_address": summary.get("oracle_address") or _DASH,
+        "checks": [
+            {
+                "id": check.get("id") or _DASH,
+                "state": check.get("state") or "unknown",
+                "detail": check.get("detail") or _DASH,
+            }
+            for check in (moog.get("checks") or [])
+            if isinstance(check, dict)
+        ],
+        "error": moog.get("error"),
+    }

@@ -1,0 +1,44 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-profile-a-bundle-dedupe-primitive",
+  "title": "Declarative runtime primitive for structured bundle dedupe on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "primitive", "dedupe", "bundle", "devnet"],
+  "related_milestones": ["M3"],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE5A0C",
+  "faults": [],
+  "phases": [
+    {
+      "id": "promote-bundle",
+      "title": "Write a promotion record into the current bundle",
+      "load": [
+        {
+          "primitive": "runtime_bundle_promote",
+          "reason_code": "divergence",
+          "reason_text": "prepare runtime bundle for dedupe",
+          "operator_notes": "primitive exercise path",
+          "actor": "dwarf",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    },
+    {
+      "id": "dedupe-bundle",
+      "title": "Compare the current bundle signature against promoted bundles",
+      "load": [
+        {
+          "primitive": "runtime_bundle_dedupe",
+          "signature_primitive": "runtime_bundle_promote",
+          "timeout_seconds": 120,
+          "expected_helper_exit": 0
+        }
+      ],
+      "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}]
+    }
+  ]
+}

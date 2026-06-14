@@ -1,0 +1,34 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-blockfetch-historical-range-burst",
+  "title": "Runtime BlockFetch repeated historical range fetch on Profile A",
+  "authors": ["dwarf"],
+  "tags": ["blockfetch", "m3", "devnet", "runtime", "historical-range", "burst"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-014", "GAP-016", "GAP-020"],
+    "architecture_ids": ["B-004", "IF-005", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-003", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded live BlockFetch evidence only; it does not prove sustained load resistance, timeout policy adequacy, or persistence safety.",
+    "The harness uses a recent two-point historical range derived from local Haskell node logs and fetches exactly two blocks per iteration.",
+    "Retry churn, stale-response injection, and cross-implementation runtime parity remain follow-up work."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3603",
+  "load": [
+    {
+      "primitive": "runtime_client_blockfetch_burst",
+      "timeout_seconds": 180,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

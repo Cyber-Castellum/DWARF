@@ -1983,7 +1983,29 @@ def generate_cbor(shape, rng):
         out = _cbor_emit_array_header(len(elements))
         for elem in elements:
             out += generate_cbor(elem, rng)
-    return out
+        return out
+    if t == "map":
+        entries = shape.get("entries", [])
+        out = _cbor_emit_map_header(len(entries))
+        for key, value_shape in entries:
+            if isinstance(key, int) and key >= 0:
+                out += _cbor_emit_uint(key)
+            elif isinstance(key, int):
+                out += _cbor_emit_header(1, -1 - key)  # negative int
+            else:
+                # text key
+                ks = str(key).encode("utf-8")
+                out += _cbor_emit_header(3, len(ks)) + ks
+            out += generate_cbor(value_shape, rng)
+        return out
+    if t == "tag":
+        tag = int(shape.get("tag", 0))
+        inner = shape.get("inner", {"type": "null"})
+        return _cbor_emit_header(6, tag) + generate_cbor(inner, rng)
+    if t == "any":
+        # terminal — emit a short uint
+        return _cbor_emit_uint(rng.randint(0, 100))
+    raise ValueError(f"unknown shape type: {t!r}")
 
 
 def _target_hook_events_from_handle(handle, *, event=None, primitive=None):
@@ -2031,28 +2053,6 @@ def _runtime_metric_samples_from_handle(handle, metric_name: str):
         except json.JSONDecodeError:
             continue
     return out
-    if t == "map":
-        entries = shape.get("entries", [])
-        out = _cbor_emit_map_header(len(entries))
-        for key, value_shape in entries:
-            if isinstance(key, int) and key >= 0:
-                out += _cbor_emit_uint(key)
-            elif isinstance(key, int):
-                out += _cbor_emit_header(1, -1 - key)  # negative int
-            else:
-                # text key
-                ks = str(key).encode("utf-8")
-                out += _cbor_emit_header(3, len(ks)) + ks
-            out += generate_cbor(value_shape, rng)
-        return out
-    if t == "tag":
-        tag = int(shape.get("tag", 0))
-        inner = shape.get("inner", {"type": "null"})
-        return _cbor_emit_header(6, tag) + generate_cbor(inner, rng)
-    if t == "any":
-        # terminal — emit a short uint
-        return _cbor_emit_uint(rng.randint(0, 100))
-    raise ValueError(f"unknown shape type: {t!r}")
 
 
 def _resolve_length(spec, rng):

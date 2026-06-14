@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_plutus_phase2_probe params",
+  "type": "object",
+  "required": ["runtime_metadata_path", "target_node", "observer_node", "probe_case", "output_dir"],
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "observer_node": { "type": "string", "minLength": 1 },
+    "probe_case": { "type": "string", "minLength": 1 },
+    "output_dir": { "type": "string", "minLength": 1 },
+    "is_valid_flag_override": { "type": "string", "minLength": 1 },
+    "ex_units_override": { "type": "integer", "minimum": 0 },
+    "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "expect_exit": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

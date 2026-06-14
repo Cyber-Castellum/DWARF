@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fault_local_port_drop params",
+  "type": "object",
+  "properties": {
+    "target_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "target_port_file": { "type": "string", "minLength": 1 },
+    "runtime_metadata_path": { "type": "string", "minLength": 1 },
+    "target_node": { "type": "string", "minLength": 1 },
+    "host": { "type": "string", "minLength": 1 },
+    "protocol": { "type": "string", "enum": ["tcp"] },
+    "drop_output": { "type": "boolean" },
+    "drop_input": { "type": "boolean" }
+  },
+  "anyOf": [
+    { "required": ["target_port"] },
+    { "required": ["target_port_file"] },
+    { "required": ["runtime_metadata_path", "target_node"] }
+  ],
+  "additionalProperties": true
+}

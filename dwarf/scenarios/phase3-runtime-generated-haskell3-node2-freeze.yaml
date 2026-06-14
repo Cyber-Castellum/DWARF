@@ -1,0 +1,44 @@
+{
+  "spec_version": "v1",
+  "id": "phase3-runtime-generated-haskell3-node2-freeze",
+  "title": "Phase 3 generated Haskell profile node2 freeze",
+  "authors": ["dwarf"],
+  "tags": ["phase3", "runtime", "generated-profile", "haskell-profile", "node-freeze", "node-targeting"],
+  "related_milestones": ["M1"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": [],
+    "architecture_ids": ["B-001"],
+    "risk_candidate_ids": []
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This scenario proves per-node SIGSTOP/SIGCONT control for one generated Haskell profile only.",
+    "It does not yet prove multi-phase sequencing, restart semantics, or inter-node traffic targeting."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-i-generated-haskell3",
+  "seed": "0xC0DE5004",
+  "faults": [
+    {
+      "primitive": "fault_node_freeze",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "target_node": "node2"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_generated_node_freeze_check",
+      "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+      "blocked_node": "node2",
+      "healthy_nodes": ["node1", "node3"],
+      "sample_seconds": 2,
+      "timeout_seconds": 60,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}

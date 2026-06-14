@@ -399,6 +399,119 @@ CLI_GROUPS: list[dict[str, Any]] = [
         ],
     },
     {
+        "slug": "moog",
+        "title": "moog",
+        "summary": (
+            "Read-only Moog deployment checks and local requester workflow "
+            "planning for Cardano Preprod. These helpers validate Dwarf-side "
+            "state, local asset directories, and future create-test commands "
+            "without submitting transactions or launching Antithesis."
+        ),
+        "anchor_path": "dwarf/profile_manager/cli.py",
+        "commands": [
+            {
+                "name": "cardano-profile moog bootstrap --json",
+                "summary": "Show the opt-in Moog bootstrap plan. Without <code>--approve</code>, this changes no remote state; with approval, it creates only the safe deploy/secrets directory skeleton and writes an operator plan file.",
+                "examples": [
+                    {"label": "Plan only", "command": "cardano-profile moog bootstrap --json"},
+                    {"label": "Approved skeleton setup", "command": "cardano-profile moog bootstrap --approve --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog status --json",
+                "summary": "Check Moog binary, deploy directories, public wallet metadata, MPFS/token config, and oracle unit state without reading wallet secrets.",
+                "examples": [
+                    {"label": "Deployment health", "command": "cardano-profile moog status --json"},
+                    {"label": "Command preview", "command": "cardano-profile moog status --dry-run"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog asset scaffold --to <dir> --json",
+                "summary": "Create a target-agnostic local compose asset skeleton. The scaffold intentionally does not embed PATs, wallet paths, Moog token values, Docker auth, Antithesis credentials, or target repo details.",
+                "examples": [
+                    {"label": "Create local asset skeleton", "command": "cardano-profile moog asset scaffold --to /tmp/moog-asset --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog asset validate --asset-dir <dir> --json",
+                "summary": "Validate local asset structure: directory, compose file, services section, and secret-like filenames.",
+                "examples": [
+                    {"label": "Validate local assets", "command": "cardano-profile moog asset validate --asset-dir /tmp/moog-asset --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog readiness --repo <org/repo> --github-user <user> --json",
+                "summary": "Read-only requester readiness check: requester wallet metadata/funding, GitHub profile vkey and CODEOWNERS, Moog user/role facts, and whitelist facts.",
+                "examples": [
+                    {"label": "Requester readiness", "command": "cardano-profile moog readiness --repo example-org/example-repo --github-user example-user --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog registration-plan --repo <org/repo> --github-user <user> --json",
+                "summary": "Plan requester registration steps and show the required moog.vkey content, CODEOWNERS line, and requester commands without submitting.",
+                "examples": [
+                    {"label": "Registration plan", "command": "cardano-profile moog registration-plan --repo example-org/example-repo --github-user example-user --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog create-test-plan --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json",
+                "summary": "Generate the future <code>moog requester create-test</code> command and validate required metadata. This is dry-run planning only.",
+                "examples": [
+                    {"label": "Create-test dry run", "command": "cardano-profile moog create-test-plan --asset-dir /tmp/moog-asset --repo example-org/example-repo --github-user example-user --directory antithesis --commit abc123 --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json",
+                "summary": "Run the combined readiness view: Moog health, requester readiness, local asset validation, and create-test command planning. It still performs no live submission.",
+                "examples": [
+                    {"label": "Combined preflight", "command": "cardano-profile moog preflight --asset-dir /tmp/moog-asset --repo example-org/example-repo --github-user example-user --directory antithesis --commit abc123 --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog create-test --repo <org/repo> --github-user <user> --directory <dir> --commit <sha> [--try <N>] [--duration <hours>] [--no-faults] [--approve]",
+                "summary": "Submit a live Antithesis test run through Moog (the same call CF's cardano-node workflow uses). Without <code>--approve</code> it prints the exact <code>moog requester create-test</code> command (dry-run); with <code>--approve</code> it submits the on-chain transaction (the wallet passphrase + GitHub PAT are sourced from on-host files, never logged). The Moog oracle validates registration + whitelist, then CF's agent launches it on Antithesis.",
+                "examples": [
+                    {"label": "Dry-run (no submission)", "command": "cardano-profile moog create-test --repo Cyber-Castellum/DWARF --github-user J-GainSec --directory antithesis/cardano_node_dwarf --commit <sha> --no-faults --json"},
+                    {"label": "Live no-faults smoke (1h)", "command": "cardano-profile moog create-test --repo Cyber-Castellum/DWARF --github-user J-GainSec --directory antithesis/cardano_node_dwarf --commit <sha> --duration 1 --no-faults --approve --json"},
+                ],
+            },
+            {
+                "name": "cardano-profile moog test-status <test-run-id> --json",
+                "summary": "Poll a submitted run's on-chain phase via <code>moog facts test-runs</code> (pending → accepted → terminal). The full triage/findings live in the Antithesis tenant dashboard; this reports the Moog-side phase.",
+                "examples": [
+                    {"label": "Check phase", "command": "cardano-profile moog test-status e39d2ddf... --json"},
+                ],
+            },
+        ],
+    },
+    {
+        "slug": "antithesis",
+        "title": "antithesis",
+        "summary": (
+            "Render a profile into a hermetic Antithesis test bundle — the second "
+            "execution backend alongside the local devnet, from one profile "
+            "definition. A single-node profile (e.g. closed Amaru) yields one node "
+            "+ the workload; a mixed profile yields Haskell <code>cardano-node</code> "
+            "+ Amaru + the workload, where the workload drives the same fuzzed CBOR "
+            "at both and asserts they agree (the cross-implementation differential). "
+            "The emitted directory is the same asset-dir that <code>moog asset "
+            "validate</code> and <code>moog preflight</code> consume. Building a "
+            "bundle submits nothing and launches nothing; it stops at ready-to-submit."
+        ),
+        "anchor_path": "dwarf/profile_manager/cli.py",
+        "commands": [
+            {
+                "name": "cardano-profile antithesis build <profile> [--scenario <s>] [--out <dir>] [--registry <ref>] [--tag <tag>] [--json]",
+                "summary": "Render the Antithesis bundle for a profile: <code>config/docker-compose.yaml</code> (registry images, <code>platform: linux/amd64</code>, <code>init</code>, healthchecks), <code>setup-complete.sh</code>, an <code>antithesis/test/</code> command, and a README. Single-node profiles run the <code>drive-once</code> driver; mixed profiles add a Haskell <code>cardano-node-devnet</code> service (devnet env baked in) and run the <code>drive-differential</code> driver. Defaults write under <code>antithesis/</code> using the registry from Moog config.",
+                "examples": [
+                    {"label": "Single closed-Amaru bundle", "command": "cardano-profile antithesis build profile-l-amaru-closed-devnet --out antithesis/amaru-single --json"},
+                    {"label": "Mixed Haskell+Amaru bundle (differential)", "command": "cardano-profile antithesis build profile-c-mixed-haskell-amaru-minimal --out antithesis/mixed-haskell-amaru --json"},
+                    {"label": "Pin registry and tag", "command": "cardano-profile antithesis build profile-l-amaru-closed-devnet --registry us-central1-docker.pkg.dev/molten-verve-216720/cardano-repository --tag v1 --json"},
+                ],
+            },
+        ],
+    },
+    {
         "slug": "testcase",
         "title": "testcase",
         "summary": (

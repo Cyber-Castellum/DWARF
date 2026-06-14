@@ -1,0 +1,44 @@
+{
+  "spec_version": "v1",
+  "id": "m3-runtime-blockfetch-port-delay-bounded-success",
+  "title": "Runtime BlockFetch remains successful under bounded per-port loopback delay",
+  "authors": ["dwarf"],
+  "tags": ["blockfetch", "m3", "devnet", "runtime", "delayed-response", "bounded-success"],
+  "related_milestones": ["M1", "M3"],
+  "m1_trace": {
+    "threat_ids": [],
+    "gap_ids": ["GAP-014", "GAP-016", "GAP-020"],
+    "architecture_ids": ["B-004", "IF-005", "IF-009"],
+    "risk_candidate_ids": ["CR-M1-DRAFT-003", "CR-M1-DRAFT-011", "CR-M1-DRAFT-015"]
+  },
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "This is bounded delayed-response runtime evidence only; it does not prove retry policy adequacy, stale-response handling, or scheduler fairness.",
+    "The fault injects fixed loopback latency into one listener path and does not emulate arbitrary network reorder or corruption.",
+    "Persistence, restart, and recovery behavior remain follow-up work."
+  ],
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "devnet",
+  "profile": "profile-a-haskell-peersharing-disabled",
+  "seed": "0xC0DE3607",
+  "faults": [
+    {
+      "primitive": "fault_local_port_delay",
+      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "target_node": "node1",
+      "host": "127.0.0.1",
+      "delay_ms": 100,
+      "jitter_ms": 0
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_blockfetch_delay_success",
+      "timeout_seconds": 120,
+      "expected_helper_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [{"primitive": "load_events_are_ok", "min_completed": 1}],
+  "teardown": []
+}
