@@ -155,7 +155,7 @@ services:
   # the thing being chaos-tested. (Tag/protocol/shape are overridden per-run by
   # the generator + tools/sp3*_repro.sh.)
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.10.0
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.14.0
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
@@ -170,11 +170,13 @@ services:
       - "--upstream"
       - "p1.example:3001"
       - "--seed"
-      - "0x1"
+      - "random"
       - "--protocol"
       - "txsubmission"
       - "--cbor-shape"
       - "tx-body"
+      - "--mutation-level"
+      - "semantic"
     depends_on:
       configurator:
         condition: service_completed_successfully
