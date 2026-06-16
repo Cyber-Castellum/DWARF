@@ -155,11 +155,16 @@ services:
   # the thing being chaos-tested. (Tag/protocol/shape are overridden per-run by
   # the generator + tools/sp3*_repro.sh.)
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.10.0
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.16.0
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
       com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    # Seed-corpus (--seed-tx): cert- and metadata-bearing base txs always offered
+    # to mutate, so --cbor-shape certificate/auxiliary-data engages on the
+    # hermetic devnet (whose tx-generator emits only payment txs and whose Asteria
+    # workload emits Plutus txs — neither carries a cert or a metadata label).
+    # See docs/superpowers/specs/2026-06-16-seed-corpus-design.md.
     command:
       - "--network-magic"
       - "42"
@@ -170,11 +175,19 @@ services:
       - "--upstream"
       - "p1.example:3001"
       - "--seed"
-      - "0x1"
+      - "random"
       - "--protocol"
       - "txsubmission"
       - "--cbor-shape"
-      - "tx-body"
+      - "certificate"
+      - "--mutation-level"
+      - "struct"
+      - "--seed-tx"
+      - "/corpus/cert-seed.cbor"
+      - "--seed-tx"
+      - "/corpus/meta-seed.cbor"
+    volumes:
+      - ./corpus:/corpus:ro
     depends_on:
       configurator:
         condition: service_completed_successfully
