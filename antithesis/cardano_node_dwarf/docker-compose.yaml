@@ -155,7 +155,7 @@ services:
   # the thing being chaos-tested. (Tag/protocol/shape are overridden per-run by
   # the generator + tools/sp3*_repro.sh.)
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.17.0
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.18.0
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
@@ -205,7 +205,11 @@ services:
   # is the bug oracle; sometimes(decoded_ok / clean_reject) proves reachability.
   # Excluded from faults (a deterministic decode loop, not the chaos target).
   decoder-fuzz:
-    image: ghcr.io/j-gainsec/dwarf-decoder-fuzz:0.1.0
+    # Reuses the public dwarf-adversary image (both binaries baked in); a separate
+    # ghcr package would default to private and be unreachable by the Antithesis
+    # builder. Entrypoint overridden to the decoder-fuzz harness.
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.18.0
+    entrypoint: ["/usr/local/bin/dwarf-decoder-fuzz"]
     container_name: decoder-fuzz
     hostname: decoder-fuzz.example
     labels:
