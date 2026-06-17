@@ -155,7 +155,7 @@ services:
   # the thing being chaos-tested. (Tag/protocol/shape are overridden per-run by
   # the generator + tools/sp3*_repro.sh.)
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary:0.16.0
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.17.0
     container_name: dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
@@ -179,7 +179,7 @@ services:
       - "--protocol"
       - "txsubmission"
       - "--cbor-shape"
-      - "certificate"
+      - "witness"
       - "--mutation-level"
       - "struct"
       - "--seed-tx"
@@ -194,6 +194,40 @@ services:
       p1:
         condition: service_started
     restart: always
+
+  # In-process decoder fuzzing (#4 / FU5) as an Antithesis workload. Independent
+  # of the devnet: calls the real Conway tx decoder directly in a tight loop over
+  # a baked seed corpus, mutating with the same engine (here: semantic, the
+  # richest — produces both decode-ok and clean-reject). --seed random draws
+  # /dev/urandom, which Antithesis intercepts as a per-timeline choice point, so
+  # each timeline explores a different region of the mutation space. It emits its
+  # own SDK assertions: always(dwarf_decoder_no_uncaught_exception / no_timeout)
+  # is the bug oracle; sometimes(decoded_ok / clean_reject) proves reachability.
+  # Excluded from faults (a deterministic decode loop, not the chaos target).
+  decoder-fuzz:
+    image: ghcr.io/j-gainsec/dwarf-decoder-fuzz:0.1.0
+    container_name: decoder-fuzz
+    hostname: decoder-fuzz.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "--target"
+      - "tx"
+      - "--corpus"
+      - "/corpus"
+      - "--level"
+      - "semantic"
+      - "--seed"
+      - "random"
+      - "--sdk"
+      - "--iters"
+      - "999999999999"
+      - "--timeout-us"
+      - "2000000"
+    restart: always
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
   # Tx-generator workload — promoted from cardano_node_tx_generator
   # after a 0-findings 1h Antithesis validation run on commit
