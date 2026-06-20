@@ -46,7 +46,7 @@ forbidden_paths=(
   "dwarf/scripts/deploy-dashboard.sh"
   "dwarf-uptodatemay"
   "dwarf-v55"
-  "infrastructure/cardano-box"
+  "infrastructure/build-host"
   "infrastructure/docker/amaru-0.1.2.Dockerfile"
   "infrastructure/docker/cardano-node-10.7.1.Dockerfile"
   "infrastructure/docker/docker-compose.yml"
@@ -110,8 +110,8 @@ if grep -q '\\\"false\\\"' "${PACKAGE_ROOT}/infrastructure/docker/dwarf-fw.Docke
   echo "Dockerfile apt config contains escaped quotes that apt will not parse as intended" >&2
   exit 1
 fi
-if grep -q 'infrastructure/cardano-box' "${PACKAGE_ROOT}/infrastructure/docker/dwarf-fw.Dockerfile"; then
-  echo "Dockerfile depends on cardano-box helper files that are not part of the delivery package" >&2
+if grep -q 'infrastructure/build-host' "${PACKAGE_ROOT}/infrastructure/docker/dwarf-fw.Dockerfile"; then
+  echo "Dockerfile depends on build-host helper files that are not part of the delivery package" >&2
   exit 1
 fi
 if grep -Eq 'dwarf-v55|dwarf-uptodatemay|Selected audit/research evidence|May continuation notes|Source-of-truth and requirements docs|dist/' "${PACKAGE_ROOT}/README.md"; then
@@ -122,15 +122,15 @@ fi
 manifest_count=$(
   find "${PACKAGE_ROOT}/dwarf/targets/manifests" -type f -name '*.yaml' | wc -l | tr -d '[:space:]'
 )
-if [[ "${manifest_count}" != "29" ]]; then
-  echo "expected 29 M2 target manifests, found ${manifest_count}" >&2
+if [[ "${manifest_count}" != "38" ]]; then
+  echo "expected 38 target manifests, found ${manifest_count}" >&2
   exit 1
 fi
 
 if find "${PACKAGE_ROOT}/dwarf/targets/manifests" -type f -name '*.yaml' \
-  ! \( -name '*-cbor-decode-*.yaml' -o -name '*-mini-protocol-decode-*.yaml' \) \
+  ! \( -name '*-cbor-decode-*.yaml' -o -name '*-mini-protocol-decode-*.yaml' -o -name '*-cov-*.yaml' \) \
   | grep -q .; then
-  echo "target manifest catalog contains non-M2 manifests" >&2
+  echo "target manifest catalog contains unexpected manifests" >&2
   exit 1
 fi
 
@@ -155,7 +155,7 @@ if find "${PACKAGE_ROOT}/dwarf/grammars" -mindepth 1 -maxdepth 1 -type d \
   exit 1
 fi
 
-if grep -R -E '/Users/nigel|/home/nigel|cardano-box|192\.168\.30\.16' "${PACKAGE_ROOT}/dwarf/targets/manifests" "${PACKAGE_ROOT}/dwarf/targets/README.md" "${PACKAGE_ROOT}/dwarf/grammars/README.md"; then
+if grep -R -E '${HOME}|${HOME}|build-host|192\.168\.30\.16' "${PACKAGE_ROOT}/dwarf/targets/manifests" "${PACKAGE_ROOT}/dwarf/targets/README.md" "${PACKAGE_ROOT}/dwarf/grammars/README.md"; then
   echo "public target or grammar catalog contains local host paths" >&2
   exit 1
 fi

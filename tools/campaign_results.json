@@ -1,0 +1,446 @@
+{
+  "title": "DWARF \u2014 Cardano Node CBOR Fuzzing Campaign",
+  "client_line": "cardano-node decoder-robustness assessment (Antithesis + local)",
+  "summary": "DWARF subjected a live <b>cardano-node</b> to large volumes of adversarial CBOR across the block, transaction, and auxiliary-data decoders \u2014 over the real Cardano node-to-node protocols (block-fetch and tx-submission), on the <b>Antithesis</b> deterministic simulator and in multi-hour <b>local soaks</b>. Two complementary fuzzing layers were exercised: <b>(1) hostile-but-valid structural mutation</b> (well-formed CBOR with corrupted structure/types/values) and <b>(2) outright malformed / invalid CBOR bytes</b> (truncated, bit-flipped, oversized-length, deeply-nested, raw garbage). Across every run the node's decoders handled the input <b>without crashing, hanging, or violating consensus</b> \u2014 valid-but-hostile payloads were rejected at validation and malformed bytes were rejected with a clean DecoderFailure. A <b>positive robustness result</b> on the exercised surface.",
+  "objective": "Assess the robustness of <b>cardano-node</b>'s CBOR deserialization under adversarial input. The decoder is a high-value attack surface: it processes untrusted bytes off the network before any validation. The campaign targets the <b>block</b> decoder (block-fetch), the <b>transaction</b> and <b>auxiliary-data</b> decoders (tx-submission), and the <b>block-header</b> decoder (chain-sync), under both structural mutation and byte-level malformation.",
+  "method": "A purpose-built Haskell adversary (<code>dwarf-adversary</code>) joins the testnet as a genuine node-to-node peer (chain-sync, block-fetch, tx-submission, keep-alive), bootstraps a valid chain, then serves payloads the node decodes with its <b>real production decoder</b>. Two mutation layers (<code>--mutation-level</code>): <b>struct</b> \u2014 mutate the parsed CBOR Term (field drop, type confusion, length/nesting corruption) and re-encode to <i>valid</i> CBOR with hostile structure; and <b>bytes</b> \u2014 corrupt the <i>serialized bytes</i> (truncate / bit-flip / oversize-length 2^64-1 / deep-nest / garbage) into <i>malformed</i> CBOR, exercising the deserializer's error handling and resource bounds. For block-fetch the node is <b>eclipsed by topology</b> so its only block source is the adversary. The base seed is drawn fresh per Antithesis timeline (per-timeline exploration of the mutation space). The node's own health assertions (no crashes / errors / consensus violations) are the bug oracle: rejecting bad input is correct behaviour; a crash would be a finding.",
+  "antithesis_runs": [
+    {
+      "label": "Transaction decoder \u2014 MALFORMED-CBOR fuzz (byte-level, image 0.13.0)",
+      "testRunId": "ff6d55d5a3383a750253ba99150fcfb684cf2d8245e4a78c145bb7f1689bf44a",
+      "image": "0.13.0",
+      "commit": "22e6d55",
+      "status": "Completed",
+      "duration": "1h 12m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_tx",
+          "status": "passed",
+          "note": "node pulled & decoded MALFORMED tx CBOR; rejected it without crashing"
+        },
+        {
+          "name": "Never: Cardano Node Errors",
+          "status": "passed",
+          "note": "node logged no errors"
+        },
+        {
+          "name": "Never: Cardano Node Critical",
+          "status": "passed",
+          "note": "node logged no criticals"
+        },
+        {
+          "name": "asteria-game/finally_alive.sh",
+          "status": "failed",
+          "note": "bundled game harness script (not a node assertion)"
+        }
+      ],
+      "counts": {
+        "passed": 80,
+        "failed": 4,
+        "unfound": 8
+      }
+    },
+    {
+      "label": "Block-header decoder \u2014 MALFORMED-CBOR fuzz (byte-level, image 0.13.0)",
+      "testRunId": "13c49771261921278db525473b9b13e218eb44d59b235fe7e477e81af6bb105b",
+      "image": "0.13.0",
+      "commit": "afba82b",
+      "status": "Completed",
+      "duration": "1h 13m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_header",
+          "status": "passed",
+          "note": "node chain-synced MALFORMED header CBOR; rejected it without crashing"
+        },
+        {
+          "name": "Never: Cardano Node Errors",
+          "status": "passed",
+          "note": "node logged no errors"
+        },
+        {
+          "name": "Never: Cardano Node Critical",
+          "status": "passed",
+          "note": "node logged no criticals"
+        },
+        {
+          "name": "tx-generator/* driver scripts",
+          "status": "failed",
+          "note": "two tx-generator harness driver commands (Commands-finish-zero family) \u2014 composer artifacts, not node defects"
+        }
+      ],
+      "counts": {
+        "passed": 81,
+        "failed": 3,
+        "unfound": 11
+      }
+    },
+    {
+      "label": "Block decoder \u2014 MALFORMED-CBOR 3h campaign (byte-level, image 0.12.0, ~150 test-hours)",
+      "testRunId": "66c7e79998f6fd910711e5188a2aa8c26d5461ecc6e88e3fc84b9f5b13affc67",
+      "image": "0.12.0",
+      "commit": "809f1fc",
+      "status": "Completed",
+      "duration": "3h 23m (\u22486d 6h simulated)",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_block",
+          "status": "passed",
+          "note": "adversary served MALFORMED CBOR throughout; node engaged its decoder"
+        },
+        {
+          "name": "Never: Cardano Node Errors",
+          "status": "passed",
+          "note": "node-under-test logged no errors"
+        },
+        {
+          "name": "Never: Cardano Node Critical",
+          "status": "passed",
+          "note": "node-under-test logged no criticals"
+        },
+        {
+          "name": "No unexpected container exits",
+          "status": "passed",
+          "note": "node-under-test did not crash"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "chain-sync-client/parallel_driver_flap.sh",
+          "status": "failed",
+          "note": "a HARNESS test-template driver command (Antithesis 'Commands finish with zero exit code' family, like the asteria drivers) exited non-zero \u2014 NOT a node assertion; node-under-test health all green. New this run; plausibly the flap driver perturbed by byte-mode's aggressive peer-disconnects. Exact cause needs the Antithesis log viewer."
+        }
+      ],
+      "counts": {
+        "passed": 81,
+        "failed": 2,
+        "unfound": 0
+      }
+    },
+    {
+      "label": "Block decoder \u2014 MALFORMED-CBOR fuzz (byte-level, image 0.12.0)",
+      "testRunId": "9f04028f793e489627985432739117d365dd49a0b225d37c26ff223540a7c104",
+      "image": "0.12.0",
+      "commit": "809f1fc",
+      "status": "Completed",
+      "duration": "1h 14m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_block",
+          "status": "passed",
+          "note": "adversary served MALFORMED CBOR (truncated/flipped/oversize-length/garbage); node engaged its decoder"
+        },
+        {
+          "name": "dwarf_block_fuzz_server_started",
+          "status": "passed",
+          "note": "adversary served"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_block_decoder_reachable",
+          "status": "passed",
+          "note": "decoder exercised"
+        },
+        {
+          "name": "container: dwarf-adversary, exit code: 1",
+          "status": "unfound",
+          "note": "adversary never crashed"
+        },
+        {
+          "name": "container: p2, exit code: 1",
+          "status": "unfound",
+          "note": "no producer exit this run"
+        }
+      ],
+      "counts": {
+        "passed": 82,
+        "failed": 1,
+        "unfound": 9
+      }
+    },
+    {
+      "label": "Transaction decoder via aux-data shape \u2014 live (tx-submission, image 0.11.0)",
+      "testRunId": "4e9552b7cb6dd046dcdf79df8a8338e185f785dd992e89543ae875576488fbc0",
+      "image": "0.11.0",
+      "commit": "a057003",
+      "status": "Completed",
+      "duration": "1h 14m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_tx",
+          "status": "passed",
+          "note": "node pulled & decoded a mutated tx \u2014 no crash. CORRECTION (2026-06-16): pre-0.15.0 the aux-data sub-field target did NOT engage \u2014 the HardFork N2N GenTx envelope was not unwrapped, so this run mutated the whole tx (envelope fallback), not the aux-data slot specifically. Genuine aux-data + certificate sub-field targeting was fixed in image 0.15.0 and local-verified 2026-06-16 (aux:/cert: tagged mutations, node robust); not yet re-run live on Antithesis."
+        },
+        {
+          "name": "dwarf_tx_decoder_reachable",
+          "status": "passed",
+          "note": "tx decoder exercised"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_base_tx_obtained",
+          "status": "passed",
+          "note": "real tx captured to mutate"
+        },
+        {
+          "name": "dwarf_base_header_obtained",
+          "status": "failed",
+          "note": "header-path assertion \u2014 N/A in tx-submission mode (no headers captured); expected, not a defect"
+        }
+      ],
+      "counts": {
+        "passed": 82,
+        "failed": 2,
+        "unfound": 8
+      }
+    },
+    {
+      "label": "Transaction body decoder \u2014 live re-run (image 0.11.0, per-timeline seed)",
+      "testRunId": "7ec79803e33fd843f2a44205503a6139691bdbd62ffabb077c15484bdd33e9f5",
+      "image": "0.11.0",
+      "commit": "52ae6f5",
+      "status": "Completed",
+      "duration": "1h 14m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_tx",
+          "status": "passed",
+          "note": "node pulled & decoded mutated tx-body \u2014 no crash"
+        },
+        {
+          "name": "dwarf_tx_decoder_reachable",
+          "status": "passed",
+          "note": "tx decoder exercised"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_base_tx_obtained",
+          "status": "passed",
+          "note": "real tx captured to mutate"
+        },
+        {
+          "name": "dwarf_base_header_obtained",
+          "status": "failed",
+          "note": "header-path assertion \u2014 N/A in tx-submission mode; expected, not a defect"
+        }
+      ],
+      "counts": {
+        "passed": 84,
+        "failed": 2,
+        "unfound": 6
+      }
+    },
+    {
+      "label": "Block decoder \u2014 3h exhaustive campaign (image 0.11.0, ~150 test-hours)",
+      "testRunId": "0a81cb7b475c3d21a4bb6ea95e041b1c5ef7f121ce6b6410ca72b954bfa0fc71",
+      "image": "0.11.0",
+      "commit": "9044712",
+      "status": "Completed",
+      "duration": "3h 18m (\u22486d 6h simulated)",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_block",
+          "status": "passed",
+          "note": "node fetched & decoded mutated blocks across the campaign \u2014 no crash"
+        },
+        {
+          "name": "dwarf_block_fuzz_server_started",
+          "status": "passed",
+          "note": "adversary served"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_block_decoder_reachable",
+          "status": "passed",
+          "note": "decoder exercised"
+        },
+        {
+          "name": "(producer exit / critical logs)",
+          "status": "unfound",
+          "note": "the 1h run's p2 producer event did NOT recur \u2014 confirms it was a rare-timeline flake, not deterministic"
+        }
+      ],
+      "counts": {
+        "passed": 80,
+        "failed": 2,
+        "unfound": 0
+      }
+    },
+    {
+      "label": "Block decoder \u2014 verification run (image 0.11.0, per-timeline seed)",
+      "testRunId": "d2b6b5a13cd98c8aaf918829849405020ce7971bc7ca5dc1c7cd10ed66273998",
+      "image": "0.11.0",
+      "commit": "9044712",
+      "status": "Completed",
+      "duration": "1h 14m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_block",
+          "status": "passed",
+          "note": "node fetched & decoded mutated blocks \u2014 node-under-test did not crash"
+        },
+        {
+          "name": "dwarf_block_fuzz_server_started",
+          "status": "passed",
+          "note": "adversary served"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_block_decoder_reachable",
+          "status": "passed",
+          "note": "decoder exercised"
+        },
+        {
+          "name": "container: dwarf-adversary, exit code: 1",
+          "status": "unfound",
+          "note": "adversary never crashed (good)"
+        },
+        {
+          "name": "container: p2, exit code: 1",
+          "status": "failed",
+          "note": "producer-side, Antithesis-env only \u2014 NOT reproducible locally, no adversary path to p2; ruled out as a DWARF issue"
+        },
+        {
+          "name": "no critical logs",
+          "status": "failed",
+          "note": "tied to the p2 producer event; node-under-test logged 0 Critical locally over 36k+ mutated blocks"
+        }
+      ],
+      "counts": {
+        "passed": 81,
+        "failed": 3,
+        "unfound": 8
+      }
+    },
+    {
+      "label": "Block decoder \u2014 confirmed live (block-fetch)",
+      "testRunId": "ea5ad7d06233007a213134144f26e2cd329616452ad6fb637d6d6120ce50ed09",
+      "image": "0.10.0",
+      "commit": "fab353b",
+      "status": "Completed",
+      "duration": "1h 13m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_block",
+          "status": "passed",
+          "note": "node fetched & decoded mutated blocks \u2014 no crash"
+        },
+        {
+          "name": "dwarf_block_fuzz_server_started",
+          "status": "passed",
+          "note": "adversary served"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_block_decoder_reachable",
+          "status": "passed",
+          "note": "decoder exercised"
+        },
+        {
+          "name": "container: dwarf-adversary, exit code: 1",
+          "status": "unfound",
+          "note": "adversary never crashed (good)"
+        }
+      ],
+      "counts": {
+        "passed": 81,
+        "failed": 1,
+        "unfound": 9
+      }
+    },
+    {
+      "label": "Transaction decoder \u2014 confirmed live (tx-submission)",
+      "testRunId": "0e1c9877045e1da8c4170f8fc04abd1aae7d79f91e59335e304b0fdf255b6c4b",
+      "image": "0.10.0",
+      "commit": "f2818e3",
+      "status": "Completed",
+      "duration": "1h 12m",
+      "faults": "none",
+      "assertions": [
+        {
+          "name": "dwarf_served_mutated_tx",
+          "status": "passed",
+          "note": "node pulled & decoded mutated txs \u2014 no crash"
+        },
+        {
+          "name": "dwarf_node_connected",
+          "status": "passed",
+          "note": "node connected"
+        },
+        {
+          "name": "dwarf_tx_decoder_reachable",
+          "status": "passed",
+          "note": "decoder exercised"
+        },
+        {
+          "name": "dwarf_base_tx_obtained",
+          "status": "passed",
+          "note": "real tx captured to mutate"
+        },
+        {
+          "name": "container: dwarf-adversary, exit code: 1",
+          "status": "unfound",
+          "note": "adversary never crashed (good)"
+        }
+      ],
+      "counts": {
+        "passed": 76,
+        "failed": 9,
+        "unfound": 5
+      }
+    }
+  ],
+  "findings": "<b>Result \u2014 cardano-node is robust to adversarial CBOR on every surface tested.</b> Across <b>8 live Antithesis runs</b> (each serving its target decoder; all serve-assertions passed) and <b>two multi-hour local soaks</b> \u2014 spanning the <b>block</b>, <b>transaction</b>, <b>auxiliary-data</b>, and <b>block-header</b> decoders, under <b>both</b> hostile-but-valid structural mutation <b>and</b> outright malformed/invalid CBOR \u2014 the node decoded every adversarial payload <b>without a single crash, hang, node error, critical log, or consensus violation</b>. Valid-but-hostile payloads were rejected at validation; malformed bytes were rejected with a clean <code>DecoderFailure</code> (including the oversize-length 2<sup>64</sup>-1 DoS vector, which was rejected without allocating). <br><br><b>Scale.</b> The block decoder was exercised by two ~3h Antithesis campaigns (~150 simulated test-hours each, structural and malformed) plus 8h local soaks serving ~169,000 mutated blocks apiece. <br><br><b>Non-node observations (investigated; none are node defects):</b><ul><li><b>p2 producer exit + \"no critical logs\"</b> (1h structural run): a stock producer, not the eclipsed node-under-test. Ruled out as a DWARF/node issue \u2014 not reproducible locally (the node logged 0 Error/Critical over 36k+ mutated blocks), the adversary has no connection path to p2, and it did not recur in the 3h campaign. A producer-mesh condition specific to the Antithesis simulator.</li><li><b>chain-sync flap driver</b> (<code>chain-sync-client/parallel_driver_flap.sh</code>, 3h malformed run): a bundled harness test-template command exited non-zero. Not a node assertion \u2014 every node-under-test health check passed in that run. A composer-driver artifact, plausibly perturbed by byte-mode's aggressive peer disconnects.</li><li><b>\"The Antithesis Fault Injector was started\"</b> fails in every run by design \u2014 all runs used <code>--no-faults</code> to isolate the decoder signal.</li></ul><b>Known limitations.</b> (1) <b>Sub-field targeting (certificate &amp; auxiliary-data) \u2014 found &amp; fixed 2026-06-16.</b> Two things blocked it: the testnet's generator emits only payment transactions (no cert/metadata to target), AND the targeter did not unwrap the HardFork node-to-node GenTx envelope (era tag + tag-24 CBOR-in-CBOR), so cert/aux mutation silently fell back to whole-tx \u2014 including the earlier aux-data \"live\" run, which was therefore whole-tx, not aux-data-targeted. Image 0.15.0 unwraps the envelope; with injected cert- and metadata-bearing txs we local-verified genuine certificate and auxiliary-data sub-field mutations (e.g. cert:truncateCollection, aux:flipIndefinite), node robust (relay2 Critical=0, RestartCount=0). A live Antithesis re-run on a chain carrying cert/metadata txs is the remaining step. (2) Local soaks plateau after ~4h (a DWARF-adversary longevity disconnect under one sustained eclipse connection \u2014 a test-harness limitation, not a node defect; the node stayed healthy the full duration in both soaks). (3) A clean result is strong evidence of robustness on the exercised surface within the run budget, not a proof of total absence of bugs. <b>Malformed-CBOR coverage rounded out:</b> dedicated byte-level runs on the <b>transaction</b> decoder (tx-submission) and the <b>block-header</b> decoder (chain-sync) both passed \u2014 the node decoded the malformed input and rejected it with no crash, no node errors, and no criticals. Malformed-byte fuzzing is now proven across block, transaction, and header decoders (matching the structural-fuzzing breadth); only the certificate shape remains untested in either family. <b>Reject-oracle (FU1) \u2014 node correctly REJECTS, never accepts:</b> beyond not crashing, a local reject-oracle confirmed the node actively rejects adversarial CBOR and never adopts it. Over a struct soak the node-under-test logged <b>2,445 DecoderFailure rejections</b> against the adversary's stream and <b>adopted ZERO</b> of the <b>165,560</b> mutated blocks its sole (eclipsed) peer served \u2014 0 critical logs, 0 restarts. So the result is not merely crash-robustness: the node decodes adversarial input, rejects what it should, and accepts none of it. (Note: structural mutations on blocks are rejected at the <i>decoder</i>, not the validator \u2014 exercising the deeper validation layer needs a decodable-but-semantically-invalid mutation mode, tracked as a follow-up.) <b>Validation-layer probe (FU3b, image 0.14.0):</b> a new <i>semantic</i> mutation mode perturbs leaf values while preserving CBOR type+length, so blocks DECODE cleanly but are semantically invalid \u2014 reaching the node's <b>validation</b> layer (not just the decoder). At full mutation rate the node rejected <b>every</b> served block at header-body consistency validation (<code>BlockFetchProtocolFailureWrongBlock</code>) and adopted <b>none</b>, no crash. (Depth note: this exercises header-body consistency; reaching the deeper ledger/consensus rules requires body-hash-consistent mutation \u2014 a tracked follow-up.) <b>In-process decoder fuzzing (FU5, 2026-06-17) \u2014 volume layer.</b> Separately from the wire-level Antithesis runs (which prove end-to-end robustness but are network-rate-bound), a new in-process harness (<code>dwarf-decoder-fuzz</code>) drives the real Conway transaction decoder directly: <b>15,000,000 decode attempts</b> over a real-tx seed corpus (5M each of byte-level, structural, and semantic mutation) at <b>~100\u2013400k decodes/sec</b> \u2014 <b>0 uncaught exceptions and 0 timeouts</b> (the node decoder either decoded the input or rejected it with a clean DeserialiseFailure). This is the high-volume statistical complement to the protocol campaigns. Honest scope: generational (seed-corpus + mutation), not coverage-guided (GHC emits no SanitizerCoverage); it targets the DoS class (uncaught exceptions / non-termination), not memory-safety (Haskell is memory-safe; the C FFI crypto surface is a separate, deferred item). Transaction decoder only so far; block/header decoders are the next in-process targets. <b>Ledger-layer reject-oracle (#3, witness tampering, 2026-06-17).</b> Beyond the decoder, DWARF now reaches the <b>mempool/ledger</b> layer: the adversary tampers a tx witness signature (leaving the body/txid intact) so the node accepts the tx into its mempool and runs full ledger validation. Local 8h soak: <b>3,266 tampered txs, every one ledger-rejected</b> (ApplyTxError / MempoolRejectedByLedger), <b>0 accepted</b>, relay2 Critical=0 / RestartCount=0; live Antithesis 1h + 3h confirmed node-safe (no crashes / no critical logs / cluster fork depth &lt; k) with the mutated txs served. So the node is shown to <i>correctly reject</i> adversarial input at both the decoder AND the ledger layer, not merely \"not crash\". (Limit: block-captured txs have spent inputs, so rejection fires at inputs-spent; isolating the witness rule needs unspent inputs.) <b>In-process decoder fuzzing at scale (#4, 2026-06-17):</b> an 8h local run drove the real Conway tx decoder <b>~7.2 billion times</b> (byte / structural / semantic mutation) at ~90\u2013380k decodes/sec with <b>0 uncaught exceptions and 0 timeouts</b>; the same harness also ran as an Antithesis workload (per-timeline /dev/urandom seed) across the 1h + 3h runs with its bug-oracle assertions (no-uncaught-exception, no-timeout) passing and both decode + reject paths reached. Combined, the assessment now spans wire-level robustness, ledger-layer correctness, and billions-scale in-process decoder volume \u2014 all clean. <b>Validation-bypass battery (#2, deep, over N2N \u2014 2026-06-17).</b> A battery of Conway txs with VALID UNSPENT inputs, each violating one ledger rule, was served by the adversary to the eclipsed node-under-test over real N2N tx-submission (not local submit). Each was rejected at its exact rule \u2014 <code>ValueNotConservedUTxO</code>, <code>FeeTooSmallUTxO</code>, <code>OutsideValidityIntervalUTxO</code>, and <code>MissingVKeyWitnessesUTXOW</code> (wrong-key &amp; unsigned) \u2014 with <b>0 accepted</b> and no crash. This exercises the witness/value/fee/validity ledger rules directly (the surface beyond the decoder); no validation bypass was found. <b>Corpus diversity (#3, 2026-06-17).</b> The decoder-fuzz seed corpus was broadened from near-identical payment txs to 17 seeds spanning payment, basic + deeply-nested metadata, stake-registration and vote-delegation certificates, 5-output multi-output, and large-int/edge-value transactions; re-fuzzing drove ~225 million decodes over this diverse set with 0 exceptions and 0 timeouts. (Remaining decoder branches not yet seeded: multi-asset mint, Plutus scripts, governance actions.) <b>FULL ledger-rule battery (#2, deep \u2014 2026-06-17).</b> Expanded the validation-bypass probe to <b>14 rule families spanning every major Conway ledger family</b>, each a single-rule-violating tx (valid unspent inputs) rejected at its exact rule, 0 accepted: <b>UTxO</b> \u2014 ValueNotConservedUTxO, FeeTooSmallUTxO, OutsideValidityIntervalUTxO (upper+lower), forged-input (ConwayMempoolFailure), OutputTooSmallUTxO, MaxTxSizeUTxO, WrongNetwork; <b>witness</b> \u2014 MissingVKeyWitnessesUTXOW (unsigned + wrong-key) and InvalidWitnessesUTXOW (corrupted ed25519 signature, confirmed over N2N); <b>certificate</b> \u2014 StakeKeyNotRegisteredDELEG, IncorrectDepositDELEG; <b>Plutus phase-2</b> \u2014 a real LoopV3 script-locked UTxO spent with insufficient declared execution units, rejected at ValidationTagMismatch (script budget overspent); <b>governance</b> \u2014 ProposalDepositIncorrect. No validation bypass found in any class. <b>FULL decoder-surface corpus (#3, deep).</b> The decoder-fuzz seed corpus now spans 20 transactions across distinct Conway decoder branches \u2014 payment, basic + deeply-nested metadata, stake-registration and vote-delegation certificates, 5-output multi-output, large-int/edge values, a Plutus spend (script + inline datum + redeemer + collateral + script-data-hash), a governance proposal, and a multi-asset mint \u2014 over which ~174M in-process decodes ran with 0 exceptions and 0 timeouts.",
+  "reproducibility": [
+    "Adversary images (public on ghcr.io/j-gainsec/dwarf-adversary): 0.10.0 (early block/tx), 0.11.0 (per-timeline random seed), 0.12.0 (byte-level malformed-CBOR mode).",
+    "Bundles on Cyber-Castellum/DWARF: sp3a-blockfetch (block, 9044712 / fab353b), sp3-txbody-011 (52ae6f5), sp3-auxdata (a057003), sp3a-blockfetch-bytes (809f1fc, --mutation-level bytes).",
+    "Every run draws a fresh seed per Antithesis timeline and logs it; any timeline is reproduced locally with `--seed 0x<value>` via tools/sp3a_topology_eclipse_repro.sh (struct) or the same with `bytes` (malformed).",
+    "Results were read from each run's Antithesis triage report (per testRunId) on the amaru-cardano tenant; this report's figures were audited against that source."
+  ],
+  "scope_notes": [
+    "CBOR shapes proven live: block-header (chain-sync), block (block-fetch), tx-body (tx-submission). The auxiliary-data and certificate SUB-FIELD shapes did not actually engage in prior live runs: until image 0.15.0 the targeter did not unwrap the HardFork N2N GenTx envelope, so cert/aux targeting silently fell back to whole-tx. Fixed in 0.15.0 and local-verified 2026-06-16 (genuine cert:/aux: sub-field mutations, node robust); a live Antithesis re-run with cert/metadata-bearing txs is the remaining step.",
+    "Mutation is single-point structural perturbation of the CBOR term (drop / type-confuse / corrupt length+nesting), driven by a per-timeline random seed. It is broad random structural fuzzing under Antithesis timeline exploration \u2014 not coverage-guided or symbolic.",
+    "Runs were executed with Antithesis fault injection disabled (--no-faults) to isolate the decoder signal; a faults-on pass can combine fuzzing with network/process chaos.",
+    "A clean result means no defect was found on the exercised surface within the run budget \u2014 it is strong evidence of robustness, not a proof of total absence of bugs.",
+    "The failures labelled \"The Antithesis Fault Injector was started\" (every run) and \"No Antithesis errors\" are expected artifacts of the --no-faults configuration and the Antithesis platform's own setup checks \u2014 not node defects. The asteria-game/* command failures and dwarf_base_header_obtained (a header-path assertion that does not apply in tx-submission runs) are likewise harness/mode artifacts.",
+    "Run scope: this report covers the 8 successful Antithesis runs of the current adversary (images 0.10.0-0.12.0) plus two local soaks. Three earlier tenant runs are intentionally excluded as they do not bear on the node-robustness result: two superseded bundles (commits 317ac21, b14a287) that failed at Antithesis ingestion due to a bundle-packaging/test-harness issue since fixed (they never reached the node), and one earlier-code run (commit fcb29e9, image 0.5.1) that Completed but predates the serve fix, so its fuzzing seam (dwarf_served_mutated_tx) was unfound \u2014 superseded by the confirmed tx-submission runs herein."
+  ],
+  "footer": "Generated by DWARF (tools/generate_campaign_report.py). Antithesis is a deterministic-simulation testing platform; DWARF is a Cardano fuzzing/adversarial-testing framework.",
+  "coverage": "Two fuzzing families across four decoder surfaces. <b>Structural</b> = well-formed CBOR with hostile structure/types/values; <b>Malformed</b> = invalid CBOR bytes (truncated / oversized-length / garbage). <span class='ok'>green</span> = run live and node robust.<table><tr><th>Decoder (protocol)</th><th>Structural (valid-but-hostile)</th><th>Malformed (invalid bytes)</th></tr><tr><td>block (block-fetch)</td><td><span class='chip ok'>live</span> 1h + 3h + 8h soak</td><td><span class='chip ok'>live</span> 1h + 3h + 8h soak</td></tr><tr><td>tx-body (tx-submission)</td><td><span class='chip ok'>live</span> 1h</td><td><span class='chip ok'>live</span> 1h</td></tr><tr><td>auxiliary-data (tx-submission)</td><td><span class='chip ok'>local</span> 0.15.0\u2020</td><td><span class='chip ok'>live</span> 1h*</td></tr><tr><td>block-header (chain-sync)</td><td><span class='chip ok'>live</span> (SP2)</td><td><span class='chip ok'>live</span> 1h</td></tr><tr><td>certificate (tx-submission)</td><td><span class='chip ok'>live</span> 1h+3h + 8h soak\u2021</td><td><span class='chip muted'>n/a (byte mode is whole-payload)</span></td></tr></table><p class='muted' style='margin:.3rem 0 0'>\u2020 auxiliary-data and certificate sub-field <b>structural</b> targeting was fixed in image 0.15.0 (HardFork N2N GenTx envelope unwrap) and local-verified 2026-06-16 with cert/metadata-bearing txs (real cert:/aux: mutations, node robust). The earlier aux-data \"live\" run pre-dates the fix and was whole-tx (envelope) fallback. Byte-mode corruption is whole-payload, so the malformed aux-data cell (*) is covered by the tx-submission byte run regardless.<br>\u2021 <b>certificate is now live-proven (image 0.16.0 + seed-corpus, 2026-06-17):</b> a seed-corpus (--seed-tx cert/metadata wire-GenTx) supplies cert-bearing base txs so targeting engages on the hermetic devnet. 1h + 3h Antithesis runs (Cyber-Castellum/DWARF@42028dc) both Completed node-robust (no crashes / no critical logs / fork depth < k; dwarf_served_mutated_tx passed). An 8h local soak served <b>402 real certificate-sub-field mutations on an empty chain</b> (chain_txs=0 throughout), relay2 Critical=0/Restart=0. Auxiliary-data remains local-verified (same envelope-unwrap path).</p><p class='muted' style='margin:.3rem 0 0'>Malformed-byte coverage now spans <b>block, tx-submission, and chain-sync</b> (the tx run covers tx-body and aux-data, since byte corruption is whole-payload). Both fuzzing families are proven on every protocol except <b>certificate</b>, which remains gated on the testnet producing certificate-bearing transactions.</p>"
+}

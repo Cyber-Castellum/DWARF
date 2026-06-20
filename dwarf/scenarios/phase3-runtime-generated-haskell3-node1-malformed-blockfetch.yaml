@@ -23,7 +23,7 @@
   "load": [
     {
       "primitive": "shim_peer_malformed_blockfetch",
-      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "runtime_metadata_path": "${HOME}/cardano-profiles/profile-i-generated-haskell3/runtime.json",
       "target_node": "node1",
       "malformation_id": "invalid-point-hash-short",
       "response_timeout_seconds": 2,

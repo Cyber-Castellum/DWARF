@@ -5,7 +5,7 @@
 # against it. Proves the block-fetch wiring locally before spending Antithesis
 # time (the mutated-block serve+decode is proven on Antithesis with real
 # in-bundle blocks). Expect: handshake completes, a clean client result, NO
-# crash/panic. Run on cardano-box (needs the ghcup ghc-9.6.7 toolchain).
+# crash/panic. Run on build-host (needs the ghcup ghc-9.6.7 toolchain).
 set -uo pipefail
 cd "$(dirname "$0")/../antithesis/components/dwarf-adversary"
 export PATH="$HOME/.ghcup/bin:$PATH"

@@ -52,13 +52,24 @@ library
     , base
     , base16-bytestring
     , bytestring
+    , cardano-crypto-class
+    , cardano-ledger-alonzo
+    , cardano-ledger-api
+    , cardano-ledger-binary
     , cardano-ledger-byron
+    , cardano-ledger-conway
+    , cardano-ledger-core
+    , cardano-ledger-shelley
+    , cardano-slotting
+    , cardano-strict-containers
     , cborg
     , containers
     , contra-tracer
+    , data-default
     , directory
     , filepath
     , io-classes
+    , microlens
     , network
     , network-mux
     , ouroboros-consensus
@@ -71,12 +82,16 @@ library
     , ouroboros-network-protocols
     , random
     , serialise
+    , small-steps
     , strict-stm
     , text
+    , time
     , typed-protocols
 
   exposed-modules:
     DwarfAdversary
+    DwarfAdversary.ApplyBlock
+    DwarfAdversary.Surfaces
     DwarfAdversary.Application
     DwarfAdversary.BlockFetch.MutatingCodec
     DwarfAdversary.BlockSource
@@ -89,6 +104,7 @@ library
     DwarfAdversary.TxSubmission.MutatingCodec
     DwarfAdversary.TxSubmission.Target
     DwarfAdversary.HeaderSource
+    DwarfAdversary.MiniProtocolDecode
     DwarfAdversary.SDK
     DwarfAdversary.TxSource
 
@@ -115,6 +131,81 @@ executable dwarf-adversary
 
   hs-source-dirs: app
 
+executable dwarf-decoder-fuzz
+  import:         settings
+  main-is:        Main.hs
+  build-depends:
+    , dwarf-adversary
+    , aeson
+    , base
+    , bytestring
+    , cborg
+    , directory
+    , filepath
+    , random
+    , time
+
+  hs-source-dirs: fuzz
+
+executable dwarf-decode-one
+  import:         settings
+  main-is:        Main.hs
+  build-depends:
+    , dwarf-adversary
+    , base
+    , bytestring
+    , cborg
+
+  hs-source-dirs: fuzz-one
+
+executable dwarf-decode-any
+  import:         settings
+  main-is:        Main.hs
+  build-depends:
+    , dwarf-adversary
+    , aeson
+    , base
+    , bytestring
+    , cborg
+    , containers
+    , cardano-crypto-class
+    , cardano-ledger-alonzo
+    , cardano-ledger-api
+    , cardano-ledger-binary
+    , cardano-ledger-conway
+    , cardano-ledger-core
+    , cardano-ledger-shelley
+    , cardano-slotting
+    , cardano-strict-containers
+    , data-default
+    , filepath
+    , microlens
+    , small-steps
+    , time
+
+  hs-source-dirs: fuzz-surface
+
+-- NOTE: an AFL persistent-mode harness (fuzz-persist/) was prototyped to lift
+-- the ~82 execs/s fork-per-exec ceiling. AFL engages persistent + shared-memory
+-- mode, but the deferred forkserver forks AFTER the GHC RTS is initialized and
+-- the persistent child hangs (calibration times out; -V0 -I0 did not help) --
+-- the known managed-runtime persistent-fork incompatibility. Left unbuilt; the
+-- realistic speedup is shrinking the whole-tree SanCov map (see COVERAGE-HARNESS.md).
+
+executable dwarf-snapshot-decode
+  import:         settings
+  main-is:        Main.hs
+  build-depends:
+    , dwarf-adversary
+    , base
+    , fs-api
+    , mtl
+    , ouroboros-consensus
+    , ouroboros-consensus-cardano
+    , serialise
+
+  hs-source-dirs: snapshot-decode
+
 test-suite dwarf-adversary-test
   import:             settings
   other-modules:      FuzzSpec
@@ -130,5 +221,6 @@ test-suite dwarf-adversary-test
     , QuickCheck
     , random
     , serialise
+    , text
 
   build-tool-depends: hspec-discover:hspec-discover

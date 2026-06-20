@@ -1,5 +1,5 @@
 {
-  "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-install",
+  "output_dir": "${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-install",
   "substrate": {
     "compose_mode": "host",
     "host_strategy": "single-host",

@@ -6,7 +6,7 @@
     "node1": {
       "impl": "cardano-node",
       "requested_version": "10.7.1",
-      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_binary": "${HOME}/.local/bin/cardano-node",
       "resolved_version": "10.7.1",
       "role": "honest",
       "satisfied": true,
@@ -16,7 +16,7 @@
     "node2": {
       "impl": "cardano-node",
       "requested_version": "10.7.1",
-      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_binary": "${HOME}/.local/bin/cardano-node",
       "resolved_version": "10.7.1",
       "role": "honest",
       "satisfied": true,

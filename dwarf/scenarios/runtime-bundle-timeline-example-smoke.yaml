@@ -13,7 +13,7 @@
   "load": [
     {
       "primitive": "runtime_bundle_timeline",
-      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "runs_dir": "${HOME}/dwarf-fw/runs",
       "bundle_ids": [
         "20260427T074053Z-ba7c46cc",
         "20260427T075930Z-8a754454",

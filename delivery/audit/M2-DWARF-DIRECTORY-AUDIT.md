@@ -39,7 +39,7 @@ Remove or quarantine material when it is one of:
 - [x] Audit every top-level directory under `dwarf/`.
 - [x] Patch public dashboard text so it only describes retained M2 material.
 - [x] Update delivery contract so removed directories cannot come back.
-- [x] Rebuild and redeploy on `cardano-box`.
+- [x] Rebuild and redeploy on `build-host`.
 - [x] Verify live `/operate` and key subpages after cleanup.
 - [ ] Commit and push only after verification passes.
 
@@ -73,7 +73,7 @@ Remove or quarantine material when it is one of:
 
 - `dwarf/fuzz-tests/` was removed because it exposed 121 broad fuzz-test
   catalog entries, including non-M2 candidate material and local paths.
-- Live deployed dashboard was verified at `http://192.168.30.16:8879` after
+- Live deployed dashboard was verified at `http://192.0.2.1:8879` after
   that change and reported `Fuzz tests: 0`.
 - `dwarf/corpora/` was initially removed too broadly, then restored locally.
   The correct approach is a scoped M2 corpus subset, not wholesale deletion.
@@ -83,12 +83,12 @@ Remove or quarantine material when it is one of:
   still useful supporting material for serialization/deserialization fuzzing.
 - Top-level directory scan found these public-delivery risk areas:
   - `dwarf/corpora/`: mixed M2 and non-M2 corpus material.
-  - `dwarf/devnet-build/`: one Dockerfile with local/cardano-box assumptions; referenced by `dwarf/profile_manager/profiles.py`.
-  - `dwarf/grammars/`: useful for fuzz/dictionary work, but contains ledger/future dictionaries and an old cardano-box sync note.
+  - `dwarf/devnet-build/`: one Dockerfile with local/build-host assumptions; referenced by `dwarf/profile_manager/profiles.py`.
+  - `dwarf/grammars/`: useful for fuzz/dictionary work, but contains ledger/future dictionaries and an old build-host sync note.
   - `dwarf/targets/`: large target tree with M2 manifests plus many non-M2 ledger, Plutus, local-protocol, and future harnesses.
   - `dwarf/tests/`: useful for verification but contains local fixtures and old route assumptions; likely not client delivery material.
   - `dwarf/profile_manager/`: required for the app, but still contains some local default paths and legacy help text that need careful review.
-- Historical `dwarf/evidence/` and `dwarf/runs/` contain `cardano-box` and `/home/nigel` strings as recorded execution output. Those should not automatically be treated like public docs/code; they may be valid preserved evidence if the surrounding docs make that clear.
+- Historical `dwarf/evidence/` and `dwarf/runs/` contain `build-host` and `${HOME}` strings as recorded execution output. Those should not automatically be treated like public docs/code; they may be valid preserved evidence if the surrounding docs make that clear.
 - `dwarf/targets/manifests/` currently contains 98 manifests. The dashboard's
   `/operate/targets` page intentionally filters this down to the 29 M2
   `*-cbor-decode-*` and `*-mini-protocol-decode-*` targets. That means the UI
@@ -102,8 +102,8 @@ Remove or quarantine material when it is one of:
   - Python framework modules compiled successfully.
   - Local dashboard returned HTTP 200 for `/operate`, key Operate subpages,
     `/learn`, and `/api/status`.
-  - `cardano-box` delivery contract passed.
-  - `cardano-box` rebuilt and redeployed `dwarf/framework:june-20260604-m2`
+  - `build-host` delivery contract passed.
+  - `build-host` rebuilt and redeployed `dwarf/framework:june-20260604-m2`
     as `dwarf-fw-june-m2` on `0.0.0.0:8879`.
   - Live dashboard returned HTTP 200 for `/operate`, `/operate/targets`,
     `/operate/scenarios`, `/operate/profiles`, `/operate/runs`,
@@ -163,7 +163,7 @@ PY
 python3 - <<'PY'
 import urllib.request
 for path in ["/operate", "/operate/targets", "/operate/runs", "/operate/bundles", "/api/status"]:
-    with urllib.request.urlopen("http://192.168.30.16:8879" + path, timeout=5) as response:
+    with urllib.request.urlopen("http://192.0.2.1:8879" + path, timeout=5) as response:
         print(response.status, path)
 PY
 ```

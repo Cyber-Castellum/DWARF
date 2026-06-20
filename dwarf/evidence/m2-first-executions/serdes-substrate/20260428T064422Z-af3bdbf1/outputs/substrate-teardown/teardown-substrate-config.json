@@ -1,4 +1,4 @@
 {
-  "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064422Z-af3bdbf1/outputs/substrate-teardown",
+  "output_dir": "${HOME}/dwarf-fw/runs/20260428T064422Z-af3bdbf1/outputs/substrate-teardown",
   "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064422Z-af3bdbf1/runtime.json"
 }

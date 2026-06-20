@@ -10,7 +10,7 @@
   "load": [
     {
       "primitive": "runtime_forensic_snapshot",
-      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "runs_dir": "${HOME}/dwarf-fw/runs",
       "run_ids": [
         "20260427T092200Z-audittraildemo",
         "20260427T074053Z-ba7c46cc"

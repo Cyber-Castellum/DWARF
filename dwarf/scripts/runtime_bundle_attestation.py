@@ -103,7 +103,7 @@ def _run_version_command(command: list[str]) -> str | None:
 def collect_tooling_versions(*, dwarf_source_sha256: str | None = None) -> dict[str, str | None]:
     amaru_candidates = [
         os.environ.get("ADA2_DWARF_AMARU_BIN"),
-        "/home/nigel/amaru-verification/target/debug/amaru",
+        "${HOME}/amaru-verification/target/debug/amaru",
         "amaru",
     ]
     amaru_version = None

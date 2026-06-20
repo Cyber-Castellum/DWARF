@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-DEFAULT_RUNTIME_ROOT_BASE = "/home/nigel/cardano-profiles"
+DEFAULT_RUNTIME_ROOT_BASE = "${HOME}/cardano-profiles"
 DEFAULT_COMPOSE_PROJECT_PREFIX = "dwarf-"
 VALID_TOPOLOGY_PATTERNS = {"local-mesh"}
 

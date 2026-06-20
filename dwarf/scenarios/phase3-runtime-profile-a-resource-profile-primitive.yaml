@@ -13,7 +13,7 @@
   "load": [
     {
       "primitive": "runtime_resource_profile",
-      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "runtime_metadata_path": "${HOME}/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
       "target_node": "node1",
       "sample_count": 5,
       "sample_interval_seconds": 0.5,

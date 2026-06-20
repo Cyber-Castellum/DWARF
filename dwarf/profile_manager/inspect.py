@@ -10,7 +10,7 @@ import shlex
 from profile_manager.profiles import find_profile
 
 
-LEGACY_RUNTIME_ROOT = "/home/nigel/cardano-devnet"
+LEGACY_RUNTIME_ROOT = "${HOME}/cardano-devnet"
 
 
 def resolve_runtime(profile_id=None, runtime_root=None):
@@ -338,14 +338,14 @@ PY
   echo "peer_sharing=not_applicable"
   echo "## tip"
   if [ -S "$socket_path" ]; then
-    CARDANO_NODE_SOCKET_PATH="$socket_path" /home/nigel/.local/bin/cardano-cli query tip --testnet-magic 2 2>/dev/null || echo "tip_query=failed"
+    CARDANO_NODE_SOCKET_PATH="$socket_path" ${HOME}/.local/bin/cardano-cli query tip --testnet-magic 2 2>/dev/null || echo "tip_query=failed"
     echo
   else
     echo "tip_query=missing_socket"
   fi
 else
   docker_node_processes=$(docker ps --filter "label=com.docker.compose.project=$project" --filter "label=ada2.service" -q 2>/dev/null | wc -l | tr -d ' ')
-  host_node_processes=$(ps -eo command 2>/dev/null | grep -Ec '[/]home/nigel/.local/bin/cardano-node run' || true)
+  host_node_processes=$(ps -eo command 2>/dev/null | grep -Ec '[/]home/dwarf/.local/bin/cardano-node run' || true)
   if [ "${docker_node_processes:-0}" -gt 0 ]; then
     node_processes="$docker_node_processes"
   else
@@ -380,7 +380,7 @@ else
   container="${project}-node1-1"
   socket="$env_root/socket/node1/sock"
   if [ -S "$socket" ]; then
-    CARDANO_NODE_SOCKET_PATH="$socket" /home/nigel/.local/bin/cardano-cli query tip --testnet-magic 42 2>/dev/null || echo "tip_query=failed"
+    CARDANO_NODE_SOCKET_PATH="$socket" ${HOME}/.local/bin/cardano-cli query tip --testnet-magic 42 2>/dev/null || echo "tip_query=failed"
     echo
   elif docker inspect "$container" >/dev/null 2>&1; then
     docker exec -e CARDANO_NODE_SOCKET_PATH=/env/socket/node1/sock "$container" \
@@ -503,7 +503,7 @@ if [ "$runtime_layout" = "preview-amaru" ]; then
   echo "tip_query=not_applicable"
 elif [ "$runtime_layout" = "preview-haskell" ]; then
   if [ -S "$socket_path" ]; then
-    CARDANO_NODE_SOCKET_PATH="$socket_path" /home/nigel/.local/bin/cardano-cli query tip --testnet-magic 2 2>/dev/null || echo "tip_query=failed"
+    CARDANO_NODE_SOCKET_PATH="$socket_path" ${HOME}/.local/bin/cardano-cli query tip --testnet-magic 2 2>/dev/null || echo "tip_query=failed"
   else
     echo "tip_query=missing_socket"
   fi

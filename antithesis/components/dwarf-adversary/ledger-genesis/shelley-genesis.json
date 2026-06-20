@@ -1,0 +1,63 @@
+{
+  "activeSlotsCoeff": 0.05,
+  "epochLength": 500,
+  "genDelegs": {
+    "4d6052605e872eb729520cfacdf068cb1bb96482d662d00c2d91c42d": {
+      "delegate": "673c5b1826a039d66efc7656635a3eb739fe7339f485f187471c8505",
+      "vrf": "9e8aff209867d531adb731eab86a310a9e323c3b430c797888984525c7837e1a"
+    },
+    "7553ef3169774034b70f3400b04d5f897055e569e849a447645d026d": {
+      "delegate": "5c63335b4195f25432cdd65a8ada29c8873d5f64fccd1213a96240e0",
+      "vrf": "1e89fd8f47c83930b183927fe45f67c122f748ce18914d653f669b53202602c6"
+    },
+    "dc098932a1b0e2d4798af3cd633bf43c5ba5a266fa681f952c624b19": {
+      "delegate": "c5a0dee20b97fcf5bf3bd064e1b728975bcb610494c083d92a47f188",
+      "vrf": "647ac30eb7ae9feb4aa83c77089d66da8340184865c93c7e700e02606bbfe5c5"
+    }
+  },
+  "initialFunds": {
+    "001973dd27d5591d595a03017b24ec41c4f1bb045955f935a93cf4720dccf723d3840890c3f998cb1c11b101e75d1e24a64da7dbc041dce3e0": 15000003000000,
+    "003756c0273fc819dee3e80b7da4c4b1170a034d739a8272c409d0ce8dd30a8db7933f62b7d04472d7ebcf80dad7b377fed79108d6acb7b2cb": 15000003000000,
+    "00dbd249633742e939cb4148b245310873f27f73758fa13c3400cc5e9d5b2664fffce4bbd52c66eeead1f020e3b8049692beb63ced4bed748e": 15000003000000,
+    "604b730d04fa481dd83a8c8810f0814cf77a68ca35697f97d8b6604860": 15000003000000,
+    "609a51c84e645b954273b2ac6f1ba7950a2194b4993f1b6bbe6b049df9": 15000003000000,
+    "60a7c3bed0f20d9c379bd91a0b3c2f9893d58c42de5277631b265bf18c": 15000003000000
+  },
+  "maxKESEvolutions": 60,
+  "maxLovelaceSupply": 100000020000000,
+  "networkId": "Testnet",
+  "networkMagic": 42,
+  "protocolParams": {
+    "a0": 0,
+    "decentralisationParam": 1,
+    "eMax": 18,
+    "extraEntropy": {
+      "tag": "NeutralNonce"
+    },
+    "keyDeposit": 400000,
+    "maxBlockBodySize": 65536,
+    "maxBlockHeaderSize": 1100,
+    "maxTxSize": 16384,
+    "minFeeA": 1,
+    "minFeeB": 0,
+    "minPoolCost": 0,
+    "minUTxOValue": 0,
+    "nOpt": 100,
+    "poolDeposit": 0,
+    "protocolVersion": {
+      "major": 10,
+      "minor": 0
+    },
+    "rho": 0.1,
+    "tau": 0.1
+  },
+  "securityParam": 5,
+  "slotLength": 0.1,
+  "slotsPerKESPeriod": 129600,
+  "staking": {
+    "pools": {},
+    "stake": {}
+  },
+  "systemStart": "2026-06-07T02:47:49Z",
+  "updateQuorum": 2
+}

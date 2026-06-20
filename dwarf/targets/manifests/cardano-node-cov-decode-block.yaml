@@ -1,0 +1,28 @@
+{
+  "id": "cardano-node-cov-decode-block",
+  "binary": "antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+  "input_format": "file_arg",
+  "implementation": "cardano-node",
+  "language": "haskell",
+  "upstream_commit": "local",
+  "decoder_type": "Coverage-guided AFL++ harness (native SanitizerCoverage)",
+  "harness": {
+    "runner": "afl-fuzz",
+    "select_env": "DWARF_DECODER=block",
+    "entrypoint": "DwarfAdversary.ChainSync.Codec.decBlock (full block: header + every tx + witnesses + aux; widest surface)",
+    "coverage": "native GHC edge coverage: -fllvm + LLVM SanitizerCoverage trace-pc-guard over the whole instrumented dep tree (cborg + cardano-ledger + ouroboros). See docs/superpowers/specs/2026-06-17-coverage-guided-haskell-decoder-fuzzing.md",
+    "seed_corpus": "antithesis/components/dwarf-adversary/corpora/block",
+    "measured_edges_60s": 3023
+  },
+  "expected_outcomes": {
+    "ok": "decode/compute succeeds, exit 0",
+    "clean_error": "DeserialiseFailure / Left decode error / trailing bytes, exit 0",
+    "crash": "non-DeserialiseFailure exception / RTS abort / signal -> SIGABRT (AFL records crash); hang -> AFL timeout"
+  },
+  "invariants": [
+    "seed corpus remains replayable",
+    "native SanCov edge surface preserved",
+    "malformed input rejects without host panic"
+  ],
+  "complements": "amaru-cargo-fuzz-* (Rust/libFuzzer) — this is the cardano-node Haskell coverage amaru cannot measure"
+}

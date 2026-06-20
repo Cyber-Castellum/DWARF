@@ -2003,7 +2003,7 @@ REMOTE_DWARF_ROOT_ENV = "ADA2_DWARF_REMOTE_ROOT"
 
 
 def _remote_dwarf_root():
-    return Path(os.environ.get(REMOTE_DWARF_ROOT_ENV, "/home/nigel/dwarf-fw"))
+    return Path(os.environ.get(REMOTE_DWARF_ROOT_ENV, "${HOME}/dwarf-fw"))
 
 
 def _manifest_target_implementation(*parts):

@@ -1,0 +1,60 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-node-cov-applyblock-aflpp-smoke",
+  "title": "Native-coverage AFL++ campaign for the cardano-node Conway applyBlock (BBODY -> LEDGERS -> per-tx ledger rules) over a genesis-initialised NewEpochState (GHC SanCov)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "fuzz",
+    "afl++",
+    "coverage",
+    "cardano-node",
+    "ledger",
+    "applyblock",
+    "bbody",
+    "sancov"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "any"
+  },
+  "runtime": "library",
+  "seed": "0xc0de0a06",
+  "load": [
+    {
+      "primitive": "runtime_aflpp_campaign",
+      "working_dir": "/tmp/dwarf-cov-applyblock",
+      "bin": "dwarf-decode-any",
+      "target_binary_path": "${DWARF_ROOT}/antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+      "env": {
+        "DWARF_DECODER": "applyblock",
+        "DWARF_GENESIS_DIR": "${DWARF_ROOT}/antithesis/components/dwarf-adversary/ledger-genesis",
+        "DWARF_AFL_FUZZ": "${DWARF_ROOT}/antithesis/components/dwarf-adversary/coverage-docker/sancov/afl-fuzz"
+      },
+      "seed_dirs": [
+        "${DWARF_ROOT}/antithesis/components/dwarf-adversary/corpora/conwaytx"
+      ],
+      "output_dir": "/tmp/dwarf-cov-applyblock/out",
+      "seconds": 45,
+      "timeout_seconds": 300,
+      "target_implementation": "cardano-node",
+      "replay_harness": "dwarf-decode-any",
+      "replay_target_id": "cardano-node-cov-applyblock",
+      "replay_targets": [
+        "cardano-node"
+      ]
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "aflpp_smoke_exit_clean",
+      "min_execs_done": 1000,
+      "min_queue_count": 12,
+      "min_cycles_done": 0,
+      "min_bitmap_cvg": 0.0
+    }
+  ],
+  "teardown": []
+}

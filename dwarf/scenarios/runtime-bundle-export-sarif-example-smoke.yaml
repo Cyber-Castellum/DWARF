@@ -10,7 +10,7 @@
   "load": [
     {
       "primitive": "runtime_bundle_export_sarif",
-      "runs_dir": "/home/nigel/dwarf-fw/runs",
+      "runs_dir": "${HOME}/dwarf-fw/runs",
       "target_run_id": "20260427T082605Z-98e8aae2",
       "timeout_seconds": 120,
       "expected_helper_exit": 0

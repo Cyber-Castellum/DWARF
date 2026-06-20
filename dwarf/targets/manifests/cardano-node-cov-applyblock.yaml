@@ -1,0 +1,31 @@
+{
+  "id": "cardano-node-cov-applyblock",
+  "binary": "antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+  "input_format": "file_arg",
+  "implementation": "cardano-node",
+  "language": "haskell",
+  "upstream_commit": "local",
+  "decoder_type": "Coverage-guided AFL++ harness (native SanitizerCoverage)",
+  "harness": {
+    "runner": "afl-fuzz",
+    "select_env": "DWARF_DECODER=applyblock (also reads DWARF_GENESIS_DIR for the Shelley/Alonzo/Conway genesis)",
+    "entrypoint": "decode full Conway Tx -> wrap as a single-tx TxSeq -> build a Block BHeaderView whose body hash/size match -> Cardano.Ledger.Shelley.API.Validation.applyBlockEither ValidateAll (BBODY -> LEDGERS -> per-tx LEDGER: UTXOW/UTXO/CERTS ...) over a genesis-initialised Conway NewEpochState (createInitialState . mkLatestTransitionConfig) + fixed Conway Globals",
+    "coverage": "native GHC edge coverage (-fllvm + LLVM SanitizerCoverage) over the whole instrumented dep tree. See docs/superpowers/specs/2026-06-17-coverage-guided-haskell-decoder-fuzzing.md",
+    "seed_corpus": "antithesis/components/dwarf-adversary/corpora/conwaytx",
+    "genesis": "antithesis/components/dwarf-adversary/ledger-genesis (Shelley staking emptied; devnet Conway-hard-fork-at-0 genesis)",
+    "measured_edges_60s": 21236,
+    "measured_60s_note": "image dwarf-haskell-cov:0.2, 0 crashes, 0 hangs, stability 99.83%, corpus 184, ~41 execs/s (genesis NewEpochState built per-exec)"
+  },
+  "expected_outcomes": {
+    "ok": "tx decodes, BBODY structural checks pass, LEDGERS runs the per-tx rules to a verdict, exit 0",
+    "clean_error": "DeserialiseFailure (tx) / BlockTransitionError (BBODY/LEDGERS rejection, e.g. BadInputsUTxO / ValueNotConservedUTxO), exit 0",
+    "crash": "non-DeserialiseFailure exception / RTS abort / signal -> SIGABRT (AFL crash); hang -> AFL timeout"
+  },
+  "invariants": [
+    "seed corpus remains replayable",
+    "BBODY -> LEDGERS -> LEDGER rule pipeline reaches a verdict without host panic",
+    "genesis-initialised Conway NewEpochState builds once per process",
+    "native SanCov edge surface preserved"
+  ],
+  "complements": "cardano-node-cov-applytx (mempool single-tx on empty LedgerState) — this exercises the block-level BBODY wrapper + per-tx rules over a real genesis epoch state"
+}

@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, "/Users/nigel/dwarf-project/dwarf-v4/dwarf")
+sys.path.insert(0, "${DWARF_ROOT}/dwarf")
 from profile_manager import scenario as s
 from profile_manager import primitives as p
 

@@ -1,0 +1,28 @@
+{
+  "id": "cardano-node-cov-applytx",
+  "binary": "antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+  "input_format": "file_arg",
+  "implementation": "cardano-node",
+  "language": "haskell",
+  "upstream_commit": "local",
+  "decoder_type": "Coverage-guided AFL++ harness (native SanitizerCoverage)",
+  "harness": {
+    "runner": "afl-fuzz",
+    "select_env": "DWARF_DECODER=applytx",
+    "entrypoint": "decode full Conway Tx + Cardano.Ledger.Shelley.API.Mempool.applyTx (ValidateAll: UTXOW -> UTXO -> ... STS rule pipeline) over a default LedgerState + fixed Conway Globals",
+    "coverage": "native GHC edge coverage (-fllvm + LLVM SanitizerCoverage) over the whole instrumented dep tree. See docs/superpowers/specs/2026-06-17-coverage-guided-haskell-decoder-fuzzing.md",
+    "seed_corpus": "antithesis/components/dwarf-adversary/corpora/conwaytx",
+    "measured_edges_60s": 8795
+  },
+  "expected_outcomes": {
+    "ok": "tx decodes and the rule pipeline runs to a verdict, exit 0",
+    "clean_error": "DeserialiseFailure / ApplyTxError (validation rejection), exit 0",
+    "crash": "non-DeserialiseFailure exception / RTS abort / signal -> SIGABRT (AFL crash); hang -> AFL timeout"
+  },
+  "invariants": [
+    "seed corpus remains replayable",
+    "ledger STS rule pipeline reaches a verdict without host panic",
+    "native SanCov edge surface preserved"
+  ],
+  "complements": "amaru-cargo-fuzz-ledger-* (Rust) — this exercises cardano-node's own Conway ledger rules"
+}

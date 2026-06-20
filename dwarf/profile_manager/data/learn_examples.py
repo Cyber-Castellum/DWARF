@@ -220,6 +220,12 @@ _EXAMPLES: list[tuple[str, str, str, str]] = [
         "AFL++ cargo-fuzz harness against Amaru's blockfetch parser. Smoke variant runs 60s with the existing corpus to detect ASAN-clean crashes only.",
         "No crashes / hangs in the smoke window · bitmap coverage advances",
     ),
+    (
+        "cardano-node-cov-applyblock-aflpp-smoke.yaml",
+        "native coverage · applyblock ledger rules",
+        "Native coverage-guided AFL++ over a SanitizerCoverage-instrumented cardano-node. The applyblock surface decodes a Conway Tx and runs the full BBODY -> LEDGERS -> per-tx LEDGER state-transition system over a genesis-initialised NewEpochState — the deepest fuzz surface, reaching the real ledger rules, not just the decoder. An 8h campaign across nine surfaces ran ~20.5M executions with 0 crashes.",
+        "aflpp_smoke_exit_clean passes · native edge coverage advances · 0 crashes",
+    ),
 
     # ---- Compound (multiple fault families together) ----
     (

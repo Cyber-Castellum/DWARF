@@ -15,8 +15,8 @@ from runtime_common import PROFILE_A_CONFIG, derive_chainsync_point, point_slot 
 from runtime_telemetry import emit_runtime_metric, emit_target_event  # noqa: E402
 
 
-SERVER_BIN = "/home/nigel/dwarf-fw/targets/amaru/target/release/dwarf-amaru-runtime-blockfetch-stale-server"
-CLIENT_BIN = "/home/nigel/dwarf-fw/targets/amaru/target/release/dwarf-amaru-runtime-blockfetch"
+SERVER_BIN = "${HOME}/dwarf-fw/targets/amaru/target/release/dwarf-amaru-runtime-blockfetch-stale-server"
+CLIENT_BIN = "${HOME}/dwarf-fw/targets/amaru/target/release/dwarf-amaru-runtime-blockfetch"
 
 
 def allocate_port() -> int:

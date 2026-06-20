@@ -35,9 +35,9 @@ from profile_manager.remote import CommandResult
 def test_deployment_config_round_trips_moog_block():
     value = {
         "enabled": True,
-        "deploy_root": "/home/nigel/moog-deploy",
-        "moog_binary": "/home/nigel/bin/moog",
-        "secrets_root": "/home/nigel/moog-secrets",
+        "deploy_root": "${HOME}/moog-deploy",
+        "moog_binary": "${HOME}/bin/moog",
+        "secrets_root": "${HOME}/moog-secrets",
         "mpfs_host": "https://mpfs.plutimus.com",
         "token_id": "21c523c3b4565f1fc1ad7e54e82ca976f60997d8e7e9946826813fabf341069b",
         "requester_wallet_id": "moog-requester",
@@ -46,7 +46,7 @@ def test_deployment_config_round_trips_moog_block():
     config = DeploymentConfig.from_dict({"moog": value})
 
     assert config.moog["enabled"] is True
-    assert config.moog["deploy_root"] == "/home/nigel/moog-deploy"
+    assert config.moog["deploy_root"] == "${HOME}/moog-deploy"
     assert config.to_dict()["moog"]["token_id"].startswith("21c523")
 
 
@@ -128,12 +128,12 @@ def test_apply_moog_setup_form_saves_values_and_preserves_blank_secrets():
 def test_moog_health_command_checks_public_state_without_reading_secrets():
     command = build_moog_health_command(DEFAULT_MOOG_CONFIG)
 
-    assert "/home/nigel/moog-deploy" in command
-    assert "/home/nigel/bin/moog" in command
+    assert "${HOME}/moog-deploy" in command
+    assert "${HOME}/bin/moog" in command
     assert "requester-wallet-info.json" in command
     assert "oracle-wallet-info.json" in command
     assert "moog-oracle.service" in command
-    assert "cat /home/nigel/moog-secrets" not in command
+    assert "cat ${HOME}/moog-secrets" not in command
     assert "requester.json" not in command
     assert "oracle.json" not in command
 
@@ -142,7 +142,7 @@ def test_parse_moog_health_result_summarizes_remote_json():
     remote_payload = {
         "checks": [
             {"id": "binary", "state": "ok", "detail": "moog 0.5.1.3"},
-            {"id": "deploy_root", "state": "ok", "detail": "/home/nigel/moog-deploy"},
+            {"id": "deploy_root", "state": "ok", "detail": "${HOME}/moog-deploy"},
             {"id": "oracle_service_active", "state": "warn", "detail": "inactive"},
         ],
         "wallets": {
@@ -154,7 +154,7 @@ def test_parse_moog_health_result_summarizes_remote_json():
         returncode=0,
         stdout=json.dumps(remote_payload),
         stderr="",
-        rendered_command="ssh cardano-box moog-health",
+        rendered_command="ssh build-host moog-health",
     )
 
     parsed = parse_moog_health_result(result)
@@ -213,11 +213,11 @@ def test_moog_bootstrap_plan_is_opt_in_and_includes_healthcheck_plan():
 def test_moog_bootstrap_command_prepares_dirs_without_reading_or_starting_secrets():
     command = build_moog_bootstrap_command(DEFAULT_MOOG_CONFIG)
 
-    assert "/home/nigel/moog-deploy" in command
-    assert "/home/nigel/moog-secrets" in command
+    assert "${HOME}/moog-deploy" in command
+    assert "${HOME}/moog-secrets" in command
     assert "requester-wallet-info.json" in command
     assert "oracle-wallet-info.json" in command
-    assert "cat /home/nigel/moog-secrets" not in command
+    assert "cat ${HOME}/moog-secrets" not in command
     assert "requester.json" not in command
     assert "oracle.json" not in command
     assert "systemctl --user start" not in command
@@ -229,8 +229,8 @@ def test_parse_moog_bootstrap_result_summarizes_remote_json():
         "state": "warn",
         "applied": True,
         "checks": [
-            {"id": "deploy_root", "state": "ok", "detail": "/home/nigel/moog-deploy"},
-            {"id": "binary", "state": "warn", "detail": "/home/nigel/bin/moog"},
+            {"id": "deploy_root", "state": "ok", "detail": "${HOME}/moog-deploy"},
+            {"id": "binary", "state": "warn", "detail": "${HOME}/bin/moog"},
         ],
         "healthcheck_plan": [{"command": "cardano-profile moog healthcheck --json"}],
     }
@@ -238,7 +238,7 @@ def test_parse_moog_bootstrap_result_summarizes_remote_json():
         returncode=0,
         stdout=json.dumps(remote_payload),
         stderr="",
-        rendered_command="ssh cardano-box moog-bootstrap",
+        rendered_command="ssh build-host moog-bootstrap",
     )
 
     parsed = parse_moog_bootstrap_result(result)
@@ -510,12 +510,12 @@ def test_moog_bootstrap_cli_approve_executes_remote_command(monkeypatch, capsys)
                 {
                     "state": "ok",
                     "applied": True,
-                    "checks": [{"id": "deploy_root", "state": "ok", "detail": "/home/nigel/moog-deploy"}],
+                    "checks": [{"id": "deploy_root", "state": "ok", "detail": "${HOME}/moog-deploy"}],
                     "healthcheck_plan": [{"command": "cardano-profile moog healthcheck --json"}],
                 }
             ),
             stderr="",
-            rendered_command="ssh cardano-box moog-bootstrap",
+            rendered_command="ssh build-host moog-bootstrap",
         )
 
     monkeypatch.setattr("profile_manager.cli._load_or_intake", lambda _command: config)
@@ -567,7 +567,7 @@ def test_moog_preflight_cli_returns_json(monkeypatch, tmp_path, capsys):
         "state": "warn",
         "checks": [{"id": "oracle_service_active", "state": "warn", "detail": "inactive"}],
         "wallets": {"requester": {"address": "addr_test1requester"}, "oracle": {}},
-        "deploy_root": "/home/nigel/moog-deploy",
+        "deploy_root": "${HOME}/moog-deploy",
         "mpfs_host": "https://mpfs.plutimus.com",
         "token_id": DEFAULT_MOOG_CONFIG["token_id"],
         "oracle_service": "moog-oracle.service",
@@ -621,14 +621,14 @@ def test_moog_create_test_command_uses_requester_wallet_without_reading_secret()
     assert "MOOG_MPFS_HOST=https://mpfs.plutimus.com" in command
     assert f"MOOG_TOKEN_ID={DEFAULT_MOOG_CONFIG['token_id']}" in command
     assert "moog requester create-test" in command
-    assert "-w /home/nigel/moog-secrets/requester/requester.json" in command
+    assert "-w ${HOME}/moog-secrets/requester/requester.json" in command
     assert "-r example-org/example-repo" in command
     assert "-u example-user" in command
     assert "-d antithesis" in command
     assert "-c abc123" in command
     assert "--try 2" in command
     assert "-t 3" in command
-    assert "cat /home/nigel/moog-secrets/requester/requester.json" not in command
+    assert "cat ${HOME}/moog-secrets/requester/requester.json" not in command
     assert "walletPassphrase" not in command
     assert "mnemonics" not in command
 
@@ -853,7 +853,7 @@ def test_moog_registration_submit_command_uses_wallet_without_reading_secret():
     public_key = "vkey1active"
     config = {
         **DEFAULT_MOOG_CONFIG,
-        "requester_wallet_file": "/home/nigel/moog-secrets/requester/requester.json",
+        "requester_wallet_file": "${HOME}/moog-secrets/requester/requester.json",
     }
     plan = build_moog_registration_plan(
         moog_config=config,
@@ -879,8 +879,8 @@ def test_moog_registration_submit_command_uses_wallet_without_reading_secret():
     assert f"MOOG_TOKEN_ID={DEFAULT_MOOG_CONFIG['token_id']}" in command
     assert "moog requester register-user" in command
     assert "moog requester register-role" in command
-    assert "-w /home/nigel/moog-secrets/requester/requester.json" in command
-    assert "cat /home/nigel/moog-secrets/requester/requester.json" not in command
+    assert "-w ${HOME}/moog-secrets/requester/requester.json" in command
+    assert "cat ${HOME}/moog-secrets/requester/requester.json" not in command
     assert "walletPassphrase" not in command
     assert "mnemonics" not in command
 
@@ -918,7 +918,7 @@ def test_dashboard_payload_includes_moog_summary(monkeypatch):
         "state": "ok",
         "checks": [{"id": "binary", "state": "ok", "detail": "moog 0.5.1.3"}],
         "wallets": {"requester": {"address": "addr_test1..."}, "oracle": {}},
-        "deploy_root": "/home/nigel/moog-deploy",
+        "deploy_root": "${HOME}/moog-deploy",
         "mpfs_host": "https://mpfs.plutimus.com",
         "token_id": DEFAULT_MOOG_CONFIG["token_id"],
         "oracle_service": "moog-oracle.service",
@@ -955,7 +955,7 @@ def test_operate_status_moog_tile_uses_summary_and_checks():
                 "ok_count": 1,
                 "warn_count": 1,
                 "error_count": 0,
-                "deploy_root": "/home/nigel/moog-deploy",
+                "deploy_root": "${HOME}/moog-deploy",
                 "mpfs_host": "https://mpfs.plutimus.com",
                 "token_id": DEFAULT_MOOG_CONFIG["token_id"],
                 "oracle_service": "moog-oracle.service",
@@ -973,7 +973,7 @@ def test_operate_status_moog_tile_uses_summary_and_checks():
 
     assert tile["state"] == "warn"
     assert tile["metric"] == "WARN"
-    assert tile["deploy_root"] == "/home/nigel/moog-deploy"
+    assert tile["deploy_root"] == "${HOME}/moog-deploy"
     assert tile["requester_address"] == "addr_test1requester"
     assert tile["checks"][1]["id"] == "oracle_service_active"
 

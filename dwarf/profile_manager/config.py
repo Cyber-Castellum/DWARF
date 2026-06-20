@@ -9,11 +9,11 @@ CONFIG_ENV = "ADA2_PROFILE_MANAGER_CONFIG"
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "state" / "config.yaml"
 
 CONFIG_FIELDS = {
-    "deployment_name": {"type": "string", "default": "cardano-box", "description": "Human-readable deployment label."},
-    "host": {"type": "string", "default": "192.168.30.16", "description": "Remote SSH host or IP."},
+    "deployment_name": {"type": "string", "default": "build-host", "description": "Human-readable deployment label."},
+    "host": {"type": "string", "default": "192.0.2.1", "description": "Remote SSH host or IP."},
     "ssh_user": {"type": "string", "default": "nigel", "description": "Remote SSH username."},
-    "ssh_key_path": {"type": "string", "default": "/Users/nigel/.ssh/cardano-box", "description": "SSH private-key path used for remote commands."},
-    "remote_base_path": {"type": "string", "default": "/home/nigel/cardano-profiles", "description": "Remote base directory for deployment artifacts."},
+    "ssh_key_path": {"type": "string", "default": "${HOME}/.ssh/build-host", "description": "SSH private-key path used for remote commands."},
+    "remote_base_path": {"type": "string", "default": "${HOME}/cardano-profiles", "description": "Remote base directory for deployment artifacts."},
     "allow_prereq_install": {"type": "boolean", "default": False, "description": "Allow prerequisite installation via CLI."},
     "allow_sudo": {"type": "boolean", "default": False, "description": "Allow sudo-backed remote commands."},
     "log_level": {"type": "string", "default": "info", "description": "Operator-facing CLI log level."},

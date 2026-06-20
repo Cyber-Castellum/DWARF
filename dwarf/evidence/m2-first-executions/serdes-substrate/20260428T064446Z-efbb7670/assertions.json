@@ -5,7 +5,7 @@
         "artifact_summary": {
           "has_correlated_timeline": true,
           "has_observation_summary": true,
-          "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation",
+          "output_dir": "${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation",
           "per_node_dir_count": 2
         },
         "exit_code": 0,
@@ -288,7 +288,7 @@
               "version": "10.7.1"
             }
           },
-          "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+          "runtime_metadata_path": "${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
           "sample_interval_seconds": 1.0,
           "summary": {
             "chain_select_consistent": true,
@@ -338,7 +338,7 @@
           }
         },
         "stderr": "",
-        "stdout": "node_count=2 responsive_node_count=2 tip_group_count=0 quorum_count=0 quorum_fraction=0.0000 observation_summary_relpath=/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation/observation-summary.json correlated_timeline_relpath=/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation/correlated-timeline.json\n"
+        "stdout": "node_count=2 responsive_node_count=2 tip_group_count=0 quorum_count=0 quorum_fraction=0.0000 observation_summary_relpath=${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation/observation-summary.json correlated_timeline_relpath=${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/multi-node-observation/correlated-timeline.json\n"
       }
     ],
     "evaluated_value": {
@@ -364,7 +364,7 @@
             "observed_divergence": false,
             "parity_match": true
           },
-          "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+          "runtime_metadata_path": "${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
           "target_node": "node1"
         },
         "result": {

@@ -4,6 +4,8 @@
 <h1>Architecture</h1>
 <p>Dwarf is the Cardano-native protocol/client/network/codec fuzzing and differential-testing platform. The closest analogues in the broader software security ecosystem are Mayhem / ForAllSecure (autonomous protocol/binary fuzzing), Defensics (protocol fuzzing harness surface), and Code Intelligence CI Fuzz (general protocol/RPC CI fuzzing engineering shape) — plus a differential-testing dimension that is uniquely Cardano-shaped, leveraging the two-implementation moment (Haskell <code>cardano-node</code> and Rust Amaru).</p>
 
+<p><strong>Two backends, one definition.</strong> The same scenario definitions drive (1) a <strong>local framework</strong> — the scenario runner over containerized devnets shown below, including <strong>native coverage-guided fuzzing</strong>: AFL++ steered by real edge coverage over a SanitizerCoverage-instrumented <code>cardano-node</code> (GHC <code>-fllvm</code> + LLVM SanCov, the <code>dwarf-haskell-cov</code> image), with surfaces from pure decode through the full Conway ledger rules (<code>applytx</code>, <code>applyblock</code>); and (2) an <strong>Antithesis bridge</strong> — a generator that emits a self-contained Antithesis test bundle plus the <code>dwarf-adversary</code> (a live N2N peer serving mutated CBOR) and an in-process <code>dwarf-decoder-fuzz</code> workload (the same <code>applyblock</code> surface run under Antithesis).</p>
+
 <hr class="hairline">
 
 {# Coordinates are visual decisions, not data — kept in the template. #}

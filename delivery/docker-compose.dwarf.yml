@@ -49,7 +49,7 @@ services:
       - ${DWARF_RUNTIME_ROOT:-../var}/runs:/var/dwarf/runs
       - ${DWARF_RUNTIME_ROOT:-../var}/state:/var/dwarf/state
       - ${DWARF_RUNTIME_ROOT:-../var}/bundles:/var/dwarf/bundles
-      - ${DWARF_SSH_KEY_PATH:-/home/nigel/.ssh/cardano-box}:/home/dwarf/.ssh/cardano-box:ro
+      - ${DWARF_SSH_KEY_PATH:-${HOME}/.ssh/build-host}:/home/dwarf/.ssh/build-host:ro
       - ${DWARF_SSH_KNOWN_HOSTS:-../var/state/ssh_known_hosts}:/home/dwarf/.ssh/known_hosts:ro
     read_only: true
     cap_drop:

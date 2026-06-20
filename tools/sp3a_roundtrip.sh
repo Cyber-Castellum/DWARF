@@ -2,7 +2,7 @@
 # SP3a round-trip: generate the block bundle (new block-fetch path) AND the
 # header bundle (SP2 regression), run the Stage-2 gate + docker compose lint on
 # each. Confirms the block scenario now generates end-to-end and the header
-# path stays green. Run on cardano-box. INTERNAL_NETWORK is supplied by the
+# path stays green. Run on build-host. INTERNAL_NETWORK is supplied by the
 # Antithesis launcher at runtime (set here for the bare `config` lint).
 set -uo pipefail
 cd "$(dirname "$0")/.."

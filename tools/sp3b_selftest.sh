@@ -5,7 +5,7 @@
 # mini-protocol #4). Proves the IR-on-inbound wiring locally with 0 crash. The
 # minimal selftest client is chain-sync-only, so it reports UnknownMiniProtocol
 # 4 when our #4 initiator opens toward it — EXPECTED; a real cardano-node has a
-# #4 consumer that accepts the offer (proven by the live run). Run on cardano-box.
+# #4 consumer that accepts the offer (proven by the live run). Run on build-host.
 set -uo pipefail
 cd "$(dirname "$0")/../antithesis/components/dwarf-adversary"
 export PATH="$HOME/.ghcup/bin:$PATH"

@@ -15,13 +15,13 @@ from profile_manager.wallets import wallet_statuses
 
 DEFAULT_MOOG_CONFIG: dict[str, Any] = {
     "enabled": True,
-    "deploy_root": "/home/nigel/moog-deploy",
-    "moog_binary": "/home/nigel/bin/moog",
-    "secrets_root": "/home/nigel/moog-secrets",
+    "deploy_root": "${HOME}/moog-deploy",
+    "moog_binary": "${HOME}/bin/moog",
+    "secrets_root": "${HOME}/moog-secrets",
     "mpfs_host": "https://mpfs.plutimus.com",
     "token_id": "21c523c3b4565f1fc1ad7e54e82ca976f60997d8e7e9946826813fabf341069b",
     "requester_wallet_id": "moog-requester",
-    "requester_wallet_file": "/home/nigel/moog-secrets/requester/requester.json",
+    "requester_wallet_file": "${HOME}/moog-secrets/requester/requester.json",
     "oracle_service": "moog-oracle.service",
     "github_user": "",
     "github_repo": "",

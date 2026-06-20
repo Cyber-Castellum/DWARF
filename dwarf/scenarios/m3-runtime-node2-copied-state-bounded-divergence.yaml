@@ -30,7 +30,7 @@
   "load": [
     {
       "primitive": "load_shell_command",
-      "command": "python3 /home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py copied-state-divergence",
+      "command": "python3 ${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py copied-state-divergence",
       "timeout_seconds": 540,
       "expect_exit": 0
     }

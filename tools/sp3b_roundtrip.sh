@@ -3,7 +3,7 @@
 # auxiliary-data, new tx-submission path) plus the block + header bundles
 # (regression), running the Stage-2 gate + docker compose lint on each.
 # Confirms the tx scenarios now generate end-to-end and the block/header paths
-# stay green. Run on cardano-box. INTERNAL_NETWORK is supplied by the Antithesis
+# stay green. Run on build-host. INTERNAL_NETWORK is supplied by the Antithesis
 # launcher at runtime (set here for the bare `config` lint).
 set -uo pipefail
 cd "$(dirname "$0")/.."

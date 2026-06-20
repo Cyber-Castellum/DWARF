@@ -9,8 +9,8 @@ from profile_manager.profile_shapes import shape_from_profile_dict
 PROFILE_ROOT = Path(__file__).resolve().parents[1] / "profiles"
 
 # Default locations on the remote build host.
-REMOTE_SOURCE_PATH = "/home/nigel/cardano-node"
-REMOTE_DOCKERFILE_PATH = "/home/nigel/dwarf-fw/devnet-build/cardano-node.Dockerfile"
+REMOTE_SOURCE_PATH = "${HOME}/cardano-node"
+REMOTE_DOCKERFILE_PATH = "${HOME}/dwarf-fw/devnet-build/cardano-node.Dockerfile"
 
 
 @dataclass(frozen=True)
@@ -131,7 +131,7 @@ docker compose ls --format json 2>/dev/null | grep -E 'dwarf-' || true
 echo "CARDANO_CONTAINERS"
 docker ps --filter 'label=ada2.managed=dwarf' --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' 2>/dev/null || true
 echo "RUNTIME_SIZES"
-for d in /home/nigel/cardano-profiles/*/env; do
+for d in ${HOME}/cardano-profiles/*/env; do
   [ -e "$d" ] && du -sh "$d" 2>/dev/null || true
 done
 echo "IMAGES"
@@ -265,8 +265,8 @@ def deploy_dry_run_text(profile):
             f"Topology pattern: {profile.topology_pattern}.\n"
             f"Shared genesis: {'yes' if profile.shared_genesis else 'no'}.\n"
             f"Would create remote runtime root: {profile.remote_runtime_root}\n"
-            "Would create the devnet env via /home/nigel/.local/bin/cardano-testnet create-env.\n"
-            "Would run Haskell nodes from /home/nigel/.local/bin/cardano-node under tmux sessions scoped to this profile.\n"
+            "Would create the devnet env via ${HOME}/.local/bin/cardano-testnet create-env.\n"
+            "Would run Haskell nodes from ${HOME}/.local/bin/cardano-node under tmux sessions scoped to this profile.\n"
             "Would auto-assign localhost listener ports and rewrite local-mesh topology from the generated node count.\n"
             "Would write runtime metadata under runtime.json for host-process inspection.\n"
             "No remote state changed.\n"
@@ -279,7 +279,7 @@ def deploy_dry_run_text(profile):
             f"Would fail fast if upstream peer {profile.upstream_peer_address} is unreachable.\n"
             f"Would copy the official {network} config set from {profile.config_source_dir}.\n"
             f"Would rewrite topology.json under the runtime root to use {profile.upstream_peer_address} as the bootstrap peer.\n"
-            f"Would start one Haskell cardano-node from /home/nigel/.local/bin/cardano-node listening on {profile.listen_address}.\n"
+            f"Would start one Haskell cardano-node from ${HOME}/.local/bin/cardano-node listening on {profile.listen_address}.\n"
             "Would write runtime metadata under runtime.json and keep logs under logs/node1/.\n"
             f"This profile depends on public {network} connectivity and is not a self-contained local devnet.\n"
             "No remote state changed.\n"
@@ -291,7 +291,7 @@ def deploy_dry_run_text(profile):
             f"Would create remote runtime root: {profile.remote_runtime_root}\n"
             f"Would fail fast if upstream peer {profile.upstream_peer_address} is unreachable.\n"
             f"Would bootstrap Amaru for network {profile.amaru_network} using the bundled upstream bootstrap config.\n"
-            f"Would start one Amaru node from /home/nigel/amaru-verification/target/debug/amaru listening on {profile.listen_address}.\n"
+            f"Would start one Amaru node from ${HOME}/amaru-verification/target/debug/amaru listening on {profile.listen_address}.\n"
             "Would write runtime metadata under runtime.json and keep logs under logs/amaru1/.\n"
             f"This profile depends on public {network} connectivity and is not a self-contained local devnet.\n"
             "No remote state changed.\n"
@@ -332,9 +332,9 @@ def deploy_command(profile):
         return f"""set -e
 runtime={runtime}
 project={project}
-cardano_node_bin=/home/nigel/.local/bin/cardano-node
-cardano_cli_bin=/home/nigel/.local/bin/cardano-cli
-cardano_testnet_bin=/home/nigel/.local/bin/cardano-testnet
+cardano_node_bin=${HOME}/.local/bin/cardano-node
+cardano_cli_bin=${HOME}/.local/bin/cardano-cli
+cardano_testnet_bin=${HOME}/.local/bin/cardano-testnet
 if [ -e "$runtime/env" ]; then
   echo "Runtime assets already exist under: $runtime" >&2
   exit 4
@@ -421,7 +421,7 @@ tmux ls | grep "$project" || true
     if deploy_mode == "haskell-only" and profile.config_source_dir:
         runtime = shlex.quote(profile.remote_runtime_root)
         session = shlex.quote(profile.compose_project)
-        node_bin = shlex.quote("/home/nigel/.local/bin/cardano-node")
+        node_bin = shlex.quote("${HOME}/.local/bin/cardano-node")
         public_network = _public_network(profile)
         testbed = _public_testbed(profile)
         listen_address_raw = profile.listen_address or "127.0.0.1:39100"
@@ -494,7 +494,7 @@ cat > "$metadata_path" <<JSON
   "upstream_peer_address": "{profile.upstream_peer_address or 'preview-node.play.dev.cardano.org:3001'}",
   "listen_address": "{profile.listen_address or '127.0.0.1:39100'}",
   "session": "{profile.compose_project}",
-  "binary": "/home/nigel/.local/bin/cardano-node",
+  "binary": "${HOME}/.local/bin/cardano-node",
   "chain_dir": "$db_dir",
   "log_path": "$log_dir/stdout.log",
   "pid_file": "$pid_file",
@@ -510,7 +510,7 @@ tmux ls
     if deploy_mode == "amaru-only":
         runtime = shlex.quote(profile.remote_runtime_root)
         session = shlex.quote(profile.compose_project)
-        amaru_bin = shlex.quote("/home/nigel/amaru-verification/target/debug/amaru")
+        amaru_bin = shlex.quote("${HOME}/amaru-verification/target/debug/amaru")
         amaru_network = shlex.quote(profile.amaru_network or "preview")
         public_network = _public_network(profile)
         testbed = _public_testbed(profile)
@@ -558,7 +558,7 @@ cat > "$metadata_path" <<JSON
   "upstream_peer_address": "{profile.upstream_peer_address or 'preview-node.play.dev.cardano.org:3001'}",
   "listen_address": "{profile.listen_address or '127.0.0.1:39000'}",
   "session": "{profile.compose_project}",
-  "binary": "/home/nigel/amaru-verification/target/debug/amaru",
+  "binary": "${HOME}/amaru-verification/target/debug/amaru",
   "chain_dir": "$state_root/chain.{profile.amaru_network or 'preview'}.db",
   "ledger_dir": "$state_root/ledger.{profile.amaru_network or 'preview'}.db",
   "log_path": "$log_dir/stdout.log",

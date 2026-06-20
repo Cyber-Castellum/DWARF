@@ -1,5 +1,29 @@
 # Release Notes
 
+## DWARF — current capabilities
+
+DWARF fuzzes Cardano node implementations (Haskell `cardano-node`, Rust `amaru`) across
+serialization/deserialization, ledger-rule, mini-protocol, runtime, resource, and
+consensus surfaces, captures replayable evidence, and bridges CBOR-decoder fuzzing into
+Antithesis.
+
+### Latest additions
+- **Native coverage-guided fuzzing**: AFL++ over a SanitizerCoverage-instrumented
+  cardano-node (GHC -fllvm + LLVM SanCov), cross-platform `dwarf-haskell-cov` image.
+  Surfaces selected by `DWARF_DECODER`: `tx/block/header/txbody/ledger/applytx/applyblock`
+  + `handshake/txsub/keepalive`. Wired as `cardano-node-cov-*-aflpp-smoke` scenarios.
+- **Ledger-rule surfaces**: `applytx` (mempool `applyTx` STS) and `applyblock`
+  (BBODY → LEDGERS → per-tx LEDGER over a genesis-initialised Conway NewEpochState).
+- **Two-backend applyBlock**: same surface runs under AFL++ locally and in-process under
+  Antithesis (`dwarf-decoder-fuzz --target applyblock`); baked into the
+  `cardano_node_dwarf` compose bundle.
+- **Evidence**: an 8-hour exhaustive coverage campaign (9 surfaces, ~20.5M executions,
+  0 crashes) under `reports/` + raw logs under `raw/logs/`.
+
+---
+
+# Release Notes
+
 ## Dwarf V3 June Milestone 2 (M2) Delivery
 
 Image tag:

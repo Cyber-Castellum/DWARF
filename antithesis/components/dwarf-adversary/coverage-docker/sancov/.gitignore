@@ -1,0 +1,6 @@
+# Vendored AFL++ 4.40c binaries (afl.rs build) — not source; pulled for the
+# Docker build context. Obtain via: scp from a host with cargo-afl installed,
+# e.g. build-host ~/.local/share/afl.rs/AFLplusplus/{afl-fuzz,afl-showmap,afl-compiler-rt.o}
+afl-fuzz
+afl-showmap
+afl-compiler-rt.o

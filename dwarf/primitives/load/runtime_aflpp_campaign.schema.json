@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "runtime_aflpp_campaign params",
+  "type": "object",
+  "required": [
+    "working_dir",
+    "bin",
+    "seed_dirs",
+    "output_dir",
+    "seconds",
+    "replay_harness",
+    "replay_target_id",
+    "replay_targets"
+  ],
+  "properties": {
+    "working_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bin": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed_dirs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "output_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "expect_exit": {
+      "type": "integer"
+    },
+    "dict_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rustup_toolchain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "afl_mode": {
+      "type": "string",
+      "enum": [
+        "instrumented",
+        "qemu"
+      ]
+    },
+    "sanitizer": {
+      "type": "string",
+      "enum": [
+        "address",
+        "memory",
+        "thread",
+        "undefined"
+      ]
+    },
+    "target_triple": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_binary_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_implementation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "replay_harness": {
+      "type": "string",
+      "minLength": 1
+    },
+    "replay_target_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "replay_targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Extra environment variables for the target (e.g. DWARF_DECODER for the cardano-node coverage harness surface select)."
+    }
+  },
+  "additionalProperties": false
+}

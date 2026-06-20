@@ -8,7 +8,7 @@ REGISTRY="${1:-}"
 TAG="${2:-latest}"
 MAGIC="${DWARF_DEVNET_MAGIC:-42}"
 BASE_IMAGE="${DWARF_NODE_BASE_IMAGE:-dwarf/cardano-node:10.7.1}"
-BIN_DIR="${DWARF_CARDANO_BIN_DIR:-/home/nigel/.local/bin}"
+BIN_DIR="${DWARF_CARDANO_BIN_DIR:-${HOME}/.local/bin}"
 IMAGE_LOCAL="cardano-node-devnet:${TAG}"
 
 # cardano-testnet finds cardano-cli/cardano-node via these env vars (NOT PATH).

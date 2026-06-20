@@ -1,6 +1,6 @@
 {
-  "output_dir": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/serdes-malformed-input-differential",
+  "output_dir": "${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/serdes-malformed-input-differential",
   "reference_node": "node2",
-  "runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
+  "runtime_metadata_path": "${HOME}/dwarf-fw/runs/20260428T064446Z-efbb7670/outputs/substrate-compose/runtime.json",
   "target_node": "node1"
 }

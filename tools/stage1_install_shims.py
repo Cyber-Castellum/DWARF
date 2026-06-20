@@ -1,12 +1,12 @@
 """Install built dwarf-cardano-shims executables to their manifest-declared
-binary paths. Run on cardano-box after `cabal build all`."""
+binary paths. Run on build-host after `cabal build all`."""
 import glob
 import json
 import os
 import shutil
 from pathlib import Path
 
-BASE = Path("/home/nigel/dwarf-v4")
+BASE = Path("${DWARF_ROOT}")
 ROOT = BASE / "dwarf"
 SHIMS = ROOT / "targets" / "cardano-node"
 MANIFESTS = ROOT / "targets" / "manifests"

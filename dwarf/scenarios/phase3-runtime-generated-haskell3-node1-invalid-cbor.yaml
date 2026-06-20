@@ -23,7 +23,7 @@
   "load": [
     {
       "primitive": "shim_peer_invalid_cbor",
-      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "runtime_metadata_path": "${HOME}/cardano-profiles/profile-i-generated-haskell3/runtime.json",
       "target_node": "node1",
       "invalid_cbor_id": "truncated-handshake-propose-v10",
       "response_timeout_seconds": 2,

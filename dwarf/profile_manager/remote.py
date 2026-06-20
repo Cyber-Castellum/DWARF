@@ -59,7 +59,7 @@ def run_moog_create_test(config, moog_config, command, timeout=900):
 
     cfg = normalize_moog_config(moog_config)
     secrets_root = cfg["secrets_root"]
-    host_config = "/home/nigel/dwarf-v4/var/state/config.yaml"
+    host_config = "${DWARF_ROOT}/var/state/config.yaml"
     script = (
         "set -uo pipefail\n"
         f'export MOOG_WALLET_PASSPHRASE="$(cat {secrets_root}/requester/wallet.passphrase)"\n'

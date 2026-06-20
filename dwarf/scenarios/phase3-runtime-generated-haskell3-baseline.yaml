@@ -23,7 +23,7 @@
   "load": [
     {
       "primitive": "runtime_live_implementation_baseline",
-      "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+      "runtime_root": "${HOME}/cardano-profiles/profile-i-generated-haskell3",
       "timeout_seconds": 60,
       "expected_helper_exit": 0
     }

@@ -39,7 +39,7 @@
       "load": [
         {
           "primitive": "runtime_preview_parity_baseline",
-          "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof",
+          "preview_cardano_node_root": "${HOME}/cardano-profiles/profile-g-haskell-preview2-proof",
           "sample_seconds": 20,
           "timeout_seconds": 60,
           "expected_helper_exit": 0
@@ -53,8 +53,8 @@
       "load": [
         {
           "primitive": "runtime_preview_upstream_drop",
-          "preview_amaru_root": "/home/nigel/cardano-profiles/profile-f-amaru-preview2-proof",
-          "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof",
+          "preview_amaru_root": "${HOME}/cardano-profiles/profile-f-amaru-preview2-proof",
+          "preview_cardano_node_root": "${HOME}/cardano-profiles/profile-g-haskell-preview2-proof",
           "fault_seconds": 15,
           "recovery_seconds": 20,
           "timeout_seconds": 90,
@@ -69,8 +69,8 @@
       "load": [
         {
           "primitive": "runtime_preview_upstream_loss",
-          "preview_amaru_root": "/home/nigel/cardano-profiles/profile-f-amaru-preview2-proof",
-          "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof",
+          "preview_amaru_root": "${HOME}/cardano-profiles/profile-f-amaru-preview2-proof",
+          "preview_cardano_node_root": "${HOME}/cardano-profiles/profile-g-haskell-preview2-proof",
           "fault_seconds": 15,
           "recovery_seconds": 20,
           "timeout_seconds": 90,
@@ -85,7 +85,7 @@
       "load": [
         {
           "primitive": "runtime_preview_parity_baseline",
-          "preview_cardano_node_root": "/home/nigel/cardano-profiles/profile-g-haskell-preview2-proof",
+          "preview_cardano_node_root": "${HOME}/cardano-profiles/profile-g-haskell-preview2-proof",
           "sample_seconds": 20,
           "timeout_seconds": 60,
           "expected_helper_exit": 0

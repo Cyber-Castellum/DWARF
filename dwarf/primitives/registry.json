@@ -2850,6 +2850,34 @@
         "amaru"
       ],
       "version": "0.1.0"
+    },
+    "runtime_aflpp_campaign": {
+      "class": "RuntimeAflppCampaign",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_aflpp_campaign.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "aflpp_smoke_exit_clean": {
+      "class": "AflppSmokeExitClean",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/aflpp_smoke_exit_clean.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
     }
   }
 }

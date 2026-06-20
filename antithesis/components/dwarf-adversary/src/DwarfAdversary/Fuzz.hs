@@ -21,16 +21,23 @@ module DwarfAdversary.Fuzz
     ( MutationInfo (..)
     , mutateTerm
     , mutationKinds
+    , MutationLevel (..)
+    , parseMutationLevel
+    , corruptBytes
+    , byteMutationKinds
+    , mutateTermSemantic
     ) where
 
 import Codec.CBOR.Term (Term (..))
+import Data.Bits (xor)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as LBS
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Data.Text.Lazy qualified as LT
-import System.Random (StdGen, randomR)
+import Data.Word (Word8)
+import System.Random (StdGen, randomR, randomRs)
 
 -- | What the mutator did, for SDK assertion details.
 data MutationInfo = MutationInfo
@@ -204,3 +211,142 @@ dropLast xs = init xs
 
 dropEndT :: Text -> Text
 dropEndT s = if T.null s then s else T.dropEnd 1 s
+
+-- ---------------------------------------------------------------------------
+-- Byte-level (invalid / malformed) mutation
+--
+-- The 'mutateTerm' path above keeps output WELL-FORMED CBOR (hostile
+-- structure, valid wire encoding). This complementary path corrupts the
+-- SERIALIZED bytes directly, producing MALFORMED CBOR — truncated items,
+-- flipped bytes, oversized length prefixes, pathological nesting, raw
+-- garbage — to exercise the node's deserializer error handling and
+-- resource bounds (the classic "throw invalid bytes at the parser"
+-- security surface: parser panics, OOM on oversized lengths, stack
+-- overflow on deep nesting). Still a pure function of (seed, bytes).
+-- ---------------------------------------------------------------------------
+
+-- | Which layer the adversary mutates at.
+data MutationLevel
+    = LevelStruct
+    -- ^ structural mutation of the CBOR Term, re-encoded to valid CBOR (default)
+    | LevelBytes
+    -- ^ corrupt the serialized bytes into MALFORMED CBOR
+    | LevelBoth
+    -- ^ structural mutation, then byte-corrupt the re-encoded result
+    | LevelSemantic
+    -- ^ value-only perturbation: preserve every CBOR type + length so the payload
+    -- still DECODES, but corrupt a leaf value (flip a byte in a hash/signature,
+    -- change an int) so it is SEMANTICALLY invalid -> exercises the node's
+    -- VALIDATION layer (InvalidBlock), not just the decoder.
+    deriving (Eq, Show)
+
+parseMutationLevel :: String -> Maybe MutationLevel
+parseMutationLevel s = case s of
+    "struct" -> Just LevelStruct
+    "bytes" -> Just LevelBytes
+    "both" -> Just LevelBoth
+    "semantic" -> Just LevelSemantic
+    _ -> Nothing
+
+-- | The byte-corruption kinds, by name (stable order for determinism).
+byteMutationKinds :: [Text]
+byteMutationKinds =
+    [ "byteTruncate" -- cut the item short -> incomplete CBOR
+    , "byteFlip" -- flip one byte -> wrong major type / length
+    , "oversizeLen" -- prepend array(2^64-1) header -> decoder expects astronomically many items
+    , "deepNest" -- prepend many indefinite-array opens -> deep nesting
+    , "garbageHead" -- prepend reserved/break bytes
+    , "randomGarbage" -- replace with random bytes
+    ]
+
+-- | Corrupt serialized bytes into malformed CBOR. @rate@ ∈ [0,1] is the
+-- probability a corruption fires (else identity). Pure in @gen@.
+corruptBytes :: StdGen -> Double -> BS.ByteString -> (BS.ByteString, MutationInfo)
+corruptBytes gen rate bs =
+    let (roll, g1) = randomR (0.0, 1.0) gen
+    in  if roll >= rate
+            then (bs, MutationInfo "none" 0)
+            else
+                let (kIx, g2) = randomR (0, length byteMutationKinds - 1) g1
+                    kind = byteMutationKinds !! kIx
+                in  (applyByte kind g2 bs, MutationInfo ("bytes:" <> kind) 0)
+
+applyByte :: Text -> StdGen -> BS.ByteString -> BS.ByteString
+applyByte "byteTruncate" g bs
+    | BS.length bs <= 1 = BS.empty
+    | otherwise = let (k, _) = randomR (1, BS.length bs - 1) g in BS.take k bs
+applyByte "byteFlip" g bs
+    | BS.null bs = BS.singleton 0xff
+    | otherwise =
+        let (i, _) = randomR (0, BS.length bs - 1) g
+            (a, b) = BS.splitAt i bs
+        in  case BS.uncons b of
+                Just (h, t) -> a <> BS.cons (h `xor` 0xff) t
+                Nothing -> bs
+applyByte "oversizeLen" _ bs = BS.pack (0x9b : replicate 8 0xff) <> bs
+applyByte "deepNest" g bs =
+    let (n, _) = randomR (16, 512 :: Int) g in BS.replicate n 0x9f <> bs
+applyByte "garbageHead" _ bs = BS.pack [0xff, 0xff, 0x1f] <> bs
+applyByte "randomGarbage" g bs =
+    let (n, g') = randomR (1, 48 :: Int) g
+    in  BS.pack (take n (randomRs (0, 255 :: Word8) g'))
+applyByte _ _ bs = bs
+
+-- ---------------------------------------------------------------------------
+-- Semantic (decodable-but-invalid) mutation
+--
+-- Unlike 'mutateTerm' (breaks structure -> rejected at the DECODER) and
+-- 'corruptBytes' (malformed bytes -> rejected at the DECODER), this perturbs a
+-- single LEAF VALUE while preserving every CBOR type and length, so the payload
+-- still DECODES into a well-formed block/tx — but a flipped hash byte / changed
+-- signature / tweaked int makes it SEMANTICALLY invalid, so the node must reject
+-- it at the VALIDATION layer (InvalidBlock / bad-signature / ledger rule), the
+-- surface the decode-stage rejections never reached. Pure in the seed.
+-- ---------------------------------------------------------------------------
+mutateTermSemantic :: StdGen -> Double -> Term -> (Term, MutationInfo)
+mutateTermSemantic gen rate term =
+    let (roll, g1) = randomR (0.0, 1.0) gen
+    in  if roll >= rate
+            then (term, MutationInfo "none" 0)
+            else
+                let (t', info) = perturbLeaf g1 0 term
+                in  if t' == term
+                        then (perturbValue g1 term, info {miKind = "semantic:forced"})
+                        else (t', info)
+
+-- | Descend (biased) to a seed-chosen leaf and perturb its value in place,
+-- keeping the surrounding structure identical so the term still decodes.
+perturbLeaf :: StdGen -> Int -> Term -> (Term, MutationInfo)
+perturbLeaf gen depth t =
+    let (descend, g1) = randomR (0.0, 1.0 :: Double) gen
+    in  case (descend < 0.7, children t) of
+            (True, cs@(_ : _)) ->
+                let (ix, g2) = randomR (0, length cs - 1) g1
+                    (child', info) = perturbLeaf g2 (depth + 1) (cs !! ix)
+                in  (replaceChild ix child' t, info)
+            _ -> (perturbValue g1 t, MutationInfo ("semantic:" <> leafKind t) depth)
+
+-- | Change a value while preserving its CBOR major type and (for byte/text
+-- strings) its length — so the typed decoder still accepts it.
+perturbValue :: StdGen -> Term -> Term
+perturbValue g (TBytes b)
+    | not (BS.null b) =
+        let (i, g2) = randomR (0, BS.length b - 1) g
+            (d, _) = randomR (1, 255 :: Word8) g2
+            (a, rest) = BS.splitAt i b
+        in  case BS.uncons rest of
+                Just (h, t) -> TBytes (a <> BS.cons (h `xor` d) t)
+                Nothing -> TBytes b
+perturbValue g (TInt n) = let (d, _) = randomR (1, maxBound :: Int) g in TInt (n + d)
+perturbValue g (TInteger n) = let (d, _) = randomR (1, maxBound :: Int) g in TInteger (n + fromIntegral d)
+perturbValue _ (TBool x) = TBool (not x)
+perturbValue _ (TString s) = TString (if T.null s then "x" else T.cons 'X' (T.drop 1 s))
+perturbValue _ t = t
+
+leafKind :: Term -> Text
+leafKind (TBytes _) = "bytes"
+leafKind (TInt _) = "int"
+leafKind (TInteger _) = "int"
+leafKind (TString _) = "string"
+leafKind (TBool _) = "bool"
+leafKind _ = "other"

@@ -111,11 +111,16 @@ def build_aflpp_fuzz_command(
     dict_path: Path | None = None,
     rng_seed: int | None = None,
     afl_mode: str = "instrumented",
+    prebuilt: bool = False,
 ) -> list[str]:
-    command = [
-        "cargo",
-        "afl",
-        "fuzz",
+    # A prebuilt (non-Rust) target invokes afl-fuzz directly; Rust cargo-fuzz
+    # targets go through `cargo afl fuzz` (which forwards the same flags).
+    # The afl-fuzz binary must match the runtime linked into the instrumented
+    # target: the GHC/SanCov harness links afl.rs 4.40c, so a mismatched system
+    # afl-fuzz (e.g. 4.09c) fails the forkserver handshake. Allow an explicit
+    # override via DWARF_AFL_FUZZ; default to PATH `afl-fuzz`.
+    afl_fuzz_bin = os.environ.get("DWARF_AFL_FUZZ", "afl-fuzz")
+    command = ([afl_fuzz_bin] if prebuilt else ["cargo", "afl", "fuzz"]) + [
         "-i",
         str(seed_dir),
         "-o",
@@ -123,6 +128,12 @@ def build_aflpp_fuzz_command(
         "-V",
         str(seconds),
     ]
+    if prebuilt:
+        # GHC/SanCov harnesses can allocate heavily during a single exec (e.g.
+        # the applyblock surface builds a full genesis Conway NewEpochState),
+        # which trips AFL's default per-target memory cap and aborts the fork
+        # server with "Unable to request new process (OOM?)". Lift the cap.
+        command.extend(["-m", "none"])
     if afl_mode == "qemu":
         command.append("-Q")
     if rng_seed is not None:
@@ -130,6 +141,10 @@ def build_aflpp_fuzz_command(
     if dict_path is not None:
         command.extend(["-x", str(dict_path)])
     command.append(str(target_binary))
+    if prebuilt:
+        # File-arg harness (reads the input path from argv); cargo-fuzz targets
+        # read stdin and take no @@.
+        command.append("@@")
     return command
 
 
@@ -439,19 +454,23 @@ def run_campaign_with_metadata(
         target_binary = _resolve_target_binary(working_dir=working_dir, bin_name=bin_name, target_triple=target_triple)
     host_arch = _host_arch()
     target_arch = _detect_binary_arch(target_binary)
-    if shutil.which("cargo") is None:
-        raise SystemExit("cargo not found in PATH")
-    with _temporarily_hide_workspace_root_manifest(working_dir):
-        afl_available = subprocess.run(
-            ["cargo", "afl", "--help"],
-            cwd=working_dir,
-            text=True,
-            capture_output=True,
-            check=False,
-            env=os.environ.copy(),
-        )
-    if afl_available.returncode != 0:
-        raise SystemExit("cargo-afl tooling not found in PATH; install with `cargo install cargo-afl`")
+    # A prebuilt target_binary_path (e.g. the pre-instrumented GHC/SanCov
+    # cardano-node coverage harness) needs no cargo/cargo-afl build toolchain;
+    # only Rust cargo-fuzz targets (resolved via _resolve_target_binary) do.
+    if target_binary_path is None:
+        if shutil.which("cargo") is None:
+            raise SystemExit("cargo not found in PATH")
+        with _temporarily_hide_workspace_root_manifest(working_dir):
+            afl_available = subprocess.run(
+                ["cargo", "afl", "--help"],
+                cwd=working_dir,
+                text=True,
+                capture_output=True,
+                check=False,
+                env=os.environ.copy(),
+            )
+        if afl_available.returncode != 0:
+            raise SystemExit("cargo-afl tooling not found in PATH; install with `cargo install cargo-afl`")
 
     corpus_dir = working_dir / "corpus" / bin_name
     merge_seed_directories(seed_dirs=seed_dirs, corpus_dir=corpus_dir)
@@ -483,7 +502,7 @@ def run_campaign_with_metadata(
     )
 
     afl_env = build_aflpp_env(os.environ.copy(), sanitizer=sanitizer, afl_mode=afl_mode)
-    if afl_mode == "instrumented":
+    if afl_mode == "instrumented" and target_binary_path is None:
         with _temporarily_hide_workspace_root_manifest(working_dir):
             build = subprocess.run(
                 _build_command(bin_name=bin_name, target_triple=target_triple, sanitizer=sanitizer),
@@ -520,6 +539,7 @@ def run_campaign_with_metadata(
                 dict_path=dict_path,
                 rng_seed=rng_seed,
                 afl_mode=afl_mode,
+                prebuilt=target_binary_path is not None,
             ),
             cwd=working_dir,
             text=True,

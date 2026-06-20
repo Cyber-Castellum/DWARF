@@ -5,9 +5,9 @@ import json
 import os
 from pathlib import Path
 
-MAY = Path("/Users/nigel/dwarf-project/dwarf-deploypackage-may/dwarf")
-V4 = Path("/Users/nigel/dwarf-project/dwarf-v4/dwarf")
-OUT = Path("/Users/nigel/dwarf-project/dwarf-v4/sp1-closure")
+MAY = Path("${HOME}/dwarf-project/dwarf-deploypackage-may/dwarf")
+V4 = Path("${DWARF_ROOT}/dwarf")
+OUT = Path("${DWARF_ROOT}/sp1-closure")
 
 
 def load(path):

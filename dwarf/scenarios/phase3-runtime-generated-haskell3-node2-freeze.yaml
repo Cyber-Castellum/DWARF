@@ -23,14 +23,14 @@
   "faults": [
     {
       "primitive": "fault_node_freeze",
-      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "runtime_metadata_path": "${HOME}/cardano-profiles/profile-i-generated-haskell3/runtime.json",
       "target_node": "node2"
     }
   ],
   "load": [
     {
       "primitive": "runtime_generated_node_freeze_check",
-      "runtime_root": "/home/nigel/cardano-profiles/profile-i-generated-haskell3",
+      "runtime_root": "${HOME}/cardano-profiles/profile-i-generated-haskell3",
       "blocked_node": "node2",
       "healthy_nodes": ["node1", "node3"],
       "sample_seconds": 2,

@@ -14,17 +14,24 @@ module DwarfAdversary.TxSource
     ( getBaseTx
     , getBaseTxs
     , getBaseTxsFromChain
+    , loadSeedTxs
+    , harvestTxs
     ) where
 
+import Codec.CBOR.Read (deserialiseFromBytes)
 import Codec.CBOR.Write (toLazyByteString)
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Class.MonadSTM.Strict (StrictTVar, atomically, readTVar)
-import Control.Monad (forM)
+import Control.Exception (SomeException, try)
+import Control.Monad (forM, forM_, unless)
+import Data.Bits (xor)
 import Data.ByteString.Lazy qualified as LBS
 import Data.Map.Strict qualified as Map
+import Data.Word (Word64)
 import DwarfAdversary.BlockSource (getBaseBlock, getBaseChain)
-import DwarfAdversary.ChainSync.Codec (Block, GenTx, GenTxId, Header, encTx)
+import DwarfAdversary.ChainSync.Codec (Block, GenTx, GenTxId, Header, decTx, encTx)
 import DwarfAdversary.ChainSync.Connection (fetchBlock)
+import Numeric (showHex)
 import Ouroboros.Consensus.Block (headerPoint)
 import Ouroboros.Consensus.Ledger.SupportsMempool (extractTxs, txId)
 import Ouroboros.Network.Block (castPoint)
@@ -32,6 +39,8 @@ import Ouroboros.Network.Magic (NetworkMagic)
 import Ouroboros.Network.Mock.Chain (Chain)
 import Ouroboros.Network.Mock.Chain qualified as Chain
 import Ouroboros.Network.Protocol.TxSubmission2.Type (SizeInBytes (SizeInBytes))
+import System.Directory (createDirectoryIfMissing, doesFileExist)
+import System.FilePath ((</>))
 
 -- | Capture one real transaction (txid + on-wire size + body) from the
 -- in-bundle node at @(host, port)@: grab a block, extract its first tx. Retries
@@ -147,3 +156,48 @@ getBaseTxsFromChain log_ chainVar magic (host, port) want = do
             <> " recent blocks"
         )
     pure txs
+
+-- | Load seed-corpus txs from wire-GenTx files (each holding exactly what
+-- 'encTx' emits). Decoded via 'decTx', so a file that round-trips the node's
+-- N2N tx codec is accepted; a bad file is logged and skipped. These are always
+-- offered as base txs, letting sub-field targeting engage when the synced chain
+-- has no matching tx (e.g. the hermetic Antithesis devnet — no cert/metadata).
+loadSeedTxs
+    :: (String -> IO ())
+    -> [FilePath]
+    -> IO [(GenTxId Block, SizeInBytes, GenTx Block)]
+loadSeedTxs log_ files = fmap concat $ forM files $ \f -> do
+    r <- try (LBS.readFile f) :: IO (Either SomeException LBS.ByteString)
+    case r of
+        Left e -> log_ ("loadSeedTxs: cannot read " <> f <> ": " <> show e) >> pure []
+        Right bytes -> case deserialiseFromBytes decTx bytes of
+            Right (rest, tx) | LBS.null rest -> do
+                let size = SizeInBytes (fromIntegral (LBS.length (toLazyByteString (encTx tx))))
+                log_ ("loadSeedTxs: loaded seed tx from " <> f)
+                pure [(txId tx, size, tx)]
+            Right _ -> log_ ("loadSeedTxs: trailing bytes in " <> f <> "; skipped") >> pure []
+            Left e -> log_ ("loadSeedTxs: decode failed for " <> f <> ": " <> show e) >> pure []
+
+-- | Dev tool: write each tx's wire bytes ('encTx') to @dir/cap-<fnv64hex>.cbor@,
+-- deduped by content hash (skips files that already exist). Run against a live
+-- cert/metadata-carrying devnet to harvest a seed corpus.
+harvestTxs
+    :: (String -> IO ())
+    -> FilePath
+    -> [(GenTxId Block, SizeInBytes, GenTx Block)]
+    -> IO ()
+harvestTxs log_ dir txs = do
+    createDirectoryIfMissing True dir
+    forM_ txs $ \(_, _, tx) -> do
+        let bytes = toLazyByteString (encTx tx)
+            path = dir </> ("cap-" <> showHex (fnv1a64 bytes) "" <> ".cbor")
+        exists <- doesFileExist path
+        unless exists $ do
+            LBS.writeFile path bytes
+            log_ ("harvestTxs: wrote " <> path <> " (" <> show (LBS.length bytes) <> " bytes)")
+
+-- | FNV-1a 64-bit over the wire bytes — content-addressed harvest filenames.
+fnv1a64 :: LBS.ByteString -> Word64
+fnv1a64 = LBS.foldl' step 0xcbf29ce484222325
+  where
+    step acc b = (acc `xor` fromIntegral b) * 0x100000001b3

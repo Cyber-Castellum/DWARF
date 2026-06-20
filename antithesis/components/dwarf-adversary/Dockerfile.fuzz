@@ -1,0 +1,26 @@
+# Runtime image for dwarf-decoder-fuzz (#4/FU5 — in-process decoder fuzzing as an
+# Antithesis workload). Like the adversary image, the binary is built on the host
+# (build-host, GHC 9.6.7) and staged into ./dist-fuzz by build-fuzz-image.sh; we
+# ship the linked binary on a glibc-matching base rather than recompiling in Docker.
+FROM ubuntu:24.04
+
+ENV TZ=UTC
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      liblmdb0 libgmp10 zlib1g libstdc++6 ca-certificates tzdata \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY dist-fuzz/libsodium.so.23 /usr/local/lib/
+COPY dist-fuzz/libsecp256k1.so.2 /usr/local/lib/
+RUN ldconfig
+
+COPY --chmod=0755 dist-fuzz/dwarf-decoder-fuzz /usr/local/bin/dwarf-decoder-fuzz
+# Baked seed corpus (real wire-GenTx CBOR harvested from a devnet).
+COPY dist-fuzz/corpus /corpus
+
+# Self-driving: emits its own SDK assertions (dwarf_decoder_*). Under Antithesis,
+# --seed random draws /dev/urandom (a per-timeline choice point); the platform
+# sets ANTITHESIS_OUTPUT_DIR so SDK lines are collected. Args come from compose.
+ENTRYPOINT ["/usr/local/bin/dwarf-decoder-fuzz"]

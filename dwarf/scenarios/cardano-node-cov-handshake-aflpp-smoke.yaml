@@ -1,0 +1,56 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-node-cov-handshake-aflpp-smoke",
+  "title": "Native-coverage AFL++ campaign \u2014 cardano-node N2N handshake version-negotiation codec (GHC SanCov)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "fuzz",
+    "afl++",
+    "coverage",
+    "cardano-node",
+    "sancov",
+    "handshake"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "any"
+  },
+  "runtime": "library",
+  "seed": "0xc0de0a06",
+  "load": [
+    {
+      "primitive": "runtime_aflpp_campaign",
+      "working_dir": "/tmp/dwarf-cov-handshake",
+      "bin": "dwarf-decode-any",
+      "target_binary_path": "${DWARF_ROOT}/antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+      "env": {
+        "DWARF_DECODER": "handshake"
+      },
+      "seed_dirs": [
+        "${DWARF_ROOT}/antithesis/components/dwarf-adversary/corpora/handshake"
+      ],
+      "output_dir": "/tmp/dwarf-cov-handshake/out",
+      "seconds": 45,
+      "timeout_seconds": 300,
+      "target_implementation": "cardano-node",
+      "replay_harness": "dwarf-decode-any",
+      "replay_target_id": "cardano-node-cov-handshake",
+      "replay_targets": [
+        "cardano-node"
+      ]
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "aflpp_smoke_exit_clean",
+      "min_execs_done": 1000,
+      "min_queue_count": 15,
+      "min_cycles_done": 0,
+      "min_bitmap_cvg": 0.0
+    }
+  ],
+  "teardown": []
+}

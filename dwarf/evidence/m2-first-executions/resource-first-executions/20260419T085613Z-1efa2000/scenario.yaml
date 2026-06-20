@@ -10,7 +10,7 @@
   "load": [
     {
       "primitive": "load_shell_command",
-      "command": "echo '== ps -o pid,rss,vsz,pcpu,etime,cmd for cardano-node =='; ps -C cardano-node -o pid,rss,vsz,pcpu,etime,cmd --no-headers; echo; echo '== free -m =='; free -m; echo; echo '== df -h /home =='; df -h /home; echo; echo '== /home/nigel/cardano-profiles disk usage =='; du -sh /home/nigel/cardano-profiles/* 2>/dev/null | head -10",
+      "command": "echo '== ps -o pid,rss,vsz,pcpu,etime,cmd for cardano-node =='; ps -C cardano-node -o pid,rss,vsz,pcpu,etime,cmd --no-headers; echo; echo '== free -m =='; free -m; echo; echo '== df -h /home =='; df -h /home; echo; echo '== ${HOME}/cardano-profiles disk usage =='; du -sh ${HOME}/cardano-profiles/* 2>/dev/null | head -10",
       "timeout_seconds": 30
     }
   ],

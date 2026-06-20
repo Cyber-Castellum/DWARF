@@ -22,6 +22,7 @@ module DwarfAdversary.TxSubmission.MutatingCodec
     , describeTxMutation
     ) where
 
+import Codec.CBOR.Encoding (encodePreEncoded)
 import Codec.CBOR.Read (deserialiseFromBytes)
 import Codec.CBOR.Term (decodeTerm, encodeTerm)
 import Codec.CBOR.Write (toLazyByteString)
@@ -39,7 +40,12 @@ import DwarfAdversary.ChainSync.Codec
     , encTx
     , encTxId
     )
-import DwarfAdversary.Fuzz (MutationInfo (..))
+import DwarfAdversary.Fuzz
+    ( MutationInfo (..)
+    , MutationLevel (..)
+    , corruptBytes
+    , mutateTermSemantic
+    )
 import DwarfAdversary.TxSubmission.Target (TxField, mutateTxField)
 import Network.TypedProtocol.Codec (Codec)
 import Ouroboros.Network.Protocol.TxSubmission2.Codec (codecTxSubmission2)
@@ -48,9 +54,10 @@ import System.Random (mkStdGen)
 
 -- | The tx-submission2 codec with a fuzzing tx encoder targeting @field@.
 -- @seed@ is the sole randomness source; @rate@ ∈ [0,1] is the mutation
--- probability.
+-- probability; @level@ selects structural / byte-level / both corruption.
 mutatingCodecTxSubmission
     :: TxField
+    -> MutationLevel
     -> Word64
     -> Double
     -> Codec
@@ -58,34 +65,42 @@ mutatingCodecTxSubmission
         DeserialiseFailure
         IO
         LBS.ByteString
-mutatingCodecTxSubmission field seed rate =
-    codecTxSubmission2 encTxId decTxId (mutEncTx field seed rate) decTx
+mutatingCodecTxSubmission field level seed rate =
+    codecTxSubmission2 encTxId decTxId (mutEncTx field level seed rate) decTx
 
--- | Encode a tx, then structurally mutate the targeted sub-field of its CBOR
--- before emitting. If the tx CBOR does not decode as a single 'Term' (should
--- not happen for valid tx bytes), the original encoding is emitted unchanged.
-mutEncTx :: TxField -> Word64 -> Double -> GenTx Block -> Encoding
-mutEncTx field seed rate tx =
+-- | Encode a tx, then mutate it before emitting. @LevelStruct@ mutates the
+-- targeted sub-field's Term and re-encodes (valid CBOR); @LevelBytes@ corrupts
+-- the serialized bytes (malformed CBOR); @LevelBoth@ does struct then bytes.
+mutEncTx :: TxField -> MutationLevel -> Word64 -> Double -> GenTx Block -> Encoding
+mutEncTx field level seed rate tx =
     let bytes = toLazyByteString (encTx tx)
-    in  case deserialiseFromBytes decodeTerm bytes of
-            Right (rest, term)
-                | LBS.null rest ->
-                    let g = mkStdGen (fromIntegral (subSeed seed bytes))
-                        (term', _) = mutateTxField field g rate term
-                    in  encodeTerm term'
-            _ -> encTx tx
+        g = mkStdGen (fromIntegral (subSeed seed bytes))
+        viaTerm f = case deserialiseFromBytes decodeTerm bytes of
+            Right (rest, term) | LBS.null rest -> Just (fst (f term))
+            _ -> Nothing
+        structTerm = viaTerm (mutateTxField field g rate)
+    in  case level of
+            LevelStruct -> maybe (encTx tx) encodeTerm structTerm
+            LevelSemantic -> maybe (encTx tx) encodeTerm (viaTerm (mutateTermSemantic g rate))
+            LevelBytes -> encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict bytes)))
+            LevelBoth ->
+                let base = maybe bytes (toLazyByteString . encodeTerm) structTerm
+                in  encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict base)))
 
 -- | The mutation 'mutEncTx' will apply — exposed so the server can emit a
 -- matching SDK assertion (same pure function, so the reported kind agrees with
 -- what went on the wire).
-describeTxMutation :: TxField -> Word64 -> Double -> GenTx Block -> MutationInfo
-describeTxMutation field seed rate tx =
+describeTxMutation :: TxField -> MutationLevel -> Word64 -> Double -> GenTx Block -> MutationInfo
+describeTxMutation field level seed rate tx =
     let bytes = toLazyByteString (encTx tx)
-    in  case deserialiseFromBytes decodeTerm bytes of
-            Right (rest, term)
-                | LBS.null rest ->
-                    snd (mutateTxField field (mkStdGen (fromIntegral (subSeed seed bytes))) rate term)
-            _ -> MutationInfo "none" 0
+        g = mkStdGen (fromIntegral (subSeed seed bytes))
+        decoded = case deserialiseFromBytes decodeTerm bytes of
+            Right (rest, term) | LBS.null rest -> Just term
+            _ -> Nothing
+    in  case level of
+            LevelStruct -> maybe (MutationInfo "none" 0) (snd . mutateTxField field g rate) decoded
+            LevelSemantic -> maybe (MutationInfo "none" 0) (snd . mutateTermSemantic g rate) decoded
+            _ -> snd (corruptBytes g rate (LBS.toStrict bytes))
 
 -- | Fold the tx bytes into the seed so distinct txs mutate differently while
 -- staying a pure function of (seed, bytes). Mirrors the header/block codecs.

@@ -116,10 +116,10 @@ def run_protocol_fault(
     reference_node: str | None = None,
     network_magic: int | None = None,
     timeout_seconds: float = 120.0,
-    peersharing_decoder_path: str = "/home/nigel/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-peersharing",
-    peersharing_state_corpus: str = "/home/nigel/dwarf-fw/corpora/m3/peersharing-sequences.json",
-    localtxmonitor_decoder_path: str = "/home/nigel/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-localtxmonitor",
-    localtxmonitor_state_corpus: str = "/home/nigel/dwarf-fw/corpora/m3/localtxmonitor-state-machine.json",
+    peersharing_decoder_path: str = "${HOME}/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-peersharing",
+    peersharing_state_corpus: str = "${HOME}/dwarf-fw/corpora/m3/peersharing-sequences.json",
+    localtxmonitor_decoder_path: str = "${HOME}/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-localtxmonitor",
+    localtxmonitor_state_corpus: str = "${HOME}/dwarf-fw/corpora/m3/localtxmonitor-state-machine.json",
 ) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     runtime_metadata_path, metadata = _load_runtime_metadata(runtime_metadata_path)
@@ -239,10 +239,10 @@ def main(argv: list[str] | None = None) -> int:
         reference_node=(str(config["reference_node"]) if config.get("reference_node") else None),
         network_magic=(int(config["network_magic"]) if "network_magic" in config else None),
         timeout_seconds=float(config.get("timeout_seconds", 120.0)),
-        peersharing_decoder_path=str(config.get("peersharing_decoder_path", "/home/nigel/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-peersharing")),
-        peersharing_state_corpus=str(config.get("peersharing_state_corpus", "/home/nigel/dwarf-fw/corpora/m3/peersharing-sequences.json")),
-        localtxmonitor_decoder_path=str(config.get("localtxmonitor_decoder_path", "/home/nigel/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-localtxmonitor")),
-        localtxmonitor_state_corpus=str(config.get("localtxmonitor_state_corpus", "/home/nigel/dwarf-fw/corpora/m3/localtxmonitor-state-machine.json")),
+        peersharing_decoder_path=str(config.get("peersharing_decoder_path", "${HOME}/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-peersharing")),
+        peersharing_state_corpus=str(config.get("peersharing_state_corpus", "${HOME}/dwarf-fw/corpora/m3/peersharing-sequences.json")),
+        localtxmonitor_decoder_path=str(config.get("localtxmonitor_decoder_path", "${HOME}/dwarf-fw/targets/cardano-node/bin/cardano-node-mini-protocol-decode-localtxmonitor")),
+        localtxmonitor_state_corpus=str(config.get("localtxmonitor_state_corpus", "${HOME}/dwarf-fw/corpora/m3/localtxmonitor-state-machine.json")),
     )
     print(
         " ".join(

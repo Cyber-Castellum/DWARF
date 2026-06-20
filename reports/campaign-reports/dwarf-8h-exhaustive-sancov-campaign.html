@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DWARF — 8h Exhaustive Native-SanCov Fuzz Campaign</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:40px 28px 80px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0 8px}
+  .hero b{color:var(--accent)}
+  .metrics{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+  .metric{flex:1 1 150px;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:12px 16px}
+  .metric .n{font-size:22px;font-weight:700;color:var(--accent)} .metric .l{font-size:12px;color:var(--muted)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  td.num{text-align:right;font-family:var(--mono);font-size:12.5px}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .chip.bad{color:var(--bad);border-color:#fecaca;background:#fef2f2}
+  .chip.warn{color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .chip.muted{color:var(--muted);border-color:var(--rule);background:#fff}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)} .muted{color:var(--muted)}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  .delta{font-weight:600}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero,.metric{break-inside:avoid} a{color:inherit;text-decoration:none}}
+</style></head>
+<body><div class="wrap">
+
+<h1>DWARF — 8-hour exhaustive native-SanCov fuzz campaign</h1>
+<div class="sub">cardano-node (Haskell) decode + ledger surfaces · coverage-guided AFL++ over a GHC <b>SanitizerCoverage</b>-instrumented dependency tree · generated 2026-06-20 · image <code>dwarf-haskell-cov:0.2</code></div>
+
+<div class="hero">
+  <b>Result: 0 crashes over ~20.5M executions.</b> Nine surfaces fuzzed in parallel for 8 hours each
+  (28,800&nbsp;s/surface) under coverage guidance. No uncaught exception, no RTS abort, no consensus
+  violation. The 13 AFL-flagged "hangs" were all replayed standalone in ~20–97&nbsp;ms with rc=0 — false
+  positives from CPU contention, not non-termination (adjudicated below).
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="n">~20.5M</div><div class="l">total executions</div></div>
+  <div class="metric"><div class="n">0</div><div class="l">crashes</div></div>
+  <div class="metric"><div class="n">9</div><div class="l">surfaces × 8 h</div></div>
+  <div class="metric"><div class="n">28,058</div><div class="l">peak edges (applyblock)</div></div>
+</div>
+
+<h2>Method</h2>
+<p>Coverage-guided AFL++ (afl.rs 4.40c) over a native GHC <b>SanitizerCoverage</b>-instrumented
+cardano-node dependency tree (<code>-fllvm</code> + LLVM SanCov pass, ~2.07M-entry edge map). One
+binary, surface selected by <code>DWARF_DECODER</code>; fork-per-exec, file-arg harness. Oracle:
+clean <code>DeserialiseFailure</code> / validation reject &rarr; exit 0; any other uncaught exception
+or RTS abort &rarr; <code>SIGABRT</code> (AFL crash); non-termination &rarr; AFL timeout (hang).
+Per-surface AFL output plus a SARIF / <code>REPORT.md</code> harvest; <code>plot_data</code>,
+container logs, and crash/hang dirs persisted.</p>
+
+<h2>Per-surface results</h2>
+<p class="muted" style="font-size:13px">Δ compares 8&nbsp;h edge coverage against the 1&nbsp;h checkpoint
+— it shows where the long window kept paying off. <code>*</code> hangs are spurious (see adjudication).</p>
+<table>
+<thead><tr>
+  <th>surface</th><th>entrypoint</th><th>execs</th><th>edges (8h)</th><th>edges (1h)</th><th>Δ</th>
+  <th>corpus</th><th>cycles</th><th>stability</th><th>crashes</th><th>hangs</th>
+</tr></thead>
+<tbody>
+<tr><td>applyblock</td><td>BBODY&rarr;LEDGERS&rarr;per-tx LEDGER over genesis NewEpochState</td><td class="num">1,850,770</td><td class="num"><b>28,058</b></td><td class="num">24,842</td><td class="num delta">+13%</td><td class="num">4,108</td><td class="num">2</td><td class="num">88.5%</td><td class="num ok">0</td><td class="num">4*</td></tr>
+<tr><td>applytx</td><td>applyTx (mempool LEDGER STS)</td><td class="num">2,267,940</td><td class="num">13,892</td><td class="num">11,908</td><td class="num delta">+17%</td><td class="num">3,897</td><td class="num">2</td><td class="num">99.6%</td><td class="num ok">0</td><td class="num">1*</td></tr>
+<tr><td>tx</td><td>wire GenTx &rarr; Conway tx decode</td><td class="num">2,336,495</td><td class="num">12,425</td><td class="num">7,570</td><td class="num delta">+64%</td><td class="num">3,823</td><td class="num">1</td><td class="num">99.6%</td><td class="num ok">0</td><td class="num">5*</td></tr>
+<tr><td>block</td><td>full block decode (widest)</td><td class="num">2,337,037</td><td class="num">7,918</td><td class="num">4,056</td><td class="num delta">+95%</td><td class="num">3,099</td><td class="num">13</td><td class="num">99.2%</td><td class="num ok">0</td><td class="num">2*</td></tr>
+<tr><td>ledger</td><td>Conway TxBody + getMinFeeTxUtxo</td><td class="num">2,350,172</td><td class="num">6,475</td><td class="num">5,402</td><td class="num delta">+20%</td><td class="num">1,504</td><td class="num">10</td><td class="num">99.9%</td><td class="num ok">0</td><td class="num">0</td></tr>
+<tr><td>handshake</td><td>N2N handshake codec decode</td><td class="num">2,305,194</td><td class="num">4,599</td><td class="num">4,362</td><td class="num delta">+5%</td><td class="num">4,225</td><td class="num">2</td><td class="num">98.9%</td><td class="num ok">0</td><td class="num">0</td></tr>
+<tr><td>header</td><td>Praos header decode</td><td class="num">2,351,019</td><td class="num">4,394</td><td class="num">4,312</td><td class="num delta">+2%</td><td class="num">1,097</td><td class="num">10</td><td class="num">99.2%</td><td class="num ok">0</td><td class="num">0</td></tr>
+<tr><td>txsub</td><td>tx-submission2 codec decode</td><td class="num">2,356,429</td><td class="num">2,432</td><td class="num">1,140</td><td class="num delta">+113%</td><td class="num">481</td><td class="num">149</td><td class="num">99.6%</td><td class="num ok">0</td><td class="num">0</td></tr>
+<tr><td>keepalive</td><td>keep-alive codec decode</td><td class="num">2,356,455</td><td class="num">1,091</td><td class="num">1,088</td><td class="num delta">+0%</td><td class="num">173</td><td class="num">264</td><td class="num">99.5%</td><td class="num ok">0</td><td class="num">1*</td></tr>
+</tbody>
+<tfoot><tr><th>totals</th><th>9 surfaces · 8 h each</th><th class="num">~20.5M</th><th class="num">—</th><th class="num">—</th><th class="num">—</th><th class="num">—</th><th class="num">—</th><th class="num">—</th><th class="num ok">0</th><th class="num">13*</th></tr></tfoot>
+</table>
+<p><span class="chip ok">0 crashes</span> <span class="chip warn">13 hangs — all spurious</span>
+<span class="chip muted">SARIF 2.1.0, schema-valid, 9 runs</span></p>
+
+<h2>Why 8 hours (not a soak)</h2>
+<p>This was coverage-guided, not a timed soak. The long window paid off where the surface was wide:
+<b>block +95%, txsub +113%</b> (a late jump at ~h7 after 147 dry cycles), <b>tx +64%, ledger +20%,
+applytx +17%, applyblock +13%</b>. Surfaces with small grammars plateaued early and just cycled
+(keepalive +0% over 264 cycles, header +2%, handshake +5%) — their value here is the 0-crash soak,
+not new edges. <b>applyblock led absolute coverage (28k edges)</b> as the deepest surface: block-body
+validation plus the full per-tx Conway ledger rules.</p>
+
+<h2>The 13 hangs are false positives, not findings</h2>
+<p>AFL saved 13 inputs as "hangs" (tx 5, applyblock 4, block 2, applytx 1, keepalive 1), clustered in
+two CPU-load spikes (9 parallel campaigns plus the substrate stack; the second batch coincided with an
+unrelated persistent-mode build/test). <b>Replayed standalone they run in ~20–97&nbsp;ms with rc=0</b>
+(decode surfaces ~20&nbsp;ms; applyblock ~80&nbsp;ms for the full BBODY&rarr;LEDGERS work) — far under any
+timeout. They are AFL's contention-relative exec-timeout tripping on fast inputs, not
+non-termination/DoS. The SARIF lists them as <code>cov-hang</code> results for completeness; this note
+is the adjudication.</p>
+
+<h2>Throughput note</h2>
+<p>Fork-per-exec ran at ~82 execs/s (applyblock ~66/s) — ~12–13&nbsp;ms/exec, dominated by fork + GHC
+RTS startup + classifying the 2.07M-entry whole-tree bitmap (the decode itself is microseconds). AFL
+<b>persistent mode</b> was prototyped to remove the fork+RTS cost but <b>hangs on the GHC RTS deferred
+fork</b> (managed-runtime incompatibility; <code>-V0 -I0</code> no help) — documented, left unbuilt. The
+realistic speedup is shrinking the SanCov map (instrument only ledger/consensus/codec packages); for raw
+generational throughput the in-process <code>dwarf-decoder-fuzz</code> already does ~73k/s.</p>
+
+<h2>Artifacts</h2>
+<ul>
+  <li><code>reports/8h-exhaustive-campaign/dwarf-exhaustive-fuzz.sarif</code> — SARIF 2.1.0 (schema-valid), 9 runs, 13 <code>cov-hang</code> results, 0 <code>cov-crash</code>.</li>
+  <li><code>reports/8h-exhaustive-campaign/plot/*.plot_data</code> — per-surface AFL coverage-over-time.</li>
+  <li><code>reports/8h-exhaustive-campaign/fuzzer_stats/*.txt</code> — final per-surface AFL stats.</li>
+  <li><code>reports/8h-exhaustive-campaign/cleaned-logs/*.log</code> — per-surface run logs.</li>
+  <li><code>reports/8h-exhaustive-campaign/{REPORT.md,WRITEUP.md}</code> — the live harvester snapshot + the full writeup.</li>
+</ul>
+
+<p class="sub" style="margin-top:24px">DWARF native-SanCov campaign · coverage-guided AFL++ over GHC-instrumented cardano-node · 0 crashes / ~20.5M execs.</p>
+
+</div></body></html>

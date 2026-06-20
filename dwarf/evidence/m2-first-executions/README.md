@@ -1,6 +1,6 @@
 # Milestone 2 (M2) First Execution Evidence
 
-This directory contains selected Dwarf run bundles copied from `cardano-box`.
+This directory contains selected Dwarf run bundles copied from `build-host`.
 
 ## Groups
 

@@ -1,0 +1,57 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-node-cov-applytx-aflpp-smoke",
+  "title": "Native-coverage AFL++ campaign for the cardano-node Conway applyTx ledger rule pipeline (GHC SanCov)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "fuzz",
+    "afl++",
+    "coverage",
+    "cardano-node",
+    "ledger",
+    "applytx",
+    "sancov"
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "any"
+  },
+  "runtime": "library",
+  "seed": "0xc0de0a05",
+  "load": [
+    {
+      "primitive": "runtime_aflpp_campaign",
+      "working_dir": "/tmp/dwarf-cov-applytx",
+      "bin": "dwarf-decode-any",
+      "target_binary_path": "${DWARF_ROOT}/antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+      "env": {
+        "DWARF_DECODER": "applytx"
+      },
+      "seed_dirs": [
+        "${DWARF_ROOT}/antithesis/components/dwarf-adversary/corpora/conwaytx"
+      ],
+      "output_dir": "/tmp/dwarf-cov-applytx/out",
+      "seconds": 45,
+      "timeout_seconds": 300,
+      "target_implementation": "cardano-node",
+      "replay_harness": "dwarf-decode-any",
+      "replay_target_id": "cardano-node-cov-applytx",
+      "replay_targets": [
+        "cardano-node"
+      ]
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "aflpp_smoke_exit_clean",
+      "min_execs_done": 1000,
+      "min_queue_count": 20,
+      "min_cycles_done": 0,
+      "min_bitmap_cvg": 0.0
+    }
+  ],
+  "teardown": []
+}

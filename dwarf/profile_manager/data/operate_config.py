@@ -26,7 +26,7 @@ _ENV_PREFIX = "DWARF_"
 
 MOOG_SETUP_FIELDS: list[dict[str, Any]] = [
     {"key": "enabled", "label": "Enable Moog", "kind": "checkbox", "group": "Moog runtime", "env": ["DWARF_MOOG_ENABLED", "MOOG_ENABLED"], "help": "Controls whether Dwarf treats Moog as an active integration."},
-    {"key": "deploy_root", "label": "Deploy root", "group": "Moog runtime", "env": ["DWARF_MOOG_DEPLOY_ROOT", "MOOG_DEPLOY_ROOT"], "help": "Remote Moog deploy directory on cardano-box."},
+    {"key": "deploy_root", "label": "Deploy root", "group": "Moog runtime", "env": ["DWARF_MOOG_DEPLOY_ROOT", "MOOG_DEPLOY_ROOT"], "help": "Remote Moog deploy directory on build-host."},
     {"key": "moog_binary", "label": "Moog binary", "group": "Moog runtime", "env": ["DWARF_MOOG_BINARY", "MOOG_BINARY"], "help": "Remote path to the release moog CLI binary."},
     {"key": "secrets_root", "label": "Secrets root", "group": "Moog runtime", "env": ["DWARF_MOOG_SECRETS_ROOT", "MOOG_SECRETS_ROOT"], "help": "Remote root for Moog wallet and service secrets."},
     {"key": "mpfs_host", "label": "MPFS host", "group": "Moog runtime", "env": ["DWARF_MOOG_MPFS_HOST", "MOOG_MPFS_HOST"], "help": "MPFS endpoint used by Moog."},

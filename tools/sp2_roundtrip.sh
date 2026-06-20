@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SP2 round-trip: generate the header-path native bundle, run the Stage-2 gate,
 # lint with docker compose, and confirm moog accepts the bundle as a test asset.
-# Run on cardano-box (Docker + moog present).
+# Run on build-host (Docker + moog present).
 set -uo pipefail
 cd "$(dirname "$0")/.."
 SCEN=dwarf/scenarios/cardano-node-cbor-block-header-fuzz-structured.yaml

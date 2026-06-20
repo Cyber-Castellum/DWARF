@@ -12,7 +12,7 @@
   "faults": [
     {
       "primitive": "fault_local_port_delay",
-      "target_port_file": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/env/node-data/node1/port",
+      "target_port_file": "${HOME}/cardano-profiles/profile-a-haskell-peersharing-disabled/env/node-data/node1/port",
       "host": "127.0.0.1",
       "delay_ms": 100,
       "jitter_ms": 0

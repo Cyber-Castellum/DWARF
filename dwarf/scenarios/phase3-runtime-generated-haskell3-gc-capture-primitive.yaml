@@ -13,7 +13,7 @@
   "load": [
     {
       "primitive": "runtime_haskell_gc_capture",
-      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-i-generated-haskell3/runtime.json",
+      "runtime_metadata_path": "${HOME}/cardano-profiles/profile-i-generated-haskell3/runtime.json",
       "target_node": "node2",
       "target_host": "127.0.0.1",
       "connect_attempts": 2,

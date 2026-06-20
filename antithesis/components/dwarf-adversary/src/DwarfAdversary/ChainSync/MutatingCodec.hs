@@ -23,6 +23,7 @@ module DwarfAdversary.ChainSync.MutatingCodec
     , describeHeaderMutation
     ) where
 
+import Codec.CBOR.Encoding (encodePreEncoded)
 import Codec.CBOR.Read (deserialiseFromBytes)
 import Codec.CBOR.Term (decodeTerm, encodeTerm)
 import Codec.CBOR.Write (toLazyByteString)
@@ -42,52 +43,67 @@ import DwarfAdversary.ChainSync.Codec
     , encPoint
     , encTip
     )
-import DwarfAdversary.Fuzz (MutationInfo (..), mutateTerm)
+import DwarfAdversary.Fuzz
+    ( MutationInfo (..)
+    , MutationLevel (..)
+    , corruptBytes
+    , mutateTerm
+    , mutateTermSemantic
+    )
 import Network.TypedProtocol.Codec (Codec)
 import Ouroboros.Network.Protocol.ChainSync.Codec qualified as ChainSync
 import Ouroboros.Network.Protocol.ChainSync.Type (ChainSync)
 import System.Random (mkStdGen)
 
 -- | The chain-sync codec with a fuzzing header encoder. @seed@ is the
--- sole randomness source; @rate@ ∈ [0,1] is the mutation probability.
+-- sole randomness source; @rate@ ∈ [0,1] is the mutation probability;
+-- @level@ selects structural / byte-level / both corruption.
 mutatingCodecChainSync
-    :: Word64
+    :: MutationLevel
+    -> Word64
     -> Double
     -> Codec (ChainSync Header Point Tip) DeserialiseFailure IO LBS.ByteString
-mutatingCodecChainSync seed rate =
+mutatingCodecChainSync level seed rate =
     ChainSync.codecChainSync
-        (mutEncHeader seed rate)
+        (mutEncHeader level seed rate)
         decHeader
         encPoint
         decPoint
         encTip
         decTip
 
--- | Encode a header, then structurally mutate its CBOR before emitting.
--- If the header CBOR does not decode as a single 'Term' (should not
--- happen for valid header bytes), the original encoding is emitted.
-mutEncHeader :: Word64 -> Double -> Header -> Encoding
-mutEncHeader seed rate h =
+-- | Encode a header, then mutate its CBOR before emitting. @LevelStruct@
+-- mutates the Term and re-encodes (valid CBOR); @LevelBytes@ corrupts the
+-- serialized bytes (malformed CBOR); @LevelBoth@ does struct then bytes.
+mutEncHeader :: MutationLevel -> Word64 -> Double -> Header -> Encoding
+mutEncHeader level seed rate h =
     let bytes = toLazyByteString (encHeader h)
-    in  case deserialiseFromBytes decodeTerm bytes of
-            Right (rest, term)
-                | LBS.null rest ->
-                    let g = mkStdGen (fromIntegral (subSeed seed bytes))
-                        (term', _) = mutateTerm g rate term
-                    in  encodeTerm term'
-            _ -> encHeader h
+        g = mkStdGen (fromIntegral (subSeed seed bytes))
+        mut f = case deserialiseFromBytes decodeTerm bytes of
+            Right (rest, term) | LBS.null rest -> Just (fst (f g rate term))
+            _ -> Nothing
+    in  case level of
+            LevelStruct -> maybe (encHeader h) encodeTerm (mut mutateTerm)
+            LevelSemantic -> maybe (encHeader h) encodeTerm (mut mutateTermSemantic)
+            LevelBytes -> encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict bytes)))
+            LevelBoth ->
+                let base = maybe bytes (toLazyByteString . encodeTerm) (mut mutateTerm)
+                in  encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict base)))
 
 -- | The mutation that 'mutEncHeader' will apply to a header — exposed so
 -- the server can emit a matching SDK assertion (same pure function, so
 -- the reported mutation kind agrees with what went on the wire).
-describeHeaderMutation :: Word64 -> Double -> Header -> MutationInfo
-describeHeaderMutation seed rate h =
+describeHeaderMutation :: MutationLevel -> Word64 -> Double -> Header -> MutationInfo
+describeHeaderMutation level seed rate h =
     let bytes = toLazyByteString (encHeader h)
-    in  case deserialiseFromBytes decodeTerm bytes of
-            Right (rest, term)
-                | LBS.null rest ->
-                    snd (mutateTerm (mkStdGen (fromIntegral (subSeed seed bytes))) rate term)
+        g = mkStdGen (fromIntegral (subSeed seed bytes))
+        viaTerm f = case deserialiseFromBytes decodeTerm bytes of
+            Right (rest, term) | LBS.null rest -> snd (f g rate term)
             _ -> MutationInfo "undecodable" 0
+    in  case level of
+            LevelStruct -> viaTerm mutateTerm
+            LevelSemantic -> viaTerm mutateTermSemantic
+            _ -> snd (corruptBytes g rate (LBS.toStrict bytes))
 
 -- | Per-header sub-seed: base seed XOR FNV-1a hash of the header bytes.
 subSeed :: Word64 -> LBS.ByteString -> Word64

@@ -22,8 +22,8 @@ CUSTOM_PACKAGE_ROOT_ENV = "ADA2_PROFILE_MANAGER_CUSTOM_PACKAGE_ROOT"
 DEFAULT_CUSTOM_PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "custom-packages"
 CUSTOM_EVIDENCE_ROOT_ENV = "ADA2_PROFILE_MANAGER_CUSTOM_EVIDENCE_ROOT"
 DEFAULT_CUSTOM_EVIDENCE_ROOT = Path(__file__).resolve().parents[2] / "agent" / "testing" / "custom-packages"
-REMOTE_AMARU_SOURCE_PATH = "/home/nigel/amaru-verification"
-REMOTE_AMARU_DOCKERFILE_PATH = "/home/nigel/amaru-verification/docker/Dockerfile.amaru"
+REMOTE_AMARU_SOURCE_PATH = "${HOME}/amaru-verification"
+REMOTE_AMARU_DOCKERFILE_PATH = "${HOME}/amaru-verification/docker/Dockerfile.amaru"
 
 EXECUTION_TYPES = {
     "status-only",
@@ -474,9 +474,9 @@ def package_deploy_dry_run_text(package, profile):
             f"Mixed Haskell/Amaru deploy: {haskell_nodes} Haskell node(s), {amaru_nodes} Amaru node(s).",
             f"Topology pattern: {profile.get('topology', {}).get('pattern') or 'local-mesh'}.",
             f"Shared genesis: {'yes' if profile.get('topology', {}).get('shared_genesis', True) else 'no'}.",
-            f"Would create Haskell runtime env under {profile['runtime_root']}/env via /home/nigel/.local/bin/cardano-testnet create-env.",
-            "Would run Haskell nodes from /home/nigel/.local/bin/cardano-node under tmux sessions scoped to this profile.",
-            "Would run Amaru nodes from /home/nigel/amaru-verification/target/debug/amaru under tmux sessions scoped to this profile.",
+            f"Would create Haskell runtime env under {profile['runtime_root']}/env via ${HOME}/.local/bin/cardano-testnet create-env.",
+            "Would run Haskell nodes from ${HOME}/.local/bin/cardano-node under tmux sessions scoped to this profile.",
+            "Would run Amaru nodes from ${HOME}/amaru-verification/target/debug/amaru under tmux sessions scoped to this profile.",
             f"Would set AMARU_NETWORK={_amaru_network_name(profile['network_magic'])} and seed AMARU_PEER_ADDRESS from 127.0.0.1:33001 then prior Amaru peers.",
             "",
             "Rendered deploy command:",
@@ -495,10 +495,10 @@ def package_deploy_command(package, profile):
     runtime = shlex.quote(profile["runtime_root"])
     project = shlex.quote(generated_profile.compose_project)
     peer_sharing = "true" if bool(profile.get("peer_sharing")) else "false"
-    cardano_node_bin = shlex.quote("/home/nigel/.local/bin/cardano-node")
-    cardano_cli_bin = shlex.quote("/home/nigel/.local/bin/cardano-cli")
-    cardano_testnet_bin = shlex.quote("/home/nigel/.local/bin/cardano-testnet")
-    amaru_bin = shlex.quote("/home/nigel/amaru-verification/target/debug/amaru")
+    cardano_node_bin = shlex.quote("${HOME}/.local/bin/cardano-node")
+    cardano_cli_bin = shlex.quote("${HOME}/.local/bin/cardano-cli")
+    cardano_testnet_bin = shlex.quote("${HOME}/.local/bin/cardano-testnet")
+    amaru_bin = shlex.quote("${HOME}/amaru-verification/target/debug/amaru")
     amaru_network = shlex.quote(_amaru_network_name(profile["network_magic"]))
     return f"""set -e
 runtime={runtime}
@@ -945,7 +945,7 @@ def create_interactive_bundle(output_path):
         "submit_api": {"enabled": submit_enabled, "bind": "127.0.0.1:0"},
         "observability": {"logs": logs, "metrics": metrics, "trace_buffer": trace_buffer},
         "topology": {"mode": topology_mode, "public_roots": [], "bootstrap_peers": []},
-        "runtime_root": f"/home/nigel/cardano-profiles/{package_id}",
+        "runtime_root": f"${HOME}/cardano-profiles/{package_id}",
     }
     result = validate_bundle_data(package, profile)
     print(validation_text(result), end="")

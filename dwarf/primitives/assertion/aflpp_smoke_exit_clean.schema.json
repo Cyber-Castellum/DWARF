@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "aflpp_smoke_exit_clean params",
+  "type": "object",
+  "properties": {
+    "min_completed": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "min_queue_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "min_execs_done": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 100
+    },
+    "min_cycles_done": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "min_bitmap_cvg": {
+      "type": "number",
+      "minimum": 0,
+      "default": 3.0
+    }
+  },
+  "additionalProperties": false
+}

@@ -89,7 +89,7 @@ cardano-profile wallet test moog-requester --json</code></pre>
   <p>Use <code>--json</code> for automation because it suppresses the interactive Dwarf banner and leaves stdout as machine-readable JSON.</p>
 
   <h3>Moog deployment health</h3>
-  <p>Dwarf can now check the Moog deployment on <code>cardano-box</code> without reading wallet secrets. The status checks verify the Moog binary, deploy directories, public requester/oracle metadata, Preprod MPFS/token configuration, and the <code>moog-oracle.service</code> systemd user unit state.</p>
+  <p>Dwarf can now check the Moog deployment on <code>build-host</code> without reading wallet secrets. The status checks verify the Moog binary, deploy directories, public requester/oracle metadata, Preprod MPFS/token configuration, and the <code>moog-oracle.service</code> systemd user unit state.</p>
   <pre class="run-payload-pre"><code>cardano-profile moog config
 cardano-profile moog config --json
 cardano-profile moog status
@@ -133,9 +133,9 @@ cardano-profile moog preflight --asset-dir &lt;dir&gt; --repo &lt;org/repo&gt; -
   <p>The Moog config block is safe for public deployment metadata only. Set or replace it with a JSON object like this:</p>
   <pre class="run-payload-pre"><code>cardano-profile moog set '{
   "enabled": true,
-  "deploy_root": "/home/nigel/moog-deploy",
-  "moog_binary": "/home/nigel/bin/moog",
-  "secrets_root": "/home/nigel/moog-secrets",
+  "deploy_root": "${HOME}/moog-deploy",
+  "moog_binary": "${HOME}/bin/moog",
+  "secrets_root": "${HOME}/moog-secrets",
   "mpfs_host": "https://mpfs.plutimus.com",
   "token_id": "21c523c3b4565f1fc1ad7e54e82ca976f60997d8e7e9946826813fabf341069b",
   "requester_wallet_id": "moog-requester",
@@ -367,7 +367,7 @@ cardano-profile restore --archive /backups/dwarf-20260429.tar.gz \
   - job_name: dwarf
     metrics_path: /metrics
     static_configs:
-      - targets: ['dwarf.gainpalfam.com:443']
+      - targets: ['dwarf.example.com:443']
     scheme: https</code></pre>
 </section>
 

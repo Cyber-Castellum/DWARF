@@ -1,0 +1,6 @@
+dist-newstyle
+dist
+dist-fuzz
+cabal.project.local
+.git
+*.tar.gz

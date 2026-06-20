@@ -20,7 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from runtime_telemetry import emit_target_event  # noqa: E402
 
 
-DEFAULT_REPO_ROOT = Path("/home/nigel/amaru-verification")
+DEFAULT_REPO_ROOT = Path("${HOME}/amaru-verification")
 DEFAULT_MANIFEST_PATH = DEFAULT_REPO_ROOT / "crates/amaru/config/bootstrap/preview/snapshots.json"
 DEFAULT_NETWORK = "preview"
 DEFAULT_PEER = "preview-node.play.dev.cardano.org:3001"

@@ -22,7 +22,7 @@
     {
       "primitive": "cbor_fuzz_target",
       "target_id": "amaru-cbor-decode-block",
-      "manifests_dir": "/home/nigel/dwarf-shims/manifests",
+      "manifests_dir": "${HOME}/dwarf-shims/manifests",
       "iterations": 10000,
       "min_bytes": 1,
       "max_bytes": 4096,

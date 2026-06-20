@@ -16,6 +16,7 @@ import Control.Concurrent.Class.MonadSTM.Strict (atomically, newTVarIO, readTVar
 import Control.Exception (SomeException, catch)
 import Control.Monad (forever)
 import Data.Aeson (object, (.=))
+import Data.ByteString qualified as BS
 import Data.Word (Word32, Word64)
 import DwarfAdversary (originPoint)
 import DwarfAdversary.Application (Limit (..), adversaryApplication, runChainProducerInto)
@@ -36,24 +37,24 @@ import DwarfAdversary.ChainSync.Connection
     , runChainSyncServer
     , servingBlockFetchResponderMap
     )
-import DwarfAdversary.TxSource (getBaseTxsFromChain)
+import DwarfAdversary.TxSource (getBaseTxsFromChain, harvestTxs, loadSeedTxs)
 import DwarfAdversary.TxSubmission.Client (txProviderClient)
 import DwarfAdversary.TxSubmission.MutatingCodec
     ( describeTxMutation
     , mutatingCodecTxSubmission
     )
-import DwarfAdversary.TxSubmission.Target (TxField (AuxData, Certificate, WholeTx))
+import DwarfAdversary.TxSubmission.Target (TxField (AuxData, Certificate, Witness, WholeTx))
 import DwarfAdversary.ChainSync.MutatingCodec
     ( describeHeaderMutation
     , mutatingCodecChainSync
     )
 import DwarfAdversary.ChainSync.Server (advancingChainSyncServer, chainSyncServer, tipFromHeaders)
-import DwarfAdversary.Fuzz (MutationInfo (..))
+import DwarfAdversary.Fuzz (MutationInfo (..), MutationLevel (..), parseMutationLevel)
 import DwarfAdversary.HeaderSource (getBaseHeaders)
 import DwarfAdversary.SDK qualified as SDK
 import Ouroboros.Network.Block (blockPoint, castPoint)
 import Network.Socket (PortNumber)
-import Numeric (readHex)
+import Numeric (readHex, showHex)
 import Options.Applicative
     ( Parser
     , auto
@@ -65,6 +66,7 @@ import Options.Applicative
     , helper
     , info
     , long
+    , many
     , metavar
     , option
     , optional
@@ -77,22 +79,37 @@ import Options.Applicative
 import Ouroboros.Network.Magic (NetworkMagic (..))
 import System.IO
     ( BufferMode (LineBuffering)
+    , IOMode (ReadMode)
     , hPutStrLn
     , hSetBuffering
     , stderr
+    , withBinaryFile
     )
 
 data Args = Args
     { argMagic :: Word32
     , argPort :: Int
     , argRate :: Double
+    , argSeedSpec :: String
+    -- ^ Raw @--seed@ string: @random@/@auto@ (draw from entropy at launch — under
+    -- Antithesis this is a per-timeline choice point) or an explicit hex/decimal seed.
     , argSeed :: Word64
+    -- ^ Resolved RNG seed (set in 'main' from 'argSeedSpec'); NOT parsed directly.
     , argUpstream :: Maybe (String, Int)
     , argSelftest :: Bool
     , argProtocol :: String
     , argShape :: String
+    , argLevel :: MutationLevel
+    -- ^ struct (default) | bytes (malformed CBOR) | both
     , argCaptureTo :: Maybe FilePath
     , argBakedChain :: Maybe FilePath
+    , argSeedTxFiles :: [FilePath]
+    -- ^ Wire-GenTx files (what 'encTx' emits) always included as base txs to
+    -- mutate, so sub-field targeting engages even when the synced chain carries
+    -- no matching tx (e.g. the hermetic Antithesis devnet has no cert/metadata).
+    , argHarvestTo :: Maybe FilePath
+    -- ^ Dev tool: write each distinct captured tx's wire bytes here (to build a
+    -- seed corpus from a live cert/metadata-carrying devnet).
     }
 
 argsParser :: Parser Args
@@ -120,12 +137,17 @@ argsParser =
                 <> help "Probability [0,1] a served header is mutated (default: 0.5; 0 = stock)."
             )
         <*> option
-            (eitherReader parseSeed)
+            str
             ( long "seed"
-                <> metavar "HEX-OR-DEC"
-                <> value 0
-                <> help "Sole RNG seed; source from $(antithesis_random). Hex (0x..) or decimal."
+                <> metavar "random|HEX-OR-DEC"
+                <> value "random"
+                <> help
+                    "Sole RNG seed. 'random'/'auto' (default) draws fresh entropy at\
+                    \ launch — under Antithesis this is a per-timeline choice point, so\
+                    \ each timeline fuzzes from a different seed. The drawn value is\
+                    \ logged for reproduction. Or pin an explicit seed: hex (0x..) or decimal."
             )
+        <*> pure 0 -- argSeed: resolved in main from argSeedSpec
         <*> optional
             ( option
                 (eitherReader parseUpstream)
@@ -157,6 +179,16 @@ argsParser =
                 <> value "block-header"
                 <> help "Target CBOR shape: block-header (default) | block."
             )
+        <*> option
+            (eitherReader (\s -> maybe (Left ("bad --mutation-level: " <> s)) Right (parseMutationLevel s)))
+            ( long "mutation-level"
+                <> metavar "L"
+                <> value LevelStruct
+                <> help
+                    "Mutation layer: struct (default, valid CBOR / hostile structure) |\
+                    \ bytes (malformed CBOR — truncate/flip/oversize-length/deep-nest/garbage,\
+                    \ exercises the deserializer's error handling) | both."
+            )
         <*> optional
             ( option
                 str
@@ -173,6 +205,26 @@ argsParser =
                     <> help "Serve a baked chain from FILE (no --upstream) — producer-less eclipse blockfetch."
                 )
             )
+        <*> many
+            ( option
+                str
+                ( long "seed-tx"
+                    <> metavar "FILE"
+                    <> help
+                        ( "Wire GenTx bytes (as encTx emits) always offered as a base tx to "
+                            <> "mutate. Repeatable. Lets --cbor-shape certificate/auxiliary-data "
+                            <> "engage on a chain that carries no such tx."
+                        )
+                )
+            )
+        <*> optional
+            ( option
+                str
+                ( long "harvest-to"
+                    <> metavar "DIR"
+                    <> help "Dev tool: write each distinct captured tx's wire bytes to DIR/cap-<fnv>.cbor."
+                )
+            )
 
 parseSeed :: String -> Either String Word64
 parseSeed s = case s of
@@ -182,6 +234,37 @@ parseSeed s = case s of
     _ -> case reads s of
         [(n :: Word64, "")] -> Right n
         _ -> Left ("not a uint64: " <> s)
+
+-- | Resolve the @--seed@ spec to a concrete RNG seed. @random@/@auto@ draws a
+-- fresh Word64 from system entropy at launch — under Antithesis, entropy is a
+-- controlled per-timeline choice point, so each timeline fuzzes from a distinct
+-- seed (the mutation seed-space is explored, not fixed). The drawn value is
+-- logged so any timeline is reproducible with @--seed 0x<value>@. An explicit
+-- hex/decimal seed pins the RNG (deterministic recreation).
+resolveSeed :: (String -> IO ()) -> String -> IO Word64
+resolveSeed logMsg spec
+    | spec `elem` ["random", "auto", "antithesis_random"] = do
+        w <- drawEntropyWord64
+        logMsg
+            ( "seed: drew random seed from entropy (per-timeline under Antithesis): 0x"
+                <> showHex w ""
+                <> " | reproduce with --seed 0x"
+                <> showHex w ""
+            )
+        pure w
+    | otherwise = case parseSeed spec of
+        Right w -> do
+            logMsg ("seed: using explicit seed 0x" <> showHex w "")
+            pure w
+        Left e -> error ("bad --seed: " <> e)
+
+-- | Draw 8 bytes of entropy and fold them into a 'Word64'. Reads @/dev/urandom@,
+-- whose reads Antithesis intercepts as a randomness choice point.
+drawEntropyWord64 :: IO Word64
+drawEntropyWord64 =
+    withBinaryFile "/dev/urandom" ReadMode $ \h -> do
+        bs <- BS.hGet h 8
+        pure (BS.foldl' (\acc b -> acc * 256 + fromIntegral b) 0 bs)
 
 parseUpstream :: String -> Either String (String, Int)
 parseUpstream s = case break (== ':') s of
@@ -193,8 +276,10 @@ parseUpstream s = case break (== ':') s of
 main :: IO ()
 main = do
     hSetBuffering stderr LineBuffering
-    args <- execParser opts
+    args0 <- execParser opts
     let logMsg s = hPutStrLn stderr ("dwarf-adversary: " <> s)
+    seed <- resolveSeed logMsg (argSeedSpec args0)
+    let args = args0 {argSeed = seed}
         magic = NetworkMagic (argMagic args)
         port = fromIntegral (argPort args) :: PortNumber
     case argCaptureTo args of
@@ -248,9 +333,9 @@ runServe logMsg args magic port = do
         codec =
             if argRate args <= 0
                 then codecChainSync
-                else mutatingCodecChainSync (argSeed args) (argRate args)
+                else mutatingCodecChainSync (argLevel args) (argSeed args) (argRate args)
         onServe h = do
-            let inf = describeHeaderMutation (argSeed args) (argRate args) h
+            let inf = describeHeaderMutation (argLevel args) (argSeed args) (argRate args) h
             SDK.sometimes
                 True
                 "dwarf_served_mutated_header"
@@ -334,9 +419,9 @@ runServeBlockFetch logMsg args magic port = do
             Right _ -> logMsg ("producer: chain-sync client returned cleanly (chainLen=" <> show n <> ")")
         threadDelay 1_000_000
     let csServer = advancingChainSyncServer logMsg (\_ -> pure ()) chainVar
-        bfCodec = mutatingCodecBlockFetch (argSeed args) (argRate args)
+        bfCodec = mutatingCodecBlockFetch (argLevel args) (argSeed args) (argRate args)
         onServeBlk b = do
-            let inf = describeBlockMutation (argSeed args) (argRate args) b
+            let inf = describeBlockMutation (argLevel args) (argSeed args) (argRate args) b
             SDK.sometimes
                 True
                 "dwarf_served_mutated_block"
@@ -389,9 +474,9 @@ runServeBakedBlockFetch logMsg args path magic port = do
         (object ["count" .= length headers])
     let tip = tipFromHeaders headers
         csServer = chainSyncServer logMsg (\_ -> pure ()) False headers tip
-        bfCodec = mutatingCodecBlockFetch (argSeed args) (argRate args)
+        bfCodec = mutatingCodecBlockFetch (argLevel args) (argSeed args) (argRate args)
         onServeBlk b = do
-            let inf = describeBlockMutation (argSeed args) (argRate args) b
+            let inf = describeBlockMutation (argLevel args) (argSeed args) (argRate args) b
             SDK.sometimes
                 True
                 "dwarf_served_mutated_block"
@@ -482,6 +567,7 @@ runTxSubmissionSelftest logMsg magic port = do
 txFieldOfShape :: String -> TxField
 txFieldOfShape "certificate" = Certificate
 txFieldOfShape "auxiliary-data" = AuxData
+txFieldOfShape "witness" = Witness
 txFieldOfShape _ = WholeTx
 
 -- | Production tx-submission path: serve a real chain (so relay2 peers happily),
@@ -518,11 +604,11 @@ runServeTxSubmission logMsg args magic port = do
         threadDelay 1_000_000
     let field = txFieldOfShape (argShape args)
         csServer = advancingChainSyncServer logMsg (\_ -> pure ()) chainVar
-        txCodec = mutatingCodecTxSubmission field (argSeed args) (argRate args)
+        txCodec = mutatingCodecTxSubmission field (argLevel args) (argSeed args) (argRate args)
         -- per-serve assertion: fired each time the node actually pulls a tx
         -- (true serve signal, not a once-at-startup emit).
         onServeTx t = do
-            let inf = describeTxMutation field (argSeed args) (argRate args) t
+            let inf = describeTxMutation field (argLevel args) (argSeed args) (argRate args) t
             SDK.sometimes
                 True
                 "dwarf_served_mutated_tx"
@@ -545,14 +631,23 @@ runServeTxSubmission logMsg args magic port = do
     -- each fresh txid once — so as the tx-generator's txs land in new blocks the
     -- adversary keeps serving NEW mutated txs, instead of capturing one batch at
     -- startup (empty before any tx lands) and never refreshing.
-    txsVar <- newTVarIO []
+    -- Seed-corpus: wire-GenTx files (what encTx emits) always offered as base
+    -- txs, so --cbor-shape certificate/auxiliary-data engages even when the
+    -- synced chain has no matching tx (the hermetic Antithesis devnet carries
+    -- only payment + Plutus txs). Loaded once; prepended to every refresh.
+    seedTxs <- loadSeedTxs logMsg (argSeedTxFiles args)
+    logMsg ("seed-corpus: " <> show (length seedTxs) <> " seed tx(s) loaded")
+    txsVar <- newTVarIO seedTxs
     _ <- forkIO $ forever $ do
         batch <- getBaseTxsFromChain logMsg chainVar magic hp 10
-        atomically (writeTVar txsVar batch)
+        case argHarvestTo args of
+            Just dir -> harvestTxs logMsg dir batch
+            Nothing -> pure ()
+        atomically (writeTVar txsVar (seedTxs <> batch))
         SDK.sometimes
-            (not (null batch))
+            (not (null seedTxs && null batch))
             "dwarf_base_tx_obtained"
-            (object ["count" .= length batch])
+            (object ["count" .= (length seedTxs + length batch), "seeds" .= length seedTxs])
         threadDelay 8_000_000
     -- LISTEN IMMEDIATELY — do NOT gate the server on the producer having synced
     -- a chain. Under approach B the downstream node reaches GSM CaughtUp via the

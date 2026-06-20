@@ -25,6 +25,7 @@ module DwarfAdversary.BlockFetch.MutatingCodec
     , describeBlockMutation
     ) where
 
+import Codec.CBOR.Encoding (encodePreEncoded)
 import Codec.CBOR.Read (deserialiseFromBytes)
 import Codec.CBOR.Term (decodeTerm, encodeTerm)
 import Codec.CBOR.Write (toLazyByteString)
@@ -40,7 +41,13 @@ import DwarfAdversary.ChainSync.Codec
     , encBlock
     , encBlockPoint
     )
-import DwarfAdversary.Fuzz (MutationInfo (..), mutateTerm)
+import DwarfAdversary.Fuzz
+    ( MutationInfo (..)
+    , MutationLevel (..)
+    , corruptBytes
+    , mutateTerm
+    , mutateTermSemantic
+    )
 import Network.TypedProtocol.Codec (Codec)
 import Ouroboros.Network.Block qualified as Network
 import Ouroboros.Network.Protocol.BlockFetch.Codec (codecBlockFetch)
@@ -48,43 +55,52 @@ import Ouroboros.Network.Protocol.BlockFetch.Type (BlockFetch)
 import System.Random (mkStdGen)
 
 -- | The block-fetch codec with a fuzzing block encoder. @seed@ is the
--- sole randomness source; @rate@ ∈ [0,1] is the mutation probability.
+-- sole randomness source; @rate@ ∈ [0,1] is the mutation probability;
+-- @level@ selects structural / byte-level / both corruption.
 mutatingCodecBlockFetch
-    :: Word64
+    :: MutationLevel
+    -> Word64
     -> Double
     -> Codec
         (BlockFetch Block (Network.Point Block))
         DeserialiseFailure
         IO
         LBS.ByteString
-mutatingCodecBlockFetch seed rate =
-    codecBlockFetch (mutEncBlock seed rate) decBlock encBlockPoint decBlockPoint
+mutatingCodecBlockFetch level seed rate =
+    codecBlockFetch (mutEncBlock level seed rate) decBlock encBlockPoint decBlockPoint
 
--- | Encode a block, then structurally mutate its CBOR before emitting.
--- If the block CBOR does not decode as a single 'Term' (should not happen
--- for valid block bytes), the original encoding is emitted unchanged.
-mutEncBlock :: Word64 -> Double -> Block -> Encoding
-mutEncBlock seed rate b =
+-- | Encode a block, then mutate its CBOR before emitting. @LevelStruct@
+-- mutates the Term and re-encodes (valid CBOR); @LevelBytes@ corrupts the
+-- serialized bytes (malformed CBOR); @LevelBoth@ does struct then bytes.
+mutEncBlock :: MutationLevel -> Word64 -> Double -> Block -> Encoding
+mutEncBlock level seed rate b =
     let bytes = toLazyByteString (encBlock b)
-    in  case deserialiseFromBytes decodeTerm bytes of
-            Right (rest, term)
-                | LBS.null rest ->
-                    let g = mkStdGen (fromIntegral (subSeed seed bytes))
-                        (term', _) = mutateTerm g rate term
-                    in  encodeTerm term'
-            _ -> encBlock b
+        g = mkStdGen (fromIntegral (subSeed seed bytes))
+        mut f = case deserialiseFromBytes decodeTerm bytes of
+            Right (rest, term) | LBS.null rest -> Just (fst (f g rate term))
+            _ -> Nothing
+    in  case level of
+            LevelStruct -> maybe (encBlock b) encodeTerm (mut mutateTerm)
+            LevelSemantic -> maybe (encBlock b) encodeTerm (mut mutateTermSemantic)
+            LevelBytes -> encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict bytes)))
+            LevelBoth ->
+                let base = maybe bytes (toLazyByteString . encodeTerm) (mut mutateTerm)
+                in  encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict base)))
 
 -- | The mutation 'mutEncBlock' will apply to a block — exposed so the
 -- server can emit a matching SDK assertion (same pure function, so the
 -- reported mutation kind agrees with what went on the wire).
-describeBlockMutation :: Word64 -> Double -> Block -> MutationInfo
-describeBlockMutation seed rate b =
+describeBlockMutation :: MutationLevel -> Word64 -> Double -> Block -> MutationInfo
+describeBlockMutation level seed rate b =
     let bytes = toLazyByteString (encBlock b)
-    in  case deserialiseFromBytes decodeTerm bytes of
-            Right (rest, term)
-                | LBS.null rest ->
-                    snd (mutateTerm (mkStdGen (fromIntegral (subSeed seed bytes))) rate term)
+        g = mkStdGen (fromIntegral (subSeed seed bytes))
+        viaTerm f = case deserialiseFromBytes decodeTerm bytes of
+            Right (rest, term) | LBS.null rest -> snd (f g rate term)
             _ -> MutationInfo "none" 0
+    in  case level of
+            LevelStruct -> viaTerm mutateTerm
+            LevelSemantic -> viaTerm mutateTermSemantic
+            _ -> snd (corruptBytes g rate (LBS.toStrict bytes))
 
 -- | Fold a block's bytes into its seed so distinct captured blocks mutate
 -- differently while staying a pure function of (seed, bytes). Mirrors

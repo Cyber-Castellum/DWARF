@@ -2,11 +2,11 @@ from profile_manager.config import DeploymentConfig, save_config
 
 
 DEFAULTS = {
-    "deployment_name": "cardano-box",
-    "host": "192.168.30.16",
+    "deployment_name": "build-host",
+    "host": "192.0.2.1",
     "ssh_user": "nigel",
-    "ssh_key_path": "/Users/nigel/.ssh/cardano-box",
-    "remote_base_path": "/home/nigel/cardano-profiles",
+    "ssh_key_path": "${HOME}/.ssh/build-host",
+    "remote_base_path": "${HOME}/cardano-profiles",
 }
 
 

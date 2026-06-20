@@ -1,0 +1,714 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run tx",
+          "properties": {
+            "surface": "tx",
+            "entrypoint": "wire GenTx -> Conway tx decode"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "tx: saved hang input id:000003,src:001422,time:6127484,execs:509959,op:havoc,rep:8"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/tx/tx/default/hangs/id:000003,src:001422,time:6127484,execs:509959,op:havoc,rep:8"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "tx: saved hang input id:000000,src:001422,time:6121203,execs:509906,op:havoc,rep:2"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/tx/tx/default/hangs/id:000000,src:001422,time:6121203,execs:509906,op:havoc,rep:2"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "tx: saved hang input id:000001,src:001422,time:6122647,execs:509912,op:havoc,rep:7"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/tx/tx/default/hangs/id:000001,src:001422,time:6122647,execs:509912,op:havoc,rep:7"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "tx: saved hang input id:000002,src:001422,time:6124926,execs:509928,op:havoc,rep:5"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/tx/tx/default/hangs/id:000002,src:001422,time:6124926,execs:509928,op:havoc,rep:5"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "tx: saved hang input id:000004,src:001422,time:6129363,execs:509976,op:havoc,rep:8"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/tx/tx/default/hangs/id:000004,src:001422,time:6129363,execs:509976,op:havoc,rep:8"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "surface": "tx",
+        "edges_found": "12425",
+        "execs_done": "2336495",
+        "execs_per_sec": "81.13",
+        "corpus_count": "3823",
+        "cycles_done": "1",
+        "stability": "99.58%",
+        "bitmap_cvg": "0.60%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "5"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run block",
+          "properties": {
+            "surface": "block",
+            "entrypoint": "full block decode (widest)"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "block: saved hang input id:000001,src:001750,time:15618913,execs:1278027,op:havoc,rep:2"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/block/block/default/hangs/id:000001,src:001750,time:15618913,execs:1278027,op:havoc,rep:2"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "block: saved hang input id:000000,src:000363,time:6106915,execs:509440,op:havoc,rep:10"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/block/block/default/hangs/id:000000,src:000363,time:6106915,execs:509440,op:havoc,rep:10"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "surface": "block",
+        "edges_found": "7918",
+        "execs_done": "2337037",
+        "execs_per_sec": "81.15",
+        "corpus_count": "3099",
+        "cycles_done": "13",
+        "stability": "99.23%",
+        "bitmap_cvg": "0.38%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "2"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run header",
+          "properties": {
+            "surface": "header",
+            "entrypoint": "Praos header decode"
+          }
+        }
+      ],
+      "results": [],
+      "properties": {
+        "surface": "header",
+        "edges_found": "4394",
+        "execs_done": "2351019",
+        "execs_per_sec": "81.63",
+        "corpus_count": "1097",
+        "cycles_done": "10",
+        "stability": "99.20%",
+        "bitmap_cvg": "0.21%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "0"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run ledger",
+          "properties": {
+            "surface": "ledger",
+            "entrypoint": "Conway TxBody + getMinFeeTxUtxo"
+          }
+        }
+      ],
+      "results": [],
+      "properties": {
+        "surface": "ledger",
+        "edges_found": "6475",
+        "execs_done": "2350172",
+        "execs_per_sec": "81.60",
+        "corpus_count": "1504",
+        "cycles_done": "10",
+        "stability": "99.94%",
+        "bitmap_cvg": "0.31%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "0"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run applytx",
+          "properties": {
+            "surface": "applytx",
+            "entrypoint": "applyTx (mempool LEDGER STS)"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "applytx: saved hang input id:000000,src:001647,time:6120612,execs:507391,op:havoc,rep:1"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/applytx/applytx/default/hangs/id:000000,src:001647,time:6120612,execs:507391,op:havoc,rep:1"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "surface": "applytx",
+        "edges_found": "13892",
+        "execs_done": "2267940",
+        "execs_per_sec": "78.75",
+        "corpus_count": "3897",
+        "cycles_done": "2",
+        "stability": "99.64%",
+        "bitmap_cvg": "0.67%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "1"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run applyblock",
+          "properties": {
+            "surface": "applyblock",
+            "entrypoint": "applyBlock (BBODY->LEDGERS->per-tx rules) over genesis NewEpochState"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "applyblock: saved hang input id:000003,src:002554,time:15627428,execs:1033989,op:havoc,rep:1"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/applyblock/applyblock/default/hangs/id:000003,src:002554,time:15627428,execs:1033989,op:havoc,rep:1"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "applyblock: saved hang input id:000002,src:002554,time:15626031,execs:1033987,op:havoc,rep:2"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/applyblock/applyblock/default/hangs/id:000002,src:002554,time:15626031,execs:1033987,op:havoc,rep:2"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "applyblock: saved hang input id:000000,src:002554,time:15623620,execs:1033983,op:havoc,rep:1"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/applyblock/applyblock/default/hangs/id:000000,src:002554,time:15623620,execs:1033983,op:havoc,rep:1"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "applyblock: saved hang input id:000001,src:002554,time:15624811,execs:1033985,op:havoc,rep:2"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/applyblock/applyblock/default/hangs/id:000001,src:002554,time:15624811,execs:1033985,op:havoc,rep:2"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "surface": "applyblock",
+        "edges_found": "28058",
+        "execs_done": "1850770",
+        "execs_per_sec": "64.26",
+        "corpus_count": "4108",
+        "cycles_done": "2",
+        "stability": "88.52%",
+        "bitmap_cvg": "1.35%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "4"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run handshake",
+          "properties": {
+            "surface": "handshake",
+            "entrypoint": "N2N handshake codec decode"
+          }
+        }
+      ],
+      "results": [],
+      "properties": {
+        "surface": "handshake",
+        "edges_found": "4599",
+        "execs_done": "2305194",
+        "execs_per_sec": "80.04",
+        "corpus_count": "4225",
+        "cycles_done": "2",
+        "stability": "98.87%",
+        "bitmap_cvg": "0.22%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "0"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run txsub",
+          "properties": {
+            "surface": "txsub",
+            "entrypoint": "tx-submission2 codec decode"
+          }
+        }
+      ],
+      "results": [],
+      "properties": {
+        "surface": "txsub",
+        "edges_found": "2432",
+        "execs_done": "2356429",
+        "execs_per_sec": "81.82",
+        "corpus_count": "481",
+        "cycles_done": "149",
+        "stability": "99.63%",
+        "bitmap_cvg": "0.12%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "0"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "dwarf-cov-fuzz",
+          "informationUri": "https://github.com/Cyber-Castellum/DWARF",
+          "version": "0.2",
+          "rules": [
+            {
+              "id": "cov-crash",
+              "name": "UncaughtExceptionOrAbort",
+              "shortDescription": {
+                "text": "A non-DeserialiseFailure exception or RTS abort reached the harness (SIGABRT)."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "cov-hang",
+              "name": "NonTermination",
+              "shortDescription": {
+                "text": "The harness exceeded the per-input time budget (hang / DoS candidate)."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "commandLine": "dwarf-cov-run keepalive",
+          "properties": {
+            "surface": "keepalive",
+            "entrypoint": "keep-alive codec decode"
+          }
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "cov-hang",
+          "level": "warning",
+          "message": {
+            "text": "keepalive: saved hang input id:000000,src:000171,time:15634540,execs:1287444,op:havoc,rep:2"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/tmp/cov8h/keepalive/keepalive/default/hangs/id:000000,src:000171,time:15634540,execs:1287444,op:havoc,rep:2"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "surface": "keepalive",
+        "edges_found": "1091",
+        "execs_done": "2356455",
+        "execs_per_sec": "81.82",
+        "corpus_count": "173",
+        "cycles_done": "264",
+        "stability": "99.54%",
+        "bitmap_cvg": "0.05%",
+        "run_time": "28800",
+        "saved_crashes": "0",
+        "saved_hangs": "1"
+      }
+    }
+  ]
+}

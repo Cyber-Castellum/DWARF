@@ -38,7 +38,7 @@ ARCHETYPE_COMPOSE = (Path(__file__).resolve().parents[2]
 NETWORK_MAGIC = 42                       # matches testnet.yaml networkMagic
 ADVERSARY_LISTEN_PORT = 3001
 ADVERSARY_UPSTREAM = "p1.example:3001"   # in-bundle base-header source
-SEED_LAUNCH_PLACEHOLDER = "0x1"          # overwritten by antithesis_random at launch
+SEED_LAUNCH_PLACEHOLDER = "random"        # adversary draws per-timeline entropy at launch
 
 # Which adversary protocol + CBOR shape a decode target maps to, and whether the
 # adversary mode that serves it is built. Only the chain-sync block-header mode
@@ -50,6 +50,22 @@ ADVERSARY_MODES = {
     "cardano-node-cbor-decode-tx-body":       {"protocol": "txsubmission", "shape": "tx-body", "built": True},
     "cardano-node-cbor-decode-certificate":   {"protocol": "txsubmission", "shape": "certificate", "built": True},
     "cardano-node-cbor-decode-auxiliary-data":{"protocol": "txsubmission", "shape": "auxiliary-data", "built": True},
+}
+
+# Coverage-surface (runtime_aflpp_campaign + DWARF_DECODER) -> the decode target
+# whose adversary mode serves the SAME surface over N2N. The native Antithesis
+# backend attacks the property via the adversary (Term-level structural mutation
+# of live N2N messages); the local backend attacks it via AFL on the SanCov
+# binary (edge-guided) -- same target/property/seed, two engines. Mini-protocol
+# surfaces (handshake/keepalive/txsub framing) have no built decode-on-receipt
+# adversary mode yet (SP4) and are refused with a named follow-on error.
+SURFACE_TO_DECODER = {
+    "tx":         "cardano-node-cbor-decode-tx-body",
+    "applytx":    "cardano-node-cbor-decode-tx-body",
+    "applyblock": "cardano-node-cbor-decode-tx-body",
+    "ledger":     "cardano-node-cbor-decode-tx-body",
+    "block":      "cardano-node-cbor-decode-block",
+    "header":     "cardano-node-cbor-decode-block-header",
 }
 
 # DWARF assertion primitive -> native SDK catalog entries. Sometimes/Reachable
@@ -69,6 +85,15 @@ _ASSERTION_MAP = {
         {"id": "parser_exit_observed", "kind": "reachable",
          "message": "parser exit status was observed"},
     ],
+    # Coverage-surface campaigns assert the surface ran and rejected adversarial
+    # input without a host fault (the SanCov edges drive the local engine; the
+    # asserted property is the same on the native backend).
+    "aflpp_smoke_exit_clean": [
+        {"id": "decoder_reached", "kind": "reachable",
+         "message": "node decode/ledger surface ran on an adversarial input"},
+        {"id": "clean_rejection", "kind": "sometimes",
+         "message": "node cleanly rejected a structurally-mutated input (no host fault)"},
+    ],
 }
 
 
@@ -86,6 +111,12 @@ def _cbor_load(scenario):
     return cbor[0]
 
 
+def _cov_load(scenario):
+    """Return the single runtime_aflpp_campaign coverage load ref, or None."""
+    cov = [p for p in scenario.load if str(p.primitive) == "runtime_aflpp_campaign"]
+    return cov[0] if len(cov) == 1 else None
+
+
 def fuzz_spec(scenario):
     """Shared descriptor consumed by both backends: same target decoder, CBOR
     shape, seed, and asserted properties. NOT a shared mutation engine -- local
@@ -96,6 +127,22 @@ def fuzz_spec(scenario):
             f"target.implementation {scenario.target.get('implementation')!r} is not "
             "supported by Antithesis (amaru/differential = SP3)"
         )
+    cov = _cov_load(scenario)
+    if cov is not None:
+        surface = (cov.params.get("env") or {}).get("DWARF_DECODER", "tx")
+        decoder = SURFACE_TO_DECODER.get(surface)
+        if decoder is None:
+            raise GeneratorError(
+                f"coverage surface {surface!r} has no native adversary mode "
+                "(mini-protocol handshake/keepalive/txsub framing = SP4 follow-on)"
+            )
+        return {
+            "target_decoder": decoder,
+            "cbor_shape": ADVERSARY_MODES[decoder]["shape"],
+            "seed": scenario.seed,
+            "mutation_rate": 0.05,
+            "asserted_properties": [a.primitive for a in scenario.assertions],
+        }
     load = _cbor_load(scenario)
     return {
         "target_decoder": load.params["target_id"],

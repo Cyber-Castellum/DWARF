@@ -3,7 +3,7 @@
 # cardano-node cbor-fuzz scenarios (the ones that meaningfully exercise
 # decode + roundtrip against the built shims). Reports OK/FAIL totals.
 #
-# Run on cardano-box (where the shim binaries are installed).
+# Run on build-host (where the shim binaries are installed).
 # Usage: tools/stage1_verify.sh ['glob']   (default: structured cbor-fuzz)
 set -uo pipefail
 cd "$(dirname "$0")/.."

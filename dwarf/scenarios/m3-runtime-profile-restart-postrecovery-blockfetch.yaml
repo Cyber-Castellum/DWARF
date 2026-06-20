@@ -24,7 +24,7 @@
   "load": [
     {
       "primitive": "load_shell_command",
-      "command": "python3 /home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py restart-fetch",
+      "command": "python3 ${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py restart-fetch",
       "timeout_seconds": 420,
       "expect_exit": 0
     }

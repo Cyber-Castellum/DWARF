@@ -1,0 +1,24 @@
+{
+  "id": "cardano-node-cov-txsub",
+  "binary": "antithesis/components/dwarf-adversary/dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decode-any/build/dwarf-decode-any/dwarf-decode-any",
+  "input_format": "file_arg",
+  "implementation": "cardano-node",
+  "language": "haskell",
+  "upstream_commit": "local",
+  "decoder_type": "Coverage-guided AFL++ harness (native SanitizerCoverage)",
+  "harness": {
+    "runner": "afl-fuzz",
+    "select_env": "DWARF_DECODER=txsub",
+    "entrypoint": "Ouroboros.Network.Protocol.TxSubmission2 codecTxSubmission2 decode @StIdle (MsgRequestTxIds/RequestTxs grammar; real GenTxId/GenTx codecs)",
+    "coverage": "native GHC edge coverage (-fllvm + LLVM SanitizerCoverage) over the instrumented dep tree",
+    "seed_corpus": "antithesis/components/dwarf-adversary/corpora/txsub",
+    "measured_edges_45s": 707
+  },
+  "expected_outcomes": {
+    "ok": "message decodes cleanly, exit 0",
+    "clean_error": "DeserialiseFailure / codec rejection, exit 0",
+    "crash": "non-DeserialiseFailure exception / RTS abort / signal -> SIGABRT (AFL crash); hang -> AFL timeout"
+  },
+  "invariants": ["seed corpus remains replayable", "mini-protocol message grammar decodes without host panic", "native SanCov edge surface preserved"],
+  "complements": "amaru-cargo-fuzz-txsub (Rust) — cardano-node's own typed-protocols message codec"
+}

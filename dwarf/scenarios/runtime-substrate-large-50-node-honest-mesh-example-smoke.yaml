@@ -28,22 +28,22 @@
     "network": "preview",
     "hosts": [
       {
-        "id": "cardano-box",
-        "ssh_target": "cardano-box",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
-        "published_host": "192.168.30.16"
+        "id": "build-host",
+        "ssh_target": "build-host",
+        "remote_runtime_base": "${HOME}/cardano-profiles",
+        "published_host": "192.0.2.1"
       },
       {
         "id": "brabox",
         "ssh_target": "brabox",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
-        "published_host": "192.168.30.15"
+        "remote_runtime_base": "${HOME}/cardano-profiles",
+        "published_host": "192.0.2.15"
       },
       {
         "id": "spark",
         "ssh_target": "spark",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
-        "published_host": "192.168.30.152"
+        "remote_runtime_base": "${HOME}/cardano-profiles",
+        "published_host": "192.0.2.152"
       }
     ],
     "nodes": [
@@ -52,119 +52,119 @@
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node2",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node3",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node4",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node5",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node6",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node7",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node8",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node9",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node10",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node11",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node12",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node13",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node14",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node15",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node16",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node17",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "build-host"
       },
       {
         "id": "node18",

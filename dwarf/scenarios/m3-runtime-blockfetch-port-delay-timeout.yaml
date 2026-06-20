@@ -31,7 +31,7 @@
   "faults": [
     {
       "primitive": "fault_local_port_delay",
-      "runtime_metadata_path": "/home/nigel/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
+      "runtime_metadata_path": "${HOME}/cardano-profiles/profile-a-haskell-peersharing-disabled/runtime.json",
       "target_node": "node1",
       "host": "127.0.0.1",
       "delay_ms": 4000,

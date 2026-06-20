@@ -19,10 +19,11 @@
 # RestartCount 0, relay2 VRFKeyBadProof 0, and relay2's established upstream is
 # the adversary (NOT a producer).
 #
-# Run on cardano-box. Arg: adversary image tag (default 0.10.0).
+# Run on build-host. Arg: adversary image tag (default 0.10.0).
 set -uo pipefail
 TAG="${1:-0.10.0}"
-cd /home/nigel/dwarf-v4/antithesis/cardano_node_dwarf
+LEVEL="${2:-struct}"   # struct | bytes | both  (byte-level = malformed CBOR)
+cd ${DWARF_ROOT}/antithesis/cardano_node_dwarf
 export INTERNAL_NETWORK=false
 DC="docker compose -f docker-compose.yaml"   # NO eclipse override -> single net
 cp docker-compose.yaml /tmp/sp3a_topo_compose.bak
@@ -31,6 +32,8 @@ trap restore EXIT
 # 1) adversary tag + blockfetch/block mode (keep --upstream p1, mutation 0.5)
 sed -i "s#dwarf-adversary:0\.[0-9]*\.[0-9]*#dwarf-adversary:${TAG}#" docker-compose.yaml
 sed -i 's#^\( *- "\)txsubmission"#\1blockfetch"#; s#^\( *- "\)tx-body"#\1block"#' docker-compose.yaml
+# 1b) inject --mutation-level after the cbor-shape value
+perl -0pi -e "s/(- \"--cbor-shape\"\n\s*- \"block\")/\$1\n      - \"--mutation-level\"\n      - \"${LEVEL}\"/" docker-compose.yaml
 # 2) relay2 topology: dwarf (dual-peer) -> eclipse (adversary-only)
 sed -i 's#\./relay-dwarf-topology\.json:/configs/configs/topology\.json#./relay-eclipse-topology.json:/configs/configs/topology.json#' docker-compose.yaml
 

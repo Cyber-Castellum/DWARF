@@ -120,7 +120,7 @@ tmux ls 2>/dev/null | grep -E 'cardano-profile-|cardano-devnet' || true
 echo "CONFIG_PEERSHARING"
 grep -n '"PeerSharing"' "$runtime/env/configuration.yaml" || true
 echo "TIP"
-CARDANO_NODE_SOCKET_PATH="$socket" /home/nigel/.local/bin/cardano-cli query tip --testnet-magic 42 || true
+CARDANO_NODE_SOCKET_PATH="$socket" ${HOME}/.local/bin/cardano-cli query tip --testnet-magic 42 || true
 echo "NODE_PROCESSES"
 pgrep -af 'cardano-node run' || true
 echo "LISTENERS"

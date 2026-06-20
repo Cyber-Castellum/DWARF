@@ -1,5 +1,5 @@
 {
-  "bundle_runtime_metadata_path": "/home/nigel/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/substrate-compose/runtime.json",
+  "bundle_runtime_metadata_path": "${HOME}/dwarf-fw/runs/20260428T064357Z-223bf4d2/outputs/substrate-compose/runtime.json",
   "compose_project": "dwarf-substrate-20260428T064357Z-223bf4d2",
   "healthy": true,
   "network": "preview",
@@ -15,7 +15,7 @@
       "peer_addresses": [
         "127.0.0.1:34042"
       ],
-      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_binary": "${HOME}/.local/bin/cardano-node",
       "resolved_version": "10.7.1",
       "role": "honest",
       "session": "dwarf-substrate-20260428T064357Z-223bf4d2-node1",
@@ -31,7 +31,7 @@
       "peer_addresses": [
         "127.0.0.1:34041"
       ],
-      "resolved_binary": "/home/nigel/.local/bin/cardano-node",
+      "resolved_binary": "${HOME}/.local/bin/cardano-node",
       "resolved_version": "10.7.1",
       "role": "honest",
       "session": "dwarf-substrate-20260428T064357Z-223bf4d2-node2",
@@ -52,8 +52,8 @@
   "runtime_metadata_path": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2/runtime.json",
   "runtime_root": "/tmp/dwarf-substrate-20260428T064357Z-223bf4d2",
   "support_binaries": {
-    "cardano-cli": "/home/nigel/.local/bin/cardano-cli",
-    "cardano-testnet": "/home/nigel/.local/bin/cardano-testnet"
+    "cardano-cli": "${HOME}/.local/bin/cardano-cli",
+    "cardano-testnet": "${HOME}/.local/bin/cardano-testnet"
   },
   "topology": {
     "edges": [

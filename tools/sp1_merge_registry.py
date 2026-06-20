@@ -2,8 +2,8 @@
 import json
 from pathlib import Path
 
-MAY_REG = Path("/Users/nigel/dwarf-project/dwarf-deploypackage-may/dwarf/primitives/registry.json")
-V4_REG = Path("/Users/nigel/dwarf-project/dwarf-v4/dwarf/primitives/registry.json")
+MAY_REG = Path("${HOME}/dwarf-project/dwarf-deploypackage-may/dwarf/primitives/registry.json")
+V4_REG = Path("${DWARF_ROOT}/dwarf/primitives/registry.json")
 
 
 def merge_registry(v4: dict, may: dict, names: list[str]) -> tuple[dict, list[str]]:
