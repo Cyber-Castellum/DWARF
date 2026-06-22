@@ -1,0 +1,6 @@
+topology-eclipse SP3a: adversary 0.13.0 blockfetch, relay2=eclipse topo, SINGLE net; full reset…
+relay2 networks: cardano-node-testnet  (expect a single default net)
+observing 230s (producers warm -> adversary advances -> relay2 CaughtUp -> block-fetch)…
+=== relay2 established peers (remote ip -> container) ===
+dwarf_served_mutated_block=65  relay2 VRFKeyBadProof=0  adversary RestartCount=0
+OK: SP3a seam fired under TOPOLOGY eclipse on a single network (Antithesis-compatible).

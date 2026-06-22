@@ -20,6 +20,14 @@ Results from the DWARF fuzzing campaigns against `cardano-node` (local + Antithe
   clean (1h, run `0341f850…`) and **under fault injection** (3h, run `859ad183…`, relays
   fault-exposed) — both Completed, node error/critical-free, 0 rare — backed by the 8h local
   SanCov applyblock soak (1.85M execs, 28k edges, 0 crashes).
+- `dwarf-ledger-correctness-fuzzing-campaign-report.html` — **ledger-correctness & high-volume**
+  local campaigns (the FU1–FU5 follow-ups): the node **actively rejects** adversarial input at the
+  right layer and accepts nothing it shouldn't. Reject-oracle (2,445 decode-rejects, 0/165,560
+  blocks adopted); **ledger-layer reach** (3,266 witness-tampered txs over 8h, 0 mempool-accepted);
+  **validation-bypass battery** (4 ledger rules each correctly enforced, 0 bypass); high-volume
+  in-process decoder fuzzing (15M decodes persisted, ~7.2B over an 8h soak, 0 uncaught
+  exceptions). Self-contained with verbatim raw-log snippets; backing logs in
+  `ledger-correctness-evidence/`.
 - `dwarf-cbor-fuzzing-campaign-client-report.html` — the consolidated CBOR fuzzing client report:
   Antithesis live runs itemized (tx / block-header / block decoders, malformed + structural CBOR,
   1h–3h each, incl. the SP3a eclipse run) with per-run testRunId + assertion tables, plus the 8h
@@ -42,5 +50,14 @@ Raw per-run Antithesis triage-report snapshots (`run03-*.md` … `run29-*.md`) p
 `forensic-evidence.md`, backing the run ledger above — one file per run, so any claim in the
 ledger ties back to its source report. **Report access tokens have been scrubbed**
 (`auth=<REDACTED>`); these files contain report content + run IDs only, no credentials.
+
+## Ledger-correctness evidence (`ledger-correctness-evidence/`)
+
+Persisted raw logs + harness scripts backing the ledger-correctness report:
+`logs/witness_soak.log` (8h ledger-layer reach), `logs/decoder_fuzz_results.txt` (15M decoder-fuzz),
+`logs/fu1_struct.log` (reject-oracle), `logs/seed_soak_8h.log` + `logs/cert_soak_8h.log`
+(certificate/seed-corpus soaks), and `scripts/` (reject_oracle, witness/seed/cert soaks,
+validation-bypass battery builders). Also bundled as `fuzzing-correctness-evidence.tar.gz`. No
+credentials present.
 
 Raw AFL fuzzer logs: `../raw/logs/`.

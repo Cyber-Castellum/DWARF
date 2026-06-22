@@ -1,0 +1,10 @@
+cert/aux soak start 2026-06-16T16:52:18Z dur=28800s img=0.15.0 shape=certificate
+16:52:49 iter=1 served=6 cert_tagged=3 cert_real=2 relay2_crit=0 relay2_restart=0 adv_restart=0
+16:54:05 iter=2 served=9 cert_tagged=5 cert_real=3 relay2_crit=0 relay2_restart=0 adv_restart=0
+16:55:03 iter=3 served=12 cert_tagged=7 cert_real=5 relay2_crit=0 relay2_restart=0 adv_restart=0
+16:57:05 iter=4 served=15 cert_tagged=9 cert_real=7 relay2_crit=0 relay2_restart=0 adv_restart=0
+16:58:03 iter=5 served=18 cert_tagged=11 cert_real=9 relay2_crit=0 relay2_restart=0 adv_restart=0
+16:59:13 iter=6 served=21 cert_tagged=13 cert_real=11 relay2_crit=0 relay2_restart=0 adv_restart=0
+17:01:26 iter=7 served=27 cert_tagged=16 cert_real=12 relay2_crit=0 relay2_restart=0 adv_restart=0
+17:02:51 iter=8 served=30 cert_tagged=18 cert_real=13 relay2_crit=0 relay2_restart=0 adv_restart=0
+17:04:28 iter=9 served=36 cert_tagged=22 cert_real=17 relay2_crit=0 relay2_restart=0 adv_restart=0

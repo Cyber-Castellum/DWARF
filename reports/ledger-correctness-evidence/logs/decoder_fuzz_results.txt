@@ -1,0 +1,6 @@
+=== bytes (5M) ===
+{"cleanReject":4346924,"decodedOk":653076,"exception":0,"execPerSec":287010.01832210424,"findings":[],"iterations":5000000,"level":"LevelBytes","seed":7,"target":"tx","timeout":0,"wallSeconds":17.420994672}
+=== struct (5M) ===
+{"cleanReject":5000000,"decodedOk":0,"exception":0,"execPerSec":384065.7957973518,"findings":[],"iterations":5000000,"level":"LevelStruct","seed":7,"target":"tx","timeout":0,"wallSeconds":13.018602684}
+=== semantic (5M) ===
+{"cleanReject":1960412,"decodedOk":3039588,"exception":0,"execPerSec":86954.95055995845,"findings":[],"iterations":5000000,"level":"LevelSemantic","seed":7,"target":"tx","timeout":0,"wallSeconds":57.501038961}
