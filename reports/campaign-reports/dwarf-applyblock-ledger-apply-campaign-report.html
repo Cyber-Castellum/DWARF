@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWARF — Cardano Node applyBlock Ledger-Apply Fuzzing Campaign</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:40px 28px 80px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0 8px}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .chip.bad{color:var(--bad);border-color:#fecaca;background:#fef2f2}
+  .chip.warn{color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .chip.muted{color:var(--muted);border-color:var(--rule);background:#fff}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)}
+  .runhead{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  details summary{cursor:pointer}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid} a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DWARF — Cardano Node applyBlock Ledger-Apply Fuzzing Campaign</h1>
+  <div class="sub">cardano-node ledger-application robustness assessment (Antithesis + local) · generated 2026-06-22 03:30Z</div>
+
+  <div class="hero">DWARF drove a live <b>cardano-node</b> ledger-application path with large volumes of adversarial input, advancing beyond the CBOR <i>decoder</i> into the <b>block-application / ledger-validation rules themselves</b>. A new in-process workload (<code>dwarf-decoder-fuzz --target applyblock</code>, adversary image <b>0.19.0</b>) decodes a mutated Conway transaction → assembles a block → runs <b>BHeaderView → BBODY → LEDGERS → per-tx ledger rules</b> over a genesis-initialised Conway <code>NewEpochState</code>, while a node-to-node adversary serves mutated transactions on the wire. The campaign ran on the <b>Antithesis</b> deterministic simulator across two runs — a <b>1-hour clean baseline</b> and a <b>3-hour run with fault injection enabled</b> — backed by an <b>8-hour local coverage-guided (SanCov) soak</b> of the same applyBlock surface. Across every run the node applied/validated and rejected adversarial input <b>without a single crash, hang, node error, critical log, or consensus violation</b> — including while its relay nodes were fully exposed to network and process faults. A <b>positive robustness result</b> on the exercised surface.</div>
+
+  <h2>What was tested</h2>
+  <p>Prior DWARF campaigns proved the cardano-node <b>decoders</b> robust to adversarial CBOR (block, transaction, auxiliary-data, block-header). This campaign extends the probe one layer deeper — to <b>ledger application</b>: does the node correctly run and reject malformed/semantically-invalid input through the full block-body and per-transaction ledger rules, not merely decode-reject it. Two surfaces were exercised together:</p>
+  <ul>
+    <li><b>In-process applyBlock fuzz</b> — <code>dwarf-decoder-fuzz --target applyblock</code> (image 0.19.0): a tight in-process loop mutating a baked Conway corpus and running each result through <code>decode → BHeaderView → BBODY → LEDGERS → per-tx ledger rules</code> over a genesis-initialised <code>NewEpochState</code> (genesis + corpus baked into the public image). Bug oracle: any uncaught exception or non-termination fails an <code>always(...)</code> assertion.</li>
+    <li><b>Node-to-node transaction adversary</b> (image 0.18.0): an eclipsed-peer tx-submission adversary serving structurally-mutated wire transactions to the node under test, with the node fully bootstrapped to CaughtUp via real producers.</li>
+  </ul>
+
+  <h2>Coverage matrix</h2>
+  <table>
+    <tr><th>Surface</th><th>Live (Antithesis)</th><th>Local (coverage-guided)</th></tr>
+    <tr><td><b>applyBlock</b> — BBODY → LEDGERS → per-tx rules (in-process)</td><td><span class="chip ok">proven live</span> 1h clean + 3h faults-on</td><td><span class="chip ok">8h SanCov</span> 1.85M execs · 28,058 edges</td></tr>
+    <tr><td>Transaction decoder (txsubmission, on-wire serve)</td><td><span class="chip ok">exercised</span> mutated tx served both runs</td><td>covered by prior CBOR campaign</td></tr>
+    <tr><td>Node safety under combined fuzz + fault injection</td><td><span class="chip ok">proven</span> 3h, relays fault-exposed</td><td>n/a (simulator-native)</td></tr>
+  </table>
+
+  <h2>Method</h2>
+  <p>Bundle <code>antithesis/cardano_node_dwarf</code> at <code>Cyber-Castellum/DWARF</code> <code>main@68c97a7b</code> — the full-harness topology bundle (real producers bootstrap the node-under-test to GSM CaughtUp; the in-process <code>decoder-fuzz-applyblock</code> + tx adversary run as fault-excluded workloads). Public images <code>ghcr.io/j-gainsec/dwarf-adversary:0.19.0</code> (applyblock + decoder-fuzz) and <code>:0.18.0</code> (wire adversary). Mutation is seeded per-timeline from <code>antithesis_random</code>, so Antithesis explores a fresh seed on every timeline; the baked Conway genesis makes each apply deterministic and replayable. Both runs were launched via the on-chain Moog requester flow; the Antithesis oracle built and ran the bundle on the <code>amaru-cardano</code> tenant. The 1-hour run isolates the surface (<code>--no-faults</code>); the 3-hour run adds Antithesis network + process fault injection to the relay nodes.</p>
+
+  <h2>Live results — Antithesis</h2>
+
+  <div class="card">
+    <div class="runhead">
+      <b>applyBlock + tx-serve — clean baseline (no faults)</b> <span class="chip ok">Completed</span>
+      <span class="muted">· 1h 17m · images 0.19.0 / 0.18.0 · commit <code>68c97a7b</code> · faults: none</span>
+    </div>
+    <p class="muted" style="margin:.2rem 0">testRunId <code>0341f850b80629b585f4ede7c9715d588bb5a8ce20bfa4b1e34f0233833f50ae</code></p>
+    <table>
+      <tr><th>Assertion</th><th>Result</th><th>Meaning</th></tr>
+      <tr><td><code>always: dwarf_decoder_no_uncaught_exception</code> (applyblock)</td><td><span class="chip ok">no failure</span></td><td class="muted">applyBlock loop raised no uncaught exception (within the 40/41-passed SDK bucket; no bug-oracle failed)</td></tr>
+      <tr><td><code>always: dwarf_decoder_no_timeout</code> (applyblock)</td><td><span class="chip ok">no failure</span></td><td class="muted">no non-termination under the per-input timeout</td></tr>
+      <tr><td><code>dwarf_base_tx_obtained</code></td><td><span class="chip ok">passed</span></td><td class="muted">adversary obtained its base txs to mutate (count 2)</td></tr>
+      <tr><td><code>Never: Cardano Node Errors</code></td><td><span class="chip ok">passed</span></td><td class="muted">node logged no errors</td></tr>
+      <tr><td><code>Never: Cardano Node Critical</code></td><td><span class="chip ok">passed</span></td><td class="muted">node logged no criticals</td></tr>
+      <tr><td><code>Sometimes: dwarf_base_header_obtained</code></td><td><span class="chip warn">not reached</span></td><td class="muted">header path N/A in tx-submission mode (benign reachability miss)</td></tr>
+    </table>
+    <p class="muted" style="margin:.3rem 0 0">Properties: <b class="ok">62 passed</b> · 4 failed · <b>0 rare</b> <span class="muted">— failures are benign harness artifacts (fault-injector-started under <code>--no-faults</code>; two command-coverage template markers; the header-reachability miss). Consensus held: all 5 nodes adopted the same tip (<code>32e68751…@449</code>); the applyBlock workload ran the full hour (~50% CPU).</span></p>
+  </div>
+
+  <div class="card">
+    <div class="runhead">
+      <b>applyBlock + tx-serve — under fault injection</b> <span class="chip ok">Completed</span>
+      <span class="muted">· 3h 19m · images 0.19.0 / 0.18.0 · commit <code>68c97a7b</code> · faults: <b>ENABLED</b></span>
+    </div>
+    <p class="muted" style="margin:.2rem 0">testRunId <code>859ad183f9211bdc285ebb949494927508d085d70d0d967f91efecc5cb4b311f</code></p>
+    <table>
+      <tr><th>Assertion</th><th>Result</th><th>Meaning</th></tr>
+      <tr><td><code>always: dwarf_decoder_*</code> bug-oracles (applyblock)</td><td><span class="chip ok">no failure</span></td><td class="muted">no uncaught exception / timeout in the applyBlock or tx decoders under fault stress</td></tr>
+      <tr><td><code>dwarf_base_tx_obtained</code></td><td><span class="chip ok">passed</span></td><td class="muted">adversary obtained base txs (count 2)</td></tr>
+      <tr><td><code>Never: Cardano Node Errors</code></td><td><span class="chip ok">passed</span></td><td class="muted"><b>node logged no errors while relays were fully fault-exposed</b></td></tr>
+      <tr><td><code>Never: Cardano Node Critical</code></td><td><span class="chip ok">passed</span></td><td class="muted"><b>no criticals under network + kill/pause/stop + clock + CPU faults</b></td></tr>
+      <tr><td><code>Sometimes: dwarf_base_header_obtained</code></td><td><span class="chip warn">not reached</span></td><td class="muted">header path N/A in tx-submission mode (benign)</td></tr>
+      <tr><td><code>All commands run to completion</code></td><td><span class="chip warn">harness</span></td><td class="muted">Antithesis test-template marker (not a node assertion)</td></tr>
+    </table>
+    <p class="muted" style="margin:.3rem 0 0">Properties: <b class="ok">68 passed</b> · 2 failed · <b>0 rare</b> <span class="muted">— Fault Configuration confirms relay1/relay2/p1/p2/p3 are <b>not</b> fault-excluded (only the fuzz harness is), so the nodes genuinely absorbed network + container kill/pause/stop + clock-jitter + CPU-modulation faults. Both failures are the same benign artifacts as the baseline. Test hours simulated: 6d 11h 50m.</span></p>
+  </div>
+
+  <h2>Local complement — coverage-guided SanCov soak (8h, build-host)</h2>
+  <p>The same applyBlock surface was fuzzed locally with native GHC SanitizerCoverage (AFL++ edge-guided) — a probe that cannot run on the sealed Antithesis image, giving coverage-guided depth alongside the live timeline exploration.</p>
+  <table>
+    <tr><th>surface</th><th>entrypoint</th><th>execs</th><th>edges</th><th>corpus</th><th>cycles</th><th>stability</th><th>crashes</th><th>hangs</th></tr>
+    <tr><td>applyblock</td><td>applyBlock (BBODY→LEDGERS→per-tx rules) over genesis NewEpochState</td><td>1,850,770</td><td>28,058</td><td>4,108</td><td>2</td><td>88.5%</td><td class="ok">0</td><td class="warn">4*</td></tr>
+  </table>
+  <p class="muted" style="margin:2px 0 0">* The 4 saved "hangs" are false positives — replayed standalone they complete in ~80 ms (rc 0), far under any timeout; they are AFL's contention-relative exec-timeout tripping under 9-way parallel load, not non-termination. applyBlock was the deepest of the 9 surfaces in the 8h campaign at 28,058 edges. (See the 8h SanCov campaign report for the full surface matrix.)</p>
+
+  <h2>Findings</h2>
+  <div class="card"><b>Result — cardano-node is robust to adversarial input on the applyBlock ledger-apply surface.</b> Across <b>2 live Antithesis runs</b> (a 1-hour clean baseline and a 3-hour run with fault injection) and an <b>8-hour local coverage-guided soak</b>, the node ran adversarial input through the full block-application and per-transaction ledger rules <b>without a single crash, hang, node error, critical log, or consensus violation</b>. No <code>always(...)</code> bug-oracle failed; no finding was classified <b>rare</b> (Antithesis's serious-defect class) in either run. The 3-hour result is the strongest: <b>the relay nodes were fully fault-exposed</b> (only the fuzz harness was excluded from faults) and still logged zero errors and zero criticals across the entire run.
+  <br><br><b>Non-node observations (investigated; none are node defects):</b>
+  <ul>
+    <li><b><code>Sometimes: dwarf_base_header_obtained</code> not reached</b> (both runs) — a reachability assertion for the chain-sync header path, which is legitimately not exercised when the adversary runs in tx-submission mode. Its sibling <code>dwarf_base_tx_obtained</code> fired (count 2). A mode-not-applicable miss, not a failure.</li>
+    <li><b>"All commands were started / run to completion at least once"</b> — Antithesis test-template command-coverage markers (composer/workload harness), not node assertions.</li>
+    <li><b>"The Antithesis Fault Injector was started"</b> — appears in the 1-hour run by design (it used <code>--no-faults</code> to isolate the surface).</li>
+  </ul></div>
+
+  <h2>Reproducibility</h2>
+  <p>Both runs are pinned to <code>Cyber-Castellum/DWARF main@68c97a7b</code>, public images <code>ghcr.io/j-gainsec/dwarf-adversary:0.19.0</code> and <code>:0.18.0</code>, on the <code>amaru-cardano</code> Antithesis tenant. testRunIds <code>0341f850…50ae</code> (1h, no-faults) and <code>859ad183…311f</code> (3h, faults-on). Per-input mutation is a deterministic function of the per-timeline seed (drawn from <code>antithesis_random</code> and logged), and the Conway genesis is baked into the image, so any timeline replays exactly. The local SanCov applyblock corpus + harness reproduce on the build host with <code>--seed</code> determinism.</p>
+
+  <h2>Scope &amp; honest limitations</h2>
+  <ul>
+    <li>A clean result is strong evidence of robustness <b>on the exercised surface within the time/seed budget</b> — it is not a proof of total absence of defects. The value is the breadth of timelines × seeds × (this run) fault schedules explored.</li>
+    <li>The Antithesis triage view summarises passing assertions by <b>category</b> (e.g. "Antithesis SDK 43/44 passed"); it does not render each <code>dwarf_decoder_*</code> applyblock assertion as an individual row. The bug-oracle verdict is unambiguous (no <code>always(...)</code> failure; node error/critical-free), but exact per-assertion pass counts would require the report's Logs-explorer drill-down.</li>
+    <li>No explicit post-fault <b>recovery / CaughtUp / fork-depth</b> liveness assertion is rendered in the summary; recovery under faults is evidenced by the run Completing and logging zero errors/criticals across the faulted duration, rather than by a dedicated liveness property.</li>
+    <li>The applyBlock corpus is a baked Conway set (varied but fixed); content diversity (multi-asset/mint, Plutus-script, governance-action branches) remains the natural next corpus extension. The live in-process volume is bounded per timeline; the 8h local SanCov soak (1.85M execs, 28k edges) is the high-volume coverage-guided complement.</li>
+  </ul>
+</div>
+</body>
+</html>
