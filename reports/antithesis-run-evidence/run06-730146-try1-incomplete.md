@@ -1,0 +1,313 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: Antithesis
+          - generic [ref=e12]: Build braver, release safer
+        - link "Home" [ref=e15] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/home
+          - generic [ref=e17]: Home
+        - link "Recent runs" [ref=e18] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/runs
+          - generic [ref=e20]: Recent runs
+        - link "Logs explorer" [ref=e21] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/search?search=v5veyJxIjp7Im4iOnsiciI6eyJoIjpbeyJoIjpbeyJjIjpmYWxzZSwiZiI6ImdlbmVyYWwub3V0cHV0X3RleHQiLCJvIjoiY29udGFpbnMiLCJ2IjoiIn1dLCJvIjoib3IifV0sIm8iOiJhbmQifSwidCI6eyJnIjpmYWxzZSwibSI6IiJ9LCJ5Ijoibm9uZSJ9fSwicyI6ImQ4YTJlMmY3NzM3ZTY2YWZkNTg4YzcwNTZkNjdiNjVkLTU1LTE1In0
+          - generic [ref=e23]: Logs explorer
+        - link "Debugging sessions" [ref=e24] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/debugging-sessions
+          - generic [ref=e26]: Debugging sessions
+        - link "Test launchers" [ref=e27] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/test-launchers
+          - generic [ref=e29]: Test launchers
+      - generic [ref=e31]:
+        - link "Contact support" [ref=e32] [cursor=pointer]:
+          - /url: mailto:support@antithesis.com?subject=[Support request]
+          - generic [ref=e34]: Contact support
+        - link "What's new" [ref=e36] [cursor=pointer]:
+          - /url: https://antithesis.com/docs/release_notes/
+          - generic [ref=e38]: What's new
+        - link "Documentation" [ref=e40] [cursor=pointer]:
+          - /url: https://antithesis.com/docs/
+          - generic [ref=e42]: Documentation
+        - generic [ref=e46]:
+          - group "Theme" [ref=e47]
+          - generic [ref=e54]: v55-15
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - heading "2026-06-16 Pragma Test" [level=2] [ref=e63]
+          - link [ref=e65] [cursor=pointer]:
+            - /url: https://amaru-cardano.antithesis.com
+        - link "Get help" [ref=e69] [cursor=pointer]:
+          - /url: "mailto:support@antithesis.com?subject=[Support request]&body=%0D%0A%0D%0AReport: https://amaru-cardano.antithesis.com/report/3Ndj0oo97DyxJJ0oJQdVpvF_/qkjJSteDDMjOEgtZd1q-shLgXzZEsuw3OyQdSamv4Vo.html?auth=<REDACTED>"
+      - generic [ref=e70]:
+        - heading "Environment" [level=3] [ref=e75] [cursor=pointer]
+        - generic [ref=e78]: No images have been pulled
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - heading "Error" [level=3] [ref=e84] [cursor=pointer]
+          - generic [ref=e86]: Build failed
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]:
+              - paragraph [ref=e91]: Cannot find image
+              - code [ref=e93]: "The provided image definition could not resolve to a reachable image: 'dwarf-adversary' {\"name\":\"dwarf-adversary\",\"registry\":\"ghcr.io/j-gainsec\",\"tag\":\"0.17.0\"}"
+              - paragraph [ref=e95]: Check that the provided image registry, name, tag/digest, and/or path are correct to ensure your image is properly defined.
+            - generic [ref=e97]:
+              - generic [ref=e99]:
+                - generic [ref=e101]: 803 items
+                - generic [ref=e102]:
+                  - textbox "Filter rows by text" [ref=e107]
+                  - textbox "Search by text" [ref=e111]
+              - generic [ref=e120]:
+                - generic [ref=e121]:
+                  - generic [ref=e123]:
+                    - generic "source" [ref=e125]
+                    - generic [ref=e127]: Pulling image ghcr.io/intersectmbo/cardano-node@sha256:5ae211f92eac18ed27b9e2f73c190b56bf4c1a7145d282e78ca58597a385d19f...
+                  - generic [ref=e129]:
+                    - generic "source" [ref=e131]
+                    - generic [ref=e133]: Trying to pull ghcr.io/intersectmbo/cardano-node@sha256:5ae211f92eac18ed27b9e2f73c190b56bf4c1a7145d282e78ca58597a385d19f...
+                  - generic [ref=e135]:
+                    - generic "source" [ref=e137]
+                    - generic [ref=e139]: Getting image source signatures
+                  - generic [ref=e141]:
+                    - generic "source" [ref=e143]
+                    - generic [ref=e145]: Copying blob sha256:04be249ea3789bf9780fb7ce88080a550840f02a2d415a584eaabc7e9241a026
+                  - generic [ref=e147]:
+                    - generic "source" [ref=e149]
+                    - generic [ref=e151]: Copying blob sha256:c990afe4ad76eea72aea4a0506656ca0017ff1adff54dd02f449494daa10c764
+                  - generic [ref=e153]:
+                    - generic "source" [ref=e155]
+                    - generic [ref=e157]: Copying config sha256:fc791d90ae8162722963cbe85f6084d2e0c8b261db0b79c7acae2441b883fc30
+                  - generic [ref=e159]:
+                    - generic "source" [ref=e161]
+                    - generic [ref=e163]: Writing manifest to image destination
+                  - generic [ref=e165]:
+                    - generic "source" [ref=e167]
+                    - generic [ref=e169]: Pulled successfully
+                  - generic [ref=e171]:
+                    - generic "source" [ref=e173]
+                    - generic [ref=e175]: Pulling image ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2...
+                  - generic [ref=e177]:
+                    - generic "source" [ref=e179]
+                    - generic [ref=e181]: Trying to pull ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2...
+                  - generic [ref=e183]:
+                    - generic "source" [ref=e185]
+                    - generic [ref=e187]: Getting image source signatures
+                  - generic [ref=e189]:
+                    - generic "source" [ref=e191]
+                    - generic [ref=e193]: Copying blob sha256:e1036e4246557bc637ae62d229e5f0df2716f86553b07b41ddbc42c74d3ca6f6
+                  - generic [ref=e195]:
+                    - generic "source" [ref=e197]
+                    - generic [ref=e199]: Copying blob sha256:becb46bbb4b65caed58003166c83b3ba82039faac4a0fc0dac9ff619736a12b9
+                  - generic [ref=e201]:
+                    - generic "source" [ref=e203]
+                    - generic [ref=e205]: Copying config sha256:556472944934d83286e51b2802f5f77a22265d18e3565718fb5277faf030fff5
+                  - generic [ref=e207]:
+                    - generic "source" [ref=e209]
+                    - generic [ref=e211]: Writing manifest to image destination
+                  - generic [ref=e213]:
+                    - generic "source" [ref=e215]
+                    - generic [ref=e217]: Pulled successfully
+                  - generic [ref=e219]:
+                    - generic "source" [ref=e221]
+                    - generic [ref=e223]: Pulling image ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe...
+                  - generic [ref=e225]:
+                    - generic "source" [ref=e227]
+                    - generic [ref=e229]: Trying to pull ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe...
+                  - generic [ref=e231]:
+                    - generic "source" [ref=e233]
+                    - generic [ref=e235]: Getting image source signatures
+                  - generic [ref=e237]:
+                    - generic "source" [ref=e239]
+                    - generic [ref=e241]: Copying blob sha256:878a694caa9e8dd40e420135cfe8478ca002e547ccff20ad1775cff74609e957
+                  - generic [ref=e243]:
+                    - generic "source" [ref=e245]
+                    - generic [ref=e247]: Copying blob sha256:82fa4b18dbaa621e8647bbad2a56a11595c25c1127592d505217c72b13bb1aed
+                  - generic [ref=e249]:
+                    - generic "source" [ref=e251]
+                    - generic [ref=e253]: Copying config sha256:269678e9b0447e89b707f22b2c32029adaffaccb60b5133a96befaa304520bb3
+                  - generic [ref=e255]:
+                    - generic "source" [ref=e257]
+                    - generic [ref=e259]: Writing manifest to image destination
+                  - generic [ref=e261]:
+                    - generic "source" [ref=e263]
+                    - generic [ref=e265]: Pulled successfully
+                  - generic [ref=e267]:
+                    - generic "source" [ref=e269]
+                    - generic [ref=e271]: Pulling image ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e273]:
+                    - generic "source" [ref=e275]
+                    - generic [ref=e277]: Trying to pull ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e279]:
+                    - generic "source" [ref=e281]
+                    - generic [ref=e283]: "Error: initializing source docker://ghcr.io/j-gainsec/dwarf-adversary:0.17.0: reading manifest 0.17.0 in ghcr.io/j-gainsec/dwarf-adversary: manifest unknown"
+                  - generic [ref=e285]:
+                    - generic "source" [ref=e287]
+                    - generic [ref=e289]: Attempt 1 failed. Retrying in 2 seconds...
+                  - generic [ref=e291]:
+                    - generic "source" [ref=e293]
+                    - generic [ref=e295]: Trying to pull ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e297]:
+                    - generic "source" [ref=e299]
+                    - generic [ref=e301]: "Error: initializing source docker://ghcr.io/j-gainsec/dwarf-adversary:0.17.0: reading manifest 0.17.0 in ghcr.io/j-gainsec/dwarf-adversary: manifest unknown"
+                  - generic [ref=e303]:
+                    - generic "source" [ref=e305]
+                    - generic [ref=e307]: Attempt 2 failed. Retrying in 4 seconds...
+                  - generic [ref=e309]:
+                    - generic "source" [ref=e311]
+                    - generic [ref=e313]: Trying to pull ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e315]:
+                    - generic "source" [ref=e317]
+                    - generic [ref=e319]: "Error: initializing source docker://ghcr.io/j-gainsec/dwarf-adversary:0.17.0: reading manifest 0.17.0 in ghcr.io/j-gainsec/dwarf-adversary: manifest unknown"
+                  - generic [ref=e321]:
+                    - generic "source" [ref=e323]
+                    - generic [ref=e325]: Attempt 3 failed. Retrying in 8 seconds...
+                  - generic [ref=e327]:
+                    - generic "source" [ref=e329]
+                    - generic [ref=e331]: Trying to pull ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e333]:
+                    - generic "source" [ref=e335]
+                    - generic [ref=e337]: "Error: initializing source docker://ghcr.io/j-gainsec/dwarf-adversary:0.17.0: reading manifest 0.17.0 in ghcr.io/j-gainsec/dwarf-adversary: manifest unknown"
+                  - generic [ref=e339]:
+                    - generic "source" [ref=e341]
+                    - generic [ref=e343]: Attempt 4 failed. Retrying in 16 seconds...
+                  - generic [ref=e345]:
+                    - generic "source" [ref=e347]
+                    - generic [ref=e349]: Trying to pull ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e351]:
+                    - generic "source" [ref=e353]
+                    - generic [ref=e355]: "Error: initializing source docker://ghcr.io/j-gainsec/dwarf-adversary:0.17.0: reading manifest 0.17.0 in ghcr.io/j-gainsec/dwarf-adversary: manifest unknown"
+                  - generic [ref=e357]:
+                    - generic "source" [ref=e359]
+                    - generic [ref=e361]: Attempt 5 failed. Retrying in 32 seconds...
+                  - generic [ref=e363]:
+                    - generic "source" [ref=e365]
+                    - generic [ref=e367]: Trying to pull ghcr.io/j-gainsec/dwarf-adversary:0.17.0...
+                  - generic [ref=e369]:
+                    - generic "source" [ref=e371]
+                    - generic [ref=e373]: "Error: initializing source docker://ghcr.io/j-gainsec/dwarf-adversary:0.17.0: reading manifest 0.17.0 in ghcr.io/j-gainsec/dwarf-adversary: manifest unknown"
+                  - generic [ref=e375]:
+                    - generic "source" [ref=e377]
+                    - generic [ref=e379]: Failed command after 6 attempts
+                  - generic [ref=e381]:
+                    - generic "source" [ref=e383]
+                    - generic [ref=e385]: "[STATUS] {\"antithesis_error\":{\"code\":4001,\"message\":\"The provided image definition could not resolve to a reachable image: 'dwarf-adversary' {\\\"name\\\":\\\"dwarf-adversary\\\",\\\"registry\\\":\\\"ghcr.io/j-gainsec\\\",\\\"tag\\\":\\\"0.17.0\\\"}\"}}"
+                  - generic [ref=e387]:
+                    - generic "source" [ref=e389]
+                    - generic [ref=e391]: "% Total % Received % Xferd Average Speed Time Time Time Current"
+                  - generic [ref=e393]:
+                    - generic "source" [ref=e395]
+                    - generic [ref=e397]: Dload Upload Total Spent Left Speed
+                  - generic [ref=e399]:
+                    - generic "source" [ref=e401]
+                    - generic [ref=e403]: 0 0 0 0 0 0 0 0 --:--:-- --:--:-- --:--:-- 0 100 68 100 2 100 66 8 273 --:--:-- --:--:-- --:--:-- 280 100 68 100 2 100 66 8 273 --:--:-- --:--:-- --:--:-- 280
+                  - generic [ref=e405]:
+                    - generic "source" [ref=e407]
+                    - generic [ref=e409]: "2026-06-17T03:53:45.033Z [WARNING] Command customer,environment.build.from_notebook failed with code: 125"
+                  - generic [ref=e411]:
+                    - generic "source" [ref=e413]
+                    - generic [ref=e415]: "[STATUS] \"Command customer,environment.build.from_notebook failed with code: 125\""
+                  - generic [ref=e417]:
+                    - generic "source" [ref=e419]
+                    - generic [ref=e421]: "2026-06-17T03:53:45.033Z [ERROR] Experiment 8d70d9be3b1bfb2adf88d1c67898e256-55-15 failed: Error: Command failed with code: 125 Error: Command failed with code: 125 at /nix/store/ny2l3c8ja8icb3agj16p24gn3z0ypg52-woodchipper/server/experiment.js:449:23 at process.processTicksAndRejections (node:internal/process/task_queues:105:5) at async Promise.all (index 0) at async PhasedExperiment.runPhase (/nix/store/ny2l3c8ja8icb3agj16p24gn3z0ypg52-woodchipper/server/experiment.js:442:9)"
+                - generic [ref=e424]:
+                  - generic "source" [ref=e426]
+                  - generic [ref=e428]: "2026-06-17T03:53:45.450Z [INFO] Status is: failed"
+          - generic [ref=e433]:
+            - heading "Logs" [level=6] [ref=e434]
+            - paragraph [ref=e435]: No additional logs available for session
+      - generic [ref=e436]:
+        - heading "Smoke Test Logs" [level=3] [ref=e441] [cursor=pointer]
+        - generic [ref=e451]: No data to display
+      - generic [ref=e454]:
+        - heading "Fault Configuration" [level=3] [ref=e459] [cursor=pointer]
+        - generic [ref=e460]:
+          - paragraph [ref=e461]:
+            - link "Faults" [ref=e462] [cursor=pointer]:
+              - /url: https://antithesis.com/docs/environment/fault_injection/
+            - text: are re-randomized each round via
+            - strong [ref=e463]: swarm testing
+            - text: ", which randomly includes/excludes"
+            - text: entire fault categories and randomizes their parameters.
+          - heading "Network Faults" [level=3] [ref=e464]
+          - paragraph [ref=e465]:
+            - strong [ref=e466]: All Network Faults are enabled
+          - paragraph [ref=e467]:
+            - text: All containers
+            - strong [ref=e468]: not in the network exclusion list
+            - text: are subject to network faults including
+            - text: latency injection, packet drops, link degradation (slowed/jammed), network partitions,
+            - text: and bad node isolation. Parameters are randomized each round.
+          - table [ref=e469]:
+            - rowgroup [ref=e470]:
+              - row "Description Patterns" [ref=e471]:
+                - columnheader "Description" [ref=e472]
+                - columnheader "Patterns" [ref=e473]
+            - row "containers excluded from network faults adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e474]:
+              - cell "containers excluded from network faults" [ref=e475]:
+                - text: containers excluded from
+                - strong [ref=e476]: network
+                - text: faults
+              - cell "adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e477]
+          - heading "Container Faults" [level=3] [ref=e478]
+          - paragraph [ref=e479]:
+            - strong [ref=e480]: All Container Faults are enabled
+          - paragraph [ref=e481]:
+            - text: All containers
+            - strong [ref=e482]: not in the containers exclusion list
+            - text: are subject to puase stop and kill faults.
+            - text: Custom scripts (clock skew, etc.) may also be randomly included per round.
+          - table [ref=e483]:
+            - rowgroup [ref=e484]:
+              - row "Description Patterns" [ref=e485]:
+                - columnheader "Description" [ref=e486]
+                - columnheader "Patterns" [ref=e487]
+            - row "containers excluded from container stop faults adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e488]:
+              - cell "containers excluded from container stop faults" [ref=e489]:
+                - text: containers excluded from container
+                - strong [ref=e490]: stop
+                - text: faults
+              - cell "adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e491]
+            - row "containers excluded from container kill faults adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e492]:
+              - cell "containers excluded from container kill faults" [ref=e493]:
+                - text: containers excluded from container
+                - strong [ref=e494]: kill
+                - text: faults
+              - cell "adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e495]
+            - row "containers excluded from container pause faults adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e496]:
+              - cell "containers excluded from container pause faults" [ref=e497]:
+                - text: containers excluded from container
+                - strong [ref=e498]: pause
+                - text: faults
+              - cell "adversary, asteria-game, decoder-fuzz, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e499]
+          - heading "Thread Pausing" [level=3] [ref=e500]
+          - paragraph [ref=e501]:
+            - strong [ref=e502]: All Thread Pause faults are enabled
+          - paragraph [ref=e503]:
+            - text: Pauses instrumented containers with a randomized probability and toggle interval each round.
+            - text: Only affects
+            - strong [ref=e504]: instrumented
+            - text: containers.
+          - heading "Clock Jitter" [level=3] [ref=e505]
+          - paragraph [ref=e506]:
+            - strong [ref=e507]: All Clock Jitter faults are enabled
+          - paragraph [ref=e508]: The system clock is occassionally moved forwards and backwards by a small interval. This fault affects all containers.
+          - heading "CPU Modulation" [level=3] [ref=e509]
+          - paragraph [ref=e510]:
+            - strong [ref=e511]: All CPU Modulation faults are enabled
+          - paragraph [ref=e512]: This fault type simulates running your entire cluster on different hardware. The clock speed of the simulated processor is randomized, and the relative performance of different low-level processor operations may also change (for example, changing the speed of particular instructions while keeping the same overall clock speed).
+          - heading "CPU Pressure" [level=3] [ref=e513]
+          - paragraph [ref=e514]:
+            - strong [ref=e515]: All CPU Pressure faults are disabled
+          - paragraph [ref=e516]: This fault type throttles containers by randomly limiting the total percentage of CPU they are permitted to use (in microseconds of processor time)
+      - generic [ref=e518]:
+        - text: "Run:"
+        - generic [ref=e519]: 8552a98268a8d18f440d16e055236bda-55-15
+        - text: "Session:"
+        - generic [ref=e520]: d8a2e2f7737e66afd588c7056d67b65d-55-15
+        - text: "Run by: pragma"
+  - generic [ref=e523]:
+    - alert
+    - alert

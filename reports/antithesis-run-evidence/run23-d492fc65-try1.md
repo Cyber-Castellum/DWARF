@@ -1,0 +1,371 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: Antithesis
+          - generic [ref=e12]: Build braver, release safer
+        - link "Home" [ref=e15] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/home
+          - generic [ref=e17]: Home
+        - link "Recent runs" [ref=e18] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/runs
+          - generic [ref=e20]: Recent runs
+        - link "Logs explorer" [ref=e21] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/search?search=v5veyJxIjp7Im4iOnsiciI6eyJoIjpbeyJoIjpbeyJjIjpmYWxzZSwiZiI6ImdlbmVyYWwub3V0cHV0X3RleHQiLCJvIjoiY29udGFpbnMiLCJ2IjoiIn1dLCJvIjoib3IifV0sIm8iOiJhbmQifSwidCI6eyJnIjpmYWxzZSwibSI6IiJ9LCJ5Ijoibm9uZSJ9fSwicyI6IjMwYWYzNTkxNWJlMTgzNDc2MjA5NzgyZTA5OWI4M2YzLTU1LTE1In0
+          - generic [ref=e23]: Logs explorer
+        - link "Debugging sessions" [ref=e24] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/debugging-sessions
+          - generic [ref=e26]: Debugging sessions
+        - link "Test launchers" [ref=e27] [cursor=pointer]:
+          - /url: https://amaru-cardano.antithesis.com/test-launchers
+          - generic [ref=e29]: Test launchers
+      - generic [ref=e31]:
+        - link "Contact support" [ref=e32] [cursor=pointer]:
+          - /url: mailto:support@antithesis.com?subject=[Support request]
+          - generic [ref=e34]: Contact support
+        - link "What's new" [ref=e36] [cursor=pointer]:
+          - /url: https://antithesis.com/docs/release_notes/
+          - generic [ref=e38]: What's new
+        - link "Documentation" [ref=e40] [cursor=pointer]:
+          - /url: https://antithesis.com/docs/
+          - generic [ref=e42]: Documentation
+        - generic [ref=e46]:
+          - group "Theme" [ref=e47]
+          - generic [ref=e54]: v55-15
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - heading "2026-06-11 Pragma Test" [level=2] [ref=e65]
+            - button "Explore logs" [ref=e67] [cursor=pointer]:
+              - generic [ref=e69]: Explore logs
+          - link [ref=e71] [cursor=pointer]:
+            - /url: https://amaru-cardano.antithesis.com
+        - generic [ref=e72]:
+          - generic [ref=e73]:
+            - generic [ref=e74]: Conducted on 2026-06-11 21:40 UTC
+            - generic [ref=e75]: "Source: cyber-castellum/dwarf"
+          - generic [ref=e76]:
+            - link "Documentation" [ref=e77] [cursor=pointer]:
+              - /url: https://antithesis.com/docs/reports/
+            - link "Get help" [ref=e78] [cursor=pointer]:
+              - /url: "mailto:support@antithesis.com?subject=[Support request]&body=%0D%0A%0D%0AReport: https://amaru-cardano.antithesis.com/report/cvyA7Yye0skruKYlJWKc2mnD/Ezjq7MiHUxv9H_-xGiZ-vIDxbZfnKwv2teOZJPZWARg.html?auth=<REDACTED>"
+      - generic [ref=e80]: "{\"testRun\":{\"commitId\":\"d492fc6538f6fa7d906bc2f2a6a9963d5b1aa9de\",\"directory\":\"antithesis/cardano_node_dwarf\",\"platform\":\"github\",\"repository\":{\"organization\":\"cyber-castellum\",\"repo\":\"dwarf\"},\"requester\":\"j-gainsec\",\"try\":1,\"type\":\"test-run\"},\"testRunId\":\"9c17df14ca8000c5353a24468622924a02087267c060ed1347e20f684412bf7d\"}"
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - heading "Environment" [level=3] [ref=e86] [cursor=pointer]
+          - generic [ref=e88]: cardano-moog-config, adversary, asteria-game, configurator, log-tailer, sidecar, tracer-sidecar, tx-generator, cardano-node, cardano-node, cardano-node, cardano-tracer, dwarf-adversary
+        - generic [ref=e90]:
+          - heading "Images" [level=5] [ref=e91]
+          - generic [ref=e92]:
+            - heading "cardano-moog-config June 11, 2026; 10 days ago" [level=6] [ref=e93]:
+              - text: cardano-moog-config
+              - generic [ref=e95]: June 11, 2026; 10 days ago
+            - generic [ref=e96]:
+              - generic [ref=e97]: "Tag: 9c17df14ca"
+              - generic [ref=e99]: <antithesis registry> /cardano-moog-config@sha256:8c20c7a2b4f3e574c0e7e23b9d3bcfef721a276b75fcee2e501be6b527bee8d8
+          - generic [ref=e100]:
+            - heading "adversary December 31, 1969; 100+ days ago" [level=6] [ref=e101]:
+              - text: adversary
+              - generic [ref=e103]: December 31, 1969; 100+ days ago
+            - generic [ref=e104]:
+              - generic [ref=e105]: "Tag: 5173fa8"
+              - generic [ref=e107]: ghcr.io/cardano-foundation/cardano-node-antithesis/adversary@sha256:b8793526535d394dda493146454aa176eb37372fb3d13ac14901846122273281
+          - generic [ref=e108]:
+            - heading "asteria-game December 31, 1969; 100+ days ago" [level=6] [ref=e109]:
+              - text: asteria-game
+              - generic [ref=e111]: December 31, 1969; 100+ days ago
+            - generic [ref=e112]:
+              - generic [ref=e113]: "Tag: 5252cad0"
+              - generic [ref=e115]: ghcr.io/cardano-foundation/cardano-node-antithesis/asteria-game@sha256:34bbec7b61cd55aeeb3109905ed939f20ec4ce8fb868c15eed1dda61a7a75ade
+          - generic [ref=e116]:
+            - heading "configurator April 20, 2026; 62 days ago" [level=6] [ref=e117]:
+              - text: configurator
+              - generic [ref=e119]: April 20, 2026; 62 days ago
+            - generic [ref=e122]: ghcr.io/cardano-foundation/cardano-node-antithesis/configurator@sha256:6e6ba428838bf754ad286b62a151c63c683ef27fbdd5dd1bb5bab11ec9a6a34d
+          - generic [ref=e123]:
+            - heading "log-tailer April 20, 2026; 62 days ago" [level=6] [ref=e124]:
+              - text: log-tailer
+              - generic [ref=e126]: April 20, 2026; 62 days ago
+            - generic [ref=e129]: ghcr.io/cardano-foundation/cardano-node-antithesis/log-tailer@sha256:65f68262d7cf2e290086221204d56f53829f47ec01227c30124bccd2ff7d91c3
+          - generic [ref=e130]:
+            - heading "sidecar December 31, 1969; 100+ days ago" [level=6] [ref=e131]:
+              - text: sidecar
+              - generic [ref=e133]: December 31, 1969; 100+ days ago
+            - generic [ref=e134]:
+              - generic [ref=e135]: "Tag: 1ff6913"
+              - generic [ref=e137]: ghcr.io/cardano-foundation/cardano-node-antithesis/sidecar@sha256:b0eb9b6194c00f6780cae4583cb5620d7140bb55b5d0760b369a428f1e090a43
+          - generic [ref=e138]:
+            - heading "tracer-sidecar December 31, 1969; 100+ days ago" [level=6] [ref=e139]:
+              - text: tracer-sidecar
+              - generic [ref=e141]: December 31, 1969; 100+ days ago
+            - generic [ref=e142]:
+              - generic [ref=e143]: "Tag: 8dbf509"
+              - generic [ref=e145]: ghcr.io/cardano-foundation/cardano-node-antithesis/tracer-sidecar@sha256:5a9902c3d722e1d54fbd92c4ba5bf07f2afb055d1442618637d2406347111c2a
+          - generic [ref=e146]:
+            - heading "tx-generator December 31, 1969; 100+ days ago" [level=6] [ref=e147]:
+              - text: tx-generator
+              - generic [ref=e149]: December 31, 1969; 100+ days ago
+            - generic [ref=e150]:
+              - generic [ref=e151]: "Tag: 69bf815"
+              - generic [ref=e153]: ghcr.io/cardano-foundation/cardano-node-antithesis/tx-generator@sha256:d647e48413b8f34d0cfac5fa128a4101aaccd4807363aaecabdde3dcbb3c0da9
+          - generic [ref=e154]:
+            - heading "cardano-node June 21, 2025; 100+ days ago" [level=6] [ref=e155]:
+              - text: cardano-node
+              - generic [ref=e157]: June 21, 2025; 100+ days ago
+            - generic [ref=e160]: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+          - generic [ref=e161]:
+            - heading "cardano-node June 21, 2025; 100+ days ago" [level=6] [ref=e162]:
+              - text: cardano-node
+              - generic [ref=e164]: June 21, 2025; 100+ days ago
+            - generic [ref=e167]: ghcr.io/intersectmbo/cardano-node@sha256:5ae211f92eac18ed27b9e2f73c190b56bf4c1a7145d282e78ca58597a385d19f
+          - generic [ref=e168]:
+            - heading "cardano-node June 21, 2025; 100+ days ago" [level=6] [ref=e169]:
+              - text: cardano-node
+              - generic [ref=e171]: June 21, 2025; 100+ days ago
+            - generic [ref=e174]: ghcr.io/intersectmbo/cardano-node@sha256:126898eda36f55dcafd2dc6e12337bf97b243e60cfd4163368f99b00861aa058
+          - generic [ref=e175]:
+            - heading "cardano-tracer June 27, 2025; 100+ days ago" [level=6] [ref=e176]:
+              - text: cardano-tracer
+              - generic [ref=e178]: June 27, 2025; 100+ days ago
+            - generic [ref=e181]: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
+          - generic [ref=e182]:
+            - heading "dwarf-adversary June 11, 2026; 10 days ago" [level=6] [ref=e183]:
+              - text: dwarf-adversary
+              - generic [ref=e185]: June 11, 2026; 10 days ago
+            - generic [ref=e186]:
+              - generic [ref=e187]: "Tag: 0.4.0"
+              - generic [ref=e189]: ghcr.io/j-gainsec/dwarf-adversary@sha256:cb35c051e4b44ae2e4479effeb8f828ebf84adbcb132d840dcc32b98d27d0fb5
+          - heading "NOTES" [level=5] [ref=e190]
+          - heading "Docker-Compose" [level=4] [ref=e194]
+      - generic [ref=e196]:
+        - heading "Utilization" [level=3] [ref=e198] [cursor=pointer]
+        - generic [ref=e200]:
+          - generic [ref=e201]:
+            - text: "Test hours:"
+            - generic [ref=e202]: 2d 5h 53m
+          - generic [ref=e203]:
+            - text: "Wall clock:"
+            - generic [ref=e204]: 1h 7m
+      - generic [ref=e205]:
+        - generic [ref=e206]:
+          - heading "Findings" [level=3] [ref=e210] [cursor=pointer]
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - generic [ref=e214]: 9 new
+              - text: ","
+              - generic [ref=e215]: 0 rare
+              - text: ","
+              - generic [ref=e216]: 1 resolved
+              - text: ","
+              - generic [ref=e217]: 0 tracked
+            - generic [ref=e218]:
+              - generic [ref=e219] [cursor=pointer]:
+                - generic [ref=e220]: Suppressions
+                - checkbox "Suppressions" [checked] [ref=e221]
+              - generic [ref=e222] [cursor=pointer]:
+                - generic [ref=e223]: Ongoing
+                - checkbox "Ongoing" [ref=e224]
+        - generic [ref=e226]:
+          - group [ref=e227]:
+            - generic "Jun 11 Thu 17:40" [ref=e228] [cursor=pointer]:
+              - generic [ref=e230]: Jun 11 Thu 17:40
+            - generic [ref=e237]:
+              - 'link "new Always: Commands finish with zero exit code → asteria-game/finally_asteria_consistency.sh" [ref=e238] [cursor=pointer]':
+                - /url: ""
+                - generic [ref=e239]:
+                  - generic [ref=e240]: new
+                  - generic [ref=e247]: "Always: Commands finish with zero exit code → asteria-game/finally_asteria_consistency.sh"
+              - 'link "resolved No unexpected container exits → container: dwarf-adversary, exit code: 1" [ref=e248] [cursor=pointer]':
+                - /url: ""
+                - generic [ref=e249]:
+                  - generic [ref=e250]: resolved
+                  - generic [ref=e257]: "No unexpected container exits → container: dwarf-adversary, exit code: 1"
+          - group [ref=e258]:
+            - generic "Jun 11 Thu 16:14" [ref=e259] [cursor=pointer]:
+              - generic [ref=e261]: Jun 11 Thu 16:14
+              - button [ref=e266]
+            - generic [ref=e269]:
+              - button "Look into all findings" [ref=e270] [cursor=pointer]:
+                - generic [ref=e272]: Look into all findings
+              - generic [ref=e273]:
+                - 'link "new Always: Commands finish with zero exit code → asteria-game/anytime_asteria_admin_singleton.sh" [ref=e274] [cursor=pointer]':
+                  - /url: ""
+                  - generic [ref=e275]:
+                    - generic [ref=e276]: new
+                    - generic [ref=e283]: "Always: Commands finish with zero exit code → asteria-game/anytime_asteria_admin_singleton.sh"
+                - 'link "new Always: Commands finish with zero exit code → asteria-game/parallel_driver_heartbeat.sh" [ref=e284] [cursor=pointer]':
+                  - /url: ""
+                  - generic [ref=e285]:
+                    - generic [ref=e286]: new
+                    - generic [ref=e293]: "Always: Commands finish with zero exit code → asteria-game/parallel_driver_heartbeat.sh"
+                - 'link "new Always: Commands finish with zero exit code → asteria-game/serial_driver_asteria_bootstrap.sh" [ref=e294] [cursor=pointer]':
+                  - /url: ""
+                  - generic [ref=e295]:
+                    - generic [ref=e296]: new
+                    - generic [ref=e303]: "Always: Commands finish with zero exit code → asteria-game/serial_driver_asteria_bootstrap.sh"
+          - group [ref=e304]:
+            - generic "Jun 11 Thu 14:52" [ref=e305] [cursor=pointer]:
+              - generic [ref=e307]: Jun 11 Thu 14:52
+              - button [ref=e312]
+            - generic [ref=e315]:
+              - button "Look into all findings" [ref=e316] [cursor=pointer]:
+                - generic [ref=e318]: Look into all findings
+              - generic [ref=e319]:
+                - link "new No Antithesis errors" [ref=e320] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e321]:
+                    - generic [ref=e322]: new
+                    - generic [ref=e329]: No Antithesis errors
+                - link "new The Antithesis Fault Injector was started" [ref=e330] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e331]:
+                    - generic [ref=e332]: new
+                    - generic [ref=e339]: The Antithesis Fault Injector was started
+                - 'link "new Always: Commands finish with zero exit code → asteria-game/eventually_alive.sh" [ref=e340] [cursor=pointer]':
+                  - /url: ""
+                  - generic [ref=e341]:
+                    - generic [ref=e342]: new
+                    - generic [ref=e349]: "Always: Commands finish with zero exit code → asteria-game/eventually_alive.sh"
+                - 'link "new Always: Commands finish with zero exit code → asteria-game/finally_alive.sh" [ref=e350] [cursor=pointer]':
+                  - /url: ""
+                  - generic [ref=e351]:
+                    - generic [ref=e352]: new
+                    - generic [ref=e359]: "Always: Commands finish with zero exit code → asteria-game/finally_alive.sh"
+                - 'link "new Always: Commands finish with zero exit code → asteria-game/parallel_driver_asteria_player.sh" [ref=e360] [cursor=pointer]':
+                  - /url: ""
+                  - generic [ref=e361]:
+                    - generic [ref=e362]: new
+                    - generic [ref=e369]: "Always: Commands finish with zero exit code → asteria-game/parallel_driver_asteria_player.sh"
+      - generic [ref=e370]:
+        - generic [ref=e371]:
+          - heading "Properties" [level=3] [ref=e375] [cursor=pointer]
+          - tablist [ref=e378]:
+            - tab "All 89" [ref=e379]:
+              - generic: All 89
+            - tab "Passed 77" [ref=e380] [cursor=pointer]:
+              - generic: Passed 77
+            - tab "Failed 6" [ref=e381] [cursor=pointer]:
+              - generic: Failed 6
+            - tab "Changed 11" [ref=e382] [cursor=pointer]:
+              - generic: Changed 11
+        - generic [ref=e384]:
+          - textbox "Filter" [ref=e386]
+          - generic [ref=e389] [cursor=pointer]:
+            - generic [ref=e396]: failed 2/6
+            - generic [ref=e397]: Setup
+          - generic [ref=e400] [cursor=pointer]:
+            - generic [ref=e407]: passed 2
+            - generic [ref=e408]: Test Efficiency
+          - generic [ref=e411] [cursor=pointer]:
+            - generic [ref=e418]: passed
+            - generic [ref=e419]: Performance
+          - generic [ref=e422] [cursor=pointer]:
+            - generic [ref=e429]: passed 2
+            - generic [ref=e430]: Correctness
+          - generic [ref=e433] [cursor=pointer]:
+            - generic [ref=e440]: passed 53
+            - generic [ref=e441]: Antithesis SDK
+          - generic [ref=e444] [cursor=pointer]:
+            - generic [ref=e451]: failed 4/17
+            - generic [ref=e452]: Antithesis Test Templates
+          - generic [ref=e455] [cursor=pointer]:
+            - generic [ref=e462]: passed
+            - generic [ref=e463]: "Never: Cardano Node Errors"
+          - generic [ref=e466] [cursor=pointer]:
+            - generic [ref=e473]: passed
+            - generic [ref=e474]: "Never: Cardano Node Critical"
+      - generic [ref=e475]:
+        - heading "Smoke Test Logs" [level=3] [ref=e480] [cursor=pointer]
+        - generic [ref=e490]: No data to display
+      - generic [ref=e493]:
+        - heading "Fault Configuration" [level=3] [ref=e498] [cursor=pointer]
+        - generic [ref=e499]:
+          - paragraph [ref=e500]:
+            - link "Faults" [ref=e501] [cursor=pointer]:
+              - /url: https://antithesis.com/docs/environment/fault_injection/
+            - text: are re-randomized each round via
+            - strong [ref=e502]: swarm testing
+            - text: ", which randomly includes/excludes"
+            - text: entire fault categories and randomizes their parameters.
+          - heading "Network Faults" [level=3] [ref=e503]
+          - paragraph [ref=e504]:
+            - strong [ref=e505]: All Network Faults are enabled
+          - paragraph [ref=e506]:
+            - text: All containers
+            - strong [ref=e507]: not in the network exclusion list
+            - text: are subject to network faults including
+            - text: latency injection, packet drops, link degradation (slowed/jammed), network partitions,
+            - text: and bad node isolation. Parameters are randomized each round.
+          - table [ref=e508]:
+            - rowgroup [ref=e509]:
+              - row "Description Patterns" [ref=e510]:
+                - columnheader "Description" [ref=e511]
+                - columnheader "Patterns" [ref=e512]
+            - row "containers excluded from network faults adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e513]:
+              - cell "containers excluded from network faults" [ref=e514]:
+                - text: containers excluded from
+                - strong [ref=e515]: network
+                - text: faults
+              - cell "adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e516]
+          - heading "Container Faults" [level=3] [ref=e517]
+          - paragraph [ref=e518]:
+            - strong [ref=e519]: All Container Faults are enabled
+          - paragraph [ref=e520]:
+            - text: All containers
+            - strong [ref=e521]: not in the containers exclusion list
+            - text: are subject to puase stop and kill faults.
+            - text: Custom scripts (clock skew, etc.) may also be randomly included per round.
+          - table [ref=e522]:
+            - rowgroup [ref=e523]:
+              - row "Description Patterns" [ref=e524]:
+                - columnheader "Description" [ref=e525]
+                - columnheader "Patterns" [ref=e526]
+            - row "containers excluded from container stop faults adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e527]:
+              - cell "containers excluded from container stop faults" [ref=e528]:
+                - text: containers excluded from container
+                - strong [ref=e529]: stop
+                - text: faults
+              - cell "adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e530]
+            - row "containers excluded from container kill faults adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e531]:
+              - cell "containers excluded from container kill faults" [ref=e532]:
+                - text: containers excluded from container
+                - strong [ref=e533]: kill
+                - text: faults
+              - cell "adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e534]
+            - row "containers excluded from container pause faults adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e535]:
+              - cell "containers excluded from container pause faults" [ref=e536]:
+                - text: containers excluded from container
+                - strong [ref=e537]: pause
+                - text: faults
+              - cell "adversary, asteria-game, dwarf-adversary, sidecar, tracer, tracer-sidecar, tx-generator" [ref=e538]
+          - heading "Thread Pausing" [level=3] [ref=e539]
+          - paragraph [ref=e540]:
+            - strong [ref=e541]: All Thread Pause faults are enabled
+          - paragraph [ref=e542]:
+            - text: Pauses instrumented containers with a randomized probability and toggle interval each round.
+            - text: Only affects
+            - strong [ref=e543]: instrumented
+            - text: containers.
+          - heading "Clock Jitter" [level=3] [ref=e544]
+          - paragraph [ref=e545]:
+            - strong [ref=e546]: All Clock Jitter faults are enabled
+          - paragraph [ref=e547]: The system clock is occassionally moved forwards and backwards by a small interval. This fault affects all containers.
+          - heading "CPU Modulation" [level=3] [ref=e548]
+          - paragraph [ref=e549]:
+            - strong [ref=e550]: All CPU Modulation faults are enabled
+          - paragraph [ref=e551]: This fault type simulates running your entire cluster on different hardware. The clock speed of the simulated processor is randomized, and the relative performance of different low-level processor operations may also change (for example, changing the speed of particular instructions while keeping the same overall clock speed).
+          - heading "CPU Pressure" [level=3] [ref=e552]
+          - paragraph [ref=e553]:
+            - strong [ref=e554]: All CPU Pressure faults are disabled
+          - paragraph [ref=e555]: This fault type throttles containers by randomly limiting the total percentage of CPU they are permitted to use (in microseconds of processor time)
+      - generic [ref=e557]:
+        - text: "Run:"
+        - generic [ref=e558]: 87c5414ceb7c955bc4cff48c3007e8a4-55-15
+        - text: "Session:"
+        - generic [ref=e559]: 30af35915be183476209782e099b83f3-55-15
+        - text: "Run by: pragma"
+  - generic [ref=e560]:
+    - alert
+    - alert
