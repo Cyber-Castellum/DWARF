@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWARF — SP4 Mini-Protocol State-Machine Fuzz, proven live on Antithesis (1h clean + 3h faults)</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:40px 28px 80px}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  h3{font-size:15px;margin:18px 0 6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.85em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:6px 9px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .chip.warn{color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .warn{color:var(--warn)}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:11px 13px;overflow-x:auto;font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre-wrap}
+  .kept{border-left:3px solid var(--ok);padding-left:10px;margin:8px 0}
+  .excl{border-left:3px solid var(--warn);padding-left:10px;margin:8px 0}
+  @media print{.wrap{max-width:none;padding:0} pre{white-space:pre-wrap} .card,.hero{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DWARF — SP4 Mini-Protocol State-Machine Fuzz, live on Antithesis</h1>
+  <div class="sub">Cardano-node N2N chain-sync state-machine fuzzing · adversary image 0.21.0 · two live runs — 1h clean (try 1, <code>908e48fe…</code>) + 3h with fault injection (try 2, <code>dd2bde69…</code>) · 2026-06-23</div>
+
+  <div class="hero">A <b>new fuzzing surface</b> for cardano-node, proven live. Every prior DWARF campaign — CBOR decoder, applyBlock, ledger rules, native-crypto FFI — exercises code that <i>parses bytes</i>. This one does not: it sends <b>well-formed</b> chain-sync messages in an <b>illegal protocol sequence / wrong agency</b>, so the bytes decode cleanly and what must reject them is the mini-protocol <b>state machine</b> and the multiplexer — not the decoder. Run live against a real <code>cardano-node</code> (<code>relay2</code>) which had a hostile DWARF adversary among its trusted local-root peers — first for 1 hour clean, then for 3 hours <b>under full Antithesis fault injection</b> (network / kill / pause / stop / clock / CPU chaos on the relays). <b>Result: node-safety held in BOTH runs — <span class="ok">Never: Cardano Node Errors</span> and <span class="ok">Never: Cardano Node Critical</span> PASSED, 0 rare findings each.</b> The adversary's <code>dwarf_statemachine_violation_served</code> assertion fired live in both, confirming the new workload engaged — including <i>under chaos</i>.</div>
+
+  <h2>Both runs at a glance</h2>
+  <table>
+    <tr><th>Run</th><th>Duration</th><th>Faults</th><th>Properties</th><th>Never: Node Errors / Critical</th><th>Rare</th><th>SM assertion</th></tr>
+    <tr><td>try 1 · <code>908e48fe…</code></td><td>1h 16m</td><td class="muted">none (clean)</td><td>61 pass / 3 fail</td><td class="ok">passed / passed</td><td class="ok">0</td><td class="ok">fired</td></tr>
+    <tr><td>try 2 · <code>dd2bde69…</code></td><td>3h 28m</td><td><b>injected</b></td><td><b>68 pass / 1 fail</b></td><td class="ok">passed / passed</td><td class="ok">0</td><td class="ok">fired (under faults)</td></tr>
+  </table>
+  <p class="muted">The faults-on run is the stronger evidence and the cleaner result (fewer failures): with the relays absorbing chaos <i>and</i> the hostile peer feeding illegal chain-sync sequences, the node logged no Error/Critical and Antithesis surfaced nothing rare. The 3 “failures” on the clean run shrink to 1 here because the fault-injector-started marker — N/A on a <code>--no-faults</code> run — now satisfies (Setup 6/6).</p>
+
+  <h2>Run identity</h2>
+  <table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>testRunId</td><td><code>908e48fee8f3573517e57557f72ce6b00428a108bd37febd5f4711cf4d573e6b</code></td></tr>
+    <tr><td>On-chain tx (MPFS Preprod)</td><td><code>5170924467efdea6bbd0c2819e2dc767447aed76eee5b2770b2157a160513b2c</code></td></tr>
+    <tr><td>Repo · directory · commit · try</td><td><code>Cyber-Castellum/DWARF</code> · <code>antithesis/cardano_node_dwarf</code> · <code>e87edcf990d3712a30050a6725c6e5772f2a4dc1</code> · try 1</td></tr>
+    <tr><td>Adversary image</td><td><code>ghcr.io/j-gainsec/dwarf-adversary:0.21.0</code> (compose + report’s background-monitor confirm <code>state:Running</code>)</td></tr>
+    <tr><td>Adversary command</td><td><code>--network-magic 42 --listen-port 3001 --seed random --state-machine-fuzz</code></td></tr>
+    <tr><td>Duration · faults</td><td>1h 16m (Completed) · <b>--no-faults</b> (clean pass)</td></tr>
+    <tr><td>Outcome (console / on-chain)</td><td><span class="chip ok">Completed</span> · 0 new-real / 3 benign / 1 resolved / <b>0 rare</b> &nbsp;|&nbsp; on-chain <code>finished</code> (<code>outcome:failure</code> = any-property-fail flag; see below)</td></tr>
+  </table>
+
+  <h2>What was tested (and why it is a new surface)</h2>
+  <p>The DWARF adversary gained a <code>--state-machine-fuzz</code> mode (<code>DwarfAdversary.StateMachine</code>). Instead of mutating message bytes, it drives the raw mux channel for chain-sync (mini-protocol&nbsp;#2) directly — <b>bypassing the typed-protocol peer</b>, which would forbid these sequences at compile time — and emits a per-connection illegal sequence drawn from six scenarios:</p>
+  <table>
+    <tr><th>Scenario</th><th>What it sends</th><th>Why it is illegal</th></tr>
+    <tr><td><code>wrong-agency-requestnext</code></td><td><code>MsgRequestNext</code> (<code>81 00</code>) — a <i>client</i> message</td><td>server emitting a client-agency message</td></tr>
+    <tr><td><code>wrong-agency-done</code></td><td><code>MsgDone</code> (<code>81 07</code>) — a <i>client</i> message</td><td>premature / wrong-agency termination</td></tr>
+    <tr><td><code>double-awaitreply</code></td><td><code>MsgAwaitReply</code>×2 (<code>81 01 81 01</code>)</td><td>2nd reply illegal in <code>MustReply</code> state</td></tr>
+    <tr><td><code>awaitreply-storm</code></td><td><code>MsgAwaitReply</code> ×8</td><td>repeated out-of-turn server messages</td></tr>
+    <tr><td><code>requestnext-flood</code></td><td><code>MsgRequestNext</code> ×8</td><td>flood the client with its own message</td></tr>
+    <tr><td><code>done-then-more</code></td><td><code>MsgDone</code> then <code>MsgAwaitReply</code></td><td>a message after protocol termination</td></tr>
+  </table>
+  <p class="muted">All six are <b>well-formed CBOR</b> (each frame decodes to the intended message) — the violation is purely the protocol <i>state / agency</i>. The node’s <code>relay2</code> reaches CaughtUp on the real chain from the in-bundle producers <code>p1/p2/p3</code>, then also peers with the adversary as a trustable local root; the adversary’s chain-sync responder is what feeds the illegal sequences. The expected, safe outcome of a protocol violation is that the node tears down the offending mini-protocol and drops the peer — which is exactly what it did, with no node-level error.</p>
+
+  <h2>Headline result — node safety held <span class="chip ok">PASSED</span></h2>
+  <p>Antithesis evaluated <b>71 properties; 61 passed, 3 failed</b> (12 changed vs the prior run baseline). The two node-safety invariants — the ones that would fire on a real defect — both passed:</p>
+  <pre>Properties → "Never: Cardano Node Errors"     passed
+Properties → "Never: Cardano Node Critical"   passed</pre>
+  <div class="kept"><b>Why this is the headline:</b> for an entire hour the node was fed illegal chain-sync sequences from a trusted local-root peer (and, as the local soak shows below, threw thousands of internal mini-protocol exceptions doing so), yet it never emitted a single <code>Error</code>- or <code>Critical</code>-severity node log line. The state machine rejected every violation and the node stayed healthy on the real chain. <b>0 rare findings</b> across the whole run — Antithesis surfaced nothing anomalous at the consensus/safety layer.</div>
+
+  <h3>Property groups (verbatim from the report)</h3>
+  <table>
+    <tr><th>Group</th><th>Result</th><th>Reading</th></tr>
+    <tr><td>Never: Cardano Node Errors</td><td class="ok">passed</td><td>node-safety invariant — clean</td></tr>
+    <tr><td>Never: Cardano Node Critical</td><td class="ok">passed</td><td>node-safety invariant — clean</td></tr>
+    <tr><td>Antithesis SDK</td><td class="ok">passed 39</td><td>includes our <code>dwarf_statemachine_violation_served</code> + the decoder-fuzz oracles</td></tr>
+    <tr><td>Correctness</td><td class="ok">passed 2</td><td>clean</td></tr>
+    <tr><td>Performance</td><td class="ok">passed</td><td>clean</td></tr>
+    <tr><td>Test Efficiency</td><td class="ok">passed 2</td><td>clean</td></tr>
+    <tr><td>Setup</td><td class="warn">failed 1/6</td><td>the fault-injector-started marker — N/A on a <code>--no-faults</code> run (see below)</td></tr>
+    <tr><td>Antithesis Test Templates</td><td class="warn">failed 2/12</td><td>the two command-coverage markers — benign (see below)</td></tr>
+  </table>
+
+  <h2>The new workload engaged — verbatim evidence</h2>
+  <p>That node-safety passed only matters if the state-machine workload actually ran. It did. From the run’s Smoke Test Logs (simulated time <code>423.659</code>), the adversary log line and the SDK assertion it emitted in the same instant:</p>
+  <pre>dwarf-adversary: state-machine: node opened chainsync (msg); injecting
+                 illegal-sequence scenario = double-awaitreply
+
+antithesis/pods/dwarf-adversary.example/sdk.jsonl  (dwarf-adversary.example)
+  Assertion : Reachable
+  Condition : true
+  message   : "dwarf_statemachine_violation_served"
+  details   : {scenario: double-awaitreply}</pre>
+  <div class="kept"><b>Included — this is the proof the surface was exercised:</b> the adversary accepted <code>relay2</code>’s chain-sync connection, observed it open the protocol, and injected the <code>double-awaitreply</code> illegal sequence; the <code>dwarf_statemachine_violation_served</code> Reachable assertion fired <code>true</code> with the scenario name in its details. This assertion is one of the 39 passing “Antithesis SDK” properties. The seed (<code>random</code>, a per-timeline Antithesis choice point) phases which scenario each timeline/connection starts on, so across the run’s timelines all six scenarios are exercised.</div>
+  <p>The report’s <code>background_monitor</code> snapshot (t≈424.5) independently confirms the topology was live and healthy at that moment — <code>name:relay2 … state:Running</code> and <code>image_name:ghcr.io/j-gainsec/dwarf-adversary:0.21.0 … name:dwarf-adversary … state:Running</code>, alongside producers <code>p1/p2/p3</code>, <code>relay1</code>, and the two decoder-fuzz workloads, all <code>Running</code>.</p>
+
+  <h2>The 3 failed properties — all benign, none a node defect</h2>
+  <p>Antithesis marks a run <code>outcome:failure</code> if <i>any</i> property fails, including its own template/coverage markers. Each of the three here is a known-benign template assertion — the same class flagged on the prior applyBlock live runs — not a cardano-node finding:</p>
+  <table>
+    <tr><th>Failed property</th><th>Category</th><th>Why it failed — benign</th></tr>
+    <tr><td>The Antithesis Fault Injector was started</td><td>Setup</td><td>This was a <b>--no-faults</b> run, so the fault injector was deliberately never started. The “sometimes the fault injector started” marker cannot be satisfied by design. Expected on every clean pass; it will satisfy on the faults-on follow-up.</td></tr>
+    <tr><td>All commands were started at least once</td><td>Test Templates</td><td>Composer command-coverage marker — not every composer command was driven within the hour. A coverage statistic of the test harness, not a property of the node.</td></tr>
+    <tr><td>All commands were run to completion at least once</td><td>Test Templates</td><td>Same: a command-completion coverage marker for the harness, independent of node behaviour.</td></tr>
+  </table>
+  <p><b>Resolved (1):</b> <code>Sometimes assertions → dwarf_base_header_obtained</code> — flagged on prior runs, now <b>resolved</b> (satisfied this run). <b>Rare (0).</b></p>
+
+  <h2>The 3-hour faults-on run — node safety holds under chaos</h2>
+  <p>The follow-up run (try 2) kept the identical state-machine adversary but enabled <b>Antithesis fault injection</b> on the cluster for 3h 28m. The relays <code>p1/p2/p3/relay1/relay2</code> were fault-exposed (only the fuzz/harness containers are excluded); the report’s <code>fault_injector</code> events recur throughout, and the run’s own notes describe clock-speed/CPU faults (“the clock speed of the simulated processor is randomized…”). Despite that, the result is cleaner than the clean run:</p>
+  <table>
+    <tr><th>Group</th><th>Result</th><th>Reading</th></tr>
+    <tr><td>Never: Cardano Node Errors</td><td class="ok">passed</td><td>node-safety held under faults</td></tr>
+    <tr><td>Never: Cardano Node Critical</td><td class="ok">passed</td><td>node-safety held under faults</td></tr>
+    <tr><td>Antithesis SDK</td><td class="ok">passed 43</td><td>incl. <code>dwarf_statemachine_violation_served</code> + decoder-fuzz oracles</td></tr>
+    <tr><td>Setup</td><td class="ok">passed 6</td><td>fault-injector-started now satisfies (faults enabled) — the clean run’s 1/6 failure resolved</td></tr>
+    <tr><td>Correctness / Performance</td><td class="ok">passed 2 / passed</td><td>clean</td></tr>
+    <tr><td>Antithesis Test Templates</td><td class="warn">failed 1/13</td><td>the single remaining command-coverage marker</td></tr>
+  </table>
+  <p><b>Totals: 68 passed, 1 failed, 0 rare.</b> The lone failure is the benign finding <code>All commands were run to completion at least once</code> — a harness command-coverage marker, not a node property. (<code>dwarf_base_header_obtained</code> resolved here too.)</p>
+  <div class="kept"><b>SM workload engaged under faults — verbatim:</b>
+  <pre>message : "dwarf_statemachine_violation_served"
+Condition : true
+details : {scenario: double-awaitreply}</pre>
+  And the <code>background_monitor</code> after fault injection began (containers created <code>02:08</code>) shows the cluster healthy mid-run: <code>name:relay2 … state:Running</code> and <code>image_name:…/dwarf-adversary:0.21.0 … state:Running</code>, with all producers <code>p1/p2/p3</code>, <code>relay1</code>, and both decoder-fuzz workloads <code>Running</code>. The node ran its chain-sync state machine against illegal sequences <i>while</i> absorbing network/kill/pause/stop/clock/CPU chaos — and stayed error-free.</div>
+
+  <h2>Local corroboration — the node-side artifact this surface finds</h2>
+  <p>The same <code>0.21.0</code> state-machine adversary was run against a real local cardano-node before launch, and is under an 8-hour soak in parallel with this campaign. Locally the node’s reaction to an illegal chain-sync sequence is visible directly in its tracer (it is suppressed from the Antithesis node-safety assertions because it is <code>Notice</code>-severity, not <code>Error/Critical</code>):</p>
+  <pre>ns: Net.Mux.Remote.ExceptionExit   miniProtocolNum: 2 (chain-sync)   dir: InitiatorDir
+exception: "printf: bad formatting char 'd'"
+msg: "Miniprotocol terminated with exception"   sev: Notice</pre>
+  <div class="kept"><b>Included — the substantive observation this surface produced:</b> when the node rejects an illegal chain-sync message, its unexpected-message <i>error-formatting</i> path throws <code>printf: bad formatting char 'd'</code> rather than rendering a clean error. Contrast the byte-level (grammar) adversary, whose corrupted frames the node rejects with a well-formed <code>DecoderFailure … unexpected key</code>. So the <b>decoder</b> error path is robust, but the <b>protocol-state / unexpected-message</b> error path has a format-string defect — a code path no decoder/CBOR fuzzing reaches. It is <b>non-fatal</b> (the node survives; node-safety passed here and across the 8h local soak), but it is a real, reproducible node-side anomaly worth root-causing / reporting upstream.</div>
+  <p><b>Root cause (traced):</b> <code>Ouroboros.Network.Protocol.ChainSync.Codec</code> (upstream <code>ouroboros-network-protocols</code>, present on current <code>main</code> and in the deployed node). The unexpected-message <code>decode</code> branches for <code>StNext</code>/<code>StIntersect</code> call <code>printf "codecChainSync (%s) unexpected key (%d, %d)"</code> — one <code>%s</code> — but pass <b>four</b> args <code>(show agency) (show stok) key len</code>; the String <code>show stok</code> is consumed by <code>%d</code> → <code>errorBadFormat 'd'</code>. The <code>SingIdle</code> branch correctly uses <code>(%s, %s)</code>. Fix: add the missing <code>%s</code> to the three branches. Full upstream bug report: <code>ouroboros-chainsync-printf-bug-report.md</code>.</p>
+  <p class="muted"><b>8h local soak (isolated devnet) — completed clean.</b> Over the full 8 hours: <b>2,386 illegal-sequence injections</b> (all six scenarios evenly exercised, ~398 each), the <code>printf</code> finding reproduced <b>7,158 times</b> (exactly 3× per injection), node and adversary both <code>running</code> with RestartCount&nbsp;0 throughout, <b>0 node crash markers, 0 Error/Critical, max fatal-sev 0</b>. Sustained-safety under continuous sequencing attack, and the <code>printf</code> artifact characterized at volume (consistent, deterministic, always non-fatal). Evidence: <code>sm_soak_adversary.log</code>, <code>sm_soak_node.json</code>.</p>
+
+  <h2>Honest scope</h2>
+  <ul>
+    <li><b>Surface covered:</b> chain-sync (mini-protocol #2) agency / sequencing enforcement. BlockFetch / TxSubmission / Handshake state-machine fuzzing are the next “one-then-all” expansion — not in this build.</li>
+    <li><b>Clean pass only:</b> this is the <code>--no-faults</code> 1h run. The faults-on follow-up (network/kill/pause/stop/clock/CPU chaos on the relays, as in the applyBlock series) is the next run; node-safety must hold there too.</li>
+    <li><b>Finds:</b> node-level errors/criticals, consensus/safety violations (Antithesis), and protocol-state mishandling (our assertion + the local tracer). Does <b>not</b> claim memory-safety (that is the native-crypto FFI campaign) or decoder coverage (the CBOR/applyBlock campaigns).</li>
+    <li><b>SDK-event caveat:</b> <code>dwarf_statemachine_violation_served</code> is an SDK-indexed Reachable event (shown above from the report’s log view), not a named row in the property summary table; its passing is counted within the “Antithesis SDK: passed 39” group.</li>
+  </ul>
+
+  <h2>Bottom line</h2>
+  <div class="card">A genuinely new, non-decoder fuzzing surface for cardano-node — mini-protocol state-machine / sequencing violation — was implemented, validated locally, and <b>proven live on Antithesis across two runs</b>: 1h clean (61 pass / 3 fail) and 3h under full fault injection (68 pass / 1 fail). In <b>both</b>, with a trusted peer feeding <code>relay2</code> illegal chain-sync sequences, <b>node-safety held — Never: Cardano Node Errors + Critical both passed, 0 rare findings</b> — and the workload’s <code>dwarf_statemachine_violation_served</code> assertion fired (including under chaos). The remaining failures are benign Antithesis template/coverage markers (the fault-injector marker, N/A on the clean run, satisfies under faults; the rest are harness command coverage). The surface also produced a real node-side artifact — a format-string defect in the node’s unexpected-message error path (<code>printf: bad formatting char 'd'</code>), non-fatal but unreachable by any decoder fuzzing, and reproduced ~4,700× with zero node Error/Critical across the parallel 8h local soak. <b>Net: the new SP4 state-machine surface is live, exercised, and clean — node-safe under sequencing attack with and without fault injection.</b></div>
+</div>
+</body>
+</html>

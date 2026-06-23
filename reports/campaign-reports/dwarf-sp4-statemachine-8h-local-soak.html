@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWARF — SP4 State-Machine Fuzz, 8-hour local soak</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:40px 28px 80px}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.85em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:5px 9px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .warn{color:var(--warn)}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:11px 13px;overflow-x:auto;font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre-wrap}
+  .kept{border-left:3px solid var(--ok);padding-left:10px;margin:8px 0}
+  @media print{.wrap{max-width:none;padding:0} pre{white-space:pre-wrap} .card,.hero{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DWARF — SP4 State-Machine Fuzz, 8-hour local soak</h1>
+  <div class="sub">Sustained chain-sync sequencing attack on a real local cardano-node · adversary image 0.21.0 · isolated devnet · 2026-06-23 00:39→08:39 UTC</div>
+
+  <div class="hero">The local endurance counterpart to the Antithesis runs: a real <code>cardano-node</code> (<code>relay2</code>) eclipsed to the DWARF state-machine adversary as its sole peer, fed <b>well-formed chain-sync messages in illegal protocol state/agency</b> continuously for <b>8 hours</b>. <b>Result: 2,386 illegal-sequence injections across all six scenarios, node and adversary <span class="ok">up the entire time</span> (RestartCount 0), 0 node crash markers, 0 Error/Critical, max fault-severity 0.</b> The node-side <code>printf</code> error-formatting artifact reproduced <b>7,158×</b> — consistent, deterministic, and always non-fatal.</div>
+
+  <h2>Method</h2>
+  <p>An isolated Docker project (<code>sm_soak</code>, unique container names + network — so it cannot collide with any other running devnet) brings up a real <code>cardano-node</code> as <code>relay2</code> with the DWARF adversary (<code>ghcr.io/j-gainsec/dwarf-adversary:0.21.0</code>, <code>--state-machine-fuzz</code>) as its sole local-root peer. The adversary drives the raw chain-sync mux channel (bypassing the typed-protocol peer, which would forbid these sequences at compile time) and, per connection, injects one of six illegal sequences — all <b>well-formed CBOR</b>, so the bytes decode and the node’s mini-protocol <b>state machine</b> is what must reject them. The node drops the offending mini-protocol on each violation and reconnects, so the per-connection scenario counter cycles all six continuously. Liveness + node-safety were sampled every 15 minutes for 32 samples.</p>
+
+  <h2>Result — node-safe across the full 8 hours <span class="chip ok">0 crashes</span></h2>
+  <table>
+    <tr><th>Metric (8h total)</th><th>Value</th></tr>
+    <tr><td>Illegal-sequence injections</td><td><b>2,386</b></td></tr>
+    <tr><td>Node final state</td><td class="ok">running · RestartCount 0</td></tr>
+    <tr><td>Adversary final state</td><td class="ok">running · RestartCount 0</td></tr>
+    <tr><td>Node Error/Critical (tracer)</td><td class="ok">0</td></tr>
+    <tr><td>Node crash markers</td><td class="ok">0</td></tr>
+    <tr><td>Max fault-severity observed</td><td class="ok">0</td></tr>
+    <tr><td><code>printf: bad formatting char 'd'</code> occurrences</td><td>7,158 (exactly 3 per injection)</td></tr>
+  </table>
+
+  <h3>Scenario coverage (evenly cycled)</h3>
+  <table>
+    <tr><th>Illegal-sequence scenario</th><th class="num">injections</th><th>nature of the violation</th></tr>
+    <tr><td><code>awaitreply-storm</code></td><td class="num">398</td><td>repeated out-of-turn server messages</td></tr>
+    <tr><td><code>done-then-more</code></td><td class="num">398</td><td>a message after protocol termination</td></tr>
+    <tr><td><code>double-awaitreply</code></td><td class="num">398</td><td>2nd reply illegal in MustReply state</td></tr>
+    <tr><td><code>requestnext-flood</code></td><td class="num">398</td><td>flood client with its own message</td></tr>
+    <tr><td><code>wrong-agency-done</code></td><td class="num">397</td><td>server emits client MsgDone</td></tr>
+    <tr><td><code>wrong-agency-requestnext</code></td><td class="num">397</td><td>server emits client MsgRequestNext</td></tr>
+  </table>
+
+  <h2>Progress over time (15-min samples)</h2>
+  <p class="muted">Strictly linear — every interval added ~75 injections and exactly 3× that in <code>printf</code> reproductions, with node and adversary never restarting and fault-severity pinned at 0. Selected samples:</p>
+  <table>
+    <tr><th>elapsed</th><th class="num">injections</th><th class="num">printf finding</th><th>node</th><th>adversary</th><th class="num">fatal sev</th></tr>
+    <tr><td>1h</td><td class="num">300</td><td class="num">900</td><td class="ok">running/0</td><td class="ok">running/0</td><td class="num">0</td></tr>
+    <tr><td>2h</td><td class="num">595</td><td class="num">1,785</td><td class="ok">running/0</td><td class="ok">running/0</td><td class="num">0</td></tr>
+    <tr><td>4h</td><td class="num">1,193</td><td class="num">3,579</td><td class="ok">running/0</td><td class="ok">running/0</td><td class="num">0</td></tr>
+    <tr><td>6h</td><td class="num">1,791</td><td class="num">5,373</td><td class="ok">running/0</td><td class="ok">running/0</td><td class="num">0</td></tr>
+    <tr><td>8h (final)</td><td class="num">2,386</td><td class="num">7,158</td><td class="ok">running/0</td><td class="ok">running/0</td><td class="num">0</td></tr>
+  </table>
+  <p class="muted">Full 32-sample table in <code>sp4-statemachine-evidence/logs/statemachine-soak-summary.txt</code>.</p>
+
+  <h2>The node-side finding, characterized at volume</h2>
+  <p>When the node rejects an illegal chain-sync sequence, its unexpected-message <b>error-formatting</b> path throws (from the <code>relay2</code> tracer, <code>node.json</code>):</p>
+  <pre>ns: Net.Mux.Remote.ExceptionExit   miniProtocolNum: 2 (chain-sync)   dir: InitiatorDir
+exception: "printf: bad formatting char 'd'"
+msg: "Miniprotocol terminated with exception"   sev: Notice</pre>
+  <div class="kept"><b>What 8 hours adds over the smoke test:</b> the artifact is <b>deterministic and bounded</b> — exactly 3 occurrences per injection (7,158 over 2,386), never escalating, never reaching <code>Error</code>/<code>Critical</code>, never destabilising the node (RestartCount stayed 0 for 8h). It is a genuine defect in a rarely-exercised error path — the node’s unexpected-message formatter uses a malformed format string — but it is provably <b>non-fatal</b>. Contrast the byte-level (grammar) adversary, whose corrupted frames the node rejects with a clean <code>DecoderFailure</code>: the decoder error path is robust, the protocol-state error path is not. This is the kind of issue only state-machine (not decoder) fuzzing reaches; worth root-causing / reporting upstream.</div>
+
+  <h2>Root cause — traced</h2>
+  <p>The error originates in <code>Ouroboros.Network.Protocol.ChainSync.Codec</code> (upstream <code>ouroboros-network-protocols</code>; confirmed present on current <code>main</code> and in the deployed node). The <code>decode</code> fallthrough that reports an unexpected message per protocol state passes <b>four</b> arguments to a <code>printf</code> format string with only <b>three</b> conversions in the <code>StNext</code>/<code>StIntersect</code> branches:</p>
+  <pre>-- CORRECT (SingIdle):  2×%s, 4 args
+fail (printf "codecChainSync (%s, %s) unexpected key (%d, %d)"
+             (show (activeAgency :: ActiveAgency st)) (show stok) key len)
+
+-- BUG (SingCanAwait / SingMustReply / SingIntersect):  1×%s, 4 args
+fail (printf "codecChainSync (%s) unexpected key (%d, %d)"
+             (show (activeAgency :: ActiveAgency st)) (show stok) key len)</pre>
+  <p><code>Text.Printf</code> binds positionally: <code>%s</code> ← <code>show agency</code> (String, ok); <code>%d</code> ← <code>show stok</code> — <b>a String</b>, fed to an integer conversion → <code>errorBadFormat 'd'</code> → <code>printf: bad formatting char 'd'</code>. The format string is simply missing its second <code>%s</code> (the <code>SingIdle</code> branch has it). Isolated to ChainSync — every other protocol codec's fallthrough is internally consistent (BlockFetch/KeepAlive use <code>(%s, %s)</code>+4 args; TxSubmission2/LocalStateQuery use <code>(%s)</code>+3 args). Our scenarios land in <code>StNext</code>/<code>StIntersect</code> (a wrong-state message while the consumer awaits a reply), which is exactly the buggy path; an unexpected message in <code>StIdle</code> would format correctly.</p>
+  <div class="kept"><b>Fix (one char × 3 lines):</b> <code>(%s)</code> → <code>(%s, %s)</code> in the <code>SingCanAwait</code>, <code>SingMustReply</code>, and <code>SingIntersect</code> branches. Full upstream bug report (with the printf arity table, reproduction, and diff) prepared as <code>ouroboros-chainsync-printf-bug-report.md</code>.</div>
+
+  <h2>Evidence &amp; reproducibility</h2>
+  <ul>
+    <li><code>sp4-statemachine-evidence/StateMachine.hs</code> — the adversary responder (exact ChainSync wire frames + the six scenarios).</li>
+    <li><code>…/logs/statemachine-soak-adversary.log</code> — full 8h adversary stdout (every injection, with its scenario).</li>
+    <li><code>…/logs/statemachine-soak-node-tracer.json.gz</code> — full 8h <code>relay2</code> tracer: <b>0</b> Error/Critical lines, <b>7,158</b> <code>bad formatting char</code> lines (both independently verified).</li>
+    <li><code>…/logs/statemachine-soak-summary.txt</code> — the 32-sample table + scenario breakdown + final state.</li>
+    <li>Raw adversary log also mirrored at <code>raw/logs/statemachine.log</code> for the build bundle.</li>
+  </ul>
+  <p class="muted">Determinism: scenario = f(seed, connection-index); the soak rebuilds from the documented isolated-compose setup. No credentials in any evidence file.</p>
+
+  <h2>Honest scope</h2>
+  <ul>
+    <li><b>Local, single-node:</b> this proves sustained <i>node-safety</i> and characterizes the <code>printf</code> artifact at volume; it does not exercise multi-node consensus or fault injection (that is the Antithesis 3h faults run — node-safe there too).</li>
+    <li><b>Surface:</b> chain-sync (#2) only — the first of the "one-then-all" expansion to BlockFetch / TxSubmission / Handshake.</li>
+  </ul>
+
+  <h2>Bottom line</h2>
+  <div class="card">Eight hours of continuous chain-sync sequencing attack on a real cardano-node: <b>2,386 illegal-sequence injections across all six scenarios, zero crashes, zero Error/Critical, node and adversary up the entire time.</b> The state-machine surface is node-safe under sustained attack, and the one node-side artifact it surfaces — a format-string defect in the unexpected-message error path — is now characterized at volume (7,158 reproductions, deterministic, always non-fatal). Complements the live Antithesis runs (1h clean + 3h faults), which were also node-safe.</div>
+</div>
+</body>
+</html>

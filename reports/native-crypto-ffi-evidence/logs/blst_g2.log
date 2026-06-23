@@ -1,0 +1,50 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4043884968
+INFO: Loaded 1 modules   (1381 inline 8-bit counters): 1381 [0x5a7a408e8f00, 0x5a7a408e9465), 
+INFO: Loaded 1 PC tables (1381 PCs): 1381 [0x5a7a408e9468,0x5a7a408eeab8), 
+INFO:       98 files found in corpus/blst_g2
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 98 min: 1b max: 192b total: 10465b rss: 32Mb
+#99	INITED cov: 52 ft: 80 corp: 19/2881b exec/s: 0 rss: 35Mb
+#61757	NEW    cov: 54 ft: 83 corp: 20/2999b lim: 797 exec/s: 61757 rss: 54Mb L: 118/192 MS: 3 CopyPart-CMP-InsertRepeatedBytes- DE: "\300\000\000\000\000\000\000\000"-
+#61797	NEW    cov: 54 ft: 85 corp: 21/3205b lim: 797 exec/s: 61797 rss: 54Mb L: 206/206 MS: 5 InsertByte-ChangeByte-ChangeBinInt-ChangeByte-InsertRepeatedBytes-
+#62548	REDUCE cov: 54 ft: 85 corp: 21/3192b lim: 797 exec/s: 62548 rss: 55Mb L: 105/206 MS: 1 EraseBytes-
+#64157	REDUCE cov: 54 ft: 85 corp: 21/3187b lim: 806 exec/s: 64157 rss: 55Mb L: 201/201 MS: 4 ChangeBinInt-CrossOver-InsertRepeatedBytes-EraseBytes-
+#65891	REDUCE cov: 54 ft: 85 corp: 21/3185b lim: 815 exec/s: 65891 rss: 56Mb L: 199/199 MS: 4 ChangeByte-EraseBytes-CopyPart-CMP- DE: "\377\377\377\377\377\377\377\010"-
+#66542	REDUCE cov: 54 ft: 85 corp: 21/3184b lim: 815 exec/s: 66542 rss: 56Mb L: 104/199 MS: 1 EraseBytes-
+#73603	REDUCE cov: 54 ft: 85 corp: 21/3181b lim: 878 exec/s: 73603 rss: 58Mb L: 196/196 MS: 1 EraseBytes-
+#81235	REDUCE cov: 54 ft: 85 corp: 21/3180b lim: 950 exec/s: 81235 rss: 60Mb L: 195/195 MS: 2 InsertRepeatedBytes-EraseBytes-
+#84056	REDUCE cov: 54 ft: 85 corp: 21/3176b lim: 977 exec/s: 84056 rss: 61Mb L: 100/195 MS: 1 EraseBytes-
+#88552	REDUCE cov: 54 ft: 85 corp: 21/3173b lim: 1013 exec/s: 88552 rss: 63Mb L: 192/192 MS: 1 EraseBytes-
+#91433	REDUCE cov: 54 ft: 85 corp: 21/3172b lim: 1041 exec/s: 91433 rss: 63Mb L: 99/192 MS: 1 EraseBytes-
+#117729	REDUCE cov: 54 ft: 85 corp: 21/3171b lim: 1301 exec/s: 58864 rss: 71Mb L: 98/192 MS: 1 EraseBytes-
+#131072	pulse  cov: 54 ft: 85 corp: 21/3171b lim: 1431 exec/s: 65536 rss: 75Mb
+#262144	pulse  cov: 54 ft: 85 corp: 21/3171b lim: 2733 exec/s: 65536 rss: 115Mb
+#524288	pulse  cov: 54 ft: 85 corp: 21/3171b lim: 4096 exec/s: 58254 rss: 195Mb
+#918306	REDUCE cov: 54 ft: 85 corp: 21/3170b lim: 4096 exec/s: 57394 rss: 315Mb L: 97/192 MS: 2 EraseBytes-InsertRepeatedBytes-
+#984922	REDUCE cov: 54 ft: 85 corp: 21/3169b lim: 4096 exec/s: 54717 rss: 335Mb L: 96/192 MS: 1 EraseBytes-
+#1048576	pulse  cov: 54 ft: 85 corp: 21/3169b lim: 4096 exec/s: 55188 rss: 355Mb
+#2097152	pulse  cov: 54 ft: 85 corp: 21/3169b lim: 4096 exec/s: 52428 rss: 441Mb
+#4194304	pulse  cov: 54 ft: 85 corp: 21/3169b lim: 4096 exec/s: 49932 rss: 441Mb
+#8388608	pulse  cov: 54 ft: 85 corp: 21/3169b lim: 4096 exec/s: 46863 rss: 442Mb
+#15942010	REDUCE cov: 56 ft: 87 corp: 22/3381b lim: 4096 exec/s: 44655 rss: 442Mb L: 212/212 MS: 3 ChangeBinInt-InsertRepeatedBytes-ChangeBit-
+#15943301	REDUCE cov: 56 ft: 87 corp: 22/3374b lim: 4096 exec/s: 44659 rss: 442Mb L: 205/205 MS: 1 EraseBytes-
+#16079202	REDUCE cov: 56 ft: 87 corp: 22/3371b lim: 4096 exec/s: 44540 rss: 443Mb L: 202/202 MS: 1 EraseBytes-
+#16104977	REDUCE cov: 56 ft: 87 corp: 22/3365b lim: 4096 exec/s: 44612 rss: 443Mb L: 196/196 MS: 5 CopyPart-PersAutoDict-EraseBytes-ShuffleBytes-CopyPart- DE: "\377\377\377\377\377\377\377\010"-
+#16107778	REDUCE cov: 56 ft: 87 corp: 22/3363b lim: 4096 exec/s: 44619 rss: 443Mb L: 194/194 MS: 1 EraseBytes-
+#16188140	REDUCE cov: 56 ft: 87 corp: 22/3361b lim: 4096 exec/s: 44595 rss: 443Mb L: 192/192 MS: 2 EraseBytes-InsertRepeatedBytes-
+#16777216	pulse  cov: 56 ft: 87 corp: 22/3361b lim: 4096 exec/s: 44501 rss: 443Mb
+#33554432	pulse  cov: 56 ft: 87 corp: 22/3361b lim: 4096 exec/s: 43073 rss: 444Mb
+#67108864	pulse  cov: 56 ft: 87 corp: 22/3361b lim: 4096 exec/s: 42233 rss: 445Mb
+#134217728	pulse  cov: 56 ft: 87 corp: 22/3361b lim: 4096 exec/s: 41669 rss: 446Mb
+#149779845	DONE   cov: 56 ft: 87 corp: 22/3361b lim: 4096 exec/s: 41593 rss: 446Mb
+###### Recommended dictionary. ######
+"\300\000\000\000\000\000\000\000" # Uses: 6618374
+"\377\377\377\377\377\377\377\010" # Uses: 6615024
+###### End of recommended dictionary. ######
+Done 149779845 runs in 3601 second(s)
+stat::number_of_executed_units: 149779845
+stat::average_exec_per_sec:     41593
+stat::new_units_added:          20
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              446

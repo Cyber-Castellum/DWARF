@@ -1,0 +1,54 @@
+make  all-am
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-secp'
+  CC       src/bench-bench.o
+  CC       src/libsecp256k1_precomputed_la-precomputed_ecmult.lo
+  CC       src/libsecp256k1_precomputed_la-precomputed_ecmult_gen.lo
+  CC       src/libsecp256k1_la-secp256k1.lo
+  CC       src/bench_internal-bench_internal.o
+  CC       src/bench_ecmult-bench_ecmult.o
+  CC       src/noverify_tests-tests.o
+  CC       src/tests-tests.o
+  CC       src/exhaustive_tests-tests_exhaustive.o
+  CCLD     libsecp256k1_precomputed.la
+  CCLD     libsecp256k1.la
+  CCLD     bench_internal
+  CCLD     bench_ecmult
+  CCLD     bench
+  CCLD     exhaustive_tests
+  CCLD     tests
+  CCLD     noverify_tests
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-secp'
+make  install-am
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-secp'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-secp'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/secp-asan/lib'
+ /bin/bash ./libtool   --mode=install /usr/bin/install -c   libsecp256k1.la '/home/nigel/dwarf-ffi-fuzz/secp-asan/lib'
+libtool: install: /usr/bin/install -c .libs/libsecp256k1.lai /home/nigel/dwarf-ffi-fuzz/secp-asan/lib/libsecp256k1.la
+libtool: install: /usr/bin/install -c .libs/libsecp256k1.a /home/nigel/dwarf-ffi-fuzz/secp-asan/lib/libsecp256k1.a
+libtool: install: chmod 644 /home/nigel/dwarf-ffi-fuzz/secp-asan/lib/libsecp256k1.a
+libtool: install: ranlib /home/nigel/dwarf-ffi-fuzz/secp-asan/lib/libsecp256k1.a
+libtool: finish: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/sbin" ldconfig -n /home/nigel/dwarf-ffi-fuzz/secp-asan/lib
+----------------------------------------------------------------------
+Libraries have been installed in:
+   /home/nigel/dwarf-ffi-fuzz/secp-asan/lib
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the '-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the 'LD_LIBRARY_PATH' environment variable
+     during execution
+   - add LIBDIR to the 'LD_RUN_PATH' environment variable
+     during linking
+   - use the '-Wl,-rpath -Wl,LIBDIR' linker flag
+   - have your system administrator add LIBDIR to '/etc/ld.so.conf'
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/secp-asan/include'
+ /usr/bin/install -c -m 644 /home/nigel/src/cardano-c-deps/secp256k1/include/secp256k1.h /home/nigel/src/cardano-c-deps/secp256k1/include/secp256k1_preallocated.h /home/nigel/src/cardano-c-deps/secp256k1/include/secp256k1_ecdh.h /home/nigel/src/cardano-c-deps/secp256k1/include/secp256k1_recovery.h /home/nigel/src/cardano-c-deps/secp256k1/include/secp256k1_extrakeys.h /home/nigel/src/cardano-c-deps/secp256k1/include/secp256k1_schnorrsig.h '/home/nigel/dwarf-ffi-fuzz/secp-asan/include'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/secp-asan/lib/pkgconfig'
+ /usr/bin/install -c -m 644 libsecp256k1.pc '/home/nigel/dwarf-ffi-fuzz/secp-asan/lib/pkgconfig'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-secp'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-secp'

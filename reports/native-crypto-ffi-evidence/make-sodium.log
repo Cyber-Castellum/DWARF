@@ -1,0 +1,278 @@
+Making all in builds
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/builds'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/builds'
+Making all in contrib
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/contrib'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/contrib'
+Making all in dist-build
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/dist-build'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/dist-build'
+Making all in msvc-scripts
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/msvc-scripts'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/msvc-scripts'
+Making all in src
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+Making all in libsodium
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+Making all in include
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium/include'
+make[3]: Nothing to be done for 'all'.
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium/include'
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+  CC       crypto_core/ed25519/libsodium_la-core_ed25519.lo
+  CC       crypto_core/ed25519/libsodium_la-core_ristretto255.lo
+  CC       crypto_shorthash/siphash24/libsodium_la-shorthash_siphashx24.lo
+  CC       crypto_shorthash/siphash24/ref/libsodium_la-shorthash_siphashx24_ref.lo
+  CC       crypto_sign/ed25519/ref10/libsodium_la-obsolete.lo
+  CC       crypto_generichash/blake2b/ref/libssse3_la-blake2b-compress-ssse3.lo
+  CC       crypto_pwhash/argon2/libssse3_la-argon2-fill-block-ssse3.lo
+  CC       crypto_generichash/blake2b/ref/libsse41_la-blake2b-compress-sse41.lo
+  CC       crypto_generichash/blake2b/ref/libavx2_la-blake2b-compress-avx2.lo
+  CC       crypto_pwhash/argon2/libavx2_la-argon2-fill-block-avx2.lo
+  CC       crypto_stream/chacha20/dolbeau/libavx2_la-chacha20_dolbeau-avx2.lo
+  CC       crypto_stream/salsa20/xmm6int/libavx2_la-salsa20_xmm6int-avx2.lo
+  CC       crypto_pwhash/argon2/libavx512f_la-argon2-fill-block-avx512f.lo
+  CC       crypto_aead/xchacha20poly1305/sodium/libsodium_la-aead_xchacha20poly1305.lo
+  CC       crypto_aead/chacha20poly1305/sodium/libsodium_la-aead_chacha20poly1305.lo
+  CC       crypto_auth/libsodium_la-crypto_auth.lo
+  CC       crypto_auth/hmacsha256/libsodium_la-auth_hmacsha256.lo
+  CC       crypto_auth/hmacsha512/libsodium_la-auth_hmacsha512.lo
+  CC       crypto_auth/hmacsha512256/libsodium_la-auth_hmacsha512256.lo
+  CC       crypto_box/libsodium_la-crypto_box.lo
+  CC       crypto_box/libsodium_la-crypto_box_easy.lo
+  CC       crypto_box/libsodium_la-crypto_box_seal.lo
+  CC       crypto_box/curve25519xsalsa20poly1305/libsodium_la-box_curve25519xsalsa20poly1305.lo
+  CC       crypto_core/ed25519/libsodium_la-core_h2c.lo
+  CC       crypto_core/ed25519/ref10/libsodium_la-ed25519_ref10.lo
+  CC       crypto_core/hchacha20/libsodium_la-core_hchacha20.lo
+  CC       crypto_core/hsalsa20/ref2/libsodium_la-core_hsalsa20_ref2.lo
+  CC       crypto_core/hsalsa20/libsodium_la-core_hsalsa20.lo
+  CC       crypto_core/salsa/ref/libsodium_la-core_salsa_ref.lo
+  CC       crypto_generichash/libsodium_la-crypto_generichash.lo
+  CC       crypto_generichash/blake2b/libsodium_la-generichash_blake2.lo
+  CC       crypto_generichash/blake2b/ref/libsodium_la-blake2b-compress-ref.lo
+  CC       crypto_generichash/blake2b/ref/libsodium_la-blake2b-ref.lo
+  CC       crypto_generichash/blake2b/ref/libsodium_la-generichash_blake2b.lo
+  CC       crypto_hash/libsodium_la-crypto_hash.lo
+  CC       crypto_hash/sha256/libsodium_la-hash_sha256.lo
+  CC       crypto_hash/sha256/cp/libsodium_la-hash_sha256_cp.lo
+  CC       crypto_hash/sha512/libsodium_la-hash_sha512.lo
+  CC       crypto_hash/sha512/cp/libsodium_la-hash_sha512_cp.lo
+  CC       crypto_kdf/blake2b/libsodium_la-kdf_blake2b.lo
+  CC       crypto_kdf/libsodium_la-crypto_kdf.lo
+  CC       crypto_kx/libsodium_la-crypto_kx.lo
+  CC       crypto_onetimeauth/libsodium_la-crypto_onetimeauth.lo
+  CC       crypto_onetimeauth/poly1305/libsodium_la-onetimeauth_poly1305.lo
+  CC       crypto_onetimeauth/poly1305/donna/libsodium_la-poly1305_donna.lo
+  CC       crypto_pwhash/argon2/libsodium_la-argon2-core.lo
+  CC       crypto_pwhash/argon2/libsodium_la-argon2-encoding.lo
+  CC       crypto_pwhash/argon2/libsodium_la-argon2-fill-block-ref.lo
+  CC       crypto_pwhash/argon2/libsodium_la-argon2.lo
+  CC       crypto_pwhash/argon2/libsodium_la-blake2b-long.lo
+  CC       crypto_pwhash/argon2/libsodium_la-pwhash_argon2i.lo
+  CC       crypto_pwhash/argon2/libsodium_la-pwhash_argon2id.lo
+  CC       crypto_pwhash/libsodium_la-crypto_pwhash.lo
+  CC       crypto_scalarmult/libsodium_la-crypto_scalarmult.lo
+  CC       crypto_scalarmult/curve25519/ref10/libsodium_la-x25519_ref10.lo
+  CC       crypto_scalarmult/curve25519/libsodium_la-scalarmult_curve25519.lo
+  CC       crypto_secretbox/libsodium_la-crypto_secretbox.lo
+  CC       crypto_secretbox/libsodium_la-crypto_secretbox_easy.lo
+  CC       crypto_secretbox/xsalsa20poly1305/libsodium_la-secretbox_xsalsa20poly1305.lo
+  CC       crypto_secretstream/xchacha20poly1305/libsodium_la-secretstream_xchacha20poly1305.lo
+  CC       crypto_shorthash/libsodium_la-crypto_shorthash.lo
+  CC       crypto_shorthash/siphash24/libsodium_la-shorthash_siphash24.lo
+  CC       crypto_shorthash/siphash24/ref/libsodium_la-shorthash_siphash24_ref.lo
+  CC       crypto_sign/libsodium_la-crypto_sign.lo
+  CC       crypto_sign/ed25519/libsodium_la-sign_ed25519.lo
+  CC       crypto_sign/ed25519/ref10/libsodium_la-keypair.lo
+  CC       crypto_sign/ed25519/ref10/libsodium_la-open.lo
+  CC       crypto_sign/ed25519/ref10/libsodium_la-sign.lo
+  CC       crypto_stream/chacha20/libsodium_la-stream_chacha20.lo
+  CC       crypto_stream/chacha20/ref/libsodium_la-chacha20_ref.lo
+  CC       crypto_stream/libsodium_la-crypto_stream.lo
+  CC       crypto_stream/salsa20/libsodium_la-stream_salsa20.lo
+  CC       crypto_stream/xsalsa20/libsodium_la-stream_xsalsa20.lo
+  CC       crypto_verify/sodium/libsodium_la-verify.lo
+  CC       crypto_vrf/libsodium_la-crypto_vrf.lo
+  CC       crypto_vrf/ietfdraft13/libsodium_la-prove.lo
+  CC       crypto_vrf/ietfdraft13/libsodium_la-verify.lo
+  CC       crypto_vrf/ietfdraft03/libsodium_la-prove.lo
+  CC       crypto_vrf/ietfdraft13/libsodium_la-vrf.lo
+  CC       crypto_vrf/ietfdraft03/libsodium_la-verify.lo
+  CC       crypto_vrf/ietfdraft03/libsodium_la-vrf.lo
+  CC       randombytes/libsodium_la-randombytes.lo
+  CC       sodium/libsodium_la-codecs.lo
+  CC       sodium/libsodium_la-core.lo
+  CC       sodium/libsodium_la-runtime.lo
+  CC       sodium/libsodium_la-utils.lo
+  CC       sodium/libsodium_la-version.lo
+  CC       crypto_stream/salsa20/ref/libsodium_la-salsa20_ref.lo
+  CC       crypto_box/curve25519xchacha20poly1305/libsodium_la-box_curve25519xchacha20poly1305.lo
+  CC       crypto_box/curve25519xchacha20poly1305/libsodium_la-box_seal_curve25519xchacha20poly1305.lo
+  CC       crypto_pwhash/scryptsalsa208sha256/libsodium_la-crypto_scrypt-common.lo
+  CC       crypto_pwhash/scryptsalsa208sha256/libsodium_la-scrypt_platform.lo
+  CC       crypto_pwhash/scryptsalsa208sha256/libsodium_la-pbkdf2-sha256.lo
+  CC       crypto_pwhash/scryptsalsa208sha256/libsodium_la-pwhash_scryptsalsa208sha256.lo
+  CC       crypto_pwhash/scryptsalsa208sha256/nosse/libsodium_la-pwhash_scryptsalsa208sha256_nosse.lo
+  CC       crypto_scalarmult/ed25519/ref10/libsodium_la-scalarmult_ed25519_ref10.lo
+  CC       crypto_scalarmult/ristretto255/ref10/libsodium_la-scalarmult_ristretto255_ref10.lo
+  CC       crypto_secretbox/xchacha20poly1305/libsodium_la-secretbox_xchacha20poly1305.lo
+  CC       crypto_stream/salsa2012/ref/libsodium_la-stream_salsa2012_ref.lo
+  CC       crypto_stream/salsa2012/libsodium_la-stream_salsa2012.lo
+  CC       crypto_stream/salsa208/ref/libsodium_la-stream_salsa208_ref.lo
+  CC       crypto_stream/salsa208/libsodium_la-stream_salsa208.lo
+  CC       crypto_stream/xchacha20/libsodium_la-stream_xchacha20.lo
+  CC       randombytes/sysrandom/libsodium_la-randombytes_sysrandom.lo
+  CC       crypto_aead/aes256gcm/aesni/libaesni_la-aead_aes256gcm_aesni.lo
+  CC       crypto_onetimeauth/poly1305/sse2/libsse2_la-poly1305_sse2.lo
+  CC       crypto_pwhash/scryptsalsa208sha256/sse/libsse2_la-pwhash_scryptsalsa208sha256_sse.lo
+  CC       crypto_stream/salsa20/xmm6int/libsse2_la-salsa20_xmm6int-sse2.lo
+  CC       crypto_stream/chacha20/dolbeau/libssse3_la-chacha20_dolbeau-ssse3.lo
+  CCLD     libsse41.la
+  CCLD     libavx2.la
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+  CCLD     libavx512f.la
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+  CC       randombytes/internal/librdrand_la-randombytes_internal_random.lo
+  CCLD     libaesni.la
+  CCLD     libsse2.la
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+  CCLD     libssse3.la
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+  CCLD     librdrand.la
+libtool: warning: '-version-info/-version-number' is ignored for convenience libraries
+  CCLD     libsodium.la
+copying selected object files to avoid basename conflicts...
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+make[2]: Nothing to be done for 'all-am'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+Making all in test
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+Making all in default
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test/default'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test/default'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[2]: Nothing to be done for 'all-am'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium'
+make[1]: Nothing to be done for 'all-am'.
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium'
+Making install in builds
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/builds'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/builds'
+make[2]: Nothing to be done for 'install-exec-am'.
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/builds'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/builds'
+Making install in contrib
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/contrib'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/contrib'
+make[2]: Nothing to be done for 'install-exec-am'.
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/contrib'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/contrib'
+Making install in dist-build
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/dist-build'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/dist-build'
+make[2]: Nothing to be done for 'install-exec-am'.
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/dist-build'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/dist-build'
+Making install in msvc-scripts
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/msvc-scripts'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/msvc-scripts'
+make[2]: Nothing to be done for 'install-exec-am'.
+make[2]: Nothing to be done for 'install-data-am'.
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/msvc-scripts'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/msvc-scripts'
+Making install in src
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+Making install in libsodium
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+Making install in include
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium/include'
+make[4]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium/include'
+make[4]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/sodium'
+ /usr/bin/install -c -m 644  /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/core.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_aead_aes256gcm.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_aead_chacha20poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_aead_xchacha20poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_auth.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_auth_hmacsha256.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_auth_hmacsha512.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_auth_hmacsha512256.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_box.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_box_curve25519xchacha20poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_box_curve25519xsalsa20poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_ed25519.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_ristretto255.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_hchacha20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_hsalsa20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_salsa20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_salsa2012.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_core_salsa208.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_generichash.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_generichash_blake2b.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_hash.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_hash_sha256.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_hash_sha512.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_kdf.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_kdf_blake2b.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_kx.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_onetimeauth.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_onetimeauth_poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_pwhash.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_pwhash_argon2i.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_pwhash_argon2id.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_pwhash_scryptsalsa208sha256.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_scalarmult.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_scalarmult_curve25519.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_scalarmult_ed25519.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_scalarmult_ristretto255.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_secretbox.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_secretbox_xchacha20poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_secretbox_xsalsa20poly1305.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_secretstream_xchacha20poly1305.h '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/sodium'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/sodium'
+ /usr/bin/install -c -m 644  /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_shorthash.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_shorthash_siphash24.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_sign.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_sign_ed25519.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_sign_edwards25519sha512batch.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream_chacha20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream_salsa20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream_salsa2012.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream_salsa208.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream_xchacha20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_stream_xsalsa20.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_verify_16.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_verify_32.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_verify_64.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_vrf.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_vrf_ietfdraft03.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/crypto_vrf_ietfdraft13.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/export.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/randombytes.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/randombytes_internal_random.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/randombytes_sysrandom.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/runtime.h /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium/utils.h '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/sodium'
+ /usr/bin/install -c -m 644  /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/include/sodium.h '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/.'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/sodium'
+ /usr/bin/install -c -m 644  sodium/version.h '/home/nigel/dwarf-ffi-fuzz/sodium-asan/include/sodium'
+make[4]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium/include'
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium/include'
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+make[4]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/lib'
+ /bin/bash ../../libtool   --mode=install /usr/bin/install -c   libsodium.la '/home/nigel/dwarf-ffi-fuzz/sodium-asan/lib'
+libtool: install: /usr/bin/install -c .libs/libsodium.lai /home/nigel/dwarf-ffi-fuzz/sodium-asan/lib/libsodium.la
+libtool: install: /usr/bin/install -c .libs/libsodium.a /home/nigel/dwarf-ffi-fuzz/sodium-asan/lib/libsodium.a
+libtool: install: chmod 644 /home/nigel/dwarf-ffi-fuzz/sodium-asan/lib/libsodium.a
+libtool: install: ranlib /home/nigel/dwarf-ffi-fuzz/sodium-asan/lib/libsodium.a
+libtool: finish: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/sbin" ldconfig -n /home/nigel/dwarf-ffi-fuzz/sodium-asan/lib
+----------------------------------------------------------------------
+Libraries have been installed in:
+   /home/nigel/dwarf-ffi-fuzz/sodium-asan/lib
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the '-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the 'LD_LIBRARY_PATH' environment variable
+     during execution
+   - add LIBDIR to the 'LD_RUN_PATH' environment variable
+     during linking
+   - use the '-Wl,-rpath -Wl,LIBDIR' linker flag
+   - have your system administrator add LIBDIR to '/etc/ld.so.conf'
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src/libsodium'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+make[3]: Nothing to be done for 'install-exec-am'.
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/src'
+Making install in test
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+Making install in default
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test/default'
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test/default'
+make[3]: Nothing to be done for 'install-exec-am'.
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test/default'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test/default'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[3]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[3]: Nothing to be done for 'install-exec-am'.
+make[3]: Nothing to be done for 'install-data-am'.
+make[3]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium/test'
+make[1]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium'
+make[2]: Entering directory '/home/nigel/dwarf-ffi-fuzz/build-sodium'
+make[2]: Nothing to be done for 'install-exec-am'.
+ /usr/bin/mkdir -p '/home/nigel/dwarf-ffi-fuzz/sodium-asan/lib/pkgconfig'
+ /usr/bin/install -c -m 644 libsodium.pc '/home/nigel/dwarf-ffi-fuzz/sodium-asan/lib/pkgconfig'
+make[2]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium'
+make[1]: Leaving directory '/home/nigel/dwarf-ffi-fuzz/build-sodium'

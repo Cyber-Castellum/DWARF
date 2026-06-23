@@ -1,0 +1,27 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4044063999
+INFO: Loaded 1 modules   (1381 inline 8-bit counters): 1381 [0x5d4ccb267f00, 0x5d4ccb268465), 
+INFO: Loaded 1 PC tables (1381 PCs): 1381 [0x5d4ccb268468,0x5d4ccb26dab8), 
+INFO:       97 files found in corpus/blst_g1
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: seed corpus: files: 97 min: 1b max: 96b total: 5137b rss: 31Mb
+#98	INITED cov: 47 ft: 72 corp: 18/1345b exec/s: 0 rss: 35Mb
+#131072	pulse  cov: 47 ft: 72 corp: 18/1345b lim: 1397 exec/s: 65536 rss: 61Mb
+#262144	pulse  cov: 47 ft: 72 corp: 18/1345b lim: 2695 exec/s: 65536 rss: 86Mb
+#524288	pulse  cov: 47 ft: 72 corp: 18/1345b lim: 4096 exec/s: 52428 rss: 135Mb
+#584295	NEW    cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 53117 rss: 146Mb L: 96/96 MS: 2 ChangeByte-InsertRepeatedBytes-
+#1048576	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 52428 rss: 234Mb
+#2097152	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 51150 rss: 432Mb
+#4194304	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 48210 rss: 460Mb
+#8388608	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 45839 rss: 460Mb
+#16777216	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 43804 rss: 461Mb
+#33554432	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 42527 rss: 462Mb
+#67108864	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 41943 rss: 463Mb
+#134217728	pulse  cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 41566 rss: 464Mb
+#149523690	DONE   cov: 48 ft: 73 corp: 19/1441b lim: 4096 exec/s: 41522 rss: 464Mb
+Done 149523690 runs in 3601 second(s)
+stat::number_of_executed_units: 149523690
+stat::average_exec_per_sec:     41522
+stat::new_units_added:          1
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              464

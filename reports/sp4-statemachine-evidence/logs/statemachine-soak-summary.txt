@@ -1,0 +1,57 @@
+SP4 state-machine fuzz — 8h local soak summary
+================================================
+Isolated devnet (project sm_soak): real cardano-node (relay2) eclipsed to the
+DWARF adversary 0.21.0 running --state-machine-fuzz, sampled every 15 min.
+Start 2026-06-23T00:39:38Z  End 2026-06-23T08:39:45Z.
+
+sample  time(UTC)             node        adversary   injections  printf-finding  fatal_sev
+ 1/32   00:54:39  running/0   running/0   76          228             0
+ 2/32   01:09:39  running/0   running/0   151         453             0
+ 3/32   01:24:39  running/0   running/0   226         678             0
+ 4/32   01:39:39  running/0   running/0   300         900             0
+ 5/32   01:54:39  running/0   running/0   373         1119            0
+ 6/32   02:09:39  running/0   running/0   447         1341            0
+ 7/32   02:24:40  running/0   running/0   520         1560            0
+ 8/32   02:39:40  running/0   running/0   595         1785            0
+ 9/32   02:54:40  running/0   running/0   670         2010            0
+10/32   03:09:40  running/0   running/0   745         2235            0
+11/32   03:24:40  running/0   running/0   819         2457            0
+12/32   03:39:41  running/0   running/0   894         2682            0
+13/32   03:54:41  running/0   running/0   969         2907            0
+14/32   04:09:41  running/0   running/0   1042        3126            0
+15/32   04:24:41  running/0   running/0   1118        3354            0
+16/32   04:39:41  running/0   running/0   1193        3579            0
+17/32   04:54:41  running/0   running/0   1266        3798            0
+18/32   05:09:42  running/0   running/0   1341        4023            0
+19/32   05:24:42  running/0   running/0   1417        4251            0
+20/32   05:39:42  running/0   running/0   1490        4470            0
+21/32   05:54:42  running/0   running/0   1565        4695            0
+22/32   06:09:42  running/0   running/0   1641        4923            0
+23/32   06:24:43  running/0   running/0   1716        5148            0
+24/32   06:39:43  running/0   running/0   1791        5373            0
+25/32   06:54:43  running/0   running/0   1863        5589            0
+26/32   07:09:43  running/0   running/0   1936        5808            0
+27/32   07:24:43  running/0   running/0   2012        6036            0
+28/32   07:39:44  running/0   running/0   2086        6258            0
+29/32   07:54:44  running/0   running/0   2160        6480            0
+30/32   08:09:44  running/0   running/0   2236        6708            0
+31/32   08:24:44  running/0   running/0   2310        6930            0
+32/32   08:39:44  running/0   running/0   2386        7158            0
+
+FINAL
+-----
+scenario breakdown (illegal-sequence injections, evenly cycled):
+    398  awaitreply-storm
+    398  done-then-more
+    398  double-awaitreply
+    398  requestnext-flood
+    397  wrong-agency-done
+    397  wrong-agency-requestnext
+node crash markers (Error/Critical sev in tracer): 0
+node final:      status=running restarts=0
+adversary final: status=running restarts=0
+max fatal-sev observed over 8h: 0
+
+Backing raw logs in this dir:
+  statemachine-soak-adversary.log     full 8h adversary stdout (per-injection)
+  statemachine-soak-node-tracer.json.gz  full 8h relay2 node.json tracer (0 Error/Critical, 7158 printf)

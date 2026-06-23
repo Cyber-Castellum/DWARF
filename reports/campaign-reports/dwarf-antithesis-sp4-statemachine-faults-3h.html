@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWARF — SP4 State-Machine Fuzz under Fault Injection (3h, Antithesis)</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:40px 28px 80px}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.85em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:6px 9px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .warn{color:var(--warn)}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:11px 13px;overflow-x:auto;font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre-wrap}
+  .kept{border-left:3px solid var(--ok);padding-left:10px;margin:8px 0}
+  @media print{.wrap{max-width:none;padding:0} pre{white-space:pre-wrap} .card,.hero{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DWARF — SP4 State-Machine Fuzz under Fault Injection</h1>
+  <div class="sub">3-hour Antithesis run with chaos enabled · adversary image 0.21.0 · testRunId <code>dd2bde69…228e54a</code> · try 2 · 2026-06-23</div>
+
+  <div class="hero">The follow-up to the 1-hour clean run: the identical mini-protocol <b>state-machine fuzz</b> adversary (feeding <code>relay2</code> well-formed chain-sync messages in illegal protocol state/agency), now run for <b>3 hours with full Antithesis fault injection</b> — network / kill / pause / stop / clock / CPU chaos on the relay cluster. <b>Result: node-safety held under chaos — <span class="ok">Never: Cardano Node Errors</span> and <span class="ok">Never: Cardano Node Critical</span> both PASSED, 68/69 properties passed, 0 rare findings.</b> This is the stronger, cleaner result: the relays absorbed chaos <i>and</i> a hostile sequencing peer simultaneously, and the node stayed defect-free.</div>
+
+  <h2>Run identity</h2>
+  <table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>testRunId</td><td><code>dd2bde6927aac96d0f7d8f085046b3b0fc4ea850b0775a911e1d1db54228e54a</code></td></tr>
+    <tr><td>On-chain tx (MPFS Preprod)</td><td><code>b5942472d996914f43ec69f9c67d4782d9344c3605d4394727ddfde5d2162abf</code></td></tr>
+    <tr><td>Repo · dir · commit · try</td><td><code>Cyber-Castellum/DWARF</code> · <code>antithesis/cardano_node_dwarf</code> · <code>e87edcf…</code> · try 2</td></tr>
+    <tr><td>Adversary</td><td><code>ghcr.io/j-gainsec/dwarf-adversary:0.21.0</code> · <code>--seed random --state-machine-fuzz</code></td></tr>
+    <tr><td>Duration · faults</td><td>3h 28m (Completed) · <b>fault injection ENABLED</b> (<code>faults_enabled=true</code>)</td></tr>
+    <tr><td>Findings</td><td><b>0 rare</b> · 1 benign · 1 resolved &nbsp;|&nbsp; Properties: <b>68 passed, 1 failed</b></td></tr>
+  </table>
+
+  <h2>Headline — node safety held under chaos <span class="chip ok">PASSED</span></h2>
+  <p>With the hostile state-machine peer attacking chain-sync <i>and</i> Antithesis injecting faults across the cluster for 3½ hours, the two node-safety invariants both passed (verbatim, Properties tab):</p>
+  <pre>Properties → "Never: Cardano Node Errors"     passed
+Properties → "Never: Cardano Node Critical"   passed</pre>
+  <div class="kept"><b>Why this matters more than the clean run:</b> a defect that only manifests under load/timing perturbation — a race in connection teardown, a leak across peer churn, a fault-induced consensus divergence — would surface here, not in the quiet 1h run. None did. <b>0 rare findings.</b></div>
+
+  <h3>Property groups (verbatim)</h3>
+  <table>
+    <tr><th>Group</th><th>Result</th><th>Reading</th></tr>
+    <tr><td>Never: Cardano Node Errors</td><td class="ok">passed</td><td>node-safety — clean under faults</td></tr>
+    <tr><td>Never: Cardano Node Critical</td><td class="ok">passed</td><td>node-safety — clean under faults</td></tr>
+    <tr><td>Setup</td><td class="ok">passed 6</td><td>incl. fault-injector-started — now satisfied (faults on). On the clean run this was the 1/6 failure; faults resolve it.</td></tr>
+    <tr><td>Antithesis SDK</td><td class="ok">passed 43</td><td>incl. <code>dwarf_statemachine_violation_served</code> + decoder-fuzz oracles</td></tr>
+    <tr><td>Correctness</td><td class="ok">passed 2</td><td>clean</td></tr>
+    <tr><td>Performance</td><td class="ok">passed</td><td>clean under clock/CPU faults</td></tr>
+    <tr><td>Antithesis Test Templates</td><td class="warn">failed 1/13</td><td>one command-coverage marker (benign)</td></tr>
+  </table>
+  <p><b>Total: 68 passed, 1 failed, 0 rare.</b> Fewer failures than the clean run (which had 3) — because the fault-injector-started marker satisfies once faults are on.</p>
+
+  <h2>Faults were actually injected</h2>
+  <p>This was not a faults-flag-set-but-quiet run. The relays <code>p1 / p2 / p3 / relay1 / relay2</code> were fault-exposed (only the DWARF fuzz/harness containers carry <code>com.antithesis.exclude_from_faults</code>). The report’s log stream is dense with <code>fault_injector</code> events throughout the 3½ hours, and the run’s own fault-type note describes clock/CPU perturbation:</p>
+  <pre>"This fault type simulates running your entire cluster on different hardware.
+ The clock speed of the simulated processor is randomized, and the relative
+ performance of different low-level processor operations may also change…"</pre>
+
+  <h2>The workload engaged under faults — verbatim</h2>
+  <p>The state-machine adversary kept injecting illegal chain-sync sequences throughout the chaos, and its SDK assertion fired (from the report’s SDK-event view):</p>
+  <pre>message   : "dwarf_statemachine_violation_served"
+Condition : true
+details   : {scenario: double-awaitreply}</pre>
+  <p>The report’s <code>background_monitor</code> snapshot (containers created <code>02:08</code>, i.e. mid-run after fault injection began) confirms the cluster healthy: <code>name:relay2 … state:Running</code>, <code>image_name:…/dwarf-adversary:0.21.0 … name:dwarf-adversary … state:Running</code>, with producers <code>p1/p2/p3</code>, <code>relay1</code>, and both <code>decoder-fuzz</code> workloads all <code>Running</code> — the node servicing illegal sequences while absorbing faults.</p>
+
+  <h2>The one failed property — benign</h2>
+  <table>
+    <tr><th>Failed property</th><th>Category</th><th>Why — benign</th></tr>
+    <tr><td>All commands were run to completion at least once</td><td>Test Templates</td><td>Antithesis composer command-coverage marker — not every composer command completed within the window. A harness coverage statistic, independent of node behaviour.</td></tr>
+  </table>
+  <p><b>Resolved (1):</b> <code>Sometimes assertions → dwarf_base_header_obtained</code> (satisfied this run). <b>Rare: 0.</b></p>
+
+  <h2>Honest scope</h2>
+  <ul>
+    <li><b>Surface:</b> chain-sync (#2) sequencing/agency enforcement, now under fault injection. BlockFetch / TxSubmission / Handshake state-machine fuzzing remain the next expansion.</li>
+    <li><b>The <code>printf</code> artifact</b> (node’s unexpected-message error formatter throws <code>printf: bad formatting char 'd'</code>) is <code>Notice</code>-severity, so it does not — and should not — fail the <code>Error/Critical</code> node-safety assertions; it remained non-fatal here too. <b>Root cause traced:</b> a `printf` format/arg-arity bug in <code>ChainSync.Codec</code>'s unexpected-message branches for <code>StNext</code>/<code>StIntersect</code> (format `(%s)` with 4 args; the String <code>show stok</code> hits <code>%d</code> → <code>bad formatting char 'd'</code>); present on upstream <code>main</code>. See the 8h soak report and <code>ouroboros-chainsync-printf-bug-report.md</code>.</li>
+    <li><b>SDK-event caveat:</b> <code>dwarf_statemachine_violation_served</code> is an SDK-indexed Reachable event (shown above from the report’s log view), counted within “Antithesis SDK: passed 43”, not a named row in the property summary.</li>
+  </ul>
+
+  <h2>Bottom line</h2>
+  <div class="card">Under 3½ hours of network/kill/pause/stop/clock/CPU chaos <b>plus</b> a trusted local-root peer feeding <code>relay2</code> illegal chain-sync sequences, cardano-node held: <b>Never: Cardano Node Errors + Critical both passed, 68/69 properties passed, 0 rare findings</b>, and the state-machine workload’s assertion fired under faults. The only failure is a benign harness command-coverage marker. Paired with the 1h clean run (61/3, also node-safe) and the 8h local soak (node-safe across 2,386 injections), the SP4 state-machine surface is proven node-safe with and without fault injection.</div>
+</div>
+</body>
+</html>

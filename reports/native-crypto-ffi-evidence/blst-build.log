@@ -1,0 +1,131 @@
+In file included from /home/nigel/src/cardano-c-deps/blst/src/server.c:22:
+In file included from /home/nigel/src/cardano-c-deps/blst/src/vect.c:10:
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:33:5: error: unknown type name 'llimb_t'; did you mean 'limb_t'?
+   33 |     llimb_t limbx;
+      |     ^~~~~~~
+      |     limb_t
+/home/nigel/src/cardano-c-deps/blst/src/vect.h:14:28: note: 'limb_t' declared here
+   14 | typedef unsigned long long limb_t;
+      |                            ^
+In file included from /home/nigel/src/cardano-c-deps/blst/src/server.c:22:
+In file included from /home/nigel/src/cardano-c-deps/blst/src/vect.c:10:
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:38:24: error: use of undeclared identifier 'llimb_t'
+   38 |         limbx = (mx * (llimb_t)a[i]) + hi;
+      |                        ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:46:24: error: use of undeclared identifier 'llimb_t'
+   46 |         limbx = (mx * (llimb_t)p[0]) + tmp[0];
+      |                        ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:49:28: error: use of undeclared identifier 'llimb_t'
+   49 |             limbx = (mx * (llimb_t)p[i] + hi) + tmp[i];
+      |                            ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:53:33: error: use of undeclared identifier 'llimb_t'
+   53 |         limbx = tmp[i] + (hi + (llimb_t)carry);
+      |                                 ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:61:28: error: use of undeclared identifier 'llimb_t'
+   61 |             limbx = (mx * (llimb_t)a[i] + hi) + tmp[i];
+      |                            ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:66:23: error: use of undeclared identifier 'llimb_t'
+   66 |         limbx = hi + (llimb_t)carry;
+      |                       ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:72:35: error: use of undeclared identifier 'llimb_t'
+   72 |         limbx = tmp[i] - (p[i] + (llimb_t)borrow);
+      |                                   ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:40:29: warning: shift count >= width of type [-Wshift-count-overflow]
+   40 |         hi = (limb_t)(limbx >> LIMB_T_BITS);
+      |                             ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:47:29: warning: shift count >= width of type [-Wshift-count-overflow]
+   47 |         hi = (limb_t)(limbx >> LIMB_T_BITS);
+      |                             ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:51:33: warning: shift count >= width of type [-Wshift-count-overflow]
+   51 |             hi = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:55:32: warning: shift count >= width of type [-Wshift-count-overflow]
+   55 |         carry = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:63:33: warning: shift count >= width of type [-Wshift-count-overflow]
+   63 |             hi = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:68:32: warning: shift count >= width of type [-Wshift-count-overflow]
+   68 |         carry = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:74:33: warning: shift count >= width of type [-Wshift-count-overflow]
+   74 |         borrow = (limb_t)(limbx >> LIMB_T_BITS) & 1;
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:108:5: error: unknown type name 'llimb_t'; did you mean 'limb_t'?
+  108 |     llimb_t limbx;
+      |     ^~~~~~~
+      |     limb_t
+/home/nigel/src/cardano-c-deps/blst/src/vect.h:14:28: note: 'limb_t' declared here
+   14 | typedef unsigned long long limb_t;
+      |                            ^
+In file included from /home/nigel/src/cardano-c-deps/blst/src/server.c:22:
+In file included from /home/nigel/src/cardano-c-deps/blst/src/vect.c:10:
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:113:33: error: use of undeclared identifier 'llimb_t'
+  113 |         limbx = a[i] + (b[i] + (llimb_t)carry);
+      |                                 ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:119:35: error: use of undeclared identifier 'llimb_t'
+  119 |         limbx = tmp[i] - (p[i] + (llimb_t)borrow);
+      |                                   ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:115:32: warning: shift count >= width of type [-Wshift-count-overflow]
+  115 |         carry = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:121:33: warning: shift count >= width of type [-Wshift-count-overflow]
+  121 |         borrow = (limb_t)(limbx >> LIMB_T_BITS) & 1;
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:143:5: error: unknown type name 'llimb_t'; did you mean 'limb_t'?
+  143 |     llimb_t limbx;
+      |     ^~~~~~~
+      |     limb_t
+/home/nigel/src/cardano-c-deps/blst/src/vect.h:14:28: note: 'limb_t' declared here
+   14 | typedef unsigned long long limb_t;
+      |                            ^
+In file included from /home/nigel/src/cardano-c-deps/blst/src/server.c:22:
+In file included from /home/nigel/src/cardano-c-deps/blst/src/vect.c:10:
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:148:33: error: use of undeclared identifier 'llimb_t'
+  148 |         limbx = a[i] - (b[i] + (llimb_t)borrow);
+      |                                 ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:157:44: error: use of undeclared identifier 'llimb_t'
+  157 |         limbx = ret[i] + ((p[i] & mask) + (llimb_t)carry);
+      |                                            ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:150:33: warning: shift count >= width of type [-Wshift-count-overflow]
+  150 |         borrow = (limb_t)(limbx >> LIMB_T_BITS) & 1;
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:159:32: warning: shift count >= width of type [-Wshift-count-overflow]
+  159 |         carry = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:175:5: error: unknown type name 'llimb_t'; did you mean 'limb_t'?
+  175 |     llimb_t limbx;
+      |     ^~~~~~~
+      |     limb_t
+/home/nigel/src/cardano-c-deps/blst/src/vect.h:14:28: note: 'limb_t' declared here
+   14 | typedef unsigned long long limb_t;
+      |                            ^
+In file included from /home/nigel/src/cardano-c-deps/blst/src/server.c:22:
+In file included from /home/nigel/src/cardano-c-deps/blst/src/vect.c:10:
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:186:35: error: use of undeclared identifier 'llimb_t'
+  186 |         limbx = tmp[i] - (p[i] + (llimb_t)borrow);
+      |                                   ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:198:37: error: use of undeclared identifier 'llimb_t'
+  198 |         limbx = a[i] + (two_a[i] + (llimb_t)carry);
+      |                                     ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:204:35: error: use of undeclared identifier 'llimb_t'
+  204 |         limbx = tmp[i] - (p[i] + (llimb_t)borrow);
+      |                                   ^
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:188:33: warning: shift count >= width of type [-Wshift-count-overflow]
+  188 |         borrow = (limb_t)(limbx >> LIMB_T_BITS) & 1;
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:200:32: warning: shift count >= width of type [-Wshift-count-overflow]
+  200 |         carry = (limb_t)(limbx >> LIMB_T_BITS);
+      |                                ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:206:33: warning: shift count >= width of type [-Wshift-count-overflow]
+  206 |         borrow = (limb_t)(limbx >> LIMB_T_BITS) & 1;
+      |                                 ^  ~~~~~~~~~~~
+/home/nigel/src/cardano-c-deps/blst/src/no_asm.h:229:5: error: unknown type name 'llimb_t'; did you mean 'limb_t'?
+  229 |     llimb_t limbx;
+      |     ^~~~~~~
+      |     limb_t
+/home/nigel/src/cardano-c-deps/blst/src/vect.h:14:28: note: 'limb_t' declared here
+   14 | typedef unsigned long long limb_t;
+      |                            ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+14 warnings and 20 errors generated.
