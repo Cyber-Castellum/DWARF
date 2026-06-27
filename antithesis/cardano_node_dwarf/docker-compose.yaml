@@ -259,6 +259,40 @@ services:
   # `finally` control-socket probes. Tag 69bf815 contains the
   # bounded socket-probe wrapper that cleared the four previous
   # "Commands finish with zero exit code" findings.
+  # Native-crypto FFI memory-safety fuzzing (FU10 — the Antithesis bridge for the
+  # only memory-corruption surface in cardano-node). cardano-node is memory-safe
+  # Haskell; the C crypto it links via FFI is the sole place an overflow / UAF /
+  # OOB could live. This C/AddressSanitizer workload exercises all seven
+  # attacker-facing parse/verify entrypoints (libsodium ed25519 / Praos VRF /
+  # blake2b, secp256k1 ECDSA / Schnorr, blst BLS12-381 G1 / G2) over a baked
+  # valid-seed corpus, mutating per-timeline from a single /dev/urandom draw
+  # (an Antithesis choice point). ASan is the oracle: a memory violation aborts
+  # (container crash) AND fires always(dwarf_ffi_no_memory_violation=false).
+  # Self-driving; excluded from faults (a deterministic memory harness, not the
+  # chaos target). Reuses the public dwarf-adversary image (binary baked in).
+  ffi-crypto-fuzz:
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.22.0
+    entrypoint: ["/usr/local/bin/dwarf-ffi-crypto-fuzz"]
+    container_name: ffi-crypto-fuzz
+    hostname: ffi-crypto-fuzz.example
+    environment:
+      ASAN_OPTIONS: "detect_leaks=0"
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "--corpus"
+      - "/corpus-ffi"
+      - "--seed"
+      - "random"
+      - "--iters"
+      - "0"
+      - "--heartbeat"
+      - "200000"
+    restart: always
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
   tx-generator:
     image: ghcr.io/cardano-foundation/cardano-node-antithesis/tx-generator:69bf815
     container_name: tx-generator
