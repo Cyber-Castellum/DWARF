@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWARF SP4 — Generative mini-protocol sequencing: 8h local soak campaign</title>
+<style>
+  :root{
+    --bg:var(--wb-bg,#fff); --surface:var(--wb-surface,#f6f8fa); --ink:var(--wb-ink,#1a2230);
+    --muted:var(--wb-muted,#5b6573); --rule:var(--wb-rule,#e2e8f0);
+    --accent:var(--wb-accent,#2563eb); --ok:var(--wb-success,#15803d); --bad:var(--wb-error,#b91c1c);
+    --warn:var(--wb-accent-2,#b45309); --mono:var(--wb-font-mono,"SFMono-Regular",Menlo,Consolas,monospace);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--wb-font-body,inherit);line-height:1.55}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 22px 60px}
+  h1{font-size:22px;margin:0 0 4px} h2{font-size:16px;margin:24px 0 8px;border-bottom:2px solid var(--rule);padding-bottom:5px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--surface);padding:1px 5px;border-radius:5px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}
+  th,td{border:1px solid var(--rule);padding:6px 9px;text-align:left;vertical-align:top}
+  th{background:var(--surface);color:var(--muted);font-weight:600}
+  .ok{color:var(--ok);font-weight:600} .bad{color:var(--bad);font-weight:600} .warn{color:var(--warn);font-weight:600} .muted{color:var(--muted)}
+  .center{text-align:center}
+  .card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 16px;margin:12px 0}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  .big{font-size:19px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SP4 — Generative mini-protocol sequencing fuzzer: 8h local soak</h1>
+  <div class="sub">Target: <b>Haskell cardano-node</b>, on-wire N2N. Adversary image <code>ghcr.io/j-gainsec/dwarf-adversary:0.23.0</code>. Run 2026-06-29 05:06→13:07Z (8h, 480 1-min samples). Reproduce: <code>--seed 0x73c7035ed442ac28</code>. Raw log: <code>reports/raw/sp4-sm-soak-8h.log</code>.</div>
+
+  <div class="card">
+    <b>What this is.</b> The deepening of the earlier <i>shallow</i> ChainSync state-machine fuzz (6 hand-coded
+    illegal sequences — which found the <code>printf</code> format-string bug in <code>ChainSync.Codec</code>) into a
+    <b>generative</b> engine: per connection it walks a legal prefix from the protocol's M3 state-machine model, then
+    injects one illegal departure synthesized from a 6-class taxonomy. The frames are <b>well-formed</b> (they decode);
+    the violation is the protocol <b>state / agency / order / multiplicity</b>. The surface under test is the
+    mini-protocol state machine + mux driver + agency enforcement — not the CBOR decoder. The safe, expected node
+    behaviour is to reject and drop the connection; a hang, crash, mux desync, or an <i>accepted</i> illegal
+    transition would be a finding.
+  </div>
+
+  <h2>Headline result</h2>
+  <div class="card">
+    <span class="big ok">Node-safe across 5,629 generative illegal sequences over 8 hours.</span>
+    <ul>
+      <li><b>0 accepted-illegal</b> — the node rejected every illegal sequence (the conservative accepted-illegal
+      heuristic never tripped).</li>
+      <li><b>0 liveness alerts</b> — the node's tip advanced continuously the entire run: block <code>4 → 501</code>,
+      slot <code>333 → 29066</code>, <code>syncProgress 100%</code> throughout.</li>
+      <li><b>0 crashes / 0 adversary restarts / 0 container exits</b> — all services up the full 8h.</li>
+      <li>No <i>new</i> fatal bug surfaced. This run's value is <b>breadth</b>, not endurance: it demonstrates the
+      node's ChainSync / KeepAlive / TxSubmission2 state machines safely reject the full generated illegal-sequence
+      space, not just the 6 hand-picked cases.</li>
+    </ul>
+  </div>
+
+  <h2>Coverage — 5,629 injections, full 3×6 matrix</h2>
+  <p>Every protocol×departure-class cell was exercised (each ≥90 injections); per-connection sequences are distinct
+  and reproducible from <code>(seed, connection-index, protocol-salt)</code>.</p>
+  <table>
+    <tr><th>Protocol (slot)</th><th class="center">WrongAgency</th><th class="center">OutOfState</th><th class="center">PrematureTerminal</th><th class="center">PostTerminal</th><th class="center">Flood</th><th class="center">Duplicate</th><th class="center">Total</th></tr>
+    <tr><td><b>ChainSync</b> (#2)</td><td class="center">93</td><td class="center">219</td><td class="center">118</td><td class="center">139</td><td class="center">102</td><td class="center">105</td><td class="center"><b>776</b></td></tr>
+    <tr><td><b>KeepAlive</b> (#8)</td><td class="center">371</td><td class="center">632</td><td class="center">332</td><td class="center">328</td><td class="center">372</td><td class="center">392</td><td class="center"><b>2,427</b></td></tr>
+    <tr><td><b>TxSubmission2</b> (#4)</td><td class="center">412</td><td class="center">494</td><td class="center">323</td><td class="center">311</td><td class="center">461</td><td class="center">425</td><td class="center"><b>2,426</b></td></tr>
+    <tr><td><b>BlockFetch</b> (#3)</td><td class="center muted" colspan="6">not opened by the node on-wire — see limitation below</td><td class="center"><b>0</b></td></tr>
+    <tr><td class="muted">class totals</td><td class="center">876</td><td class="center">1,345</td><td class="center">773</td><td class="center">778</td><td class="center">935</td><td class="center">922</td><td class="center"><b>5,629</b></td></tr>
+  </table>
+  <div class="sub">The protocols run <b>concurrently</b> over one mux connection, each with a decorrelated per-protocol
+  selector (so the four state machines are violated simultaneously and independently). KeepAlive/TxSubmission dominate
+  the counts because the node re-opens them rapidly after each teardown; ChainSync re-establishment is slower.</div>
+
+  <h2>Method</h2>
+  <ul>
+    <li><b>Legal scaffold (reused, not rebuilt):</b> the M3 state-machine models (<code>corpora/m3/*-state-machine.json</code>)
+    supply the legal transition graph + real N2N wire-frame alphabet per protocol. They are embedded in the binary
+    (<code>file-embed</code>) and parsed at startup.</li>
+    <li><b>Synthesized departures:</b> the models carry only happy-paths (all <code>expect:ok</code>); the engine
+    <i>derives</i> the illegal sequences — WrongAgency, OutOfState, PrematureTerminal, PostTerminal, Flood, Duplicate.
+    Each single-frame departure is provably illegal-at-state (QuickCheck-verified, 100 cases).</li>
+    <li><b>Determinism:</b> every sequence is a pure function of the selector; the run is reproducible from
+    <code>--seed 0x73c7035ed442ac28</code>.</li>
+    <li><b>Oracle:</b> node liveness (tip advance) sampled each minute — the real win/lose signal. The adversary also
+    emits a conservative, heuristic <i>accepted-illegal</i> exploration signal (reachable-only, never a pass/fail), and
+    per-protocol×class reachability signals (for the Antithesis route).</li>
+    <li><b>Isolation:</b> ran in a dedicated docker project (<code>sp4soak</code>) on a separate network, never
+    colliding with the live bundle.</li>
+  </ul>
+
+  <h2>Limitations / next increment (labelled, not dropped)</h2>
+  <div class="card">
+    <ul>
+      <li><b>BlockFetch (#3) un-exercised on-wire.</b> The engine generates BlockFetch illegal sequences correctly
+      (unit-proven), but the node never <i>opens</i> BlockFetch toward our adversary — BlockFetch starts on-demand only
+      after a peer serves valid headers, and this adversary violates ChainSync immediately. Reaching the node's
+      BlockFetch state machine on-wire requires a <b>serve-valid-then-violate</b> adversary (serve a valid ChainSync
+      header to make the node open BlockFetch, then inject the illegal BlockFetch sequence). Scoped as the next
+      increment.</li>
+      <li><b>Handshake (#0) deferred.</b> Handshake runs inside the version-negotiation phase (<code>withServerNode</code>)
+      before any application mux channel exists; there is no <code>MiniProtocolNum 0</code> / raw-mux server in the
+      adversary, so driving illegal handshake frames would mean reimplementing server-node + mux bring-up internals.
+      Deferred to a second increment with this reason recorded.</li>
+    </ul>
+    Net on-wire coverage this run: <b>3 of 4 wired protocols</b> (ChainSync, KeepAlive, TxSubmission2). The fourth
+    (BlockFetch) and Handshake are the documented next steps.
+  </div>
+
+  <h2>Throughput redesign (2026-06-29) — adversary-initiated concurrent pool</h2>
+  <div class="card">
+    The original server-mode soak above (5,629 injections / 8h ≈ 12/min) was throttled by (1) artificial 100 ms
+    responder pacing and (2) the node's serial reconnect backoff on one peer link. It was rebuilt as an
+    <b>adversary-initiated concurrent pool</b>: N workers each dial the node, inject a generated illegal sequence,
+    force-close (capped at <code>--sm-conn-ms 750</code>), and reconnect — no pacing. Image <code>0.25.0</code>.
+    <ul>
+      <li><b>Throughput:</b> ~12/min → <b>~26,000/min at N=16</b> (~2,200×); measured up to ~53k/min at higher N
+      (node-clean ceiling tuned to keep relay connections well under the 384 soft-limit).</li>
+      <li><b>BlockFetch gap CLOSED:</b> as the <i>initiator</i> the adversary opens every protocol itself, so
+      BlockFetch (#3) is now exercised on-wire alongside ChainSync/TxSubmission2/KeepAlive — and it now tests the
+      node's <b>server-side</b> state machines (a new surface vs. the responder-side run above).</li>
+      <li><b>Connection-pressure finding:</b> at N=384 (the node's connection soft-limit) the relay's chain advance
+      transiently stalled ~5 min then recovered (0 accepted-illegal throughout) — a single peer saturating the
+      connection budget briefly pressures liveness. Soak run at N=16 for an unambiguous liveness baseline.</li>
+    </ul>
+    Pool engine: tasks role-param generator → strip pacing → initiator injector → pool → per-connection cap. Commits
+    <code>977f7b7 · 5aa4e9e · 4448f20 · 1263635 · 561b593</code>.
+  </div>
+
+  <h2>Antithesis — live run (MPFS Preprod)</h2>
+  <table>
+    <tr><th>Run</th><th>Result</th><th>Detail</th></tr>
+    <tr><td><b>1h (no-faults)</b><br><span class="muted">commit 666e8cf · try 1</span></td><td class="ok">✓ node-safe / clean</td>
+      <td>Image <code>0.25.0</code> pool (N=16, dials relay2). Completed 1h41m. <b>Properties 96 passed / 3 failed</b>;
+      findings <b>0 new · 0 rare</b>. Node-safety oracles PASSED: <code>Never: Cardano Node Errors</code>,
+      <code>Never: Cardano Node Critical</code>. The 3 failures are benign meta-checks — "fault injector was started"
+      (expected: this was <code>--no-faults</code>) + two CF test-template command-coverage checks. Adversary SDK
+      signals registered (<code>dwarf_sm_{chainsync,keepalive,…}_{PrematureTerminal,WrongAgency,…}</code> Reachable;
+      <code>dwarf_sm_served_*</code> Sometimes); 713K+ injection log items captured. testRunId
+      <code>5bec1e05…</code>.</td></tr>
+    <tr><td><b>3h (faults)</b><br><span class="muted">commit 666e8cf · try 2</span></td><td class="ok">✓ outcome:success</td>
+      <td>Same image, faults ON. Completed 3h53m. <b>Properties 104 passed / 0 FAILED</b>; findings <b>0 new · 0 ongoing
+      · 1 resolved · 0 rare</b>. Node-safety oracles PASSED (<code>Never: Cardano Node Errors/Critical</code>). The node
+      survived 3h of <i>combined</i> stress — the fast-pool illegal-sequence adversary <b>plus</b> Antithesis fault
+      injection (network partition / delay / kill / pause) — with zero failed properties. The "1 resolved" is the
+      fault-injector property that (correctly) failed in the no-faults 1h. testRunId <code>e075a2ac…</code>.</td></tr>
+  </table>
+  <div class="card"><b>Both routes complete and clean.</b> Local: 12.4M illegal sequences / 8h, 0 accepted, node-safe.
+  Antithesis: 1h node-safe (0 new findings) + 3h faults <b>outcome:success</b> (104/0, node survived adversary +
+  fault injection). The node's mini-protocol state machines (server-side, all four protocols incl. BlockFetch)
+  safely reject the generated illegal-sequence space at scale, on a real devnet and under adversarial fault
+  injection.</div>
+
+  <h2>Routes</h2>
+  <table>
+    <tr><th>Route</th><th>Status</th><th>Detail</th></tr>
+    <tr><td><b>Local soak (server mode)</b></td><td class="ok">✓ done</td><td>5,629 injections / 8h; node-safe; seed <code>0x73c7035ed442ac28</code>.</td></tr>
+    <tr><td><b>Local soak (fast pool)</b></td><td class="ok">✓ done</td><td>N=16 @ ~26k/min, 8h: <b>12,428,651 injections</b>, <b>0 accepted-illegal</b>, node-safe (block 4→675, slot advancing, 0 liveness alerts), adversary up 8h no restarts; seed <code>0x48176c2bd908f415</code>. ~2,200× the server-mode soak.</td></tr>
+    <tr><td><b>Antithesis 1h</b></td><td class="ok">✓ clean</td><td>Pool <code>0.25.0</code>; node-safety passed; 0 new findings.</td></tr>
+    <tr><td><b>Antithesis 3h faults</b></td><td class="ok">✓ success</td><td>104 properties passed / 0 failed; node-safe under adversary + fault injection.</td></tr>
+  </table>
+  <div class="sub">Engine: 6 tasks, 29 unit/property tests green; pool redesign +5 tasks. Companion notes:
+  <b>SP4 on-wire coverage matrix</b>, <b>Local fuzzing landscape inventory</b>.</div>
+</div>
+</body>
+</html>
