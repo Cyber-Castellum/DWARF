@@ -123,8 +123,6 @@ services:
         condition: service_completed_successfully
       tracer-sidecar:
         condition: service_started
-      dwarf-adversary:
-        condition: service_started
     image: ghcr.io/intersectmbo/cardano-node@sha256:45857be8d86b314a05cd46d310b74b24e5f5870469f90c6464994a7f78142271
     container_name: relay2
     hostname: relay2.example
