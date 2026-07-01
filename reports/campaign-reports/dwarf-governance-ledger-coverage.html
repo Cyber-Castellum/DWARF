@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DWARF — Conway governance ledger coverage campaign</title>
+<style>
+  :root{
+    --bg:var(--wb-bg,#fff); --surface:var(--wb-surface,#f6f8fa); --ink:var(--wb-ink,#1a2230);
+    --muted:var(--wb-muted,#5b6573); --rule:var(--wb-rule,#e2e8f0);
+    --accent:var(--wb-accent,#2563eb); --ok:var(--wb-success,#15803d); --bad:var(--wb-error,#b91c1c);
+    --warn:var(--wb-accent-2,#b45309); --mono:var(--wb-font-mono,"SFMono-Regular",Menlo,Consolas,monospace);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--wb-font-body,inherit);line-height:1.55}
+  .wrap{max-width:940px;margin:0 auto;padding:28px 22px 60px}
+  h1{font-size:22px;margin:0 0 4px} h2{font-size:16px;margin:24px 0 8px;border-bottom:2px solid var(--rule);padding-bottom:5px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--surface);padding:1px 5px;border-radius:5px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}
+  th,td{border:1px solid var(--rule);padding:6px 9px;text-align:left;vertical-align:top}
+  th{background:var(--surface);color:var(--muted);font-weight:600}
+  .ok{color:var(--ok);font-weight:600} .bad{color:var(--bad);font-weight:600} .warn{color:var(--warn);font-weight:600} .muted{color:var(--muted)}
+  .center{text-align:center}
+  .card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:12px 16px;margin:12px 0}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  .big{font-size:19px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Conway governance ledger coverage — campaign report</h1>
+  <div class="sub">Target: <b>Haskell cardano-node</b>, Conway governance. Tested <b>locally AND on Antithesis</b>. Adversary image <code>ghcr.io/j-gainsec/dwarf-adversary:0.26.0</code>, bundle <code>Cyber-Castellum/DWARF antithesis/cardano_node_dwarf</code> @ <code>b3d73cd</code>. 2026-07-01. First of the corpus-extension cycles (governance → Plutus → multi-asset). Amaru deferred.</div>
+
+  <div class="card">
+    <b>Why.</b> Every prior DWARF engine skipped the Conway governance ledger code because the corpus never
+    contained a governance transaction — the newest, least-battle-tested, most-consensus-critical ledger surface.
+    This cycle built a governance corpus and ran it through the proven engines to (L1) fuzz the gov-action decoder
+    at volume and (L2) prove the node <b>correctly rejects</b> decodable-but-invalid governance txs at the right
+    ledger rule — on both routes.
+  </div>
+
+  <h2>Headline</h2>
+  <div class="card">
+    <span class="big ok">Governance ledger validated node-safe on both routes; correct per-rule rejection proven; no defect.</span>
+    <ul>
+      <li><b>L2 correctness (local):</b> one-rule-invalid governance txs are rejected at the <b>exact</b>
+      <code>ConwayGovPredFailure</code>, adopting none — <b>3/3 rules, 0 validation-bypass</b>.</li>
+      <li><b>L1 volume (local, 8h):</b> <b>1,316,880,384 gov decodes</b> (255,249,030 fully decoded → the Conway gov
+      decoder exercised deep), <b>0 uncaught exceptions, 0 timeouts</b>.</li>
+      <li><b>Antithesis:</b> 1h node-safe + 3h fault-injection <code>outcome:success</code> — the gov workload fuzzed
+      live and the node survived adversary + faults with zero real findings.</li>
+      <li>Honest framing: a clean <b>correctness</b> result on the newest ledger code — the node runs full governance
+      validation on adversarial input and rejects correctly. No bug found; reported as such.</li>
+    </ul>
+  </div>
+
+  <h2>L2 — per-rule rejection battery (local, forging Conway devnet)</h2>
+  <p>Each one-rule-invalid governance tx (built with <code>cardano-cli conway governance</code>, valid unspent input
+  via a utxo fan-out) is served/submitted and the node's rejection rule is read from the tracer/submit response.</p>
+  <table>
+    <tr><th>Variant</th><th>Construction</th><th>Expected rule</th><th class="center">Result</th></tr>
+    <tr><td><b>v-deposit</b></td><td>InfoAction, deposit ≠ <code>govActionDeposit</code></td><td><code>ProposalDepositIncorrect</code></td><td class="center ok">✓ rejected at rule</td></tr>
+    <tr><td><b>v-zerowdl</b></td><td>TreasuryWithdrawal, amount 0</td><td><code>ZeroTreasuryWithdrawals</code></td><td class="center ok">✓ rejected at rule</td></tr>
+    <tr><td><b>v-previd</b></td><td>Constitution, bogus prev-<code>GovActionId</code></td><td><code>InvalidPrevGovActionId</code></td><td class="center ok">✓ rejected at rule</td></tr>
+  </table>
+  <div class="sub">Valid bases <code>info</code>/<code>constitution</code> ACCEPTED. Bonus correctness: a
+  guardrails-less <code>treasury</code> withdrawal was correctly rejected <code>InvalidPolicyHash</code> (Conway
+  enforces the constitution's guardrails script). <b>0 accepted-invalid across all variants.</b></div>
+
+  <h2>L1 — high-volume in-process decoder fuzz (local, 8h, SanCov-instrumented)</h2>
+  <p><code>dwarf-decoder-fuzz --shape governance</code> mutates the gov corpus at the proposal_procedures sub-field
+  (tx_body key 20) so the mutated bytes land <b>in</b> the Conway gov decoder (not bouncing off the tx envelope —
+  whole-term mutation gets 0 full decodes; the gov shape gets millions), then decodes via the real <code>decTx</code>.</p>
+  <table>
+    <tr><th>Level</th><th class="center">Decodes</th><th class="center">Fully decoded</th><th>Note</th></tr>
+    <tr><td>struct (×2 chunks)</td><td class="center">~265M</td><td class="center">~12.9M</td><td>structural perturbation of the gov action</td></tr>
+    <tr><td>semantic (×3 chunks)</td><td class="center">~391M</td><td class="center">~235M</td><td>type/length-preserving → deep gov-decode logic runs</td></tr>
+    <tr><td>both (×2 chunks)</td><td class="center">~527M</td><td class="center">~0.6M</td><td>byte+struct → broad shallow</td></tr>
+    <tr><td class="muted">semantic (final chunk)</td><td class="center">~130M</td><td class="center">~78M</td><td></td></tr>
+    <tr><td><b>Total (8h)</b></td><td class="center"><b>1,316,880,384</b></td><td class="center"><b>255,249,030</b></td><td><b>0 exceptions · 0 timeouts</b></td></tr>
+  </table>
+  <div class="sub">Level rotation (struct/semantic/both) gives coverage diversity — semantic drives the deepest
+  gov-decode paths (~60% full-decode), both is broadest/shallowest. Instrumented via the GHC-SanCov toolchain.
+  Log: <code>governance-ledger-evidence/gov-8h-campaign.log</code>.</div>
+
+  <h2>Antithesis (MPFS Preprod, image 0.26.0)</h2>
+  <table>
+    <tr><th>Run</th><th>Result</th><th>Detail</th></tr>
+    <tr><td><b>1h no-faults</b><br><span class="muted">b3d73cd · try1</span></td><td class="ok">✓ node-safe</td>
+      <td>Completed 1h20m. <b>Properties 68 passed / 4 failed</b>; <code>Never: Cardano Node Errors/Critical</code>
+      PASSED; SDK 44/45. The <code>decoder-fuzz-governance</code> workload ran (registered container; SDK gov-decode
+      assertions fired). 4 fails = benign meta (fault-injector off under <code>--no-faults</code>,
+      <code>dwarf_base_header_obtained</code> N/A for a decoder workload, 2 template command-coverage).
+      testRunId <code>b3f37310…</code>.</td></tr>
+    <tr><td><b>3h faults</b><br><span class="muted">b3d73cd · try2</span></td><td class="ok">✓ outcome:success</td>
+      <td>Completed 3h18m, faults ON. <b>Properties 80 passed / 2 failed</b>; Setup 6/6 (fault-injector now passes),
+      Test Templates 17/17; <code>Never: Cardano Node Errors/Critical</code> PASSED under active fault injection
+      (<code>fault_injector</code> events throughout — partition/delay/kill/pause). 2 fails = benign N/A SDK
+      <code>Sometimes</code> (header/base-tx assertions). testRunId <code>bbc19a28…</code>.</td></tr>
+  </table>
+
+  <h2>Routes — both complete</h2>
+  <table>
+    <tr><th>Route</th><th>Status</th><th>Detail</th></tr>
+    <tr><td><b>Local L2 battery</b></td><td class="ok">✓ done</td><td>3/3 rules rejected at exact <code>ConwayGovPredFailure</code>, 0 bypass.</td></tr>
+    <tr><td><b>Local 8h L1 campaign</b></td><td class="ok">✓ done</td><td>1.32B gov decodes, 255M full, 0 exc/0 timeout.</td></tr>
+    <tr><td><b>Antithesis 1h</b></td><td class="ok">✓ node-safe</td><td>gov workload fuzzed; 0 real findings.</td></tr>
+    <tr><td><b>Antithesis 3h faults</b></td><td class="ok">✓ success</td><td>80/2; node-safe under adversary + faults.</td></tr>
+  </table>
+
+  <h2>Reuse vs net-new; limits</h2>
+  <div class="card">
+    <b>Reuse:</b> <code>--seed-tx</code> corpus, <code>reject_oracle</code> pattern, GHC-SanCov harness,
+    <code>dwarf-decoder-fuzz</code>, the adversary bundle + moog pipeline, <code>build-raw → wire GenTx</code>.
+    <b>Net-new:</b> <code>gov-corpus-build.sh</code> (+ utxo fan-out), the violation matrix, <code>--cbor-shape
+    governance</code> (Target.hs, proposal_procedures key 20) and <code>--shape governance</code> (dwarf-decoder-fuzz).
+    <b>Limits / next:</b> the L2 battery covers 3 rules (deposit/zero-withdrawal/prev-id) — network-id / bad-account /
+    unregistered-voter / malformed are the incremental breadth; <b>L3 ratification/enactment</b> (vote an action
+    through, probe enactment) is the deferred stretch (needs a governance-active devnet with DReps/CC/voting rounds).
+    Committee-seated forging devnet made the whole cycle tractable without a governance bootstrap.
+  </div>
+  <div class="sub">Commits (adversary): <code>a4ddc25</code> (--cbor-shape governance), <code>7e13743</code>
+  (--shape governance). Tools + spike + log under <code>governance-ledger-evidence/</code>. Next cycles: Plutus,
+  multi-asset.</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# gov 8h campaign start 2026-07-01T03:03:24Z corpus=6 bin=dwarf-decoder-fuzz
+2026-07-01T04:03:25Z chunk=1 level=struct iters=132644864 decodedOk=6431172 exc=0 timeout=0 | cumTot=132644864 cumExc=0 cumTmo=0
+2026-07-01T05:03:26Z chunk=2 level=semantic iters=130613248 decodedOk=78572904 exc=0 timeout=0 | cumTot=263258112 cumExc=0 cumTmo=0
+2026-07-01T06:03:27Z chunk=3 level=both iters=261619712 decodedOk=281646 exc=0 timeout=0 | cumTot=524877824 cumExc=0 cumTmo=0
+2026-07-01T07:03:28Z chunk=4 level=struct iters=132710400 decodedOk=6435655 exc=0 timeout=0 | cumTot=657588224 cumExc=0 cumTmo=0
+2026-07-01T08:03:28Z chunk=5 level=semantic iters=130285568 decodedOk=78363014 exc=0 timeout=0 | cumTot=787873792 cumExc=0 cumTmo=0
+2026-07-01T09:03:28Z chunk=6 level=both iters=265945088 decodedOk=286865 exc=0 timeout=0 | cumTot=1053818880 cumExc=0 cumTmo=0
+2026-07-01T10:03:28Z chunk=7 level=struct iters=132644864 decodedOk=6436473 exc=0 timeout=0 | cumTot=1186463744 cumExc=0 cumTmo=0
+2026-07-01T11:03:30Z chunk=8 level=semantic iters=130416640 decodedOk=78441301 exc=0 timeout=0 | cumTot=1316880384 cumExc=0 cumTmo=0
+# gov 8h campaign end 2026-07-01T11:03:30Z TOTAL_decodes=1316880384 decodedOk=255249030 exceptions=0 timeouts=0

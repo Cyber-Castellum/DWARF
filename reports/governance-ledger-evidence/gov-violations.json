@@ -1,0 +1,5 @@
+[
+  {"file": "v-deposit", "base": "info",         "rule": "wrong-deposit",   "expected_failure": "ProposalDepositIncorrect"},
+  {"file": "v-zerowdl", "base": "treasury",     "rule": "zero-withdrawal", "expected_failure": "ZeroTreasuryWithdrawals"},
+  {"file": "v-previd",  "base": "constitution", "rule": "bad-prev-gov-id", "expected_failure": "InvalidPrevGovActionId"}
+]
