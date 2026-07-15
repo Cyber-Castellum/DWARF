@@ -10,10 +10,10 @@
 #
 # SUCCESS = RequestTxIds-received > 0 with RestartCount 0. Before this fix
 # (5-header static chain) it was 0 (relay2 looped FindIntersect->reset, never
-# CaughtUp). Run on build-host.
+# CaughtUp). Run on cardano-box.
 set -uo pipefail
 TAG="${1:-0.9.0}"
-cd ${DWARF_ROOT}/antithesis/cardano_node_dwarf
+cd /home/nigel/dwarf-v4/antithesis/cardano_node_dwarf
 export INTERNAL_NETWORK=false
 sed -i "s#dwarf-adversary:0\.[0-9]*\.[0-9]*#dwarf-adversary:${TAG}#" docker-compose.yaml
 # FULL reset to genesis: a fresh SHORT chain means relay2 catches up in seconds

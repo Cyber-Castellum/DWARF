@@ -235,6 +235,30 @@ def _observe_cardano_node_tip_state(
     }
 
 
+def _amaru_log_text(node: dict, log_path) -> tuple[str | None, str | None]:
+    """Return ``(log_text, error)`` for an Amaru node.
+
+    Prefers a mounted ``log_path`` file (DWARF-composed substrates). Falls back to
+    ``docker logs <container>`` when the node carries a ``container_name`` but no
+    readable log file — the case for the upstream cardano_amaru topology, whose
+    Amaru relays log to stderr rather than a host file. Amaru's tracing output goes
+    to stderr, so both streams are concatenated before parsing.
+    """
+    if log_path is not None and log_path.exists():
+        return log_path.read_text(encoding="utf-8", errors="replace"), None
+    container_name = str(node.get("container_name") or "") or None
+    if container_name:
+        tail = str(node.get("log_tail_lines") or 4000)
+        proc = _run(["docker", "logs", "--tail", tail, container_name], timeout=20)
+        text = (proc.stdout or "") + (proc.stderr or "")
+        if not text.strip():
+            return None, f"docker logs returned no output for {container_name} (rc={proc.returncode})"
+        return text, None
+    if log_path is None:
+        return None, "amaru runtime metadata missing both log_path and container_name"
+    return None, f"amaru log path does not exist: {log_path}"
+
+
 def _observe_amaru_tip_state(
     *,
     node: dict,
@@ -247,28 +271,18 @@ def _observe_amaru_tip_state(
     samples = []
     while True:
         observed_at = _utc_now()
-        if log_path is None:
+        log_text, log_error = _amaru_log_text(node, log_path)
+        if log_text is None:
             sample = {
                 "ok": False,
                 "observed_at": observed_at,
-                "error": "amaru runtime metadata missing log_path",
-                "slot": None,
-                "block": None,
-                "hash": None,
-                "syncProgress": None,
-            }
-        elif not log_path.exists():
-            sample = {
-                "ok": False,
-                "observed_at": observed_at,
-                "error": f"amaru log path does not exist: {log_path}",
+                "error": log_error,
                 "slot": None,
                 "block": None,
                 "hash": None,
                 "syncProgress": None,
             }
         else:
-            log_text = log_path.read_text(encoding="utf-8", errors="replace")
             latest_tip = _extract_latest_amaru_tip(log_text)
             if latest_tip is None:
                 sample = {
@@ -710,8 +724,12 @@ def run_multi_node_observation(
         if nodes[node_id].get("container_ip")
     }
     requested = list(dict.fromkeys(observation_primitives or ["tip_state", "connection_state"]))
-    per_node = {}
-    for node_id in resolved_node_ids:
+    def _observe_single_node(node_id):
+        # One node's full observation window. Runs in its own thread so every
+        # node is sampled over the SAME wall-clock window — required for a valid
+        # cross-node / cross-implementation tip differential (sequential
+        # observation would capture each node's tip at a different time while the
+        # chain advances, conflating observation time with chain selection).
         node = nodes[node_id]
         node_output_dir = output_dir / "per-node" / node_id
         node_output_dir.mkdir(parents=True, exist_ok=True)
@@ -767,7 +785,15 @@ def run_multi_node_observation(
             )
             node_record["syscall_trace"] = syscall_trace
             _write_json(node_output_dir / "syscall-trace.json", syscall_trace)
-        per_node[node_id] = node_record
+        return node_id, node_record
+
+    per_node = {}
+    if resolved_node_ids:
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=len(resolved_node_ids)) as executor:
+            for node_id, node_record in executor.map(_observe_single_node, resolved_node_ids):
+                per_node[node_id] = node_record
 
     timeline = _correlated_timeline(per_node)
     _write_json(output_dir / "correlated-timeline.json", timeline)

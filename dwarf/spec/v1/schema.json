@@ -44,7 +44,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "pattern": "^[a-z0-9][a-z0-9-]*$"
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$"
       },
       "uniqueItems": true
     },
@@ -117,7 +117,7 @@
     "target": {
       "description": "Which Cardano implementation this scenario targets. The runner refuses if any referenced primitive does not declare support for this implementation.",
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "required": [
         "implementation",
         "version"
@@ -160,15 +160,10 @@
       "pattern": "^[0-9]+(s|m|h)$"
     },
     "seed": {
-      "description": "Optional integer or hex string used to seed all primitives' RNGs. If omitted, the runner generates one and records it in the run manifest. Required for deterministic replay.",
-      "oneOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "type": "string",
-          "pattern": "^0[xX][0-9a-fA-F]+$"
-        }
+      "description": "Seeds all primitives' RNGs. Integer, 0x-hex, or a string token. Omitted -> runner generates + records one.",
+      "type": [
+        "integer",
+        "string"
       ]
     },
     "setup": {
@@ -229,11 +224,114 @@
       "description": "When true (default), failing iterations trigger shrinking: the runner attempts to find a smaller failing input by reducing FUZZ-generated values toward minimum bounds (smaller integers, shorter strings/bytes). The shrunk failing input is recorded alongside the original. Shrinking only runs when an iteration fails, so it is free in the happy path.",
       "type": "boolean",
       "default": true
+    },
+    "substrate": {
+      "description": "Inline devnet composition \u2014 nodes + topology + launch mode. Devnet scenarios use this (instead of or alongside a profile id) to declare the network under test.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "network": {
+          "type": "string",
+          "description": "Base network/config the devnet derives from, e.g. preview."
+        },
+        "compose_mode": {
+          "type": "string",
+          "enum": [
+            "host",
+            "docker",
+            "multi-host"
+          ],
+          "description": "How nodes launch (native tmux / docker-compose / SSH fan-out)."
+        },
+        "host_strategy": {
+          "type": "string"
+        },
+        "hosts": {
+          "type": "array"
+        },
+        "nodes": {
+          "type": "array",
+          "description": "The nodes in the substrate.",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "impl"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "impl": {
+                "type": "string",
+                "enum": [
+                  "cardano-node",
+                  "amaru"
+                ]
+              },
+              "version": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "honest",
+                  "byzantine",
+                  "sybil",
+                  "adversary",
+                  "submitter",
+                  "observer"
+                ],
+                "description": "Behavioural role of the node in the scenario."
+              },
+              "host": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "topology": {
+          "type": "object",
+          "description": "Peer edges between nodes."
+        }
+      }
+    },
+    "phases": {
+      "description": "Optional phased execution: an ordered list of phases, each carrying its own setup/load/faults/probes/assertions/teardown primitive lists. An alternative to declaring those at top level.",
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "invariants": {
+      "description": "Optional declarative invariants attached to the scenario (runner-interpreted).",
+      "type": [
+        "array",
+        "object"
+      ]
+    },
+    "attach": {
+      "type": "object",
+      "description": "Bind to an already-running external topology instead of composing a substrate.",
+      "properties": {
+        "topology": {
+          "type": "string",
+          "description": "Upstream topology name, e.g. cardano_amaru."
+        },
+        "network_magic": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "topology"
+      ],
+      "additionalProperties": true
     }
   },
   "allOf": [
     {
-      "description": "profile is required when runtime is devnet, forbidden otherwise.",
+      "description": "When runtime is devnet, declare exactly one of profile, substrate, or attach.",
       "if": {
         "properties": {
           "runtime": {
@@ -242,22 +340,23 @@
         }
       },
       "then": {
-        "required": [
-          "profile"
-        ],
-        "properties": {
-          "profile": {
-            "type": "string",
-            "minLength": 1
+        "oneOf": [
+          {
+            "required": [
+              "profile"
+            ]
+          },
+          {
+            "required": [
+              "substrate"
+            ]
+          },
+          {
+            "required": [
+              "attach"
+            ]
           }
-        }
-      },
-      "else": {
-        "properties": {
-          "profile": {
-            "type": "null"
-          }
-        }
+        ]
       }
     }
   ],

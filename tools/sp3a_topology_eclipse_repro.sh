@@ -19,11 +19,11 @@
 # RestartCount 0, relay2 VRFKeyBadProof 0, and relay2's established upstream is
 # the adversary (NOT a producer).
 #
-# Run on build-host. Arg: adversary image tag (default 0.10.0).
+# Run on cardano-box. Arg: adversary image tag (default 0.10.0).
 set -uo pipefail
 TAG="${1:-0.10.0}"
 LEVEL="${2:-struct}"   # struct | bytes | both  (byte-level = malformed CBOR)
-cd ${DWARF_ROOT}/antithesis/cardano_node_dwarf
+cd /home/nigel/dwarf-v4/antithesis/cardano_node_dwarf
 export INTERNAL_NETWORK=false
 DC="docker compose -f docker-compose.yaml"   # NO eclipse override -> single net
 cp docker-compose.yaml /tmp/sp3a_topo_compose.bak

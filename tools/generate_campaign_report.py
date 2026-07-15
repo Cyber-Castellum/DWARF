@@ -119,7 +119,7 @@ def render(data, soak):
             for s in samples[-12:]
         )
         soak_html = f'''
-        <h2>Local soak campaign (8h, build-host)</h2>
+        <h2>Local soak campaign (8h, cardano-box)</h2>
         <div class="card">
           <p>A sustained block-fetch soak: the adversary served a continuous stream of
           structurally-mutated blocks to an eclipsed cardano-node against the evolving

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "reference_node_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Node ids of the reference implementation group (e.g. the Haskell cardano-node relays)."
+    },
+    "target_node_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Node ids of the target implementation group (e.g. the Amaru relays)."
+    },
+    "tolerance_slots": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Allowed slot gap between the two groups' converged tips. 0 requires hash-identical tips; >0 permits agreement modulo lag (reported as within_slot_tolerance)."
+    },
+    "require_real_progress": {
+      "type": "boolean",
+      "default": true,
+      "description": "Require both groups' tips to show real non-zero chain progress, so the assertion cannot pass on nodes stalled at genesis."
+    }
+  },
+  "required": ["reference_node_ids", "target_node_ids"],
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "output_dir": { "type": "string" },
+    "topology": { "type": "string", "default": "cardano_amaru", "description": "Upstream topology to bind to." },
+    "network_magic": { "type": "integer", "default": 42 },
+    "require_all": { "type": "boolean", "default": false, "description": "Fail if any core cardano-node container is missing." },
+    "timeout_seconds": { "type": "number", "minimum": 1, "default": 120 }
+  },
+  "required": ["output_dir"],
+  "additionalProperties": false
+}

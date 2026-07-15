@@ -1,0 +1,147 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-threshold-delay-probe",
+  "title": "Private-fork safety vs network delay (lambda*Delta) \u2014 find the minimal delay that breaks Common Prefix",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "threshold",
+    "private-attack",
+    "common-prefix",
+    "rollback",
+    "lambda-delta"
+  ],
+  "evidence_intent": "candidate",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x51501540",
+  "iterations": 1,
+  "shrink": true,
+  "substrate": {
+    "network": "testnet_42",
+    "nodes": [
+      {
+        "id": "node1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node2",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "node3",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "honest"
+      },
+      {
+        "id": "adv1",
+        "impl": "cardano-node",
+        "version": "10.7.1",
+        "role": "adversary"
+      }
+    ],
+    "topology": {
+      "edges": [
+        {
+          "from": "node1",
+          "to": "node2"
+        },
+        {
+          "from": "node2",
+          "to": "node1"
+        },
+        {
+          "from": "node2",
+          "to": "node3"
+        },
+        {
+          "from": "node3",
+          "to": "node2"
+        },
+        {
+          "from": "adv1",
+          "to": "node1"
+        },
+        {
+          "from": "node1",
+          "to": "adv1"
+        }
+      ]
+    },
+    "compose_mode": "docker"
+  },
+  "setup": [
+    {
+      "primitive": "runtime_install_version",
+      "output_dir": "outputs/substrate-install"
+    },
+    {
+      "primitive": "runtime_compose_substrate",
+      "output_dir": "outputs/substrate-compose"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_network_impairment",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "from_node": "adv1",
+      "to_node": "node1",
+      "latency_ms": 300,
+      "jitter_ms": 0,
+      "loss_percent": 0,
+      "partition": false,
+      "output_dir": "outputs/net-impair"
+    },
+    {
+      "primitive": "runtime_chainsync_responder_fork_switch",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "target_node": "node1",
+      "output_dir": "outputs/private-fork"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3"
+      ],
+      "observation_window_seconds": 20,
+      "sample_interval_seconds": 1,
+      "network_magic": 42,
+      "observation_primitives": [
+        "tip_state",
+        "connection_state"
+      ],
+      "output_dir": "outputs/multi-node-observation"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "all_nodes_responsive"
+    },
+    {
+      "primitive": "k_bound_rollback_recovered"
+    },
+    {
+      "primitive": "chain_select_consistent"
+    }
+  ],
+  "teardown": [
+    {
+      "primitive": "runtime_teardown_substrate",
+      "output_dir": "outputs/substrate-teardown"
+    }
+  ]
+}

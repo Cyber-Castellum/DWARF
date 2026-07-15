@@ -2,7 +2,7 @@ import json, sys
 from pathlib import Path
 import pytest
 
-ROOT = Path("${DWARF_ROOT}")
+ROOT = Path("/Users/nigel/dwarf-project/dwarf-v4")
 sys.path.insert(0, str(ROOT / "dwarf"))
 from profile_manager import scenario as scn
 from profile_manager import antithesis_generator as gen

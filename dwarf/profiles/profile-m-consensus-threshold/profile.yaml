@@ -1,0 +1,11 @@
+{
+  "id": "profile-m-consensus-threshold",
+  "label": "Consensus threshold probe — 3 honest + 1 adversary, short epoch",
+  "node_type": "cardano-node",
+  "node_count": 4,
+  "amaru_node_count": 0,
+  "network_magic": 42,
+  "peer_sharing": false,
+  "remote_runtime_root": "/opt/dwarf/cardano-profiles/profile-m-consensus-threshold",
+  "compose_project": "dwarf-profile-m-consensus-threshold"
+}

@@ -1,0 +1,69 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-epoch-boundary-differential",
+  "title": "Epoch-boundary differential (S3) — cardano-node and Amaru transition epochs identically (nonce / stake snapshot)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "epoch",
+    "nonce",
+    "stake-snapshot",
+    "differential",
+    "chain-selection",
+    "amaru",
+    "upstream-topology"
+  ],
+  "evidence_intent": "candidate",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x0e70c40a",
+  "iterations": 1,
+  "shrink": false,
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42
+  },
+  "setup": [
+    {
+      "primitive": "runtime_attach_topology",
+      "output_dir": "outputs/attach",
+      "topology": "cardano_amaru",
+      "network_magic": 42
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_tracer_capture",
+      "output_dir": "outputs/tracer",
+      "tracer_container": "tracer",
+      "prometheus_port": 4000
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "node_ids": [ "p1", "p2", "p3", "relay1", "relay2", "amaru-consumer" ],
+      "observation_window_seconds": 150,
+      "sample_interval_seconds": 3,
+      "network_magic": 42,
+      "observation_primitives": [ "tip_state" ],
+      "timeout_seconds": 240,
+      "output_dir": "outputs/obs"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "chain_select_differential",
+      "reference_node_ids": [ "relay1", "relay2" ],
+      "target_node_ids": [ "amaru-consumer" ],
+      "tolerance_slots": 6,
+      "require_real_progress": true
+    }
+  ],
+  "teardown": []
+}

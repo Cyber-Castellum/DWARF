@@ -1,6 +1,6 @@
 # Thin runtime image for dwarf-adversary.
 #
-# The dwarf-adversary binary is built on the host (build-host: Ubuntu
+# The dwarf-adversary binary is built on the host (cardano-box: Ubuntu
 # 24.04, GHC 9.6.7 via ghcup, CHaP) — see build-image.sh, which stages
 # the binary plus the IOG-patched C libs into ./dist before this build.
 # We deliberately do NOT recompile the Cardano stack inside Docker (that
@@ -28,19 +28,6 @@ RUN ldconfig
 # into a second layer (doubling the image). Debug symbols are kept (not
 # stripped) — they aid post-mortem analysis on any finding.
 COPY --chmod=0755 dist/dwarf-adversary /usr/local/bin/dwarf-adversary
-
-# Also ship the in-process decoder-fuzz harness (#4/FU5) + its baked seed corpus
-# in this SAME (public) image, so the Antithesis decoder-fuzz workload reuses this
-# package rather than a separate ghcr package (new packages default to private and
-# are unreachable by the Antithesis image builder). The decoder-fuzz compose
-# service overrides ENTRYPOINT to /usr/local/bin/dwarf-decoder-fuzz.
-COPY --chmod=0755 dist/dwarf-decoder-fuzz /usr/local/bin/dwarf-decoder-fuzz
-COPY dist/corpus /corpus
-# Genesis (Shelley/Alonzo/Conway) for the decoder-fuzz applyblock target, which
-# builds an initial Conway NewEpochState from it. Other targets ignore it. The
-# applyblock decoder-fuzz compose service sets DWARF_GENESIS_DIR=/ledger-genesis.
-COPY dist/ledger-genesis /ledger-genesis
-COPY dist/corpus-conway /corpus-conway
 
 # No Antithesis composer scripts: dwarf-adversary is a self-driving
 # daemon and emits all its SDK assertions itself (dwarf_fuzz_server_*,

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "runtime_metadata_path": { "type": "string", "description": "runtime.json to resolve target_node -> container_name." },
+    "target_node": { "type": "string", "description": "Node id/name to partition (resolved to its container)." },
+    "container_name": { "type": "string", "description": "Override: partition this container directly (skips runtime.json lookup)." },
+    "network_name": { "type": "string", "default": "cardano-amaru-testnet", "description": "Docker network to disconnect from / reconnect to." },
+    "partition_seconds": { "type": "number", "minimum": 0, "default": 90, "description": "How long to hold the partition (drives fork depth)." },
+    "settle_seconds": { "type": "number", "minimum": 0, "default": 70, "description": "Post-heal settle time before the load phase observes." },
+    "output_dir": { "type": "string" }
+  },
+  "additionalProperties": false
+}

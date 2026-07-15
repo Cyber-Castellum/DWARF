@@ -271,6 +271,7 @@ def _validate_top(body):
         raise ScenarioValidationError(f"runtime must be one of {VALID_RUNTIMES}, got {runtime!r}")
     profile = body.get("profile")
     substrate = body.get("substrate")
+    attach = body.get("attach")
     if runtime == "devnet":
         if profile is not None and substrate is not None:
             raise ScenarioValidationError("runtime=devnet requires either profile or substrate, not both")
@@ -279,8 +280,16 @@ def _validate_top(body):
             profile = None
         elif isinstance(profile, str) and profile:
             substrate = None
+        elif isinstance(attach, dict) and attach.get("topology"):
+            # Bind to an already-running external topology (e.g. the upstream
+            # cardano_amaru compose). A runtime_attach_topology setup step emits the
+            # runtime.json; no substrate is composed here.
+            substrate = None
+            profile = None
         else:
-            raise ScenarioValidationError("runtime=devnet requires a non-empty profile id or a substrate block")
+            raise ScenarioValidationError(
+                "runtime=devnet requires a non-empty profile id, a substrate block, or an attach block"
+            )
     else:
         if profile is not None:
             raise ScenarioValidationError(f"profile must be null when runtime={runtime}; got {profile!r}")

@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DWARF Consensus — Chain-Selection Differential (Status)</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 28px 80px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  h3{font-size:15px;margin:16px 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .chip.muted{color:var(--muted);border-color:var(--rule);background:#fff}
+  .ok{color:var(--ok)} .muted{color:var(--muted)} b.accent{color:var(--accent)}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  pre{font-family:var(--mono);font-size:12px;line-height:1.45;background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:8px 0}
+  @media print{.wrap{max-width:none;padding:0}.card,.hero{break-inside:avoid}pre{background:#f1f5f9;color:#0f172a}}
+</style></head><body><div class="wrap">
+  <h1>DWARF Consensus — Cross-Implementation Chain-Selection Differential</h1>
+  <div class="sub">Status &amp; capability note · does the Haskell cardano-node and Amaru ever disagree on which chain is real? · runs on the upstream cardano_amaru topology</div>
+
+  <div class="hero">
+    DWARF now runs a <b>chain-selection differential</b> between the two Cardano node implementations — the Haskell
+    <code>cardano-node</code> and <b>Amaru</b> — on a real mixed network, and checks, block-for-block, whether they ever
+    pick a different chain. Across every regime exercised so far — honest steady state, a shallow (&lt;k) fork that heals, a
+    deep (&gt;k) fork that must not, and an epoch-boundary transition — <b class="accent">cardano-node and Amaru selected the
+    identical chain every time (0 divergences)</b>. A consensus split between the two clients is the highest-value failure
+    class; none was found.
+  </div>
+
+  <h2>What it tests, in one paragraph</h2>
+  <div class="card">
+    Cardano is moving from one node implementation (Haskell <code>cardano-node</code>) toward a second, independent one
+    (Amaru). If the two ever disagree about which sequence of blocks is the canonical chain, the network splits. This
+    harness stands up a real mixed devnet (Haskell producers + relays alongside Amaru relays and an Amaru-fed consumer),
+    deliberately induces forks, and compares — at time-aligned instants — the chain each implementation selects. Agreement
+    is a pass; any divergence is a finding.
+  </div>
+
+  <h2>How a run works</h2>
+  <div class="card">
+<pre>ensure converged topology (auto-retry gate)
+        │
+        ▼
+runtime_attach_topology   → bind to the running cardano_amaru containers (emit runtime.json)
+        │
+        ▼
+runtime_network_partition → cut a producer off the network to build a competing chain, then heal
+        │
+        ▼
+runtime_multi_node_observation → read every node's tip CONCURRENTLY (time-aligned)
+runtime_tracer_capture         → pull per-node forge / ChainDB forensics into the run bundle
+        │
+        ▼
+chain_select_differential → assert cardano-node relays == Amaru (amaru-consumer): same block, same hash</pre>
+    <p class="muted" style="margin:.3rem 0 0">Amaru's selected chain is observed through <code>amaru-consumer</code> — a
+    cardano-node that catches up <em>through</em> the Amaru relays, so its tip is a cardano-cli-queryable proxy for
+    "what Amaru served/selected."</p>
+  </div>
+
+  <h2>Results by regime (smoke-level, all green)</h2>
+  <div class="card">
+  <table>
+    <tr><th>Regime</th><th>Scenario</th><th>Behavior</th><th>cardano-node ≡ Amaru</th></tr>
+    <tr><td>Honest + <b>&gt;k fork</b></td><td><code>consensus-chainhold-upstream-differential</code></td>
+        <td>Partitioned producer stranded — deep rollback correctly refused, canonical holds</td><td><span class="chip ok">PASS</span></td></tr>
+    <tr><td><b>&lt;k rollback recovery</b></td><td><code>consensus-rollback-recovery-within-k-differential</code></td>
+        <td>Partitioned producer recovers (≤k rollback accepted), all reconverge</td><td><span class="chip ok">PASS</span></td></tr>
+    <tr><td><b>Epoch boundary</b></td><td><code>consensus-epoch-boundary-differential</code></td>
+        <td>Hash-identical across an epoch transition (nonce / stake snapshot)</td><td><span class="chip ok">PASS</span></td></tr>
+  </table>
+  <p class="muted" style="margin:.4rem 0 0">In every case the two implementations agreed byte-for-byte (same block number, same block hash).</p>
+  </div>
+
+  <h2>Exhaustive sweep (smoke → coverage matrix)</h2>
+  <div class="card">
+    <p>The single-shot scenarios are driven exhaustively by <code>consensus_differential_sweep.py</code>, which walks a
+    grid of fork depths (crossing the security parameter <b>k</b>) and verifies both the cross-implementation agreement
+    and that the recover-vs-strand behavior is identical for both clients. Demonstration grid:</p>
+<pre>VERDICT: PASS | trials: 3 | cross-impl divergences: 0
+  depth=15s  cardano-node == Amaru ✓   p2 RECOVERED   (all at block 4962)
+  depth=30s  cardano-node == Amaru ✓   p2 RECOVERED   (all at block 4984)
+  depth=60s  cardano-node == Amaru ✓   p2 STRANDED     (relay/amaru 5006, p2 4994)</pre>
+    <p class="muted" style="margin:.3rem 0 0">The k-boundary crossover (shallow forks heal, deep forks strand) is captured
+    automatically, and cardano-node ≡ Amaru holds at every depth. Scales via <code>--depths</code> / <code>--trials</code>.</p>
+  </div>
+
+  <h2>Building blocks (composable)</h2>
+  <div class="card">
+  <table>
+    <tr><th>Piece</th><th>Kind</th><th>Role</th></tr>
+    <tr><td><code>chain_select_differential</code></td><td>assertion</td><td>Implementation-aware Common-Prefix oracle: reference (cardano-node) group vs target (Amaru) group agree on the tip</td></tr>
+    <tr><td><code>runtime_attach_topology</code></td><td>setup</td><td>Bind a scenario to an already-running upstream topology (no substrate composition)</td></tr>
+    <tr><td><code>runtime_network_partition</code></td><td>fault</td><td>Induce a forgery-free fork by isolating a node, then heal; fork depth set by partition time</td></tr>
+    <tr><td><code>runtime_tracer_capture</code></td><td>load</td><td>Pull per-node forge / leadership / ChainDB traces + Prometheus into the run bundle</td></tr>
+    <tr><td><code>runtime_multi_node_observation</code></td><td>load</td><td>Concurrent, time-aligned per-node tip observation (reads Amaru via <code>docker logs</code>)</td></tr>
+    <tr><td><code>ensure_cardano_amaru_converged.py</code></td><td>tool</td><td>Convergence-gated bring-up: retries until the producers agree (fixes startup split-brain)</td></tr>
+    <tr><td><code>consensus_differential_sweep.py</code></td><td>tool</td><td>Exhaustive driver: parameter grid × trials → coverage matrix + single verdict</td></tr>
+    <tr><td><code>adapt_cardano_amaru_runtime.py</code></td><td>tool</td><td>Emit runtime.json from the live upstream containers</td></tr>
+  </table>
+  <p class="muted" style="margin:.4rem 0 0">204 primitives total. New scenarios compose these — vary the partition target/depth, the observed
+  nodes, the reference/target groups — and the sweep runs any of them across a grid.</p>
+  </div>
+
+  <h2>Scope &amp; honest framing</h2>
+  <div class="card"><ul>
+    <li>This is a <b>differential</b> (do the two implementations agree?), not a threshold measurement. It does not, and is not meant to, measure economic-attack numbers like the "40%".</li>
+    <li>The runs to date are <b>smoke-level</b> (short windows, single/few trials) plus the demonstration sweep — proof the mechanism and tooling work and the first shots pass. Full exhaustiveness layers on the same harness: many trials × seeds, long soaks, and the Antithesis deterministic scheduler.</li>
+    <li>Amaru's selection is read through <code>amaru-consumer</code> (a cardano-node fed by Amaru), because the Amaru relays log quietly by design.</li>
+    <li>A known startup flake (producers occasionally split-brain before the mesh converges) is wrapped by the convergence gate so scenarios run on a healthy network.</li>
+  </ul></div>
+
+  <p class="sub" style="margin-top:30px">Every run captures a tamper-evident evidence bundle (per-node forge/ChainDB traces, tip observations, the differential verdict). Scenarios: consensus-chainhold-upstream-differential · consensus-rollback-recovery-within-k-differential · consensus-epoch-boundary-differential · driven by consensus_differential_sweep.py.</p>
+</div></body></html>

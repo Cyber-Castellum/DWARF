@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "output_dir": {
+      "type": "string",
+      "description": "Run-relative directory for the captured tracer artifacts."
+    },
+    "tracer_container": {
+      "type": "string",
+      "default": "tracer",
+      "description": "Name of the cardano-tracer container to capture from."
+    },
+    "prometheus_port": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 4000,
+      "description": "Tracer Prometheus port to snapshot."
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "minimum": 1,
+      "default": 180,
+      "description": "Capture subprocess timeout."
+    }
+  },
+  "required": ["output_dir"],
+  "additionalProperties": false
+}

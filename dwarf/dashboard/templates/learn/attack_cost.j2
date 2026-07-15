@@ -1,0 +1,72 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Learn</span>
+<h1>Cost to attack Cardano (live)</h1>
+<p>The textbook figure is "51% of the stake." The <em>effective</em> figure is lower — because only part of all ADA is actively staked, an attacker needs a fraction of <strong>active</strong> stake, not of total supply. Computed live from on-chain data (Koios) + the ADA price (CoinGecko); falls back to the last snapshot if the live feed is blocked.</p>
+<hr class="hairline">
+
+<div id="dwarf-attackcost">
+  {% raw %}<style>
+    #dwarf-attackcost{--g:#3fb950;--mut:#8b949e;--pan:#0f1a16;--rule:rgba(140,255,203,.18);--ink:#e6edf3}
+    #dwarf-attackcost .tg{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin:12px 0}
+    #dwarf-attackcost .hero{background:var(--pan);border:1px solid var(--g);border-radius:16px;padding:20px 22px;box-shadow:0 0 0 1px var(--g) inset}
+    #dwarf-attackcost .lab{color:var(--mut);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    #dwarf-attackcost .big{font-size:clamp(2.2rem,6vw,3.4rem);font-weight:800;color:var(--g);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.05;margin:6px 0}
+    #dwarf-attackcost .sub{color:var(--ink);font-size:.95rem}
+    #dwarf-attackcost .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    #dwarf-attackcost .card{background:var(--pan);border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+    #dwarf-attackcost .card b{display:block;font-size:1.2rem;color:var(--ink);font-variant-numeric:tabular-nums}
+    #dwarf-attackcost .card span{color:var(--mut);font-size:.74rem}
+    #dwarf-attackcost .rows{margin:10px 0}
+    #dwarf-attackcost .row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--rule);padding:8px 2px;font-size:.9rem}
+    #dwarf-attackcost .row span{color:var(--mut)}#dwarf-attackcost .row b{color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+    #dwarf-attackcost .st{color:var(--g);font-size:.82rem;margin-top:8px}
+    @media (max-width:640px){#dwarf-attackcost .tg{grid-template-columns:1fr}}
+  </style>{% endraw %}
+  <div class="tg">
+    <div class="hero">
+      <div class="lab">Est. cost to reach the ~40%-of-active-stake band</div>
+      <div class="big" id="ac-cost">$—</div>
+      <div class="sub"><span id="ac-ada">—</span> ADA · <span id="ac-pct">—</span> of circulating supply</div>
+    </div>
+    <div class="cards">
+      <div class="card"><b id="ac-active">—</b><span>active stake (ADA)</span></div>
+      <div class="card"><b id="ac-ratio">—</b><span>staking ratio (of circulating)</span></div>
+      <div class="card"><b id="ac-price">$—</b><span>ADA price</span></div>
+      <div class="card"><b id="ac-epoch">—</b><span>epoch</span></div>
+    </div>
+  </div>
+  <div class="rows">
+    <div class="row"><span>~40% of active stake (effective / harm-onset band)</span><b id="ac-r40">—</b></div>
+    <div class="row"><span>50% of active stake (majority)</span><b id="ac-r50">—</b></div>
+  </div>
+  <div class="st" id="ac-status">snapshot</div>
+  <p style="color:var(--mut);font-size:.84rem;margin-top:10px">The theoretical Praos threshold (~48% of active stake at mainnet's block rate) barely moves; the economic figures tick with staking ratio and price. Acquiring this much ADA would itself crash the price — the cost is a deterrent, not just a number. See <a href="/learn/glossary#term-k-security-parameter">the consensus glossary</a>.</p>
+</div>
+<script>
+(function(){
+  var SNAP={epoch:642,circ:36474473805.5,total:38743637897.0,active:21392411062.6,price:0.157322};
+  function fu(n){ if(n>=1e9)return '$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M'; return '$'+Math.round(n).toLocaleString(); }
+  function fa(n){ if(n>=1e9)return (n/1e9).toFixed(2)+'B'; if(n>=1e6)return (n/1e6).toFixed(1)+'M'; return Math.round(n).toLocaleString(); }
+  function s(id,v){ var e=document.getElementById(id); if(e)e.textContent=v; }
+  function render(d,live){
+    var a40=d.active*0.40,a50=d.active*0.50;
+    s('ac-cost',fu(a40*d.price)); s('ac-ada',fa(a40)); s('ac-pct',(100*a40/d.circ).toFixed(1)+'%');
+    s('ac-active',fa(d.active)); s('ac-ratio',(100*d.active/d.circ).toFixed(1)+'%');
+    s('ac-price','$'+d.price.toFixed(4)); s('ac-epoch',d.epoch);
+    s('ac-r40',fa(a40)+' ADA · '+fu(a40*d.price)+' · '+(100*a40/d.circ).toFixed(1)+'% supply');
+    s('ac-r50',fa(a50)+' ADA · '+fu(a50*d.price)+' · '+(100*a50/d.circ).toFixed(1)+'% supply');
+    s('ac-status', live ? 'live · updates every 60s' : 'snapshot (live feed unavailable here)');
+  }
+  async function live(){
+    try{
+      var t=(await fetch('https://api.koios.rest/api/v1/totals').then(function(r){return r.json();}))[0], ep=+t.epoch;
+      var ei=await fetch('https://api.koios.rest/api/v1/epoch_info?_epoch_no='+ep).then(function(r){return r.json();});
+      var pr=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd').then(function(r){return r.json();});
+      render({epoch:ep,circ:+t.circulation_lovelace/1e6,total:+t.total_supply_lovelace/1e6,active:+ei[0].active_stake/1e6,price:+pr.cardano.usd},true);
+    }catch(e){ render(SNAP,false); }
+  }
+  render(SNAP,false); live(); setInterval(live,60000);
+})();
+</script>
+{% endblock %}

@@ -9,9 +9,9 @@
 #                        adopting a MUTATED block would be an acceptance FINDING.
 # Verdict: served>0 AND decode-reject>0 AND adopted==0  => node correctly REJECTS,
 # never accepts (reject-oracle holds). adopted>0 under eclipse => investigate.
-# Run on build-host against a live eclipse stack. Arg: adversary peer IP (default 198.51.100.8).
+# Run on cardano-box against a live eclipse stack. Arg: adversary peer IP (default 172.31.0.8).
 set -uo pipefail
-ADVIP="${1:-198.51.100.8}"
+ADVIP="${1:-172.31.0.8}"
 b=$(docker exec tracer cat /opt/cardano-tracer/logs/relay2.example_3001/node.json 2>/dev/null)
 served=$(docker exec dwarf-adversary sh -lc 'grep -cE "dwarf_served_mutated_(block|tx|header)" /tmp/sdk.jsonl 2>/dev/null || echo 0')
 decodeRej=$(printf '%s' "$b" | grep -Fc 'DecoderFailure')

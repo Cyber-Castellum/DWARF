@@ -2585,11 +2585,6 @@ class RuntimeAflppCampaign(LoadPrimitive):
             env = _ensure_cargo_path(_build_dwarf_telemetry_env(handle))
             if rustup_toolchain:
                 env["RUSTUP_TOOLCHAIN"] = str(rustup_toolchain)
-            # Optional per-scenario env passthrough (e.g. DWARF_DECODER for the
-            # cardano-node coverage harness surface select). Inherited by afl-fuzz
-            # and thence the target via build_aflpp_env's os.environ.copy().
-            for _k, _v in (self.params.get("env") or {}).items():
-                env[str(_k)] = str(_v)
             with _temporary_workspace_root_manifest_move_aside(working_dir) as moved_root_manifest:
                 proc = subprocess.run(
                     command,
@@ -4334,6 +4329,75 @@ class RuntimeInstallVersion(LoadPrimitive):
         )
 
 
+class RuntimeAttachTopology(LoadPrimitive):
+    """Bind to an already-running upstream topology by emitting its runtime.json.
+
+    For scenarios that run against a pre-composed topology (the upstream
+    cardano_amaru docker compose) instead of composing their own substrate. Runs the
+    adapter to inspect the live containers and write runtime.json, which downstream
+    observation / fault / assertion / tracer-capture steps reference.
+    """
+
+    def run(self, handle, rng):
+        output_dir = _resolve_output_path(handle, self.params["output_dir"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+        runtime_json = output_dir / "runtime.json"
+        topology = str(self.params.get("topology", "cardano_amaru"))
+        network_magic = int(self.params.get("network_magic", 42))
+        timeout = float(self.params.get("timeout_seconds", 120))
+        if topology != "cardano_amaru":
+            raise ValueError(f"runtime_attach_topology: unsupported topology {topology!r}")
+        command = [
+            "python3",
+            str(DWARF_ROOT / "scripts" / "adapt_cardano_amaru_runtime.py"),
+            "--output",
+            str(runtime_json),
+            "--network-magic",
+            str(network_magic),
+        ]
+        if self.params.get("require_all"):
+            command.append("--require-all")
+        handle.log(
+            phase="setup",
+            primitive="runtime_attach_topology",
+            level="info",
+            event="started",
+            payload={"topology": topology, "output": str(runtime_json), "command": command},
+        )
+        proc = subprocess.run(
+            command,
+            cwd=DWARF_ROOT,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+            env=_ensure_cargo_path(_build_dwarf_telemetry_env(handle)),
+        )
+        stdout = _decode_process_output(proc.stdout)
+        stderr = _decode_process_output(proc.stderr)
+        meta = {}
+        if runtime_json.is_file():
+            meta = json.loads(runtime_json.read_text(encoding="utf-8"))
+        outcome = "ok" if proc.returncode == 0 and runtime_json.is_file() else "unexpected_exit"
+        handle.log(
+            phase="setup",
+            primitive="runtime_attach_topology",
+            level="info" if outcome == "ok" else "error",
+            event="completed",
+            payload={
+                "exit_code": proc.returncode,
+                "outcome": outcome,
+                "artifact_summary": {
+                    "has_runtime_json": runtime_json.is_file(),
+                    "haskell_nodes": len(meta.get("haskell_nodes", [])),
+                    "amaru_nodes": len(meta.get("amaru_nodes", [])),
+                },
+                "runtime_metadata_path": str(runtime_json),
+                "stdout": stdout[-1024:],
+                "stderr": stderr[-1024:],
+            },
+        )
+
+
 class RuntimeComposeSubstrate(LoadPrimitive):
     """Compose a temporary mixed Cardano/Amaru substrate from scenario.substrate."""
 
@@ -4841,6 +4905,71 @@ class RuntimeBlockfetchRangeMismatch(_RuntimeChainsyncBlockfetchFaultPrimitive):
 class RuntimeBlockfetchContinuityFailure(_RuntimeChainsyncBlockfetchFaultPrimitive):
     primitive_name = "runtime_blockfetch_continuity_failure"
     mode_name = "blockfetch_continuity_failure"
+
+
+class RuntimeTracerCapture(LoadPrimitive):
+    """Capture cardano-tracer per-node forensic logs + Prometheus into the run bundle.
+
+    Producers forward forge/leadership/ChainDB traces to the cardano-tracer sidecar
+    (not stdout), so this is where forge events, fork switches, and adoptions live.
+    This primitive pulls that per-node evidence + the tracer Prometheus snapshot into
+    the run's artifacts, giving consensus scenarios (chainhold, rollback, epoch)
+    automatic forensic capture instead of hand-run docker exec.
+    """
+
+    def run(self, handle, rng):
+        output_dir = _resolve_output_path(handle, self.params["output_dir"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+        timeout = float(self.params.get("timeout_seconds", 180))
+        command = [
+            "python3",
+            str(DWARF_ROOT / "scripts" / "runtime_tracer_capture.py"),
+            "--output-dir",
+            str(output_dir),
+            "--tracer-container",
+            str(self.params.get("tracer_container", "tracer")),
+            "--prometheus-port",
+            str(int(self.params.get("prometheus_port", 4000))),
+        ]
+        handle.log(
+            phase="load",
+            primitive="runtime_tracer_capture",
+            level="info",
+            event="started",
+            payload={"output_dir": str(output_dir), "command": command},
+        )
+        proc = subprocess.run(
+            command,
+            cwd=DWARF_ROOT,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+            env=_ensure_cargo_path(_build_dwarf_telemetry_env(handle)),
+        )
+        stdout = _decode_process_output(proc.stdout)
+        stderr = _decode_process_output(proc.stderr)
+        summary = {}
+        summary_path = output_dir / "forge-summary.json"
+        if summary_path.is_file():
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        outcome = "ok" if proc.returncode == 0 else "unexpected_exit"
+        handle.log(
+            phase="load",
+            primitive="runtime_tracer_capture",
+            level="info" if outcome == "ok" else "error",
+            event="completed",
+            payload={
+                "exit_code": proc.returncode,
+                "outcome": outcome,
+                "artifact_summary": {
+                    "has_forge_summary": summary_path.is_file(),
+                    "captured_nodes": int(summary.get("captured_nodes", 0)),
+                },
+                "forge_summary": summary,
+                "stdout": stdout[-2048:],
+                "stderr": stderr[-1024:],
+            },
+        )
 
 
 class _RuntimeTxsubmissionProbePrimitive(LoadPrimitive):
@@ -7236,7 +7365,7 @@ class ShimPeerInvalidCbor(LoadPrimitive):
 class ShimResponderStaleBlockfetch(LoadPrimitive):
     """Run the existing stale-response BlockFetch harness as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_blockfetch_stale_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_blockfetch_stale_check.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -7357,7 +7486,7 @@ class ShimResponderStaleBlockfetch(LoadPrimitive):
 class RuntimeClientBlockfetchBurst(LoadPrimitive):
     """Run the existing blockfetch-burst helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_fetch_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_fetch_check.py"
 
     def run(self, handle, rng):
         import os
@@ -7462,7 +7591,7 @@ class RuntimeClientBlockfetchBurst(LoadPrimitive):
 class RuntimeClientChainsyncBurst(LoadPrimitive):
     """Run the existing chainsync-burst helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_fetch_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_fetch_check.py"
 
     def run(self, handle, rng):
         import os
@@ -7567,7 +7696,7 @@ class RuntimeClientChainsyncBurst(LoadPrimitive):
 class RuntimeClientChainsyncMultiPeer(LoadPrimitive):
     """Run the existing chainsync-multi-peer helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_fetch_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_fetch_check.py"
 
     def run(self, handle, rng):
         import os
@@ -7672,7 +7801,7 @@ class RuntimeClientChainsyncMultiPeer(LoadPrimitive):
 class RuntimeClientBlockfetchMultiPeer(LoadPrimitive):
     """Run the existing blockfetch-multi-peer helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_fetch_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_fetch_check.py"
 
     def run(self, handle, rng):
         import os
@@ -7777,7 +7906,7 @@ class RuntimeClientBlockfetchMultiPeer(LoadPrimitive):
 class RuntimeProfileCopiedStateDivergence(LoadPrimitive):
     """Run the existing copied-state-divergence helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py"
 
     def run(self, handle, rng):
         import os
@@ -7882,7 +8011,7 @@ class RuntimeProfileCopiedStateDivergence(LoadPrimitive):
 class RuntimeProfileCopiedStateChainsyncDivergence(LoadPrimitive):
     """Run the existing copied-state-chainsync-divergence helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py"
 
     def run(self, handle, rng):
         import os
@@ -7987,7 +8116,7 @@ class RuntimeProfileCopiedStateChainsyncDivergence(LoadPrimitive):
 class RuntimeBlockfetchDropTimeout(LoadPrimitive):
     """Run the existing blockfetch port-fault drop-timeout helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8092,7 +8221,7 @@ class RuntimeBlockfetchDropTimeout(LoadPrimitive):
 class RuntimeBlockfetchDropIsolatedPeer(LoadPrimitive):
     """Run the existing blockfetch port-fault drop-isolated-peer helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8197,7 +8326,7 @@ class RuntimeBlockfetchDropIsolatedPeer(LoadPrimitive):
 class RuntimeBlockfetchDelaySuccess(LoadPrimitive):
     """Run the existing blockfetch port-fault delay-success helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8302,7 +8431,7 @@ class RuntimeBlockfetchDelaySuccess(LoadPrimitive):
 class RuntimeBlockfetchDelayTimeout(LoadPrimitive):
     """Run the existing blockfetch port-fault delay-timeout helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_blockfetch_port_fault_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8407,7 +8536,7 @@ class RuntimeBlockfetchDelayTimeout(LoadPrimitive):
 class RuntimeObservabilityLogBaseline(LoadPrimitive):
     """Run the existing observability log-baseline helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_observability_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_observability_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8512,7 +8641,7 @@ class RuntimeObservabilityLogBaseline(LoadPrimitive):
 class RuntimeObservabilityTraceSettingsBaseline(LoadPrimitive):
     """Run the existing observability trace-settings helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_observability_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_observability_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8627,7 +8756,7 @@ class RuntimeAmaruPreviewProof(LoadPrimitive):
         python_bin = str(self.params.get("python_bin", "python3"))
         timeout_seconds = float(self.params.get("timeout_seconds", 60))
         expected_helper_exit = int(self.params.get("expected_helper_exit", 0))
-        runtime_root = str(self.params.get("runtime_root", "${HOME}/cardano-profiles/profile-d-amaru-preview-proof"))
+        runtime_root = str(self.params.get("runtime_root", "/home/nigel/cardano-profiles/profile-d-amaru-preview-proof"))
         sample_seconds = int(self.params.get("sample_seconds", 20))
         mode = "proof"
 
@@ -8728,7 +8857,7 @@ class RuntimeAmaruPreviewProof(LoadPrimitive):
 class RuntimeGeneratedNodeFreezeCheck(LoadPrimitive):
     """Run the existing generated-node freeze-check helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_generated_node_freeze_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_generated_node_freeze_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8857,7 +8986,7 @@ class RuntimeGeneratedNodeFreezeCheck(LoadPrimitive):
 class RuntimeGeneratedNodeRecoveryCheck(LoadPrimitive):
     """Run the existing generated-node recovery-check helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_generated_node_freeze_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_generated_node_freeze_check.py"
 
     def run(self, handle, rng):
         import os
@@ -8991,7 +9120,7 @@ class RuntimeGeneratedNodeRecoveryCheck(LoadPrimitive):
 class RuntimeGeneratedNodePortDropCheck(LoadPrimitive):
     """Run the existing generated-node port-drop helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_generated_node_port_fault_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_generated_node_port_fault_check.py"
 
     def run(self, handle, rng):
         import os
@@ -9115,7 +9244,7 @@ class RuntimeGeneratedNodePortDropCheck(LoadPrimitive):
 class RuntimePcapCapture(LoadPrimitive):
     """Capture a bounded runtime pcap while driving a stable fetch workload."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_pcap_capture.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_pcap_capture.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -9286,7 +9415,7 @@ class RuntimePcapCapture(LoadPrimitive):
 class RuntimeResourceProfile(LoadPrimitive):
     """Capture bounded /proc resource snapshots for a target runtime process."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_resource_profile.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_resource_profile.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -9438,7 +9567,7 @@ class RuntimeResourceProfile(LoadPrimitive):
 class RuntimeSyscallTrace(LoadPrimitive):
     """Capture a bounded syscall trace for a target runtime process."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_syscall_trace.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_syscall_trace.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -9598,7 +9727,7 @@ class RuntimeSyscallTrace(LoadPrimitive):
 class RuntimeConnectionState(LoadPrimitive):
     """Capture bounded ss/lsof connection-state snapshots for a target runtime process."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_connection_state.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_connection_state.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -9764,7 +9893,7 @@ class RuntimeConnectionState(LoadPrimitive):
 class RuntimeHaskellGcCapture(LoadPrimitive):
     """Capture bounded GHC RTS -s output for a live Haskell runtime node and restore it."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_haskell_gc_capture.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_haskell_gc_capture.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -9946,7 +10075,7 @@ class RuntimeHaskellGcCapture(LoadPrimitive):
 class RuntimeBundlePromote(LoadPrimitive):
     """Write a structured promotion record into the current run bundle."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_promote.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_promote.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -10099,7 +10228,7 @@ class RuntimeBundlePromote(LoadPrimitive):
 class RuntimeBundleDedupe(LoadPrimitive):
     """Compare a target run signature against promoted bundles."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_dedupe.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_dedupe.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -10246,7 +10375,7 @@ class RuntimeBundleDedupe(LoadPrimitive):
 class RuntimeBundleTriage(LoadPrimitive):
     """Promote and dedupe a target run in one composite step."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_triage.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_triage.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -10418,7 +10547,7 @@ class RuntimeBundleTriage(LoadPrimitive):
 class RuntimeBundleSign(LoadPrimitive):
     """Write a cryptographic signature record into the current run bundle."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_sign.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_sign.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -10565,7 +10694,7 @@ class RuntimeBundleSign(LoadPrimitive):
 class RuntimeBundleChain(LoadPrimitive):
     """Sign, promote, and dedupe the current run in one composite step."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_chain.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_chain.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -10747,7 +10876,7 @@ class RuntimeBundleChain(LoadPrimitive):
 class RuntimeBundleReplay(LoadPrimitive):
     """Replay a previously captured bundle and compare selected artifacts."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_replay.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_replay.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -10911,7 +11040,7 @@ class RuntimeBundleReplay(LoadPrimitive):
 class RuntimeBundleDiff(LoadPrimitive):
     """Compare selected artifacts across any two captured bundles."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_diff.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_diff.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -11069,7 +11198,7 @@ class RuntimeBundleDiff(LoadPrimitive):
 class RuntimeBundleChainVerify(LoadPrimitive):
     """Verify an attestation chain for a captured bundle and emit a report."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_chain_verify.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_chain_verify.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -11224,7 +11353,7 @@ class RuntimeBundleChainVerify(LoadPrimitive):
 class RuntimeBundleTag(LoadPrimitive):
     """Attach operator-defined slug tags to a captured bundle as additive metadata."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_tag.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_tag.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -11366,7 +11495,7 @@ class RuntimeBundleTag(LoadPrimitive):
 class RuntimeForensicSnapshot(LoadPrimitive):
     """Capture a frozen audit-handoff snapshot tarball for selected bundles."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_forensic_snapshot.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_forensic_snapshot.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -11507,7 +11636,7 @@ class RuntimeForensicSnapshot(LoadPrimitive):
 class RuntimeBundleSummaryCompose(LoadPrimitive):
     """Compose an executive-readable rollup across captured bundles."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_summary_compose.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_summary_compose.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -11799,7 +11928,7 @@ class RuntimeMultiNodeObservation(LoadPrimitive):
 class _RuntimeStaticAnalysisBase(LoadPrimitive):
     _TOOL = ""
     _PRIMITIVE = ""
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_static_analysis.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_static_analysis.py"
 
     def run(self, handle, rng):
         import subprocess
@@ -11928,7 +12057,7 @@ class RuntimeStaticAnalysisDeny(_RuntimeStaticAnalysisBase):
 class RuntimeBundleExportSarif(LoadPrimitive):
     """Export a captured bundle into SARIF v2.1.0."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_export_sarif.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_export_sarif.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -12092,7 +12221,7 @@ class RuntimeBundleExportSarif(LoadPrimitive):
 class RuntimeBundleExport(LoadPrimitive):
     """Package the current run bundle into a signed export tarball."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_bundle_export.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_bundle_export.py"
 
     @staticmethod
     def _parse_summary(stdout: str) -> dict:
@@ -12230,7 +12359,7 @@ class RuntimeBundleExport(LoadPrimitive):
 class RuntimePreviewParityBaseline(LoadPrimitive):
     """Run the existing preview parity baseline helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_preview_parity_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_preview_parity_check.py"
 
     def run(self, handle, rng):
         import os
@@ -12356,7 +12485,7 @@ class RuntimePreviewParityBaseline(LoadPrimitive):
 class RuntimePreviewUpstreamDrop(LoadPrimitive):
     """Run the existing preview upstream drop helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_preview_upstream_fault_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_preview_upstream_fault_check.py"
 
     def run(self, handle, rng):
         import os
@@ -12491,7 +12620,7 @@ class RuntimePreviewUpstreamDrop(LoadPrimitive):
 class RuntimePreviewUpstreamReset(LoadPrimitive):
     """Run the existing preview upstream reset helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_preview_upstream_reset_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_preview_upstream_reset_check.py"
 
     def run(self, handle, rng):
         import os
@@ -12626,7 +12755,7 @@ class RuntimePreviewUpstreamReset(LoadPrimitive):
 class RuntimePreviewUpstreamDelay(LoadPrimitive):
     """Run the existing preview upstream delay helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_preview_upstream_delay_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_preview_upstream_delay_check.py"
 
     def run(self, handle, rng):
         import os
@@ -12773,7 +12902,7 @@ class RuntimePreviewUpstreamDelay(LoadPrimitive):
 class RuntimePreviewUpstreamLoss(LoadPrimitive):
     """Run the existing preview upstream loss helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_preview_upstream_loss_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_preview_upstream_loss_check.py"
 
     def run(self, handle, rng):
         import os
@@ -12915,7 +13044,7 @@ class RuntimePreviewUpstreamLoss(LoadPrimitive):
 class RuntimeLiveImplementationBaseline(LoadPrimitive):
     """Run the existing live implementation baseline helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_live_implementation_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_live_implementation_check.py"
 
     def run(self, handle, rng):
         import os
@@ -13037,7 +13166,7 @@ class RuntimeLiveImplementationBaseline(LoadPrimitive):
 class RuntimePartitionRejoin(LoadPrimitive):
     """Run the existing partition/rejoin helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_partition_rejoin_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_partition_rejoin_check.py"
 
     def run(self, handle, rng):
         import os
@@ -13139,7 +13268,7 @@ class RuntimePartitionRejoin(LoadPrimitive):
 class RuntimeProfileRestartRecovery(LoadPrimitive):
     """Run the existing profile restart recovery helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py"
 
     def run(self, handle, rng):
         import os
@@ -13244,7 +13373,7 @@ class RuntimeProfileRestartRecovery(LoadPrimitive):
 class RuntimeProfileRestartPostrecoveryBlockfetch(LoadPrimitive):
     """Run the existing restart-fetch recovery helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py"
 
     def run(self, handle, rng):
         import os
@@ -13349,7 +13478,7 @@ class RuntimeProfileRestartPostrecoveryBlockfetch(LoadPrimitive):
 class RuntimeProfileCopiedStateRecovery(LoadPrimitive):
     """Run the existing copied-state recovery helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py"
 
     def run(self, handle, rng):
         import os
@@ -13454,7 +13583,7 @@ class RuntimeProfileCopiedStateRecovery(LoadPrimitive):
 class RuntimeProfileCopiedStatePostremediationBlockfetch(LoadPrimitive):
     """Run the existing copied-state-fetch helper as a declarative primitive."""
 
-    _DEFAULT_HELPER = "${HOME}/dwarf-fw/scripts/runtime_profile_recovery_check.py"
+    _DEFAULT_HELPER = "/home/nigel/dwarf-fw/scripts/runtime_profile_recovery_check.py"
 
     def run(self, handle, rng):
         import os
@@ -15557,6 +15686,30 @@ def _honest_tip_groups(*, latest_tips: dict[str, dict], honest_node_ids: list[st
     return groups
 
 
+def _group_tip_agreement(
+    latest_tips: dict[str, dict], node_ids: list[str]
+) -> tuple[bool, dict | None, dict[str, dict]]:
+    """Return ``(converged, tip, per_node_tips)`` for one group of nodes.
+
+    ``converged`` is True iff every listed node reported a tip and all of them
+    share a single ``(hash, slot)``. ``tip`` is that shared tip (or ``None`` when
+    the group did not converge). ``per_node_tips`` maps each node id to its tip so
+    a divergence can be reported per node.
+    """
+    per_node = {node_id: (latest_tips.get(node_id) or {}) for node_id in node_ids}
+    keys: set[tuple[str, int]] = set()
+    for tip in per_node.values():
+        hash_value = tip.get("hash")
+        slot_value = tip.get("slot")
+        if hash_value is None or slot_value is None:
+            return False, None, per_node
+        keys.add((str(hash_value), int(slot_value)))
+    if not node_ids or len(keys) != 1:
+        return False, None, per_node
+    hash_value, slot_value = next(iter(keys))
+    return True, {"hash": hash_value, "slot": slot_value}, per_node
+
+
 class TipConvergenceClean(AssertionPrimitive):
     """Pass iff the latest observation shows all nodes at a single converged tip."""
 
@@ -15688,6 +15841,96 @@ class ChainSelectConsistent(AssertionPrimitive):
                 "completed": 1 if latest is not None else 0,
                 "chain_select_consistent": summary.get("chain_select_consistent"),
                 "tip_group_count": summary.get("tip_group_count"),
+            },
+            "data_points_used": [payload] if latest is not None else [],
+            "result": result,
+            "note": note,
+        }
+
+
+class ChainSelectDifferential(AssertionPrimitive):
+    """Cross-implementation chain-selection differential (Common Prefix / "chainhold").
+
+    Partition the observed nodes into a reference group (e.g. the Haskell
+    ``cardano-node`` relays) and a target group (e.g. the Amaru relays), and assert
+    both groups converged to the same selected tip. A tip that differs *across
+    implementations* beyond ``tolerance_slots`` is the finding: the two clients
+    resolved the same served forks to different chains — a chain-selection
+    divergence, the highest-value consensus finding class.
+
+    This is property P1 of Design Doc A. Tip-only observation proves hash-identity
+    (and, with ``tolerance_slots``, agreement modulo lag); it does not by itself
+    prove agreement on all-but-the-last-k blocks, which needs full chain history.
+    """
+
+    def evaluate(self, handle):
+        latest, payload, result_body, summary = _latest_multi_node_observation(handle)
+        reference_ids = [str(node_id) for node_id in self.params.get("reference_node_ids", [])]
+        target_ids = [str(node_id) for node_id in self.params.get("target_node_ids", [])]
+        tolerance_slots = int(self.params.get("tolerance_slots", 0))
+        require_real_progress = bool(self.params.get("require_real_progress", True))
+        latest_tips = _multi_node_latest_tips(result_body, summary)
+
+        ref_converged, ref_tip, ref_nodes = _group_tip_agreement(latest_tips, reference_ids)
+        tgt_converged, tgt_tip, tgt_nodes = _group_tip_agreement(latest_tips, target_ids)
+
+        def _real(tip: dict | None) -> bool:
+            return (not require_real_progress) or _tip_has_real_chain_progress(tip or {})
+
+        agree = False
+        agreement_kind = "none"
+        slot_gap = None
+        if ref_tip and tgt_tip:
+            if ref_tip.get("hash") == tgt_tip.get("hash") and int(ref_tip.get("slot", -1)) == int(
+                tgt_tip.get("slot", -2)
+            ):
+                agree, agreement_kind, slot_gap = True, "hash_identical", 0
+            else:
+                slot_gap = abs(int(ref_tip.get("slot", 0) or 0) - int(tgt_tip.get("slot", 0) or 0))
+                if tolerance_slots > 0 and slot_gap <= tolerance_slots:
+                    agree, agreement_kind = True, "within_slot_tolerance"
+
+        enough = (
+            latest is not None
+            and payload.get("outcome") == "ok"
+            and (payload.get("artifact_summary") or {}).get("has_observation_summary", False)
+            and bool(reference_ids)
+            and bool(target_ids)
+            and ref_converged
+            and tgt_converged
+            and _real(ref_tip)
+            and _real(tgt_tip)
+            and agree
+        )
+        result = "pass" if enough else "fail"
+        if enough:
+            note = None
+        elif not (ref_converged and tgt_converged):
+            note = "reference and/or target implementation group did not internally converge to one tip"
+        elif ref_tip and tgt_tip and not agree:
+            note = (
+                "chain-selection divergence across implementations: reference tip "
+                f"{ref_tip.get('hash')}@{ref_tip.get('slot')} != target tip "
+                f"{tgt_tip.get('hash')}@{tgt_tip.get('slot')} "
+                f"(slot_gap={slot_gap}, tolerance_slots={tolerance_slots})"
+            )
+        else:
+            note = "insufficient real-tip evidence for a cross-implementation chain-selection differential"
+        return {
+            "primitive": "chain_select_differential",
+            "params": dict(self.params),
+            "evaluated_value": {
+                "completed": 1 if latest is not None else 0,
+                "reference_tip": ref_tip,
+                "target_tip": tgt_tip,
+                "agree": agree,
+                "agreement_kind": agreement_kind,
+                "slot_gap": slot_gap,
+                "tolerance_slots": tolerance_slots,
+                "reference_converged": ref_converged,
+                "target_converged": tgt_converged,
+                "reference_node_tips": ref_nodes,
+                "target_node_tips": tgt_nodes,
             },
             "data_points_used": [payload] if latest is not None else [],
             "result": result,
@@ -18367,6 +18610,94 @@ class FaultPrimitive(Primitive):
 
     def remove(self, handle):
         raise NotImplementedError
+
+
+class RuntimeNetworkPartition(FaultPrimitive):
+    """Partition a substrate node off its docker network to induce a real fork, then heal.
+
+    ``apply()`` disconnects the target container from the docker network so it builds
+    an isolated branch, holds the partition for ``partition_seconds``, reconnects
+    (heal), and lets the network settle for ``settle_seconds`` — so the following
+    load phase observes the *post-heal* reconverged state (the chain-selection /
+    rollback differential). ``remove()`` is a safety reconnect.
+
+    Forgery-free adversarial fork: the isolated honest producer builds a genuine
+    competing branch with its own stake; on heal the network reorgs, or — if the
+    divergence exceeds k — honest nodes correctly refuse the deep rollback and the
+    partitioned node is stranded (Praos immutability-beyond-k). Both cardano-node and
+    Amaru observers must resolve it identically.
+    """
+
+    def _resolve_container(self, handle) -> str:
+        override = str(self.params.get("container_name") or "")
+        if override:
+            return override
+        runtime_metadata_value = str(self.params.get("runtime_metadata_path") or "")
+        if not runtime_metadata_value:
+            raise ValueError("runtime_network_partition requires runtime_metadata_path or container_name")
+        metadata_path = _resolve_output_path(handle, runtime_metadata_value)
+        metadata = json.loads(Path(metadata_path).read_text(encoding="utf-8"))
+        target = str(self.params["target_node"])
+        pools = list(metadata.get("haskell_nodes") or []) + list(metadata.get("amaru_nodes") or []) + list(
+            metadata.get("nodes") or []
+        )
+        for node in pools:
+            if node.get("id") == target or node.get("name") == target:
+                container = str(node.get("container_name") or node.get("id") or "")
+                if container:
+                    return container
+        raise ValueError(f"runtime_network_partition: no container for target node {target!r}")
+
+    def _docker(self, args: list[str]):
+        return subprocess.run(["docker", *args], capture_output=True, text=True, check=False, timeout=60)
+
+    def apply(self, handle):
+        import time as _time
+
+        network = str(self.params.get("network_name", "cardano-amaru-testnet"))
+        container = self._resolve_container(handle)
+        partition_seconds = float(self.params.get("partition_seconds", 90))
+        settle_seconds = float(self.params.get("settle_seconds", 70))
+        dc = self._docker(["network", "disconnect", network, container])
+        handle.log(
+            phase="fault",
+            primitive="runtime_network_partition",
+            level="info" if dc.returncode == 0 else "error",
+            event="partitioned",
+            payload={
+                "container": container,
+                "network": network,
+                "partition_seconds": partition_seconds,
+                "disconnect_rc": dc.returncode,
+                "stderr": (dc.stderr or "")[-512:],
+            },
+        )
+        _time.sleep(partition_seconds)
+        cc = self._docker(["network", "connect", network, container])
+        handle.log(
+            phase="fault",
+            primitive="runtime_network_partition",
+            level="info" if cc.returncode == 0 else "error",
+            event="healed",
+            payload={"container": container, "network": network, "connect_rc": cc.returncode, "stderr": (cc.stderr or "")[-512:]},
+        )
+        _time.sleep(settle_seconds)
+
+    def remove(self, handle):
+        network = str(self.params.get("network_name", "cardano-amaru-testnet"))
+        try:
+            container = self._resolve_container(handle)
+        except ValueError:
+            return
+        # safety reconnect (idempotent — ignore "already connected")
+        cc = self._docker(["network", "connect", network, container])
+        handle.log(
+            phase="fault",
+            primitive="runtime_network_partition",
+            level="info",
+            event="removed",
+            payload={"container": container, "network": network, "reconnect_rc": cc.returncode},
+        )
 
 
 class RuntimeByzantinePeer(FaultPrimitive):

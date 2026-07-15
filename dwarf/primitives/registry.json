@@ -198,6 +198,20 @@
       ],
       "version": "0.1.0"
     },
+    "runtime_attach_topology": {
+      "class": "RuntimeAttachTopology",
+      "family": "setup",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/setup/runtime_attach_topology.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "runtime_malformed_input_differential": {
       "class": "RuntimeMalformedInputDifferential",
       "family": "load",
@@ -220,6 +234,20 @@
       "runtimes": [
         "devnet",
         "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_tracer_capture": {
+      "class": "RuntimeTracerCapture",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_tracer_capture.schema.json",
+      "runtimes": [
+        "devnet"
       ],
       "supports": [
         "cardano-node",
@@ -496,6 +524,21 @@
       "family": "assertion",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/assertion/chain_select_consistent.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "chain_select_differential": {
+      "class": "ChainSelectDifferential",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/chain_select_differential.schema.json",
       "runtimes": [
         "devnet",
         "library"
@@ -1459,6 +1502,20 @@
       ],
       "supports": [
         "cardano-node"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_network_partition": {
+      "class": "RuntimeNetworkPartition",
+      "family": "fault",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/fault/runtime_network_partition.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
       ],
       "version": "0.1.0"
     },
@@ -2843,34 +2900,6 @@
       "params_schema": "primitives/assertion/validation_path_parity_preserved.schema.json",
       "runtimes": [
         "devnet",
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_aflpp_campaign": {
-      "class": "RuntimeAflppCampaign",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_aflpp_campaign.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "aflpp_smoke_exit_clean": {
-      "class": "AflppSmokeExitClean",
-      "family": "assertion",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/assertion/aflpp_smoke_exit_clean.schema.json",
-      "runtimes": [
         "library"
       ],
       "supports": [

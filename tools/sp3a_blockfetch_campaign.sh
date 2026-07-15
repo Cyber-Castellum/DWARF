@@ -15,12 +15,12 @@
 # soak with it (no per-timeline seed explosion — that is Antithesis's job). The
 # local value is a long soak against EVOLVING real-chain content + crash watch.
 #
-# Run on build-host. Args: TAG (default 0.11.0) HOURS (default 8).
+# Run on cardano-box. Args: TAG (default 0.11.0) HOURS (default 8).
 set -uo pipefail
 TAG="${1:-0.11.0}"
 HOURS="${2:-8}"
 LEVEL="${3:-struct}"   # struct | bytes | both (byte-level = malformed CBOR)
-cd ${DWARF_ROOT}/antithesis/cardano_node_dwarf
+cd /home/nigel/dwarf-v4/antithesis/cardano_node_dwarf
 export INTERNAL_NETWORK=false
 DC="docker compose -f docker-compose.yaml"
 cp docker-compose.yaml /tmp/sp3a_campaign_compose.bak

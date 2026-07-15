@@ -111,6 +111,9 @@ from profile_manager.views.operate_status import render_operate_status
 from profile_manager.views.operate_targets import render_operate_targets
 from profile_manager.views.status import render_learn_status
 from profile_manager.views.walkthroughs import render_learn_walkthroughs
+from profile_manager.views.learn_attack_cost import render_learn_attack_cost
+from profile_manager.views.learn_overview import render_learn_overview
+from profile_manager.views.learn_consensus import render_learn_consensus
 from profile_manager.views.learn import render_learn_landing
 from profile_manager.views.operate import render_operate_landing
 from profile_manager.views.scenarios import render_operate_scenarios
@@ -125,12 +128,12 @@ def _pick_dashboard_root(project_root: Path) -> Path:
     Two candidate layouts:
     - ``project_root/dwarf/dashboard``  (local Mac dev checkout: dwarf/ is the
       app subdir under the parent ada2 repo)
-    - ``project_root/dashboard``        (build-host flattened layout: rsync
+    - ``project_root/dashboard``        (cardano-box flattened layout: rsync
       from sync-dwarf-fw.sh strips the dwarf/ wrapper, putting dashboard/ +
       profile_manager/ at top level)
 
     Pre-slice-19 logic checked only that ``project_root/dwarf`` *existed*,
-    which on build-host was true but stale -- a leftover ``dwarf/`` directory
+    which on cardano-box was true but stale -- a leftover ``dwarf/`` directory
     from an old layout containing only an ``index.html``, no ``static/``.
     Result: the picker selected ``project_root/dwarf/dashboard`` (which had
     no ``static/``), so ``/static/css/base.css`` returned 404 and all
@@ -881,8 +884,8 @@ def render_command_center_html():
     <div class="flow" id="deployment-flow">
       <div class="flow-step"><strong>Browser / CLI</strong>Local operator view and command entry point.</div>
       <div class="flow-step"><strong>SSH</strong>Read-only health polling and explicit CLI operations.</div>
-      <div class="flow-step"><strong>build-host</strong>Ubuntu host for local Cardano profile runtime.</div>
-      <div class="flow-step"><strong>Profile Runtime</strong>Managed local testnet profile under `${HOME}/cardano-profiles`.</div>
+      <div class="flow-step"><strong>cardano-box</strong>Ubuntu host for local Cardano profile runtime.</div>
+      <div class="flow-step"><strong>Profile Runtime</strong>Managed local testnet profile under `/home/nigel/cardano-profiles`.</div>
       <div class="flow-step"><strong>node1 / node2 / node3</strong>Loopback node-to-node listeners, sockets, logs, and DB state.</div>
     </div>
   </section>
@@ -1056,7 +1059,7 @@ function drawDeploymentFlow(payload, active, parsed) {
     <line class="edge" x1="154" y1="119" x2="238" y2="119"/>
     <rect class="node" x="248" y="86" width="110" height="66" rx="8"/><text x="303" y="114" text-anchor="middle" font-weight="700">SSH</text><text class="muted" x="303" y="136" text-anchor="middle">read-only poll</text>
     <line class="edge" x1="358" y1="119" x2="438" y2="119"/>
-    <rect class="node" x="448" y="66" width="146" height="106" rx="8"/><text x="521" y="102" text-anchor="middle" font-weight="700">build-host</text><text class="muted" x="521" y="126" text-anchor="middle">${esc((payload.config || {}).host || "unknown")}</text><text class="muted" x="521" y="150" text-anchor="middle">Ubuntu host</text>
+    <rect class="node" x="448" y="66" width="146" height="106" rx="8"/><text x="521" y="102" text-anchor="middle" font-weight="700">cardano-box</text><text class="muted" x="521" y="126" text-anchor="middle">${esc((payload.config || {}).host || "unknown")}</text><text class="muted" x="521" y="150" text-anchor="middle">Ubuntu host</text>
     <line class="edge" x1="594" y1="119" x2="674" y2="119"/>
     <rect class="node" x="684" y="46" width="190" height="146" rx="8"/><text x="779" y="76" text-anchor="middle" font-weight="700">${esc(active.id || "active profile")}</text>
     <circle class="${processClass}" cx="729" cy="124" r="22"/><text x="729" y="130" text-anchor="middle">n1</text>
@@ -2242,6 +2245,9 @@ def render_route_html(route):
         "/operate/scenarios": render_operate_scenarios,
         "/learn": render_learn_landing,
         "/learn/concepts": render_learn_concepts,
+        "/learn/attack-cost": render_learn_attack_cost,
+        "/learn/overview": render_learn_overview,
+        "/learn/consensus": render_learn_consensus,
         "/learn/coverage": render_learn_coverage,
         "/learn/status": render_learn_status,
         "/operate/compare": render_operate_compare,

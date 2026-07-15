@@ -2,28 +2,24 @@
 
 DWARF is a fuzzing and adversarial-testing framework for Cardano node implementations
 (Haskell `cardano-node` and Rust `amaru`). It exercises a node's serialization /
-deserialization, **ledger-rule**, mini-protocol, runtime, resource, and consensus
-surfaces with structurally-malformed and adversarial inputs, captures structured
-evidence, and **bridges its fuzzing into the [Antithesis](https://antithesis.com)
-deterministic-simulation platform** so a real node processes mutated payloads across
+deserialization, mini-protocol, runtime, resource, and consensus surfaces with
+structurally-malformed and adversarial inputs, captures structured evidence, and
+**bridges its CBOR-decoder fuzzing into the [Antithesis](https://antithesis.com)
+deterministic-simulation platform** so a real node decodes mutated payloads across
 thousands of explored timelines.
 
-It runs in two places from one set of definitions:
+It has two complementary halves:
 
 1. **Local framework** — a scenario-driven fuzz/test runner (Python `profile_manager`
-   + `cardano-profile` CLI + web dashboard) that spins up containerized Cardano devnets
-   (Haskell `cardano-node`, Rust `amaru`, or **mixed**), runs a catalog of scenarios
-   across CBOR, ledger-rule, mini-protocol, runtime, resource, and consensus families,
-   and captures structured, replayable evidence. It also drives **native
-   coverage-guided fuzzing** — AFL++ steered by real edge coverage over a
-   SanitizerCoverage-instrumented `cardano-node` (decode + the full Conway ledger rules,
-   incl. `applyBlock`).
-2. **Antithesis bridge** — a generator that turns a fuzz scenario into a self-contained
-   Antithesis test bundle, plus a Haskell **`dwarf-adversary`** that joins a live testnet
-   as a node-to-node (N2N) peer and serves structurally-mutated CBOR to the node under
-   test, and an in-process **`dwarf-decoder-fuzz`** workload (the same `applyBlock`
-   surface, run under Antithesis). Profiles parameterize implementation, version,
-   network, topology, and peer-sharing.
+   + `cardano-profile` CLI + web dashboard) that spins up containerized Cardano
+   devnets (Haskell `cardano-node`, Rust `amaru`, or **mixed**), runs a catalog of
+   ~223 scenarios across ~8 capability families against them, and captures structured,
+   replayable evidence. Profiles parameterize implementation, version, network,
+   topology, and peer-sharing.
+2. **Antithesis bridge** — a generator that turns a CBOR-decode scenario into a
+   self-contained Antithesis test bundle, plus a Haskell **`dwarf-adversary`** that
+   joins a live testnet as a node-to-node (N2N) peer and serves structurally-mutated
+   CBOR to the node under test.
 
 ---
 
@@ -36,8 +32,6 @@ The local catalog (`dwarf/scenarios/`, 223 YAML scenarios) spans these families:
 | Family | What it exercises |
 |---|---|
 | **CBOR structural fuzz** | Decoder robustness on structurally-mutated CBOR — block-header, block, tx-body, certificate, auxiliary-data — against `cardano-node` and `amaru` (`*-cbor-*`, `edge-cases-cbor-*`). |
-| **Native coverage-guided fuzz** | Edge-guided AFL++ over a **SanitizerCoverage-instrumented `cardano-node`** dependency tree (GHC `-fllvm` + LLVM SanCov), in a cross-platform Docker image. One harness, surface selected by `DWARF_DECODER`: `tx / block / header / txbody / ledger / applytx / applyblock` decode + ledger surfaces and `handshake / txsub / keepalive` mini-protocol codecs. See [`COVERAGE-HARNESS.md`](antithesis/components/dwarf-adversary/COVERAGE-HARNESS.md). |
-| **Ledger-rule fuzz** | Decode + **run the real Conway ledger rules**: `applytx` (mempool `applyTx` STS) and `applyblock` (full `BBODY → LEDGERS → per-tx LEDGER` over a genesis-initialised `NewEpochState`). The deepest surfaces — they reach `ConwayUtxow/Utxo/Certs` validation, not just decoding. |
 | **Mini-protocol fuzz** | N2N protocol grammar / sequencing / state-machine — dedicated `cardano-node-mini-protocol-*-fuzz` scenarios for handshake, chain-sync, block-fetch, tx-submission, keep-alive, peer-sharing, plus wrong-version / malformed-handshake gating. |
 | **Adversarial topology / consensus** | Eclipse, sybil, byzantine block-fetch, fork-switch, era / hard-fork boundaries. |
 | **Runtime / network faults** | Partition–rejoin, restart / tip recovery, freeze / recover, keep-alive failure cascade, slow-loris, time-skew. |
@@ -55,25 +49,19 @@ for curated corner cases. Each run writes a manifest, assertion summary, NDJSON
 log, and probe outputs under `dwarf/runs/` (dashboard-inspectable) and
 `dwarf/evidence/`.
 
-### Native coverage-guided fuzzing
+### Consensus chain-selection differential
 
-Beyond generational CBOR fuzzing, DWARF runs **edge-coverage-guided AFL++** against a
-natively-instrumented `cardano-node`. The whole dependency tree is compiled with GHC
-`-fllvm` + an LLVM **SanitizerCoverage** pass, so AFL steers mutation by real edge
-coverage — packaged as a cross-platform Docker image (`dwarf-haskell-cov`). A single
-harness (`dwarf-decode-any`) selects the surface via `DWARF_DECODER`, from pure decode
-(`tx`, `block`, `header`) through the Conway ledger rules (`applytx`, `applyblock`).
-The same surfaces are wired as DWARF scenarios (`dwarf scenario run
-cardano-node-cov-<surface>-aflpp-smoke`, asserted by `aflpp_smoke_exit_clean`) and as a
-two-backend definition: the same `applyblock` surface also runs **in-process under
-Antithesis** via `dwarf-decoder-fuzz --target applyblock`.
-
-The `applyblock` surface builds an initial Conway `NewEpochState` from genesis once per
-process and applies a decoded tx through the full block-application STS — reaching the
-real per-tx ledger validation (`ValueNotConservedUTxO`, `BadInputsUTxO`,
-`StakeKeyNotRegisteredDELEG`, …), the deepest fuzz surface in the framework. Campaign
-evidence (SARIF + per-surface metrics + reports) lives under `reports/`; raw fuzzer
-logs under `raw/logs/`.
+Beyond input-level differential testing, DWARF runs a **cross-implementation
+chain-selection differential** on a real mixed network (the upstream `cardano_amaru`
+topology — Haskell producers and relays alongside Amaru relays and an Amaru-fed
+consumer). It induces forks (`runtime_network_partition`) and asserts, block-for-block
+at time-aligned instants, that the Haskell `cardano-node` and Amaru select the identical
+chain (`chain_select_differential`) — a consensus split between the two clients being the
+highest-value failure class. Scenarios cover a healed `<k` fork, a stranding `>k` fork
+(deep rollback correctly refused), and an epoch-boundary transition;
+`consensus_differential_sweep.py` walks a grid of fork depths into a coverage matrix, and
+`ensure_cardano_amaru_converged.py` gates a converged network first. Every run captures
+per-node forge / ChainDB forensics via `runtime_tracer_capture`. See `/learn/consensus`.
 
 ### Profiles, devnets, and targets
 
@@ -152,7 +140,7 @@ under test fetches blocks only from the adversary.
 ### The `dwarf-adversary`
 
 A Haskell N2N peer (`antithesis/components/dwarf-adversary/`, image
-`ghcr.io/j-gainsec/dwarf-adversary:0.19.0`) that speaks the real Ouroboros N2N
+`ghcr.io/j-gainsec/dwarf-adversary:0.11.0`) that speaks the real Ouroboros N2N
 mini-protocols — chain-sync (#2), block-fetch (#3), tx-submission2 (#4), keep-alive
 (#8) — and serves **structurally-mutated CBOR** to the node under test. It bootstraps
 a valid chain (proxying an upstream producer or serving a baked corpus), reaches GSM
@@ -171,20 +159,6 @@ Key flags: `--protocol {chainsync|blockfetch|txsubmission}`, `--cbor-shape {bloc
 `--mutation-rate`, `--upstream HOST:PORT`, `--seed {random|0x<hex>|<dec>}`, `--network-magic`,
 `--listen-port`, `--baked-chain FILE` (serve an embedded chain, no upstream),
 `--capture-to FILE` (serialize a captured chain), `--selftest`.
-
-### Container images
-
-Several parts of DWARF require pre-built container images:
-
-| Image | Where | Used by |
-|---|---|---|
-| `ghcr.io/j-gainsec/dwarf-adversary:<tag>` | **GitHub Container Registry (public)** — current `:0.19.0` | The N2N `dwarf-adversary` **and** the in-process `dwarf-decoder-fuzz` harness (both binaries baked in). Pulled by the Antithesis `cardano_node_dwarf` compose bundle. Built/pushed via `antithesis/components/dwarf-adversary/build-image.sh`. |
-| `ghcr.io/j-gainsec/dwarf-haskell-cov:<tag>` | **GitHub Container Registry (public)** — same `j-gainsec` registry as the adversary (e.g. `:0.1-clean`). Built/pushed via `antithesis/components/dwarf-adversary/coverage-docker/build.sh`; cross-platform, reproducible from the Dockerfile in `coverage-docker/`. | The native-SanCov coverage-guided AFL++ harness (`dwarf-cov-run <surface> <seconds>`). |
-| `ghcr.io/cardano-foundation/cardano-node-antithesis/*` (tracer-sidecar, tx-generator, sidecar, …), `ghcr.io/pragma-org/amaru/loader` | **Public upstream registries**, pinned by digest in the compose files | The Antithesis testnet substrate (producers, relays, tracer, tx-generator). |
-
-The framework's own devnet node/amaru images are built locally from
-`infrastructure/docker/` (see `delivery/scripts/build-image.sh`). Pulling/pushing to
-`ghcr.io/j-gainsec/*` requires a GHCR credential with the appropriate scope.
 
 ### Launching live runs (Moog)
 
@@ -214,7 +188,7 @@ Both hard serve-path shapes (tx-body, block) are now proven on Antithesis: a rea
 `cardano-node` connects to the `dwarf-adversary`, pulls structurally-mutated CBOR, and
 runs its decoder on it — with the adversary stable (no crash) and the run completing.
 
-**Local gates** (run on the build-host testnet, all green):
+**Local gates** (run on the cardano-box testnet, all green):
 
 - `tools/sp3a_topology_eclipse_repro.sh` — block-fetch under single-network topology
   eclipse: `dwarf_served_mutated_block=69`, VRFKeyBadProof 0, RestartCount 0.
@@ -228,24 +202,13 @@ no peer-sharing gossip, so the node under test reaches only the adversary. The
 custom-network and producer-less baked bundles are retained as local capabilities
 (they lack the Antithesis test harness and must not be run live).
 
-**Native coverage-guided fuzzing** (`dwarf-haskell-cov`, native GHC SanCov):
-
-- All surfaces run clean in-container with edge coverage > 0, 100% stability, 0 crashes.
-- The `applyblock` surface is proven to reach the real per-tx Conway ledger rules
-  (`ConwayUtxow/Utxo/Certs`), and is green through the DWARF framework (`dwarf scenario
-  run cardano-node-cov-applyblock` → pass, ~20.7k edges, 0 crashes) and in-process under
-  Antithesis (`dwarf-decoder-fuzz --target applyblock`).
-- An **8-hour exhaustive campaign** across all 9 surfaces ran **~20.5M executions with 0
-  crashes** (`applyblock` led coverage at ~28k edges). Results, SARIF, and per-surface
-  metrics are under [`reports/`](reports/).
-
 ---
 
 ## Layout
 
 ```text
 DWARF/
-├── README.md  INSTALL.md  OPERATIONS.md  RELEASE-NOTES.md  TEST-OUTPUTS.md
+├── README.md  INSTALL.md  OPERATIONS.md  RELEASE-NOTES.md
 ├── antithesis/
 │   ├── components/dwarf-adversary/      # Haskell N2N adversary (cabal)
 │   ├── cardano_node_dwarf/              # full-harness CBOR bundle (live-proven)
@@ -259,7 +222,7 @@ DWARF/
 │   ├── scenarios/                       # 223 scenario YAMLs (~8 families)
 │   ├── primitives/                      # primitive registry + schemas
 │   ├── profiles/                        # 12 profiles + templates/
-│   ├── runs/  bundles/  evidence/       # run artifacts + evidence
+│   ├── bundles/                        # preserved bundle archives (runs/ evidence/ generated at runtime)
 │   ├── spec/                            # SARIF + spec schemas
 │   └── docs/
 ├── delivery/                            # Docker delivery wrapper (framework image)
@@ -288,15 +251,6 @@ cabal build -w ghc-9.6.7 exe:dwarf-adversary
 ./build-image.sh ghcr.io/<owner>/dwarf-adversary:<tag>
 ```
 
-**Native coverage-guided harness** (`dwarf-haskell-cov`, GHC 9.6.x + LLVM-15):
-
-```bash
-cd antithesis/components/dwarf-adversary/coverage-docker
-./build.sh ghcr.io/<owner>/dwarf-haskell-cov:<tag>
-# run one surface (edge-guided AFL++) for N seconds:
-docker run --rm -v "$PWD/out:/out" ghcr.io/<owner>/dwarf-haskell-cov:<tag> applyblock 60
-```
-
 **Generate an Antithesis bundle** from a CBOR-decode scenario, via the `cardano-profile` CLI:
 
 ```bash
@@ -314,15 +268,11 @@ Verify the package layout with `delivery/tests/test_delivery_contract.sh`.
 
 ## Roadmap
 
-The CBOR family is fully bridged to Antithesis (header + tx-body + block proven live;
-certificate + auxiliary-data built and pending a live run), and **native
-coverage-guided fuzzing** now covers the decode and full Conway ledger-rule surfaces
-(`applytx`, `applyblock`) with `applyblock` also running in-process under Antithesis.
-The highest-leverage next steps are **consensus-level header validation**
-(Praos/VRF/KES, distinct from the ledger BBODY rules), **SP4 mini-protocol
-grammar/state-machine fuzz** against a live node (the adversary already speaks every
-N2N protocol), and **differential** `amaru` ↔ `cardano-node` agreement. Runtime/network-
-fault and snapshot scenarios are largely redundant with Antithesis's native fault
-injector and are better expressed as fault config; resource-pressure and forensics
-scenarios stay local. See `docs/` and `reports/` for specs, the capability-surface map,
-and campaign evidence.
+The CBOR family is the one fully bridged to Antithesis (header + tx-body + block
+proven live; certificate + auxiliary-data built and pending a live run). The
+highest-leverage next bridges are **mini-protocol fuzz** (the adversary already speaks
+every N2N protocol), **differential** `amaru` ↔ `cardano-node` agreement, and
+**mempool / tx pressure**. Runtime/network-fault and snapshot scenarios are largely
+redundant with Antithesis's native fault injector and are better expressed as fault
+config than rebuilt as adversaries; resource-pressure and forensics scenarios stay
+local. See `docs/` for design specs and the capability-surface map.

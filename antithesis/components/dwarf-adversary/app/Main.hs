@@ -37,13 +37,13 @@ import DwarfAdversary.ChainSync.Connection
     , runChainSyncServer
     , servingBlockFetchResponderMap
     )
-import DwarfAdversary.TxSource (getBaseTxsFromChain, harvestTxs, loadSeedTxs)
+import DwarfAdversary.TxSource (getBaseTxsFromChain)
 import DwarfAdversary.TxSubmission.Client (txProviderClient)
 import DwarfAdversary.TxSubmission.MutatingCodec
     ( describeTxMutation
     , mutatingCodecTxSubmission
     )
-import DwarfAdversary.TxSubmission.Target (TxField (AuxData, Certificate, Witness, WholeTx))
+import DwarfAdversary.TxSubmission.Target (TxField (AuxData, Certificate, WholeTx))
 import DwarfAdversary.ChainSync.MutatingCodec
     ( describeHeaderMutation
     , mutatingCodecChainSync
@@ -66,7 +66,6 @@ import Options.Applicative
     , helper
     , info
     , long
-    , many
     , metavar
     , option
     , optional
@@ -103,13 +102,6 @@ data Args = Args
     -- ^ struct (default) | bytes (malformed CBOR) | both
     , argCaptureTo :: Maybe FilePath
     , argBakedChain :: Maybe FilePath
-    , argSeedTxFiles :: [FilePath]
-    -- ^ Wire-GenTx files (what 'encTx' emits) always included as base txs to
-    -- mutate, so sub-field targeting engages even when the synced chain carries
-    -- no matching tx (e.g. the hermetic Antithesis devnet has no cert/metadata).
-    , argHarvestTo :: Maybe FilePath
-    -- ^ Dev tool: write each distinct captured tx's wire bytes here (to build a
-    -- seed corpus from a live cert/metadata-carrying devnet).
     }
 
 argsParser :: Parser Args
@@ -203,26 +195,6 @@ argsParser =
                 ( long "baked-chain"
                     <> metavar "FILE"
                     <> help "Serve a baked chain from FILE (no --upstream) — producer-less eclipse blockfetch."
-                )
-            )
-        <*> many
-            ( option
-                str
-                ( long "seed-tx"
-                    <> metavar "FILE"
-                    <> help
-                        ( "Wire GenTx bytes (as encTx emits) always offered as a base tx to "
-                            <> "mutate. Repeatable. Lets --cbor-shape certificate/auxiliary-data "
-                            <> "engage on a chain that carries no such tx."
-                        )
-                )
-            )
-        <*> optional
-            ( option
-                str
-                ( long "harvest-to"
-                    <> metavar "DIR"
-                    <> help "Dev tool: write each distinct captured tx's wire bytes to DIR/cap-<fnv>.cbor."
                 )
             )
 
@@ -567,7 +539,6 @@ runTxSubmissionSelftest logMsg magic port = do
 txFieldOfShape :: String -> TxField
 txFieldOfShape "certificate" = Certificate
 txFieldOfShape "auxiliary-data" = AuxData
-txFieldOfShape "witness" = Witness
 txFieldOfShape _ = WholeTx
 
 -- | Production tx-submission path: serve a real chain (so relay2 peers happily),
@@ -631,23 +602,14 @@ runServeTxSubmission logMsg args magic port = do
     -- each fresh txid once — so as the tx-generator's txs land in new blocks the
     -- adversary keeps serving NEW mutated txs, instead of capturing one batch at
     -- startup (empty before any tx lands) and never refreshing.
-    -- Seed-corpus: wire-GenTx files (what encTx emits) always offered as base
-    -- txs, so --cbor-shape certificate/auxiliary-data engages even when the
-    -- synced chain has no matching tx (the hermetic Antithesis devnet carries
-    -- only payment + Plutus txs). Loaded once; prepended to every refresh.
-    seedTxs <- loadSeedTxs logMsg (argSeedTxFiles args)
-    logMsg ("seed-corpus: " <> show (length seedTxs) <> " seed tx(s) loaded")
-    txsVar <- newTVarIO seedTxs
+    txsVar <- newTVarIO []
     _ <- forkIO $ forever $ do
         batch <- getBaseTxsFromChain logMsg chainVar magic hp 10
-        case argHarvestTo args of
-            Just dir -> harvestTxs logMsg dir batch
-            Nothing -> pure ()
-        atomically (writeTVar txsVar (seedTxs <> batch))
+        atomically (writeTVar txsVar batch)
         SDK.sometimes
-            (not (null seedTxs && null batch))
+            (not (null batch))
             "dwarf_base_tx_obtained"
-            (object ["count" .= (length seedTxs + length batch), "seeds" .= length seedTxs])
+            (object ["count" .= length batch])
         threadDelay 8_000_000
     -- LISTEN IMMEDIATELY — do NOT gate the server on the producer having synced
     -- a chain. Under approach B the downstream node reaches GSM CaughtUp via the

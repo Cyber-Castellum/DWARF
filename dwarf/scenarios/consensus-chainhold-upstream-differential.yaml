@@ -1,0 +1,80 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-chainhold-upstream-differential",
+  "title": "Chainhold chain-selection differential on the upstream cardano_amaru topology — induced fork + reorg, cardano-node vs Amaru",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "chainhold",
+    "differential",
+    "chain-selection",
+    "partition",
+    "rollback",
+    "amaru",
+    "upstream-topology"
+  ],
+  "evidence_intent": "candidate",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x0c4a1d01",
+  "iterations": 1,
+  "shrink": false,
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42
+  },
+  "setup": [
+    {
+      "primitive": "runtime_attach_topology",
+      "output_dir": "outputs/attach",
+      "topology": "cardano_amaru",
+      "network_magic": 42
+    }
+  ],
+  "faults": [
+    {
+      "primitive": "runtime_network_partition",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "target_node": "p2",
+      "network_name": "cardano-amaru-testnet",
+      "partition_seconds": 90,
+      "settle_seconds": 70,
+      "output_dir": "outputs/partition"
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_tracer_capture",
+      "output_dir": "outputs/tracer",
+      "tracer_container": "tracer",
+      "prometheus_port": 4000
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "node_ids": [ "relay1", "relay2", "amaru-consumer" ],
+      "observation_window_seconds": 18,
+      "sample_interval_seconds": 3,
+      "network_magic": 42,
+      "observation_primitives": [ "tip_state", "connection_state" ],
+      "timeout_seconds": 180,
+      "output_dir": "outputs/obs"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "chain_select_differential",
+      "reference_node_ids": [ "relay1", "relay2" ],
+      "target_node_ids": [ "amaru-consumer" ],
+      "tolerance_slots": 5,
+      "require_real_progress": true
+    }
+  ],
+  "teardown": []
+}
