@@ -1,8 +1,8 @@
 # DWARF Primitives Reference
 
-The complete catalogue of the **202** primitives a scenario can reference — every *strategy* (what a scenario can do) and every *oracle* (what it can assert). Generated from `primitives/registry.json`; purposes/pass-conditions are curated. A scenario may only reference names listed here. Many primitives operate on CBOR (Concise Binary Object Representation), Cardano's binary wire and ledger encoding. The **Antithesis** column marks the primitives the DWARF&rarr;Antithesis generator can carry onto the Antithesis backend (CBOR-only by design &mdash; `cbor_fuzz_*` strategies, the `runtime_aflpp_campaign` coverage surface, and the assertions mapped to native SDK checks); everything else runs on the local backend only.
+The complete catalogue of the **204** primitives a scenario can reference — every *strategy* (what a scenario can do) and every *oracle* (what it can assert). Generated from `primitives/registry.json`; purposes/pass-conditions are curated. A scenario may only reference names listed here. Many primitives operate on CBOR (Concise Binary Object Representation), Cardano's binary wire and ledger encoding. The **Antithesis** column marks the primitives the DWARF&rarr;Antithesis generator can carry onto the Antithesis backend (CBOR-only by design &mdash; `cbor_fuzz_*` strategies, the `runtime_aflpp_campaign` coverage surface, and the assertions mapped to native SDK checks); everything else runs on the local backend only.
 
-> Coverage: 202/202 primitives carry a curated description (100%). Any without one is still listed with its registry metadata. Regenerate with `scripts/gen_reference.py`.
+> Coverage: 204/204 primitives carry a curated description (100%). Any without one is still listed with its registry metadata. Regenerate with `scripts/gen_reference.py`.
 
 > **Every primitive here is fully implemented** (no stubs). The **verified** column is *evidence of exercise*, not an implementation claim: `full` = exercised by a full scenario, `smoke` = exercised by an example / smoke scenario; `cn` = cardano-node, `amaru` = Amaru. So `smoke · cn` means "implemented, and exercised at smoke depth on cardano-node" — not "half-built." Note on targets: the registry declares cardano-node + Amaru support broadly, but Amaru is currently *verified* only on the CBOR-decode surfaces and a mixed-substrate baseline (19 primitives); elsewhere it is implemented but not yet exercised against Amaru. Computed from `scenarios/` at build time.
 
@@ -82,13 +82,6 @@ What a scenario *does*. These run in the `load` phase.
 | `runtime_profile_restart_recovery` | Restart a node and verify recovery (profile flow). | dev | full · cn | — |
 
 
-### Coverage-guided fuzzing (American Fuzzy Lop plus-plus, AFL++)
-
-| primitive | purpose / pass-condition | runtimes | verified | Antithesis |
-|---|---|---|---|---|
-| `runtime_aflpp_campaign` | Run a coverage-guided AFL++ campaign against a built binary, then replay findings against decode targets. | lib | smoke · cn | ✓ |
-
-
 ### Epoch / era / hard-fork control
 
 | primitive | purpose / pass-condition | runtimes | verified | Antithesis |
@@ -165,6 +158,7 @@ What a scenario *does*. These run in the `load` phase.
 | `runtime_slow_loris_chainsync` | Slow-loris (byte-drip) a ChainSync connection to hold resources. | dev | smoke · cn | — |
 | `runtime_substitute_big_ledger_peers` | Substitute the big-ledger-peer set to probe Sybil/quorum resistance. | dev | smoke · cn | — |
 | `runtime_time_skew` | Skew a node's clock (libfaketime) for a duration to test time sensitivity. | dev | smoke · cn | — |
+| `runtime_tracer_capture` | Capture structured tracer output (cardano-tracer FileMode JSON / Prometheus) from the observed nodes over a window as evidence. | dev | full · cn | — |
 | `runtime_validation_path_differential` | Compare validation-path behaviour across implementations (differential). | dev | smoke · cn | — |
 
 
@@ -269,7 +263,8 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 |---|---|---|---|---|
 | `big_ledger_peer_quorum_intact` | PASS iff the observed big-ledger-peer subset still contains >= the required expected top peers. | dev·lib | smoke · cn | — |
 | `bootstrap_assumptions_safe` | PASS iff bootstrap assumptions remain explicit and downgrade-free. | dev·lib | smoke · cn | — |
-| `chain_select_consistent` | PASS iff every observed node chain-selects the same tip. | dev·lib | full · cn | — |
+| `chain_select_consistent` | Assert that every observed node agrees on the selected chain tip — a single-implementation Common-Prefix consistency oracle. | dev·lib | full · cn | — |
+| `chain_select_differential` | Cross-implementation Common-Prefix oracle: assert the reference node group (cardano-node) and the target group (Amaru) select the same canonical chain tip. A disagreement is a consensus divergence. | dev·lib | full · cn+amaru | — |
 | `chain_switch_consistent` | PASS iff all observed honest nodes reach the injected chain-switch tip. | dev·lib | smoke · cn | — |
 | `epoch_boundary_timing_within_bounds` | PASS iff the epoch boundary occurs within the configured slot window. | dev·lib | smoke · cn | — |
 | `hf_boundary_rule_consistent` | PASS iff all observed nodes apply one protocol version at the hard-fork boundary. | dev·lib | smoke · cn | — |
@@ -303,13 +298,6 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `snapshot_restore_succeeded` | PASS iff snapshot restore restarts the target node and recovers health. | dev | smoke · cn | — |
 | `substrate_checkpoint_recorded_clean` | PASS iff the substrate checkpoint is non-empty and the substrate restarts cleanly. | dev | smoke · cn | — |
 | `substrate_resume_succeeded` | PASS iff resume restores the checkpoint and recovers substrate health. | dev | smoke · cn | — |
-
-
-### Fuzzing harness
-
-| primitive | purpose / pass-condition | runtimes | verified | Antithesis |
-|---|---|---|---|---|
-| `aflpp_smoke_exit_clean` | PASS iff the AFL++ smoke run exits clean, meeting completed/queue/execs/cycles/bitmap-coverage floors. | lib | smoke · cn | ✓ |
 
 
 ### Mini-protocol & local inter-process-communication (IPC) behaviour
@@ -374,13 +362,14 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `plutus_phase2_isvalid_mismatch_rejected` | PASS iff a phase-2 IsValid mismatch is rejected with ValidationTagMismatch. | dev·lib | smoke · cn | — |
 
 
-## Setup primitives (3)
+## Setup primitives (4)
 
 | primitive | purpose / pass-condition | runtimes | verified | Antithesis |
 |---|---|---|---|---|
+| `runtime_attach_topology` | Attach to an already-running external topology (e.g. the upstream cardano_amaru mesh) as the runtime substrate, instead of provisioning a fresh one. | dev | full · cn | — |
 | `runtime_compose_substrate` | Bring up the docker-compose substrate and wait for health. | dev | full · cn+amaru | — |
 | `runtime_install_version` | Install/pin a specific node/implementation version into the runtime. | dev | full · cn+amaru | — |
-| `runtime_substrate_tip_warmup` | Warm a freshly-composed substrate until nodes reach a minimum tip/slot. | dev | smoke · cn+amaru | — |
+| `runtime_substrate_tip_warmup` | Warm a freshly-composed substrate until nodes reach a minimum tip/slot. | dev | full · cn+amaru | — |
 
 
 ## Probe primitives (1)
@@ -390,7 +379,7 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `parser_exit_status` | Per-input probe: record each iteration's outcome to probes/parser_exit_status.ndjson (newline-delimited JavaScript Object Notation). | lib | full · cn+amaru | ✓ |
 
 
-## Fault primitives (4)
+## Fault primitives (5)
 
 | primitive | purpose / pass-condition | runtimes | verified | Antithesis |
 |---|---|---|---|---|
@@ -398,6 +387,7 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `fault_local_port_drop` | Drop loopback traffic to one target port for the load duration (host iptables). | dev | full · cn | — |
 | `fault_node_freeze` | Freeze (SIGSTOP) a target node for a window, then resume. | dev | full · cn | — |
 | `runtime_byzantine_cardano_node` | Run a byzantine cardano-node proxy that mutates/downgrades protocol traffic. | dev | smoke · cn+amaru | — |
+| `runtime_network_partition` | Partition a node from the runtime network for a window (disconnect it from the docker network), then reconnect and settle — a runtime fault that exercises fork and recovery behaviour. | dev | full · cn | — |
 
 
 ## Teardown primitives (1)

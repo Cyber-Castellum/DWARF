@@ -32,21 +32,21 @@
     "network": "preview",
     "hosts": [
       {
-        "id": "cardano-box",
-        "ssh_target": "cardano-box",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
-        "published_host": "192.168.30.16"
+        "id": "remote-host",
+        "ssh_target": "remote-host",
+        "remote_runtime_base": "~/cardano-profiles",
+        "published_host": "203.0.113.10"
       },
       {
-        "id": "brabox",
-        "ssh_target": "brabox",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
+        "id": "remote-host-2",
+        "ssh_target": "remote-host-2",
+        "remote_runtime_base": "~/cardano-profiles",
         "published_host": "192.168.30.15"
       },
       {
         "id": "spark",
         "ssh_target": "spark",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
+        "remote_runtime_base": "~/cardano-profiles",
         "published_host": "192.168.30.152"
       }
     ],
@@ -56,238 +56,238 @@
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node2",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node3",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node4",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node5",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node6",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node7",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node8",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node9",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node10",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node11",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node12",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node13",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node14",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node15",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node16",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node17",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node18",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node19",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node20",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node21",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node22",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node23",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node24",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node25",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node26",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node27",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node28",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node29",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node30",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node31",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node32",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node33",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node34",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       },
       {
         "id": "node35",

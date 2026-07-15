@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 
 import json
@@ -28,11 +29,11 @@ PROFILE_A_CONFIG = RuntimeConfig(
     runtime_root=Path("/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled"),
     env_root=Path("/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled/env"),
     session="cardano-profile-a",
-    cardano_cli=Path("/home/nigel/.local/bin/cardano-cli"),
-    cardano_node=Path("/home/nigel/.local/bin/cardano-node"),
+    cardano_cli=Path(os.environ.get("CARDANO_CLI","cardano-cli")),
+    cardano_node=Path(os.environ.get("CARDANO_NODE","cardano-node")),
     network_magic="42",
-    blockfetch_bin="/home/nigel/dwarf-fw/targets/amaru/target/release/dwarf-amaru-runtime-blockfetch",
-    chainsync_bin="/home/nigel/amaru-verification/target/debug/amaru",
+    blockfetch_bin=os.environ.get("DWARF_AMARU_BLOCKFETCH_BIN","dwarf-amaru-runtime-blockfetch"),
+    chainsync_bin=os.environ.get("AMARU_BIN","amaru"),
     log_paths=(
         Path("/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled/logs/node3/stdout.log"),
         Path("/opt/dwarf/cardano-profiles/profile-a-haskell-peersharing-disabled/logs/node2/stdout.log"),

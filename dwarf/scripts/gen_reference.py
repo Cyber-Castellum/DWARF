@@ -338,6 +338,12 @@ DESC = {
 "fault_local_port_drop":"Drop loopback traffic to one target port for the load duration (host iptables).",
 "fault_node_freeze":"Freeze (SIGSTOP) a target node for a window, then resume.",
 "runtime_byzantine_cardano_node":"Run a byzantine cardano-node proxy that mutates/downgrades protocol traffic.",
+# consensus / chain-selection differential
+"runtime_attach_topology":"Attach to an already-running external topology (e.g. the upstream cardano_amaru mesh) as the runtime substrate, instead of provisioning a fresh one.",
+"runtime_tracer_capture":"Capture structured tracer output (cardano-tracer FileMode JSON / Prometheus) from the observed nodes over a window as evidence.",
+"runtime_network_partition":"Partition a node from the runtime network for a window (disconnect it from the docker network), then reconnect and settle — a runtime fault that exercises fork and recovery behaviour.",
+"chain_select_consistent":"Assert that every observed node agrees on the selected chain tip — a single-implementation Common-Prefix consistency oracle.",
+"chain_select_differential":"Cross-implementation Common-Prefix oracle: assert the reference node group (cardano-node) and the target group (Amaru) select the same canonical chain tip. A disagreement is a consensus divergence.",
 # teardown
 "runtime_teardown_substrate":"Tear down the substrate and record the outcome (runs regardless of pass/fail).",
 }

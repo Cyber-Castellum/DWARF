@@ -1,12 +1,13 @@
+import os
 from profile_manager.config import DeploymentConfig, save_config
 
 
 DEFAULTS = {
-    "deployment_name": "cardano-box",
-    "host": "192.168.30.16",
-    "ssh_user": "nigel",
-    "ssh_key_path": "/Users/nigel/.ssh/cardano-box",
-    "remote_base_path": "/home/nigel/cardano-profiles",
+    "deployment_name": "<remote-host>",
+    "host": "<box-lan-ip>",
+    "ssh_user": "USER",
+    "ssh_key_path": "/Users/USER/.ssh/<remote-host>",
+    "remote_base_path": os.path.expanduser("~/cardano-profiles"),
 }
 
 

@@ -8,7 +8,7 @@ INFO: seed corpus: files: 80 min: 120b max: 159b total: 11160b rss: 31Mb
 #81	INITED cov: 159 ft: 214 corp: 15/1926b exec/s: 0 rss: 35Mb
 #82	NEW    cov: 160 ft: 233 corp: 16/2055b lim: 142 exec/s: 0 rss: 36Mb L: 129/142 MS: 1 CopyPart-
 #83	NEW    cov: 161 ft: 252 corp: 17/2180b lim: 142 exec/s: 0 rss: 36Mb L: 125/142 MS: 1 ChangeByte-
-	NEW_FUNC[1/1]: 0x58e9108f73e0 in sc25519_is_canonical /home/nigel/src/cardano-c-deps/libsodium/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c:2647
+	NEW_FUNC[1/1]: 0x58e9108f73e0 in sc25519_is_canonical /home/USER/src/cardano-c-deps/libsodium/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c:2647
 #84	NEW    cov: 165 ft: 273 corp: 18/2316b lim: 142 exec/s: 0 rss: 37Mb L: 136/142 MS: 1 CrossOver-
 #89	NEW    cov: 166 ft: 274 corp: 19/2448b lim: 142 exec/s: 0 rss: 37Mb L: 132/142 MS: 5 CopyPart-ShuffleBytes-ChangeASCIIInt-ChangeBit-CMP- DE: "\001\020"-
 #91	NEW    cov: 167 ft: 275 corp: 20/2536b lim: 142 exec/s: 0 rss: 37Mb L: 88/142 MS: 2 CrossOver-EraseBytes-

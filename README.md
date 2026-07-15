@@ -13,7 +13,7 @@ It has two complementary halves:
 1. **Local framework** — a scenario-driven fuzz/test runner (Python `profile_manager`
    + `cardano-profile` CLI + web dashboard) that spins up containerized Cardano
    devnets (Haskell `cardano-node`, Rust `amaru`, or **mixed**), runs a catalog of
-   ~223 scenarios across ~8 capability families against them, and captures structured,
+   ~228 scenarios across ~8 capability families against them, and captures structured,
    replayable evidence. Profiles parameterize implementation, version, network,
    topology, and peer-sharing.
 2. **Antithesis bridge** — a generator that turns a CBOR-decode scenario into a
@@ -27,7 +27,7 @@ It has two complementary halves:
 
 ### Local fuzz testing
 
-The local catalog (`dwarf/scenarios/`, 223 YAML scenarios) spans these families:
+The local catalog (`dwarf/scenarios/`, 228 YAML scenarios) spans these families:
 
 | Family | What it exercises |
 |---|---|
@@ -188,7 +188,7 @@ Both hard serve-path shapes (tx-body, block) are now proven on Antithesis: a rea
 `cardano-node` connects to the `dwarf-adversary`, pulls structurally-mutated CBOR, and
 runs its decoder on it — with the adversary stable (no crash) and the run completing.
 
-**Local gates** (run on the cardano-box testnet, all green):
+**Local gates** (run on the <remote-host> testnet, all green):
 
 - `tools/sp3a_topology_eclipse_repro.sh` — block-fetch under single-network topology
   eclipse: `dwarf_served_mutated_block=69`, VRFKeyBadProof 0, RestartCount 0.
@@ -219,7 +219,7 @@ DWARF/
 ├── dwarf/
 │   ├── cardano-profile                  # CLI entrypoint
 │   ├── profile_manager/                 # framework + antithesis.py + antithesis_generator.py + moog.py
-│   ├── scenarios/                       # 223 scenario YAMLs (~8 families)
+│   ├── scenarios/                       # 228 scenario YAMLs (~8 families)
 │   ├── primitives/                      # primitive registry + schemas
 │   ├── profiles/                        # 12 profiles + templates/
 │   ├── bundles/                        # preserved bundle archives (runs/ evidence/ generated at runtime)

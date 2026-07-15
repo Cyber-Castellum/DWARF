@@ -13,15 +13,15 @@
     "network": "preview",
     "hosts": [
       {
-        "id": "cardano-box",
-        "ssh_target": "cardano-box",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
-        "published_host": "192.168.30.16"
+        "id": "remote-host",
+        "ssh_target": "remote-host",
+        "remote_runtime_base": "~/cardano-profiles",
+        "published_host": "203.0.113.10"
       },
       {
-        "id": "brabox",
-        "ssh_target": "brabox",
-        "remote_runtime_base": "/home/nigel/cardano-profiles",
+        "id": "remote-host-2",
+        "ssh_target": "remote-host-2",
+        "remote_runtime_base": "~/cardano-profiles",
         "published_host": "192.168.30.15"
       }
     ],
@@ -31,14 +31,14 @@
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "cardano-box"
+        "host": "remote-host"
       },
       {
         "id": "node2",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "brabox"
+        "host": "remote-host-2"
       }
     ],
     "topology": {

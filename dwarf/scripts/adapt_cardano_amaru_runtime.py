@@ -89,7 +89,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--network-magic", type=int, default=42)
     ap.add_argument("--cardano-node-version", default="10.7.1")
     ap.add_argument("--amaru-version", default="0.1.2")
-    ap.add_argument("--runtime-root", default="/home/nigel/cardano-node-antithesis/testnets/cardano_amaru")
+    ap.add_argument("--runtime-root", default=os.path.expanduser("~/cardano-node-antithesis/testnets/cardano_amaru"))
     ap.add_argument("--require-all", action="store_true",
                     help="fail if any of p1/p2/p3/relay1/relay2 is not running")
     args = ap.parse_args(argv)

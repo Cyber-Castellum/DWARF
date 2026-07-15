@@ -174,19 +174,19 @@ def _candidate_binaries(impl: str, version: str, *, which: Callable[[str], str |
     if impl == "cardano-node":
         for candidate in (
             which("cardano-node"),
-            f"/home/nigel/.local/bin/cardano-node-{version}",
-            f"/home/nigel/cardano-node-versions/{version}/bin/cardano-node",
-            "/home/nigel/.local/bin/cardano-node",
+            f"/home/USER/.local/bin/cardano-node-{version}",
+            f"/home/USER/cardano-node-versions/{version}/bin/cardano-node",
+            "/home/USER/.local/bin/cardano-node",
         ):
             if candidate and candidate not in paths:
                 paths.append(candidate)
     else:
         for candidate in (
             which("amaru"),
-            f"/home/nigel/.local/bin/amaru-{version}",
-            f"/home/nigel/amaru-versions/{version}/bin/amaru",
-            "/home/nigel/amaru-verification/target/release/amaru",
-            "/home/nigel/amaru-verification/target/debug/amaru",
+            f"/home/USER/.local/bin/amaru-{version}",
+            f"/home/USER/amaru-versions/{version}/bin/amaru",
+            "/home/USER/amaru-verification/target/release/amaru",
+            "/home/USER/amaru-verification/target/debug/amaru",
         ):
             if candidate and candidate not in paths:
                 paths.append(candidate)

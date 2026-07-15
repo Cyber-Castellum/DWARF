@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exhaustive chain-selection differential sweep (smoke -> exhaustive template).
+import os
 
 Drives the induced-fork differential across a GRID of partition depths and repeated
 trials against the upstream cardano_amaru topology, verifying at every point:
@@ -116,7 +117,7 @@ def main(argv):
     ap.add_argument("--depths", default="15,30,60,120", help="partition_seconds grid.")
     ap.add_argument("--trials", type=int, default=1, help="trials per depth.")
     ap.add_argument("--settle", type=float, default=75)
-    ap.add_argument("--topo-dir", default="/home/nigel/cardano-node-antithesis")
+    ap.add_argument("--topo-dir", default=os.path.expanduser("~/cardano-node-antithesis"))
     ap.add_argument("--out", default="/tmp/consensus-sweep-results.json")
     args = ap.parse_args(argv)
     depths = [int(x) for x in args.depths.split(",") if x.strip()]

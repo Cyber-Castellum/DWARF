@@ -1,6 +1,6 @@
 # Thin runtime image for dwarf-adversary.
 #
-# The dwarf-adversary binary is built on the host (cardano-box: Ubuntu
+# The dwarf-adversary binary is built on the host (<remote-host>: Ubuntu
 # 24.04, GHC 9.6.7 via ghcup, CHaP) — see build-image.sh, which stages
 # the binary plus the IOG-patched C libs into ./dist before this build.
 # We deliberately do NOT recompile the Cardano stack inside Docker (that

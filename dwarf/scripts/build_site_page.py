@@ -221,7 +221,7 @@ PROFILES = f"""
 <p class="ref-p">The substrate is <em>mode-agnostic</em> &mdash; the observation tiles look identical across modes; only performance, isolation, and reachability differ.</p>
 <h4 class="ref-h4">What a profile holds</h4>
 <div class="ref-tablewrap"><table class="ref-table"><thead><tr><th>field</th><th>meaning</th></tr></thead><tbody>
-<tr><td><code>deployment_name</code></td><td>Human label for the deployment (e.g. <code>cardano-box</code>).</td></tr>
+<tr><td><code>deployment_name</code></td><td>Human label for the deployment (e.g. <code><remote-host></code>).</td></tr>
 <tr><td><code>host</code> · <code>ssh_user</code> · <code>ssh_key_path</code></td><td>How DWARF reaches the deployment box over SSH.</td></tr>
 <tr><td><code>remote_base_path</code></td><td>Remote directory for deployment artifacts.</td></tr>
 <tr><td><code>docker_registry</code></td><td>Default registry prefix for framework images.</td></tr>

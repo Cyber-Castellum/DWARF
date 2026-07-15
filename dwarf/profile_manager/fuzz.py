@@ -151,7 +151,7 @@ def _override_campaign_seconds(command: str, seconds_override: int | None) -> st
 
 def _normalize_remote_command(command: str) -> str:
     command = command.replace("python3 dwarf/scripts/", "python3 scripts/")
-    command = command.replace("/home/nigel/dwarf-fw/dwarf/", "/home/nigel/dwarf-fw/")
+    command = command.replace("/home/USER/dwarf-fw/dwarf/", "/home/USER/dwarf-fw/")
     return command
 
 
@@ -175,7 +175,7 @@ echo "WORKING_DIRECTORY={fuzz.working_directory}"
 echo "TIMEOUT_SECONDS={fuzz.timeout_seconds}"
 echo "No public Cardano network is contacted by this fuzz manifest."
 cd {shlex.quote(fuzz.working_directory)}
-export PATH=/home/nigel/.local/bin:$PATH
+export PATH=/home/USER/.local/bin:$PATH
 {exports}
 {command_lines}
 """
