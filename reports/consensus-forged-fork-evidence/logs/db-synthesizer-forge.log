@@ -1,0 +1,8 @@
+--> forger count: 1
+--> opening ChainDB on file system with mode: OpenAppend
+--> starting at: SlotNo 185984
+--> epoch size: EpochSize 125
+--> will process until: ForgeLimitSlot (SlotNo 600)
+--> forged and adopted 53 blocks; reached SlotNo 186584
+--> done; result: ForgeResult {resultForged = 53}
+SYNTH_EXIT=0

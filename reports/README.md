@@ -49,6 +49,17 @@ Results from the DWARF fuzzing campaigns against `cardano-node` (local + Antithe
   `Amaru` **refuse identically** (selected tip never regresses > k). ~3 h soak: 91 injections into
   cardano-node, 92 into Amaru, **0 regressions, 0 divergences**. Backing logs/harness in
   `consensus-differential-evidence/`.
+- `dwarf-consensus-long-range-forged-fork-differential.html` — the **costless-simulation**
+  long-range attack: a **real, validly-signed, longer** alternative chain (forged with the node's
+  own KES/VRF/opcert via `db-truncater`/`db-synthesizer`, branching 20 blocks > k back) is served
+  to both implementations. Both **refuse** and keep the honest chain — **no divergence** (Praos
+  k-limit against a real forged fork; LoE/GDD disabled = pure Praos on this devnet). Backing
+  pipeline/logs in `consensus-forged-fork-evidence/`.
+- `dwarf-consensus-genesis-follow-on-amaru-finding.html` — the **Genesis-enabled follow-on**
+  + Amaru chain-selection finding: `cardano-node` Genesis (LoE/GDD) works; **Amaru is Praos-only**;
+  both refuse the forged fork; **no reproducible Genesis-vs-Praos divergence** (shared k-limit). Two
+  behavioural differences flagged for the Amaru team (Praos-only; shallow chain-sync intersect) —
+  see `consensus-forged-fork-evidence/finding-amaru-chain-selection.md`.
 
 ## Local coverage-guided soak (`8h-exhaustive-campaign/`)
 
@@ -88,3 +99,16 @@ per-scenario write-ups; `scripts/` holds `consensus_4h_runner.py`, the eclipse h
 (`docker-compose.lr-eclipse.yaml`, `relay-lr-topology.json`), the adversary's
 `deepRollbackChainSyncServer`, and the differential oracles. Also bundled as
 `consensus-differential-evidence.tar.gz`. No credentials present.
+
+## Consensus forged-fork + Genesis follow-on evidence (`consensus-forged-fork-evidence/`)
+
+Backs the forged-fork campaign report and the Amaru finding note. The **costless-simulation**
+forging pipeline (`ouroboros-consensus-cardano` `db-truncater` + `db-synthesizer` + `immdb-server`)
+forges a real, validly-signed alternative chain in logical slot time — `logs/db-synthesizer-forge.log`
+(**"forged and adopted 53 blocks"**), `scripts/` (build/forge/serve + the real-relay harness and the
+Genesis-vs-Praos oracle). Result: both `cardano-node` and `Amaru` refuse the forged fork. The
+Genesis-enabled follow-on (`logs/genesis-vs-praos-probe.log`) confirms `cardano-node` GenesisMode
+(LoE/GDD) works and **Amaru is Praos-only**, but finds **no reproducible divergence** on the 2-peer
+devnet (the shared k-limit governs the deep-fork decision). `finding-amaru-chain-selection.md` — the
+finding note for the Amaru team (Praos-only; shallow chain-sync intersect; recommendations). No
+credentials present.

@@ -1,0 +1,68 @@
+# Plan B — Amaru differential via REAL cardano-node relays (Amaru peers cleanly
+# with cardano-node; it choked on immdb-server). Two relays serve seeded static
+# chains; Amaru is seeded at honest block 30520 (phase 1) then offered the forged
+# fork (phase 2) and its chain-selection decision is the differential vs cardano-node.
+#   Phase 1 (seed Amaru to 30520): up honest-relay amaru-victim
+#   Phase 2 (offer fork): up attacker-relay ; then recreate amaru-victim with fork peer
+services:
+  honest-relay:
+    image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+    container_name: pb-honest-relay
+    hostname: honest-relay.example
+    restart: always
+    command: >
+      run --topology /configs/configs/topology.json --config /configs/configs/config.json
+      --database-path /state --socket-path /state/node.socket --port 3001 --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+    volumes:
+      - /tmp/planB/honest-relay:/state
+      - /tmp/planB/configs:/configs/configs:ro
+      - /tmp/planB/honest-relay-topology.json:/configs/configs/topology.json:ro
+    networks:
+      planb-net:
+        aliases: [honest-relay.example]
+
+  attacker-relay:
+    image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+    container_name: pb-attacker-relay
+    hostname: attacker-relay.example
+    restart: always
+    command: >
+      run --topology /configs/configs/topology.json --config /configs/configs/config.json
+      --database-path /state --socket-path /state/node.socket --port 3001 --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+    volumes:
+      - /tmp/planB/fork-relay:/state
+      - /tmp/planB/configs:/configs/configs:ro
+      - /tmp/planB/fork-relay-topology.json:/configs/configs/topology.json:ro
+    networks:
+      planb-net:
+        aliases: [attacker-relay.example]
+
+  amaru-victim:
+    image: ghcr.io/lambdasistemi/amaru-bootstrap-producer:03d2727b71e8d1fe7c793d5036dce3c3ce294f6c
+    container_name: pb-amaru-victim
+    hostname: amaru-victim.example
+    restart: always
+    environment:
+      AMARU_LOG: info
+      AMARU_PEER: "attacker-relay.example:3001"
+    entrypoint: [/bin/sh]
+    command: ["-c", "exec /entry.sh"]
+    volumes:
+      - cardano_amaru_amaru-bundle:/bundle:ro
+      - /home/nigel/cardano-node-antithesis/testnets/cardano_amaru/amaru-runtime:/amaru-runtime:ro
+      - pb-amaru-state:/srv/amaru
+      - /tmp/planB/amaru-victim-entry.sh:/entry.sh:ro
+    networks:
+      planb-net:
+        aliases: [amaru-victim.example]
+
+networks:
+  planb-net:
+    driver: bridge
+
+volumes:
+  pb-amaru-state: null
+  cardano_amaru_amaru-bundle:
+    external: true

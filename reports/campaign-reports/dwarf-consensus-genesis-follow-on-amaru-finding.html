@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DWARF — Genesis Follow-On & Amaru Chain-Selection Finding</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 22px 70px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.warn{color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .num{text-align:right;font-family:var(--mono)}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid}}
+</style></head><body><div class="wrap">
+  <h1>DWARF — Genesis Follow-On &amp; Amaru Chain-Selection Finding</h1>
+  <div class="sub">cardano-node (Ouroboros Genesis) vs Amaru (Praos) chain-selection on the <code>cardano_amaru</code> devnet · generated 2026-07-17</div>
+
+  <div class="hero">Across the full consensus differential suite — a 4-hour chain-selection soak (466 iterations, 0 divergences), a deep-rollback differential, and a costless-simulation forged-fork differential — <b>cardano-node and Amaru reached the same chain-selection decision every time. No consensus-safety divergence.</b> The Genesis-enabled follow-on surfaced <b>two implementation differences</b> worth the Amaru team's attention — not bugs, but real behavioural differences in chain-selection.</div>
+
+  <h2>Finding 1 — Amaru implements Praos only; no Ouroboros Genesis</h2>
+  <div class="card"><code>cardano-node</code> runs Ouroboros <b>Genesis</b> (<code>ConsensusMode: GenesisMode</code> — LoE + GDD + CSJ + ChainSync LoP bucket); we enabled it on the devnet and confirmed it initialises and syncs. <code>Amaru</code> shows <b>no Genesis support</b> — no consensus-mode flag, no Genesis/GDD/density options, env, or binary symbols; its only chain-selection parameters are Praos (security-param k, active-slot-coeff, KES). <span class="chip warn">different chain-selection rules</span> As the network activates Genesis, a Praos-only node uses the older longest-chain + k-limit rule; Genesis' distinctive protection (defeating a long-range/eclipse attacker that offers a longer-but-sparser chain to a <i>bootstrapping</i> node) is a mainnet-scale, many-peer scenario a devnet cannot reproduce.</div>
+
+  <h2>Finding 2 — Shallow chain-sync intersect (~k recent points)</h2>
+  <div class="card">On <code>MsgFindIntersect</code>, Amaru offers only its ~k most-recent chain points. Consequences observed repeatedly: (1) it <b>cannot engage a fork that branches more than ~k blocks back</b> — responds <code>intersect not found</code> and drops the peer (conservative/safe, but it will not evaluate a deep alternative); (2) it is <b>finicky syncing from non-cardano-node servers</b> — it synced cleanly from real cardano-node relays but failed against the consensus tool <code>immdb-server</code>, where <code>cardano-node</code> (which offers intersect points geometrically deep) had no trouble.</div>
+
+  <h2>Test results — both implementations agree</h2>
+  <div class="card">
+  <table>
+    <tr><th>Test</th><th>Result</th></tr>
+    <tr><td>Chain-selection differential (4h × 5 regimes)</td><td class="ok">466 iterations, 0 divergences</td></tr>
+    <tr><td>Deep-rollback differential (commanded > k rollback)</td><td class="ok">both refuse identically (~91/92 injections, 0 regressions)</td></tr>
+    <tr><td>Forged-fork differential (real validly-signed longer fork)</td><td class="ok">both refuse identically — no divergence</td></tr>
+    <tr><td>Genesis vs Praos divergence probe</td><td class="ok">no reproducible divergence</td></tr>
+  </table>
+  <p class="muted" style="margin:.4rem 0 0">The forged fork was produced with the node's own KES/VRF/opcert via <code>db-truncater</code>/<code>db-synthesizer</code> in logical slot time (sidestepping the wall-clock/KES-exhaustion wall). A fresh Praos Amaru pointed only at the adversary <i>does</i> adopt the forged chain — confirming it is a valid, adoptable chain end-to-end — but a Genesis node under the same full eclipse would too (GDD needs an honest peer to compare against).</p>
+  </div>
+
+  <h2>Why no divergence (the honest conclusion)</h2>
+  <div class="card">The <b>k-rollback limit is shared by both implementations and both consensus modes</b>, so it governs the deep-fork/incumbent decision regardless of Praos vs Genesis. A fork Amaru can engage (within k) is not one GDD would distinctively reject; a fork GDD would distinctively reject (deep, sparse) is one Amaru's k-limit already refuses. The two conditions contradict, so no clean deterministic divergence is constructible on a 2-peer devnet.</div>
+
+  <h2>Recommendations</h2>
+  <div class="card"><b>1.</b> Confirm whether Ouroboros Genesis is on Amaru's roadmap — a Praos-only node has weaker bootstrapping/long-range protection than cardano-node once mainnet activates Genesis. <b>2.</b> Review chain-sync intersect-point selection (offer points geometrically deep, as cardano-node does) — improves interop and lets Amaru evaluate (and correctly reject) deeper forks rather than dropping the peer. <b>3.</b> The harness (forging pipeline + real-relay serving + differential oracle) is reusable against a Genesis-enabled, multi-peer topology to probe the density rule at scale.</div>
+</div></body></html>
