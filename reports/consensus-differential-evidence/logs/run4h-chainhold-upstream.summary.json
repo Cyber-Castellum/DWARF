@@ -1,0 +1,9 @@
+{
+  "scenario": "consensus-chainhold-upstream-differential.yaml",
+  "iterations": 80,
+  "passed": 80,
+  "failed": 0,
+  "errored": 0,
+  "duration_s": 14432.8,
+  "finished_ts": 1784119811
+}

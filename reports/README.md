@@ -36,6 +36,19 @@ Results from the DWARF fuzzing campaigns against `cardano-node` (local + Antithe
   above is the full set of all 29 runs.)
 - `dwarf-8h-exhaustive-sancov-campaign.html` — the 9-surface native-SanCov local deep-dive
   (self-contained HTML view of `8h-exhaustive-campaign/`).
+- `dwarf-consensus-chain-selection-differential-campaign.html` — the **cross-implementation
+  chain-selection differential** on the upstream `cardano_amaru` mesh: does `cardano-node` ever
+  disagree with the Rust `Amaru` node on which chain is canonical? A node-agnostic Common-Prefix
+  oracle across five regimes (honest reorg, within-k partition recovery, epoch boundary, VRF
+  tiebreak, private-fork-under-delay), each looped **4 h**. **466 iterations, 0 genuine
+  divergences** (9 stage1 flags are benign 1-slot intra-Amaru propagation jitter). Backing
+  logs/scripts in `consensus-differential-evidence/`.
+- `dwarf-consensus-long-range-attack-differential.html` — the **long-range deep-rollback
+  rejection differential**: each node is eclipsed behind a chain-serving adversary that, once the
+  node is caught up, injects an exact 10-block (> k=5) `MsgRollBackward`. Both `cardano-node` and
+  `Amaru` **refuse identically** (selected tip never regresses > k). ~3 h soak: 91 injections into
+  cardano-node, 92 into Amaru, **0 regressions, 0 divergences**. Backing logs/harness in
+  `consensus-differential-evidence/`.
 
 ## Local coverage-guided soak (`8h-exhaustive-campaign/`)
 
@@ -61,3 +74,17 @@ validation-bypass battery builders). Also bundled as `fuzzing-correctness-eviden
 credentials present.
 
 Raw AFL fuzzer logs: `../raw/logs/`.
+
+## Consensus differential evidence (`consensus-differential-evidence/`)
+
+Summaries + heartbeats + harness backing the two consensus differential campaign reports
+(`campaign-reports/dwarf-consensus-chain-selection-differential-campaign.html` and
+`…-long-range-attack-differential.html`). `logs/run4h-*.summary.json` + `…heartbeat.jsonl` are
+the per-scenario 4-hour soak tallies (chainhold 80/80, epoch-boundary 94/94, rollback 47/47,
+stage1 145/154 with 9 benign 1-slot jitter flags, threshold 91/91 = **466 iterations, 0 genuine
+divergences**); `logs/longrange-deep-rollback-soak.log` is the long-range deep-rollback soak
+(91/92 injections, 0 > k regressions). `scenario-reports/consensus-report-*.md` are the
+per-scenario write-ups; `scripts/` holds `consensus_4h_runner.py`, the eclipse harness
+(`docker-compose.lr-eclipse.yaml`, `relay-lr-topology.json`), the adversary's
+`deepRollbackChainSyncServer`, and the differential oracles. Also bundled as
+`consensus-differential-evidence.tar.gz`. No credentials present.

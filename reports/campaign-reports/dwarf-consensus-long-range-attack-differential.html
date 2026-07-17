@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DWARF — cardano-node vs Amaru Long-Range Deep-Rollback Differential</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 22px 70px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .num{text-align:right;font-family:var(--mono)}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid}}
+</style></head><body><div class="wrap">
+  <h1>DWARF — cardano-node vs Amaru Long-Range Deep-Rollback Differential</h1>
+  <div class="sub">Cross-implementation consensus safety test on the upstream <code>cardano_amaru</code> mesh · chain-serving adversary + eclipse · repeating soak · generated 2026-07-16</div>
+
+  <div class="hero">The core long-range safety rule in Ouroboros: <b>an honest, already-synced node must never roll back more than the security parameter k</b> (here k=5) — even when told to by its only source of the chain. Accepting a deeper rollback abandons settled history. DWARF eclipses each node behind a chain-serving adversary that, once the node is caught up to the real tip, injects a rollback <b>10 blocks deep (&gt; k)</b>. The differential question: <b>does the new Amaru node enforce the k-bound identically to cardano-node?</b> Across a repeating soak of <b>91–92 injections per implementation</b>, <b>both refused every time. Zero divergences.</b></div>
+
+  <div class="card"><b>Substrate.</b> The real upstream <code>cardano_amaru</code> topology (k=5, epoch 125 slots, active-slot-coeff 0.2, Conway at epoch 0). Each target node is isolated on its own bridge network so its <b>only</b> upstream peer is a <code>dwarf-adversary</code> chain-serving instance, which sources the real honest chain from producer <code>p1</code> and re-serves it. cardano-node target: a fresh eclipsed <code>relay-lr</code>. Amaru target: <code>amaru-lr</code>, seeded from an already-synced Amaru database so it starts <i>at the tip</i> — a long-range attack targets a running, synced node.</div>
+
+  <h2>Result</h2>
+  <div class="card">
+  <table>
+    <tr><th>Implementation</th><th>Stimulus</th><th>Reaction</th><th class="num">Injections</th><th class="num">Regressions&gt;k</th></tr>
+    <tr><td>cardano-node (<code>relay-lr</code>)</td><td>MsgRollBackward 10 blocks (&gt; k)</td><td class="ok">Refused — tip held, dropped peer (MsgDone)</td><td class="num">91–92</td><td class="num ok">0</td></tr>
+    <tr><td><b>Amaru</b> (<code>amaru-lr</code>)</td><td>MsgRollBackward 10 blocks (&gt; k)</td><td class="ok">Refused — tip advanced monotonically, no deep roll-back</td><td class="num">91–92</td><td class="num ok">0</td></tr>
+    <tr><td colspan="2"><b>Differential verdict</b></td><td class="ok"><b>AGREE — both refuse; no divergence</b></td><td class="num"></td><td class="num ok"><b>0</b></td></tr>
+  </table>
+  <p class="muted" style="margin:.4rem 0 0">Oracle: per target, the selected tip must never regress more than k below the maximum height it reached after an injection. A regression &gt; k = accepted deep rollback = safety violation. Neither implementation regressed on any cycle.</p>
+  </div>
+
+  <h2>Method</h2>
+  <div class="card"><b>Eclipse:</b> the node under test reaches ONLY the adversary (a true eclipse — its topology / <code>--peer-address</code> lists the adversary alone). <b>Adversary:</b> <code>dwarf-adversary --protocol blockfetch --upstream p1.example:3001 --mutation-rate 0</code> serves the real chain so the node stays caught up. <b>Stimulus:</b> <code>deepRollbackChainSyncServer</code> — once the node is at the honest tip (<code>--rollback-min-tip</code>), inject one <code>MsgRollBackward</code> exactly <code>--rollback-depth 10</code> blocks behind the head (&gt; k), then resume serving; <code>--rollback-repeat-secs 120</code> re-arms it every 2 min for the soak. A regression monitor samples both nodes' tips continuously and alerts on any &gt; k drop.</div>
+
+  <h2>Amaru note</h2>
+  <div class="card">Amaru is seeded from an already-synced database rather than cold-synced through the adversary. This is deliberate and faithful to the threat model (the victim of a long-range attack is a running, synced node). It also sidesteps an orthogonal issue: cold-syncing Amaru through the adversary fails on header validation, because Amaru's header check requires per-epoch stake distributions that its ledger has not yet computed during bulk sync — unrelated to the rollback property under test.</div>
+
+  <h2>Bottom line</h2>
+  <div class="card">On the deep-rollback regime, <b>the new Amaru node enforces the k-rollback safety bound exactly as cardano-node does</b> — a <span class="ok">positive consensus-equivalence result</span> on a from-scratch reimplementation. A divergence would have been a genuine finding; identical safe behavior is the reassuring one, and the harness is now a repeatable soak that would catch a future regression in either implementation. Scope: this is the <b>deep-rollback rejection</b> variant; the heavier <i>costless-simulation</i> long-range attack (forging a longer valid chain to exercise Genesis density-based selection) is the follow-on.</div>
+</div></body></html>

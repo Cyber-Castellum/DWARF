@@ -1,0 +1,152 @@
+# Long-range (Plan A) eclipse override — ADDITIVE.
+# Adds a fresh eclipsed cardano-node (relay-lr) whose ONLY peer is the
+# dwarf-adversary, plus the adversary itself (bridges the testnet net to source a
+# real chain from p1, and the eclipse-lr net to serve relay-lr). Touches no
+# running service.
+#   Bring up ONLY the new services (do not recreate the running stack):
+#   docker compose -p cardano_amaru \
+#     -f docker-compose.yaml -f docker-compose.lr-eclipse.yaml \
+#     up -d dwarf-adversary relay-lr
+services:
+  dwarf-adversary:
+    image: ghcr.io/j-gainsec/dwarf-adversary:lr
+    container_name: dwarf-adversary-lr
+    hostname: dwarf-adversary.example
+    restart: always
+    command:
+      - --network-magic
+      - "42"
+      - --listen-port
+      - "3001"
+      - --protocol
+      - blockfetch
+      - --upstream
+      - p1.example:3001
+      - --mutation-rate
+      - "0"
+      - --rollback-depth
+      - "10"
+      - --rollback-min-tip
+      - "22967"
+      - --rollback-repeat-secs
+      - "120"
+      - --seed
+      - "0x10a9"
+    networks:
+      default:
+        aliases:
+          - dwarf-adversary.example
+      eclipse-lr:
+        aliases:
+          - dwarf-adversary.example
+
+  relay-lr:
+    image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+    container_name: relay-lr
+    hostname: relay-lr.example
+    restart: always
+    command: >
+      run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+    volumes:
+      - p1-configs:/configs:ro
+      - ./relay-lr-topology.json:/configs/configs/topology.json:ro
+      - relay-lr-state:/state
+      - tracer:/tracer
+    networks:
+      - eclipse-lr
+
+  # --- A3 differential: eclipsed Amaru node with its OWN adversary ---
+  dwarf-adversary-amaru:
+    image: ghcr.io/j-gainsec/dwarf-adversary:lr
+    container_name: dwarf-adversary-amaru
+    hostname: dwarf-adversary-amaru.example
+    restart: always
+    command:
+      - --network-magic
+      - "42"
+      - --listen-port
+      - "3001"
+      - --protocol
+      - blockfetch
+      - --upstream
+      - p1.example:3001
+      - --mutation-rate
+      - "0"
+      - --rollback-depth
+      - "10"
+      - --rollback-min-tip
+      - "22967"
+      - --rollback-repeat-secs
+      - "120"
+      - --seed
+      - "0x20b2"
+    networks:
+      default:
+        aliases:
+          - dwarf-adversary-amaru.example
+      eclipse-amaru:
+        aliases:
+          - dwarf-adversary-amaru.example
+
+  amaru-lr:
+    image: ghcr.io/lambdasistemi/amaru-bootstrap-producer:03d2727b71e8d1fe7c793d5036dce3c3ce294f6c
+    container_name: amaru-lr
+    hostname: amaru-lr.example
+    restart: always
+    entrypoint:
+      - /bin/sh
+    environment:
+      AMARU_LOG: info
+      AMARU_TRACE: info
+      AMARU_COLOR: never
+    command:
+      - -c
+      - |
+        set -eu
+        if [ ! -d /srv/amaru/ledger.testnet_42.db ] || [ ! -d /srv/amaru/chain.testnet_42.db ]; then
+          until [ -d /bundle/testnet_42/ledger.testnet_42.db ] && [ -d /bundle/testnet_42/chain.testnet_42.db ]; do
+            sleep 10
+          done
+          find /srv/amaru -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          cp -rL /bundle/testnet_42/. /srv/amaru/
+        fi
+        mkdir -p /startup
+        printf '%s\n' "$${HOSTNAME:-amaru-lr.example}" > /startup/amaru-lr.started
+        export AMARU_GLOBAL_CONSENSUS_SECURITY_PARAM=5
+        export AMARU_GLOBAL_ACTIVE_SLOT_COEFF_INVERSE=5
+        export AMARU_GLOBAL_EPOCH_LENGTH_SCALE_FACTOR=5
+        export AMARU_GLOBAL_MAX_LOVELACE_SUPPLY=45000000000000000
+        export AMARU_GLOBAL_SLOTS_PER_KES_PERIOD=129600
+        export AMARU_GLOBAL_MAX_KES_EVOLUTION=62
+        export AMARU_GLOBAL_SYSTEM_START=0
+        exec /bin/amaru run \
+          --network testnet_42 \
+          --ledger-dir /srv/amaru/ledger.testnet_42.db \
+          --chain-dir /srv/amaru/chain.testnet_42.db \
+          --era-history /amaru-runtime/era-history.json \
+          --listen-address 0.0.0.0:3001 \
+          --peer-address dwarf-adversary-amaru.example:3001
+    volumes:
+      - amaru-bundle:/bundle:ro
+      - ./amaru-runtime:/amaru-runtime:ro
+      - amaru-startup:/startup
+      - a-lr-state:/srv/amaru
+    networks:
+      - eclipse-amaru
+
+networks:
+  eclipse-lr:
+    driver: bridge
+  eclipse-amaru:
+    driver: bridge
+
+volumes:
+  relay-lr-state: null
+  a-lr-state: null

@@ -1,0 +1,9 @@
+{
+  "scenario": "consensus-rollback-recovery-within-k-differential.yaml",
+  "iterations": 47,
+  "passed": 47,
+  "failed": 0,
+  "errored": 0,
+  "duration_s": 14561.4,
+  "finished_ts": 1784186594
+}

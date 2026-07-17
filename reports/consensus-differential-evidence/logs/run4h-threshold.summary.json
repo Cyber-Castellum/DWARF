@@ -1,0 +1,9 @@
+{
+  "scenario": "consensus-threshold-delay-probe.yaml",
+  "iterations": 91,
+  "passed": 91,
+  "failed": 0,
+  "errored": 0,
+  "duration_s": 14416.9,
+  "finished_ts": 1784171966
+}

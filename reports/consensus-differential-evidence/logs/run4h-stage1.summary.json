@@ -1,0 +1,9 @@
+{
+  "scenario": "consensus-chainhold-differential-stage1-tiebreak.yaml",
+  "iterations": 154,
+  "passed": 145,
+  "failed": 9,
+  "errored": 0,
+  "duration_s": 14443.6,
+  "finished_ts": 1784171993
+}

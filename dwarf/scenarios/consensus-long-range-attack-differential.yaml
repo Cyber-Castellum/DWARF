@@ -1,0 +1,68 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-long-range-attack-differential",
+  "title": "Long-range deep-rollback rejection differential (S1) — cardano-node and Amaru both refuse a >k rollback from their sole peer",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "long-range",
+    "rollback",
+    "deep-fork",
+    "security-parameter-k",
+    "differential",
+    "chain-selection",
+    "amaru",
+    "eclipse",
+    "chain-serving-adversary",
+    "upstream-topology"
+  ],
+  "evidence_intent": "candidate",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x10a9",
+  "iterations": 1,
+  "shrink": false,
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42,
+    "security_parameter_k": 5
+  },
+  "harness": {
+    "note": "Executed via the additive eclipse compose harness (docker-compose.lr-eclipse.yaml), NOT the primitive runner: the deep-rollback stimulus is delivered over the real node-to-node chain-sync protocol by the dwarf-adversary chain-serving upstream, which the standard primitive set does not model.",
+    "components": {
+      "eclipse": "Each target node is isolated on its own bridge network so its ONLY upstream peer is a dwarf-adversary instance. cardano-node target: fresh relay-lr with topology -> dwarf-adversary only. Amaru target: amaru-lr, --peer-address dwarf-adversary-amaru.example:3001, seeded from an already-synced Amaru rocksdb so it starts AT the honest tip (a long-range attack targets a running, synced node, not a bootstrapping one).",
+      "adversary": "dwarf-adversary (image :lr), --protocol blockfetch --upstream p1.example:3001 --mutation-rate 0, sources the real honest chain from p1 and serves it so the eclipsed node stays caught up.",
+      "stimulus": "deepRollbackChainSyncServer: once the eclipsed node is caught up to the true honest tip (--rollback-min-tip), inject one MsgRollBackward exactly --rollback-depth (=10) blocks behind the served head (> k=5). --rollback-repeat-secs re-arms it for a durable soak."
+    }
+  },
+  "oracle": {
+    "safety_property": "No honest node rolls back more than k blocks. A correct chain-sync client refuses a rollback whose target sits beyond its k-bounded candidate fragment (in its immutable DB) and keeps its selected chain.",
+    "differential": "cardano-node and Amaru must make the identical decision. A divergence (one refuses, one accepts) is the finding.",
+    "measure": "Per target: the selected tip must never regress more than k below the maximum height it reached after an injection. A regression > k = accepted deep rollback = safety violation."
+  },
+  "assertions": [
+    {
+      "primitive": "deep_rollback_refused",
+      "target_node_ids": [ "relay-lr" ],
+      "security_parameter_k": 5,
+      "rollback_depth": 10
+    },
+    {
+      "primitive": "deep_rollback_refused",
+      "target_node_ids": [ "amaru-lr" ],
+      "security_parameter_k": 5,
+      "rollback_depth": 10
+    },
+    {
+      "primitive": "differential_agree",
+      "reference_node_ids": [ "relay-lr" ],
+      "target_node_ids": [ "amaru-lr" ]
+    }
+  ],
+  "teardown": []
+}
