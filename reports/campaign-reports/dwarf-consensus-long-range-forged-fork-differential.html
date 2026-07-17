@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DWARF — cardano-node vs Amaru Long-Range Forged-Fork Differential</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 22px 70px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--accent)}
+  table{border-collapse:collapse;width:100%;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .num{text-align:right;font-family:var(--mono)}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid}}
+</style></head><body><div class="wrap">
+  <h1>DWARF — cardano-node vs Amaru Long-Range Forged-Fork Differential</h1>
+  <div class="sub">Costless-simulation long-range attack: forge a real, longer alternative chain and test both implementations' chain-selection · generated 2026-07-17</div>
+
+  <div class="hero">The strong form of the long-range attack: instead of merely <i>commanding</i> a rollback, the attacker <b>forges a genuinely valid, longer alternative chain</b> that branches &gt; k blocks in the past and presents it. Does an honest node adopt this better-looking forged history (a &gt; k rollback), or refuse — and <b>does the new Amaru node decide identically to cardano-node?</b> Both nodes, seeded on the honest chain at block 30520 and offered the forged fork (tip 30553, forking 20 blocks back), <b>REFUSED it. No divergence.</b></div>
+
+  <div class="card"><b>Forge (real crypto, logical time).</b> Using the <code>ouroboros-consensus-cardano</code> tools already in the stack — <code>db-truncater</code> + <code>db-synthesizer</code> + <code>immdb-server</code> — copy a honest chain-db, truncate to fork point block 30500 (&gt; k behind), then <code>db-synthesizer&nbsp;--append</code> with an honest operator's real KES/VRF/opcert credentials forges a validly-signed alternative continuation <b>in logical slot order</b>. This sidesteps the wall-clock/KES-exhaustion wall that defeats any live-node approach. Forged fork: tip block 30553, forking at 30500.</div>
+
+  <h2>Result</h2>
+  <div class="card">
+  <table>
+    <tr><th>Implementation</th><th>Stimulus (seeded at honest 30520)</th><th>Decision</th></tr>
+    <tr><td>cardano-node</td><td>real forged fork to 30553 (longer, forks 20 &gt; k back)</td><td class="ok">Refused — held 30520, dropped peer</td></tr>
+    <tr><td><b>Amaru</b></td><td>same forged fork</td><td class="ok">Refused — adopted nothing from the fork, held 30520</td></tr>
+    <tr><td colspan="2"><b>Differential verdict</b></td><td class="ok"><b>AGREE — both refuse; no divergence</b></td></tr>
+  </table>
+  <p class="muted" style="margin:.4rem 0 0">A validly-forged, longer alternative chain that branches &gt; k back is rejected by both implementations.</p>
+  </div>
+
+  <h2>Method</h2>
+  <div class="card"><b>Serve via a real cardano-node relay.</b> The forged fork is served by an isolated cardano-node (<code>attacker-relay</code>) seeded at the forged chain-db, topology dialing the victim back, <code>ProtocolIdleTimeout</code> raised to 600 s (Amaru peers cleanly with cardano-node relays; it does not sync reliably from <code>immdb-server</code> directly). <b>Victims seeded in the past.</b> A cardano-node and an Amaru node are each seeded on the honest chain at block 30520 — just past the fork — so the forged fork (30553) is genuinely longer from their view but forks &gt; k back. <b>Oracle:</b> each victim must keep 30520 and adopt none of the fork's blocks; both must decide identically.</div>
+
+  <h2>Behavioral observation (not a safety divergence)</h2>
+  <div class="card">The two nodes refuse via <b>different mechanisms</b>. <b>cardano-node</b> offers chain-sync intersect points geometrically deep, so it can latch onto a fork up to k back, evaluate it, and reject the &gt; k rollback. <b>Amaru</b> offers only its ~k most-recent points on <code>FindIntersect</code> (blocks 30516–30520, all after the fork point), so the fork (branching 20 back) has no common point among them → <code>intersect not found</code> → Amaru stops and adopts nothing. Same safe outcome, but Amaru will not even <i>engage</i> a fork &gt; k back — likely also the root of its finickiness syncing from non-cardano-node servers. Worth flagging to the Amaru team.</div>
+
+  <h2>Scope caveat</h2>
+  <div class="card">This devnet runs pure <b>Praos</b> (<code>LoEAndGDDDisabled</code>, <code>CSJDisabled</code>), so what is proven is the <b>Praos k-rollback bound against a real forged fork</b> — a stronger, higher-fidelity result than the commanded-rollback test. It does <b>not</b> exercise Ouroboros <b>Genesis's density-based chain-selection</b> (which decides between deep forks by density in the genesis window). Probing that specifically requires the devnet reconfigured with LoE/GDD enabled — the follow-on.</div>
+
+  <h2>Bottom line</h2>
+  <div class="card">The costless-simulation forging pipeline is real and working (<code>db-truncater</code> → <code>db-synthesizer</code> → cardano-node relay serve), and a genuinely-forged, longer, deep fork is <span class="ok">rejected identically by cardano-node and Amaru</span>. A positive consensus-equivalence result on the strongest achievable long-range stimulus under Praos.</div>
+</div></body></html>
