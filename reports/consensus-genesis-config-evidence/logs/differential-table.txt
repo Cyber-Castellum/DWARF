@@ -1,0 +1,27 @@
+Genesis/config-acceptance differential — cardano-node 10.7.1 vs Amaru (bootstrap-producer derivation)
+Devnet: cardano_amaru testnet_42 (f=0.2, k=5, epoch 125). Baseline shelley-genesis mutated one field at a time.
+
+MUTATION            CARDANO-NODE (raw genesis read, at startup)              AMARU (bootstrap-producer deriver)
+------------------  -------------------------------------------------------  ------------------------------------------------
+baseline            ACCEPT (started)                                         ACCEPT (k=5 1/f=5 epoch=125, correct)
+activeSlotsCoeff=0.5 ACCEPT (valid)                                          ACCEPT (1/f=2, correct)  [CONTROL - proves genesis reaches Amaru]
+activeSlotsCoeff=2.0 REJECT ~0.02s "Value is outside of bounds: 2 % 1"       NO clean reject; mangled derivation (1/f=1 scale=25 on one run, 1/f=5 on another - NON-DETERMINISTIC), then header-extractor hang
+activeSlotsCoeff=0   REJECT ~0.02s "Value is outside of bounds: 0 % 1"       error rc=5 "number (1) and number (0) cannot [divide]"  (both fail; Amaru via div error)
+activeSlotsCoeff=-0.1 REJECT ~0.02s "Value is negative: -0.1"                killed/hung rc=137 (inconclusive)
+activeSlotsCoeff="0.2" REJECT "parsing Scientific failed ... encountered String"  (not run through Amaru)
+securityParam=0     REJECT ~0.02s "Encountered zero ... NonZero value"       hung rc=124, "error token is" (inconclusive)
+securityParam=-5    REJECT "parsing Word64 failed ... -5.0"                  (not run)
+securityParam=2.5   REJECT "parsing Word64 failed ... 2.5"                   (not run)
+epochLength=0       CRASH rc=1 ~0.13s "divide by zero"  (uncaught!)          error rc=3 (both fail differently)
+epochLength=1       ACCEPT (started)                                         (not run)
+slotLength=0        CRASH rc=1 ~0.13s "Ratio has zero denominator" (uncaught!) ACCEPT rc=0, derives baseline (k=5 1/f=5 epoch=125), boots  [DIVERGENCE: node crashes, Amaru accepts]
+activeSlotsCoeff missing REJECT "key ... not found"                          (not run)
+extra unknown field ACCEPT (ignored)                                         (not run)
+
+Reject/crash latency (cardano-node): parse-time rejects ~0.02s (20 ms); the two crashes ~0.13s. Accept = runs past startup.
+Amaru bootstrap-producer: seconds-to-minutes per run; intermittently HANGS on its internal header-extractor regardless of input (harness fragility).
+
+CONFIDENCE:
+- CONFIRMED: cardano-node crashes (uncaught arithmetic) on epochLength=0 and slotLength=0 rather than cleanly rejecting.
+- WELL-SUPPORTED: architectural asymmetry (cardano-node validates raw genesis at startup in ~20ms; Amaru validates in a different component (bootstrap-producer), slowly, non-deterministically/hanging, and NOT re-validated at `amaru run`).
+- PRELIMINARY (do not report as a confirmed Amaru finding): Amaru leniency on out-of-bounds activeSlotsCoeff and slotLength=0 — the derivations were non-deterministic and runs hung, so a deterministic Amaru genesis-parse surface is needed to confirm.

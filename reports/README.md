@@ -21,3 +21,13 @@ Client-facing results from DWARF campaigns against `cardano-node` and Amaru.
   leadership threshold — secure against any-stake block forgery. (A separate Amaru
   epoch-transition panic surfaced during setup is reported as a robustness finding.)
   Backing patch/logs/scripts in `consensus-false-leadership-vrf-evidence/`.
+- `dwarf-consensus-genesis-config-differential.html` — the **genesis/config-acceptance
+  differential**: a new surface — the `shelley-genesis.json` both nodes ingest at startup (the
+  "stored" input, vs the messages/blocks fuzzing already covers). Mutate one field at a time and
+  compare accept/reject. **Finding 1 (confirmed):** cardano-node crashes with an uncaught
+  arithmetic exception on `epochLength=0`/`slotLength=0` instead of rejecting (it rejects every
+  other malformed field cleanly in ~20 ms). **Finding 2 (well-supported):** the two clients
+  validate genesis fundamentally differently — cardano-node directly at startup (~20 ms); Amaru in
+  a separate component (`bootstrap-producer`), slowly, non-deterministically/hanging, and never
+  re-validated at `amaru run`. **Finding 3 (preliminary, held back):** an Amaru-leniency lead not
+  yet confirmed (flaky derivations). Battery + raw data in `consensus-genesis-config-evidence/`.
