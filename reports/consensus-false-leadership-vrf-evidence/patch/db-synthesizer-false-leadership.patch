@@ -1,0 +1,118 @@
+--- Run.hs.orig	2026-07-17 21:24:08.790878209 +0000
++++ Run.hs	2026-07-17 21:40:32.257424083 +0000
+@@ -25,7 +25,7 @@
+ import qualified Data.Set as Set
+ import           Ouroboros.Consensus.Cardano.Block
+ import           Ouroboros.Consensus.Cardano.Node
+-import           Ouroboros.Consensus.Config (TopLevelConfig, configStorage)
++import           Ouroboros.Consensus.Config (TopLevelConfig (..), configStorage)
+ import qualified Ouroboros.Consensus.Node as Node (stdMkChainDbHasFS)
+ import qualified Ouroboros.Consensus.Node.InitStorage as Node
+                      (nodeImmutableDbChunkInfo)
+@@ -43,6 +43,24 @@
+ import           System.Directory
+ import           System.FilePath (takeDirectory, (</>))
+ 
++-- DWARF false-leadership patch imports
++import qualified Cardano.Ledger.BaseTypes as SL (ActiveSlotCoeff,
++                     boundRational, mkActiveSlotCoeff)
++import           Data.Maybe (fromMaybe)
++import           Data.Ratio ((%))
++import           Data.SOP.Strict (NP (..))
++import           Ouroboros.Consensus.HardFork.Combinator.AcrossEras
++                     (PerEraConsensusConfig (..))
++import           Ouroboros.Consensus.HardFork.Combinator.Basics
++                     (ConsensusConfig (HardForkConsensusConfig,
++                     hardForkConsensusConfigPerEra))
++import           Ouroboros.Consensus.HardFork.Combinator.PartialConfig
++                     (WrapPartialConsensusConfig (..))
++import           Ouroboros.Consensus.Protocol.Praos (PraosParams (..))
++import           Ouroboros.Consensus.Protocol.TPraos (TPraosParams (..))
++import           System.Environment (lookupEnv)
++import           System.IO.Unsafe (unsafePerformIO)
++
+ 
+ initialize ::
+        NodeFilePaths
+@@ -131,7 +149,7 @@
+             dbArgs      =
+              ChainDB.completeChainDbArgs
+               registry
+-              pInfoConfig
++              pInfoConfig'
+               pInfoInitLedger
+               chunkInfo
+               (const True)
+@@ -156,7 +174,7 @@
+                             At s   -> succ s
+ 
+                     putStrLn $ "--> starting at: " ++ show slotNo
+-                    runForge epochSize slotNo synthLimit chainDB forgers pInfoConfig $ genTxs pInfoConfig
++                    runForge epochSize slotNo synthLimit chainDB forgers pInfoConfig' $ genTxs pInfoConfig'
+             else do
+                 putStrLn "--> no forgers found; leaving possibly existing ChainDB untouched"
+                 pure $ ForgeResult 0
+@@ -171,6 +189,7 @@
+         }
+       , blockForging
+       ) = protocolInfoCardano runP
++    pInfoConfig' = if falseLeadership then bumpLeaderF pInfoConfig else pInfoConfig
+ 
+ preOpenChainDB :: DBSynthesizerOpenMode -> FilePath -> IO ()
+ preOpenChainDB mode db =
+@@ -197,3 +216,55 @@
+     listSubdirectories path = filterM isDir =<< listDirectory path
+       where
+         isDir p = doesDirectoryExist (path </> p)
++
++-- ---------------------------------------------------------------------------
++-- DWARF false-leadership patch
++--
++-- When DWARF_FALSE_LEADERSHIP is set, we raise the per-era active-slot
++-- coefficient (praosLeaderF / tpraosLeaderF) to ~1 in the consensus config
++-- used to forge and to validate our own forged blocks. This makes the local
++-- forger "win" the VRF leader lottery in (almost) every slot regardless of
++-- its real stake, producing blocks whose VRF proof is valid but whose leader
++-- value is far above the real threshold. Only the leader-value check is
++-- affected: praosRandomnessStabilisationWindow (nonce evolution) is a separate
++-- field and is left untouched, so the forged chain still connects to the real
++-- genesis root and the honest prefix replays consistently.
++--
++-- Served to an honest node (real, low coefficient), each such block must be
++-- rejected as VRFLeaderValueTooBig. A node that accepts it is not enforcing
++-- the leadership threshold -> any-stake block forgery.
++-- ---------------------------------------------------------------------------
++
++{-# NOINLINE falseLeadership #-}
++falseLeadership :: Bool
++falseLeadership =
++    unsafePerformIO (maybe False (const True) <$> lookupEnv "DWARF_FALSE_LEADERSHIP")
++
++hiF :: SL.ActiveSlotCoeff
++hiF = SL.mkActiveSlotCoeff (fromMaybe (error "hiF: bad coeff") (SL.boundRational (99 % 100)))
++
++bumpLeaderF ::
++     TopLevelConfig (CardanoBlock StandardCrypto)
++  -> TopLevelConfig (CardanoBlock StandardCrypto)
++bumpLeaderF cfg = cfg { topLevelConfigProtocol = hfc' }
++  where
++    hfc  = topLevelConfigProtocol cfg
++    hfc' = hfc
++      { hardForkConsensusConfigPerEra =
++          PerEraConsensusConfig
++            (bumpNP (getPerEraConsensusConfig (hardForkConsensusConfigPerEra hfc)))
++      }
++
++bumpNP ::
++     NP WrapPartialConsensusConfig (CardanoEras StandardCrypto)
++  -> NP WrapPartialConsensusConfig (CardanoEras StandardCrypto)
++bumpNP (byron :* sh :* al :* ma :* alo :* ba :* co :* Nil) =
++       byron
++    :* wT sh :* wT al :* wT ma :* wT alo
++    :* wP ba :* wP co
++    :* Nil
++  where
++    wT (WrapPartialConsensusConfig pp) =
++        WrapPartialConsensusConfig pp { tpraosLeaderF = hiF }
++    wP (WrapPartialConsensusConfig pp) =
++        WrapPartialConsensusConfig pp { praosLeaderF = hiF }

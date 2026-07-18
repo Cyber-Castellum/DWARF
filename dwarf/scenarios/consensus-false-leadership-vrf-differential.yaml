@@ -1,0 +1,74 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-false-leadership-vrf-differential",
+  "title": "False-leadership (forged-VRF) rejection differential — cardano-node and Amaru both reject blocks whose VRF proof is valid but whose leader value exceeds the active-slot threshold (a win the producer never earned)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "leader-election",
+    "vrf",
+    "praos",
+    "false-leadership",
+    "block-forgery",
+    "VRFLeaderValueTooBig",
+    "active-slot-coefficient",
+    "differential",
+    "amaru",
+    "db-synthesizer",
+    "security"
+  ],
+  "evidence_intent": "candidate",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x0f05",
+  "iterations": 1,
+  "shrink": false,
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42,
+    "security_parameter_k": 5,
+    "active_slot_coeff": 0.2,
+    "epoch_length_slots": 125
+  },
+  "harness": {
+    "note": "Executed via a PATCHED db-synthesizer forge pipeline + real cardano-node relay + a bootstrapped Amaru node, NOT the primitive runner. This is a leader-election safety test, distinct from the chain-selection (S1/S1b) tests: it does not present a competing fork; it presents a single valid-looking chain whose blocks are individually illegitimate because their VRF leader value is above the active-slot threshold for the producer's stake.",
+    "forge": {
+      "tools": "ouroboros-consensus-cardano db-synthesizer + db-truncater (v0.25.1.0), PATCHED",
+      "patch": "db-synthesizer's Run.hs is patched (env gate DWARF_FALSE_LEADERSHIP=1) to raise the per-era active-slot coefficient (praosLeaderF / tpraosLeaderF) to ~0.99 in the consensus config used to forge AND to validate its own forged blocks, leaving praosRandomnessStabilisationWindow and the genesis config untouched (so nonce evolution is unchanged and the forged chain still connects to the real genesis root). The forger then 'wins' the VRF leader lottery in ~every slot regardless of its real stake, producing blocks with a valid VRF proof but a leader value far above the real threshold.",
+      "proof_of_forgery": "Same pool, same KES/VRF/opcert, same 400-slot window: honest (real f=0.2) forges 27 blocks; patched (f~0.99) forges 320 blocks. The extra ~293 blocks are the false-leadership blocks.",
+      "attack_chain": "honest chain forged to the bundle tip (block 50, slot 646, epoch 5); db-truncater --truncate-after-slot 646 then clear volatile/ledger/gsm; db-synthesizer --append with DWARF_FALSE_LEADERSHIP=1 forges the false-leadership continuation from slot 647 — kept within epoch 5 (before the 5->6 boundary at slot 750) so Amaru validates the leader value without processing an epoch transition."
+    },
+    "serve": "The attack chain is served by a real cardano-node relay seeded at the forged chain-db (Amaru peers cleanly with cardano-node relays). The cardano-node victim syncs the chain over the real N2N chain-sync protocol and validates every header.",
+    "victims": "cardano-node victim: fresh, syncs the attack chain from genesis over the network. Amaru victim: bootstrapped (via bootstrap-producer) on the honest chain up to the bundle tip (slot 646, epoch 5), then peers the relay and receives the false-leadership continuation from slot 647."
+  },
+  "oracle": {
+    "safety_property": "No honest node adopts a block whose VRF leader value exceeds the active-slot leadership threshold for the producer's stake, even though the VRF proof itself verifies. (Enforcing this is what prevents any-stake block forgery.)",
+    "differential": "cardano-node and Amaru must make the identical decision. A gap where Amaru ACCEPTS a false-leadership block that cardano-node rejects would be a critical finding (no leadership-threshold enforcement).",
+    "measure": "Each victim's selected tip must not advance onto any false-leadership block. Each must reject the first illegitimate block with a leadership-threshold error."
+  },
+  "assertions": [
+    {
+      "primitive": "false_leadership_block_rejected",
+      "target_node_ids": [ "victim-cardano-node" ],
+      "expected_error": "VRFLeaderValueTooBig",
+      "active_slot_coeff": 0.2
+    },
+    {
+      "primitive": "false_leadership_block_rejected",
+      "target_node_ids": [ "victim-amaru" ],
+      "expected_error": "Insufficient leader stake",
+      "active_slot_coeff": 0.2
+    },
+    {
+      "primitive": "differential_agree",
+      "reference_node_ids": [ "victim-cardano-node" ],
+      "target_node_ids": [ "victim-amaru" ]
+    }
+  ],
+  "teardown": []
+}

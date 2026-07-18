@@ -1,0 +1,146 @@
+2026-07-17T22:38:57.140773Z  INFO amaru::observability: using ENV variable var="AMARU_LOG" value="info"
+2026-07-17T22:38:57.140794Z  INFO amaru: Started
+2026-07-17T22:38:57.140847Z  INFO amaru::cmd::node::run: running _command="node run" chain_dir=/srv/amaru/testnet_42/chain.testnet_42.db ledger_dir=/srv/amaru/testnet_42/ledger.testnet_42.db listen_address="0.0.0.0:3001" max_extra_ledger_snapshots=0 migrate_chain_db=false network=testnet_42 era_history="/amaru-runtime/era-history.json" global_parameters="{\"consensus_security_param\":5,\"epoch_length_scale_factor\":5,\"active_slot_coeff_inverse\":5,\"max_lovelace_supply\":45000000000000000,\"slots_per_kes_period\":129600,\"max_kes_evolution\":62,\"system_start\":0}" peer_address=relay.example:3001 pid_file= submit_api_address=disabled trace_buffer_min_entries=0 trace_buffer_max_size=0 trace_dump_path=disabled peer_removal_cooldown_secs=600 mempool_max_bytes=180224 tx_submission_max_window=10 tx_submission_fetch_batch_bytes=393240 tx_submission_inflight_timeout_ms=10000 tx_submission_insert_timeout_ms=5000
+2026-07-17T22:38:57.197288Z  INFO compute_stake_distribution: amaru_ledger::summary::stake_distribution: accounts=3 pools=3 active_stake=600452484615383 dreps=2 dreps_voting_stake=0 pools_voting_stake=600452484615383 [3mepoch[0m[2m=[0m2
+2026-07-17T22:38:57.197304Z  INFO compute_stake_distribution: amaru::ledger::state: close time.busy=162µs time.idle=6.72µs [3mepoch[0m[2m=[0m2
+2026-07-17T22:38:57.232046Z  INFO compute_stake_distribution: amaru_ledger::summary::stake_distribution: accounts=3 pools=3 active_stake=600452484615383 dreps=2 dreps_voting_stake=0 pools_voting_stake=600452484615383 [3mepoch[0m[2m=[0m3
+2026-07-17T22:38:57.232063Z  INFO compute_stake_distribution: amaru::ledger::state: close time.busy=146µs time.idle=2.70µs [3mepoch[0m[2m=[0m3
+2026-07-17T22:38:57.266756Z  INFO compute_stake_distribution: amaru_ledger::summary::stake_distribution: accounts=3 pools=3 active_stake=601098921557296 dreps=2 dreps_voting_stake=0 pools_voting_stake=601098921557296 [3mepoch[0m[2m=[0m4
+2026-07-17T22:38:57.266774Z  INFO compute_stake_distribution: amaru::ledger::state: close time.busy=148µs time.idle=2.21µs [3mepoch[0m[2m=[0m4
+2026-07-17T22:38:57.273673Z  INFO amaru::stages::build_node: build_ledger tip.hash=d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 tip.slot=602
+2026-07-17T22:38:57.281325Z  INFO amaru::stages::build_node: first initialization - setting anchor and best chain anchor=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6
+2026-07-17T22:38:57.281624Z  INFO amaru_consensus::stages::peer_selection: peer_selection.connect_initial peers=1
+2026-07-17T22:38:57.281765Z  INFO amaru_protocols::manager: listening listen_addr=0.0.0.0:3001
+2026-07-17T22:38:57.281777Z  INFO get_ledger_candidates: amaru_consensus::stages::peer_selection: close time.busy=16.5µs time.idle=62.9µs [3mlast_height[0m[2m=[0m0
+2026-07-17T22:38:57.281814Z  INFO amaru_protocols::manager: adding peer peer=relay.example:3001
+2026-07-17T22:38:57.281969Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:38:57.282802Z  INFO amaru_protocols::manager: connection established peer=relay.example:3001 conn_id=0
+2026-07-17T22:38:57.283179Z  INFO amaru_protocols::manager: handshake completed peer=relay.example:3001 conn_id=0 full_duplex_capable=false full_duplex=false
+2026-07-17T22:38:57.283262Z  INFO amaru_protocols::chainsync::initiator: intersect points points=Found([Specific(602, d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6)])
+2026-07-17T22:38:57.283303Z  INFO amaru_consensus::stages::track_peers: initializing chainsync peer=relay.example:3001
+2026-07-17T22:38:57.283747Z  INFO amaru_consensus::stages::track_peers: intersect found peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:38:57.283963Z  INFO amaru_consensus::stages::track_peers: roll backward peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:38:57.285646Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Insufficient leader stake. peer=relay.example:3001
+2026-07-17T22:38:57.285661Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connected(Connection { id: ConnectionId(0), full_duplex_capable: false, full_duplex: false }) is_static=true
+2026-07-17T22:38:57.285675Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:38:57.285684Z  INFO amaru_protocols::manager: discarding connection request, already connected or scheduled peer=relay.example:3001
+2026-07-17T22:38:57.285689Z  INFO amaru_protocols::manager: disconnecting outbound connection peer=relay.example:3001 conn_id=0
+2026-07-17T22:38:57.285700Z  WARN amaru_pure_stage::tokio: stage `0-relay.example:3001-19` terminated
+2026-07-17T22:38:57.285703Z  INFO amaru_pure_stage::tokio: terminated stage_name=0-relay.example:3001-19
+2026-07-17T22:38:57.285715Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Unknown peer relay.example:3001, bailing out peer=relay.example:3001
+2026-07-17T22:38:57.285725Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connecting is_static=true
+2026-07-17T22:38:57.285750Z  INFO amaru_protocols::manager: disconnect request ignored, not connected peer=relay.example:3001
+2026-07-17T22:39:02.282806Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=1
+2026-07-17T22:39:02.283133Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:07.284525Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=2
+2026-07-17T22:39:07.284726Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:07.286882Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:07.286907Z  INFO amaru_protocols::manager: adding peer peer=relay.example:3001
+2026-07-17T22:39:07.287906Z  INFO amaru_protocols::manager: connection established peer=relay.example:3001 conn_id=1
+2026-07-17T22:39:07.288328Z  INFO amaru_protocols::manager: handshake completed peer=relay.example:3001 conn_id=1 full_duplex_capable=false full_duplex=false
+2026-07-17T22:39:07.288446Z  INFO amaru_protocols::chainsync::initiator: intersect points points=Found([Specific(602, d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6)])
+2026-07-17T22:39:07.288491Z  INFO amaru_consensus::stages::track_peers: initializing chainsync peer=relay.example:3001
+2026-07-17T22:39:07.289141Z  INFO amaru_consensus::stages::track_peers: intersect found peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:07.289269Z  INFO amaru_consensus::stages::track_peers: roll backward peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:07.289779Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Insufficient leader stake. peer=relay.example:3001
+2026-07-17T22:39:07.289793Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connected(Connection { id: ConnectionId(1), full_duplex_capable: false, full_duplex: false }) is_static=true
+2026-07-17T22:39:07.289799Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:07.289806Z  INFO amaru_protocols::manager: discarding connection request, already connected or scheduled peer=relay.example:3001
+2026-07-17T22:39:07.289812Z  INFO amaru_protocols::manager: disconnecting outbound connection peer=relay.example:3001 conn_id=1
+2026-07-17T22:39:07.289821Z  WARN amaru_pure_stage::tokio: stage `1-relay.example:3001-37` terminated
+2026-07-17T22:39:07.289825Z  INFO amaru_pure_stage::tokio: terminated stage_name=1-relay.example:3001-37
+2026-07-17T22:39:07.289825Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Unknown peer relay.example:3001, bailing out peer=relay.example:3001
+2026-07-17T22:39:07.289833Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connecting is_static=true
+2026-07-17T22:39:07.289900Z  INFO amaru_protocols::manager: disconnect request ignored, not connected peer=relay.example:3001
+2026-07-17T22:39:12.285669Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=3
+2026-07-17T22:39:12.285848Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:17.286644Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=4
+2026-07-17T22:39:17.286827Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:17.290952Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:17.290977Z  INFO amaru_protocols::manager: adding peer peer=relay.example:3001
+2026-07-17T22:39:17.291757Z  INFO amaru_protocols::manager: connection established peer=relay.example:3001 conn_id=2
+2026-07-17T22:39:17.292290Z  INFO amaru_protocols::manager: handshake completed peer=relay.example:3001 conn_id=2 full_duplex_capable=false full_duplex=false
+2026-07-17T22:39:17.292368Z  INFO amaru_protocols::chainsync::initiator: intersect points points=Found([Specific(602, d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6)])
+2026-07-17T22:39:17.292407Z  INFO amaru_consensus::stages::track_peers: initializing chainsync peer=relay.example:3001
+2026-07-17T22:39:17.294011Z  INFO amaru_consensus::stages::track_peers: intersect found peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:17.294191Z  INFO amaru_consensus::stages::track_peers: roll backward peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:17.295048Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Insufficient leader stake. peer=relay.example:3001
+2026-07-17T22:39:17.295073Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connected(Connection { id: ConnectionId(2), full_duplex_capable: false, full_duplex: false }) is_static=true
+2026-07-17T22:39:17.295085Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:17.295104Z  INFO amaru_protocols::manager: discarding connection request, already connected or scheduled peer=relay.example:3001
+2026-07-17T22:39:17.295112Z  INFO amaru_protocols::manager: disconnecting outbound connection peer=relay.example:3001 conn_id=2
+2026-07-17T22:39:17.295130Z  WARN amaru_pure_stage::tokio: stage `2-relay.example:3001-55` terminated
+2026-07-17T22:39:17.295140Z  INFO amaru_pure_stage::tokio: terminated stage_name=2-relay.example:3001-55
+2026-07-17T22:39:17.295144Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Unknown peer relay.example:3001, bailing out peer=relay.example:3001
+2026-07-17T22:39:17.295154Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connecting is_static=true
+2026-07-17T22:39:17.295233Z  INFO amaru_protocols::manager: disconnect request ignored, not connected peer=relay.example:3001
+2026-07-17T22:39:22.288164Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=5
+2026-07-17T22:39:22.288333Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:27.290150Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=6
+2026-07-17T22:39:27.290401Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:27.296569Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:27.296604Z  INFO amaru_protocols::manager: adding peer peer=relay.example:3001
+2026-07-17T22:39:27.297787Z  INFO amaru_protocols::manager: connection established peer=relay.example:3001 conn_id=3
+2026-07-17T22:39:27.298386Z  INFO amaru_protocols::manager: handshake completed peer=relay.example:3001 conn_id=3 full_duplex_capable=false full_duplex=false
+2026-07-17T22:39:27.298519Z  INFO amaru_protocols::chainsync::initiator: intersect points points=Found([Specific(602, d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6)])
+2026-07-17T22:39:27.298541Z  INFO amaru_consensus::stages::track_peers: initializing chainsync peer=relay.example:3001
+2026-07-17T22:39:27.299043Z  INFO amaru_consensus::stages::track_peers: intersect found peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:27.299544Z  INFO amaru_consensus::stages::track_peers: roll backward peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:27.300020Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Insufficient leader stake. peer=relay.example:3001
+2026-07-17T22:39:27.300042Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connected(Connection { id: ConnectionId(3), full_duplex_capable: false, full_duplex: false }) is_static=true
+2026-07-17T22:39:27.300054Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:27.300064Z  INFO amaru_protocols::manager: discarding connection request, already connected or scheduled peer=relay.example:3001
+2026-07-17T22:39:27.300070Z  INFO amaru_protocols::manager: disconnecting outbound connection peer=relay.example:3001 conn_id=3
+2026-07-17T22:39:27.300080Z  WARN amaru_pure_stage::tokio: stage `3-relay.example:3001-73` terminated
+2026-07-17T22:39:27.300084Z  INFO amaru_pure_stage::tokio: terminated stage_name=3-relay.example:3001-73
+2026-07-17T22:39:27.300092Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Unknown peer relay.example:3001, bailing out peer=relay.example:3001
+2026-07-17T22:39:27.300103Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connecting is_static=true
+2026-07-17T22:39:27.300147Z  INFO amaru_protocols::manager: disconnect request ignored, not connected peer=relay.example:3001
+2026-07-17T22:39:32.291463Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=7
+2026-07-17T22:39:32.291713Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:37.293126Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=8
+2026-07-17T22:39:37.293363Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:37.301516Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:37.301577Z  INFO amaru_protocols::manager: adding peer peer=relay.example:3001
+2026-07-17T22:39:37.302608Z  INFO amaru_protocols::manager: connection established peer=relay.example:3001 conn_id=4
+2026-07-17T22:39:37.303060Z  INFO amaru_protocols::manager: handshake completed peer=relay.example:3001 conn_id=4 full_duplex_capable=false full_duplex=false
+2026-07-17T22:39:37.303253Z  INFO amaru_protocols::chainsync::initiator: intersect points points=Found([Specific(602, d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6)])
+2026-07-17T22:39:37.303288Z  INFO amaru_consensus::stages::track_peers: initializing chainsync peer=relay.example:3001
+2026-07-17T22:39:37.303911Z  INFO amaru_consensus::stages::track_peers: intersect found peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:37.304579Z  INFO amaru_consensus::stages::track_peers: roll backward peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:37.305095Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Insufficient leader stake. peer=relay.example:3001
+2026-07-17T22:39:37.305116Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connected(Connection { id: ConnectionId(4), full_duplex_capable: false, full_duplex: false }) is_static=true
+2026-07-17T22:39:37.305122Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:37.305132Z  INFO amaru_protocols::manager: discarding connection request, already connected or scheduled peer=relay.example:3001
+2026-07-17T22:39:37.305137Z  INFO amaru_protocols::manager: disconnecting outbound connection peer=relay.example:3001 conn_id=4
+2026-07-17T22:39:37.305144Z  WARN amaru_pure_stage::tokio: stage `4-relay.example:3001-91` terminated
+2026-07-17T22:39:37.305147Z  INFO amaru_pure_stage::tokio: terminated stage_name=4-relay.example:3001-91
+2026-07-17T22:39:37.305150Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Unknown peer relay.example:3001, bailing out peer=relay.example:3001
+2026-07-17T22:39:37.305156Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connecting is_static=true
+2026-07-17T22:39:37.305191Z  INFO amaru_protocols::manager: disconnect request ignored, not connected peer=relay.example:3001
+2026-07-17T22:39:42.294622Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=9
+2026-07-17T22:39:42.294799Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:47.296350Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=10
+2026-07-17T22:39:47.296602Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:47.306715Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:47.306737Z  INFO amaru_protocols::manager: adding peer peer=relay.example:3001
+2026-07-17T22:39:47.307651Z  INFO amaru_protocols::manager: connection established peer=relay.example:3001 conn_id=5
+2026-07-17T22:39:47.308295Z  INFO amaru_protocols::manager: handshake completed peer=relay.example:3001 conn_id=5 full_duplex_capable=false full_duplex=false
+2026-07-17T22:39:47.308441Z  INFO amaru_protocols::chainsync::initiator: intersect points points=Found([Specific(602, d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6)])
+2026-07-17T22:39:47.308487Z  INFO amaru_consensus::stages::track_peers: initializing chainsync peer=relay.example:3001
+2026-07-17T22:39:47.308972Z  INFO amaru_consensus::stages::track_peers: intersect found peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:47.309129Z  INFO amaru_consensus::stages::track_peers: roll backward peer=relay.example:3001 current=602.d6c6af0479291eff947ecdb34c7692752f406d0a16657a6e7f61dcbfbdb589b6 highest=1386.d510df5a544893cf1ce389444cc8cb3f215191693507d3db26e40e5b2a802c0e
+2026-07-17T22:39:47.309716Z ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed error=Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Failed to validate header at 649.33d9929b829860fd41dd061cab26f3669c28d0b0158762cb95276a5acb1038fd: HeaderValidationError: Insufficient leader stake. peer=relay.example:3001
+2026-07-17T22:39:47.309737Z  WARN amaru_consensus::stages::peer_selection: removing peer (outbound) peer=relay.example:3001 peer_state=Connected(Connection { id: ConnectionId(5), full_duplex_capable: false, full_duplex: false }) is_static=true
+2026-07-17T22:39:47.309742Z  INFO amaru_consensus::stages::peer_selection: peer_selection.add_peer peer=relay.example:3001 was_banned=false
+2026-07-17T22:39:47.309752Z  INFO amaru_protocols::manager: discarding connection request, already connected or scheduled peer=relay.example:3001
+2026-07-17T22:39:47.309758Z  INFO amaru_protocols::manager: disconnecting outbound connection peer=relay.example:3001 conn_id=5
+2026-07-17T22:39:47.309766Z  WARN amaru_pure_stage::tokio: stage `5-relay.example:3001-109` terminated
+2026-07-17T22:39:47.309769Z  INFO amaru_pure_stage::tokio: terminated stage_name=5-relay.example:3001-109
+2026-07-17T22:39:52.298194Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=11
+2026-07-17T22:39:52.298361Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:39:57.283361Z  INFO get_ledger_candidates: amaru_consensus::stages::peer_selection: close time.busy=7.72µs time.idle=99.9µs [3mlast_height[0m[2m=[0m0
+2026-07-17T22:39:57.299612Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=12
+2026-07-17T22:39:57.299855Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+2026-07-17T22:40:02.300536Z ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=13
+2026-07-17T22:40:02.300814Z  INFO amaru_protocols::manager: no connections available to fetch blocks, returning empty result

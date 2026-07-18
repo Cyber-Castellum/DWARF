@@ -1,0 +1,68 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DWARF — False-Leadership (Forged-VRF) Rejection Differential</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 22px 70px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.5}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#ecfdf5,#f8fafc);border:1px solid #bbf7d0;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero b{color:var(--ok)}
+  table{border-collapse:collapse;width:100%;margin:6px 0}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
+  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
+  .chip.warn{color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .muted{color:var(--muted)} .num{text-align:right;font-family:var(--mono)}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid}}
+</style></head><body><div class="wrap">
+  <h1>DWARF — False-Leadership (Forged-VRF) Rejection Differential</h1>
+  <div class="sub">Does each node enforce the VRF <b>leadership threshold</b>, or only that the proof verifies? · cardano-node 10.7.1 vs Amaru · <code>cardano_amaru</code> devnet (k=5, f=0.2, epoch 125) · generated 2026-07-17</div>
+
+  <div class="hero">We forged blocks with a <b>valid VRF proof but an unearned win</b> (leader value above the active-slot threshold) and served them to both implementations. <b>Both reject them — cardano-node with <code>VRFLeaderValueTooBig</code>, Amaru with <code>Insufficient leader stake</code>. Differential: AGREE. Amaru enforces the leadership threshold — it is secure against any-stake block forgery.</b></div>
+
+  <h2>The security question</h2>
+  <div class="card">A Praos block producer proves its right to a slot with a VRF output. Legitimacy needs <b>two</b> checks: (1) the VRF proof verifies, and (2) the resulting <b>leader value is below a threshold</b> set by the active-slot coefficient <code>f</code> and the producer's stake <code>σ</code> — i.e. the producer actually won the lottery. A node that checks only (1) would accept blocks from a producer that never won the slot: <b>any-stake block forgery</b>, a catastrophic break. This test asks whether Amaru enforces (2), and whether it agrees with cardano-node.</div>
+
+  <h2>Method — a patched forger that mints unearned wins</h2>
+  <div class="card">We patched the <code>ouroboros-consensus-cardano</code> <code>db-synthesizer</code> (env gate <code>DWARF_FALSE_LEADERSHIP=1</code>) to raise the per-era active-slot coefficient (<code>praosLeaderF</code>/<code>tpraosLeaderF</code>) to ~0.99 inside the forger only — leaving <code>praosRandomnessStabilisationWindow</code> and the genesis untouched, so nonce evolution is unchanged and the forged chain still connects to the real genesis. The forger then "wins" ~every slot regardless of stake.
+  <table>
+    <tr><th>Forge (same pool, keys, 400-slot window)</th><th class="num">Blocks</th></tr>
+    <tr><td>Honest — real threshold f = 0.2</td><td class="num">27</td></tr>
+    <tr><td>Patched — f ≈ 0.99 (false-leadership)</td><td class="num">320</td></tr>
+  </table>
+  <p class="muted" style="margin:.3rem 0 0">The extra ~293 blocks are the attack material: genuine signatures, unearned wins.</p>
+  </div>
+
+  <h2>Result — both implementations reject, identically</h2>
+  <div class="card">
+  <table>
+    <tr><th>Implementation</th><th>Reaction to a valid-proof / illegitimate-win block</th></tr>
+    <tr><td>cardano-node (fresh network sync)</td><td class="ok"><b>Rejected</b> — <code>VRFLeaderValueTooBig</code>, dropped the peer</td></tr>
+    <tr><td>Amaru (bootstrapped at slot 646)</td><td class="ok"><b>Rejected</b> — <code>Insufficient leader stake</code> at slot 649; adopted nothing past 646</td></tr>
+    <tr><td>Differential</td><td class="ok"><b>AGREE — no divergence, no vulnerability</b></td></tr>
+  </table>
+  <p style="margin:.5rem 0 0">The nodes even agree block-by-block: they accept the few early slots the producer <i>could</i> legitimately have won and reject at the first block whose leader value genuinely exceeds the threshold. Neither adopts a single unearned block.</p>
+  </div>
+
+  <h2>The rejections (verbatim)</h2>
+  <div class="card">
+  <p class="muted" style="margin:0 0 4px">cardano-node — chain-sync client, over the network:</p>
+  <pre>HeaderProtocolError (HardForkValidationErrFromEra … VRFLeaderValueTooBig
+  61212094261962437809907301506100521169968675569959351119865565872699103080056
+  (1 % 5) (ActiveSlotCoeff {unActiveSlotVal = …}))   — chain-sync client threw; peer dropped</pre>
+  <p class="muted" style="margin:10px 0 4px">Amaru — header validation:</p>
+  <pre>ERROR amaru_consensus::stages::track_peers: chain_sync.validate_header.failed
+  Failed to validate header at 649.33d9929b…: HeaderValidationError:
+  Insufficient leader stake.   peer=relay.example:3001</pre>
+  </div>
+
+  <h2>Behavioural note for the Amaru team <span class="chip warn">robustness</span></h2>
+  <div class="card">Setting the test up surfaced an unrelated Amaru crash: when Amaru forward-syncs <b>across an epoch boundary</b> from a freshly bootstrapped snapshot, it <b>panics</b> on an internal assertion (<code>amaru-ledger/src/state.rs:514: "unexpected stake distribution for epoch"</code>) rather than handling it. We worked around it by confining the forged blocks to a single epoch. This is a crash/availability bug, <b>not</b> a consensus-safety divergence — details and a repro sketch in <code>finding-amaru-vrf-leadership-epoch-panic.md</code>.</div>
+
+  <h2>Scope</h2>
+  <div class="card">Exercises the Praos leader-value check on the <code>cardano_amaru</code> devnet (k=5, f=0.2, epoch 125, Conway). cardano-node control captured live over N2N chain-sync; Amaru's rejection captured on its own devnet. A <b>positive</b> result — a novel security test that Amaru passes. Backing logs, the Haskell patch, and the forge/serve scripts are in <code>consensus-false-leadership-vrf-evidence/</code>.</div>
+</div></body></html>
