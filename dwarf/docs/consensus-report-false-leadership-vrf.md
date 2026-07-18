@@ -1,6 +1,6 @@
 # False-leadership (forged-VRF) rejection differential (cardano-node vs Amaru)
 
-**Scenario:** `consensus-false-leadership-vrf-differential` · **Run:** 2026-07-17
+**Harness experiment** (bespoke forge/serve pipeline, not a runner-native DSL scenario) · **Run:** 2026-07-17
 
 ## What it tests
 

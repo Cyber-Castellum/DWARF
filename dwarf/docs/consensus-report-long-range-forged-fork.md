@@ -1,6 +1,6 @@
 # Long-range forged-fork rejection differential (cardano-node vs Amaru)
 
-**Scenario:** `consensus-long-range-forged-fork-differential` · **Run:** 2026-07-17
+**Harness experiment** (db-synthesizer forge + real-relay serve, not a runner-native DSL scenario) · **Run:** 2026-07-17
 
 ## What it tests
 
