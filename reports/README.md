@@ -31,3 +31,28 @@ Client-facing results from DWARF campaigns against `cardano-node` and Amaru.
   a separate component (`bootstrap-producer`), slowly, non-deterministically/hanging, and never
   re-validated at `amaru run`. **Finding 3 (preliminary, held back):** an Amaru-leniency lead not
   yet confirmed (flaky derivations). Battery + raw data in `consensus-genesis-config-evidence/`.
+- `dwarf-consensus-bootstrap-trust-source-differential.html` — the **bootstrap trust-source
+  differential** ("where did this node's truth come from?"). Source analysis: **cardano-node can
+  bootstrap trustlessly from genesis** (and ships checkpoints); **Amaru cannot validate from
+  genesis** — it structurally requires a trusted imported snapshot and carries **compiled-into-the-
+  binary trust anchors** per network (initial leader-election **nonces**, headers, snapshot point;
+  well-known-net snapshots via a hardcoded Mithril aggregator). So the two clients **do not share a
+  root of trust for their initial state**, including the consensus-critical nonces — a
+  trust-provenance gap a tip-convergence oracle can't see. No exploit; a model gap + new test
+  dimension. Source citations in `consensus-bootstrap-trust-source-evidence/`.
+- `dwarf-consensus-state-lifecycle-differential.html` — the **state-lifecycle / recovery
+  differential** ("what happens across restart, crash-recovery, and cold-start after bootstrap?").
+  Source analysis: **cardano-node** keeps a **self-contained ledger state** and **replays from the
+  newest snapshot — falling back to genesis** — to self-heal on startup, so it is operational
+  immediately. **Amaru** splits state across **four cross-consistent stores**, needs
+  `MIN_LEDGER_SNAPSHOTS = 3` epochs of history to operate, and crossing an epoch boundary reads the
+  **N-2 snapshot + N-2 stake distribution**. Amaru also has **no from-genesis rebuild** and **panics**
+  on store inconsistency where cardano-node validates-and-truncates. So the two clients **recover
+  differently** — a lifecycle model gap a tip oracle can't see. **A live DWARF run
+  (`consensus-state-lifecycle-bootstrap-differential`, schema + registry valid) corrected one predicted
+  finding:** a fresh-bootstrapped real Amaru crossed epoch boundaries **cleanly** (49+ consecutive, 0
+  panics/errors) because the shipped bundle contains the 3 required snapshots — refuting the "valid
+  block fails at first boundary" claim for the normal path (that failure needs an *incomplete*
+  bootstrap). No exploit; a model gap + new test dimension. Source, live-run log, and observed-crash
+  note in `consensus-state-lifecycle-evidence/`; scenario in
+  `dwarf/scenarios/consensus-state-lifecycle-bootstrap-differential.yaml`.

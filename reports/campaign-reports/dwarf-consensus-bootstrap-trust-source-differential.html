@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DWARF — Bootstrap Trust-Source Differential</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:34px 22px 70px}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.5}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  table{border-collapse:collapse;width:100%;margin:6px 0} .scroll{overflow-x:auto}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid;color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)} .muted{color:var(--muted)}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid}}
+</style></head><body><div class="wrap">
+  <h1>DWARF — Bootstrap Trust-Source Differential</h1>
+  <div class="sub">"Where did this node's truth come from?" · cardano-node vs Amaru · source analysis · 2026-07-18</div>
+
+  <div class="hero">Two nodes can reach the same chain tip while establishing their <b>initial trusted state</b> by completely different means. DWARF's oracles watch tip convergence; they don't model trust <i>provenance</i>. <b>Result: cardano-node can bootstrap trustlessly from genesis; Amaru structurally requires a trusted snapshot and carries compiled-in trust anchors — including the consensus-critical leader-election nonces. The two clients do not share a root of trust for their initial state.</b> No exploit — a model gap DWARF should test.</div>
+
+  <h2>The two trust models <span class="chip">confirmed · from source</span></h2>
+  <div class="card scroll">
+  <table>
+    <tr><th></th><th>cardano-node</th><th>Amaru</th></tr>
+    <tr><td>Validate from genesis?</td><td class="ok"><b>Yes</b> — trustless option</td><td class="bad"><b>No</b> — snapshot mandatory (<code>build_node.rs</code>: "ledger tip header not found")</td></tr>
+    <tr><td>Initial epoch nonces</td><td class="ok"><b>derived</b> from validated chain history</td><td class="bad"><b>compiled-in constants</b> (<code>config/bootstrap/*/nonces.json</code>, embedded via <code>include_dir!</code>)</td></tr>
+    <tr><td>Checkpoint (trusted block-hash)</td><td class="ok">Yes (<code>npcCheckpointsFile</code>)</td><td class="bad"><b>None</b> (its "checkpoints" are RocksDB snapshots)</td></tr>
+    <tr><td>Well-known-net bootstrap trust</td><td>genesis (or optional Mithril)</td><td>Mithril aggregator — hardcoded endpoint + verification key</td></tr>
+    <tr><td>Custom-net bootstrap trust</td><td>genesis</td><td>a locally-imported snapshot, trusted as-is</td></tr>
+  </table>
+  </div>
+
+  <h2>The load-bearing anchor — Amaru's initial nonces</h2>
+  <div class="card">Amaru embeds the initial Ouroboros nonces into the binary, per network — these <b>seed leader election</b>:
+  <pre>config/bootstrap/mainnet/nonces.json
+{ "at": "134956789.6558deef…",
+  "active":   "0b9e320e63bf995b81287ce7a624b6735d98b083cc1a0e2ae8b08b680c79c983",
+  "candidate":"6cc4dafecbe0d593ca0dee64518542f5faa741538791ac7fc2d5008f32d5c4d5",
+  "evolving": "f5589f01dd0efd0add0c58e8b27dc73ba3fcd662d9026b3fedbf06c648adb313" }</pre>
+  cardano-node <i>derives</i> these by validating history from a genesis it can check. A wrong or tampered <code>nonces.json</code> would give Amaru a <b>different leader schedule</b> than cardano-node — a real consensus divergence originating entirely in a build-time trust anchor, and one a tip-convergence oracle would only notice <i>after</i> the fact.</div>
+
+  <h2>Why it matters (no exploit — a model gap)</h2>
+  <div class="card">Pinned nonces + Mithril snapshots are a legitimate, audited fast-bootstrap design (cardano-node uses Mithril too). The finding is that the two nodes' <b>trust roots differ</b>, and DWARF's convergence oracles can't detect a divergence caused by a bad trust source. Amaru's bootstrap security depends on its compiled-in anchors (build/supply-chain trust) and the imported snapshot (Mithril integrity, or the snapshot producer); cardano-node's from-genesis mode depends on neither, and it has a checkpoint defence Amaru lacks.</div>
+
+  <h2>What DWARF should add</h2>
+  <div class="card">A <b>trust-source dimension</b> to the differential harness: bootstrap each node from each supported source (genesis / checkpoint / Mithril / synthetic snapshot), record the <i>provenance</i> of the initial state, and assert the two nodes anchored on <i>compatible</i> roots — not just that their tips converged. Tampering a bootstrap anchor (a nonce, a snapshot) and checking whether the node detects it is the natural adversarial follow-up. Source citations in <code>consensus-bootstrap-trust-source-evidence/</code>.</div>
+</div></body></html>

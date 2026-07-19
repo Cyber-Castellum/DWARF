@@ -1,0 +1,63 @@
+name: DWARF validation gate
+
+# Wallet-free, infra-free validation of the DWARF scenario corpus and Antithesis
+# bundles. Runs on every push / PR. Does NOT run scenarios, fuzzers, a devnet, or
+# any Antithesis job (those are wallet-gated / need a self-hosted runner) — this
+# gate only proves the scenario + bundle definitions are well-formed before anyone
+# spends a real run on a broken one.
+
+on:
+  push:
+    paths:
+      - "dwarf/scenarios/**"
+      - "dwarf/spec/**"
+      - "dwarf/primitives/**"
+      - "dwarf/profile_manager/**"
+      - "dwarf/scripts/validate_scenarios.py"
+      - ".github/workflows/dwarf-validate.yml"
+  pull_request:
+    paths:
+      - "dwarf/scenarios/**"
+      - "dwarf/spec/**"
+      - "dwarf/primitives/**"
+      - "dwarf/profile_manager/**"
+      - "dwarf/scripts/validate_scenarios.py"
+      - ".github/workflows/dwarf-validate.yml"
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Treat semantic warnings as failures"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip jsonschema
+
+      - name: Run DWARF validation gate
+        run: |
+          python3 dwarf/scripts/validate_scenarios.py \
+            ${{ (github.event_name == 'workflow_dispatch' && inputs.strict) && '--strict' || '' }} \
+            --report dwarf-validation-report.json
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dwarf-validation-report
+          path: dwarf-validation-report.json

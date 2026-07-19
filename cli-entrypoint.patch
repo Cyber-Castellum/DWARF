@@ -1,0 +1,12 @@
+diff --git a/dwarf/profile_manager/cli.py b/dwarf/profile_manager/cli.py
+index 8f5ab27..ed85bd9 100644
+--- a/dwarf/profile_manager/cli.py
++++ b/dwarf/profile_manager/cli.py
+@@ -3424,3 +3424,7 @@ def main(argv=None):
+         return cmd_testcase(args)
+     parser.error(f"Unhandled command: {args.command}")
+     return 2
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

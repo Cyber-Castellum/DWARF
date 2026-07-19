@@ -1,0 +1,35 @@
+### Amaru bootstrap trust anchors (compiled into the binary)
+config/bootstrap/ (embedded via include_dir! in crates/amaru/src/lib.rs):
+crates/amaru/config/bootstrap/mainnet/config.json
+crates/amaru/config/bootstrap/mainnet/headers.json
+crates/amaru/config/bootstrap/mainnet/nonces.json
+crates/amaru/config/bootstrap/mainnet/snapshots.json
+crates/amaru/config/bootstrap/preprod/config.json
+crates/amaru/config/bootstrap/preprod/headers.json
+crates/amaru/config/bootstrap/preprod/nonces.json
+crates/amaru/config/bootstrap/preprod/snapshots.json
+crates/amaru/config/bootstrap/preview/config.json
+crates/amaru/config/bootstrap/preview/headers.json
+crates/amaru/config/bootstrap/preview/nonces.json
+crates/amaru/config/bootstrap/preview/snapshots.json
+
+### mainnet nonces.json (leader-election seed):
+{
+    "at": "134956789.6558deef007ba372a414466e49214368c17c1f8428093193fc187d1c4587053c",
+    "active": "0b9e320e63bf995b81287ce7a624b6735d98b083cc1a0e2ae8b08b680c79c983",
+    "candidate": "6cc4dafecbe0d593ca0dee64518542f5faa741538791ac7fc2d5008f32d5c4d5",
+    "evolving": "f5589f01dd0efd0add0c58e8b27dc73ba3fcd662d9026b3fedbf06c648adb313",
+    "tail": "29011cc1320d03b3da0121236dc66e6bc391feef4bb1d506a7fb20e769d6a494"
+  }
+### Mithril aggregator trust root (mithril.rs aggregator_details):
+307:    endpoint: &'static str,
+308:    verification_key: &'static str,
+309:    ancillary_verification_key: &'static str,
+316:        NetworkName::Mainnet => AggregatorDetails {
+317:            endpoint: "https://aggregator.release-mainnet.api.mithril.network/aggregator",
+318:            verification_key: "5b3139312c36362c3134302c3138352c3133382c31312c3233372c3230372c3235302c3134342c32372c322c3138382c33302c31322c38312c3135352c3230342c31302c3137392c37352c32332c3133382c3139362c3231372c352c31342c32302c35372c37392c33392c3137365d",
+319:            ancillary_verification_key: "5b32332c37312c39362c3133332c34372c3235332c3232362c3133362c3233352c35372c3136342c3130362c3138362c322c32312c32392c3132302c3136332c38392c3132312c3137372c3133382c3230382c3133382c3231342c39392c35382c32322c302c35382c332c36395d",
+321:        NetworkName::Preprod => AggregatorDetails {
+
+### No from-genesis path — run requires populated stores:
+96:    let ledger_tip = chain_store.load_tip(&ledger_tip.hash()).ok_or(anyhow!("ledger tip header not found"))?;

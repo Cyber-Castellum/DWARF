@@ -27,8 +27,7 @@
   <div class="card"><b>Nothing here is a critical or exploitable security finding.</b> The value is the <b>method</b> (a config-acceptance differential — a surface DWARF didn't previously cover) and two honest observations.
   <ul style="margin:.4rem 0 0">
     <li><b>Finding 1</b> is a <b>low-severity robustness bug, not a vulnerability.</b> The genesis is trusted operator-set config — an attacker can't feed a node a malicious genesis over the network, so there is <b>no attack surface</b>. The bug: cardano-node <i>crashes</i> instead of cleanly rejecting a malformed genesis. Belongs upstream as a <code>cardano-node</code> (IntersectMBO) robustness issue.</li>
-    <li><b>Finding 2</b> is the <b>Amaru-relevant</b> result — an architectural observation about how Amaru validates the genesis. No exploit; a design point.</li>
-    <li><b>Finding 3</b> is a <b>preliminary lead, deliberately not claimed</b> (flaky data).</li>
+    <li><b>Findings 2 &amp; 3</b> are the <b>Amaru-relevant</b> result — <b>confirmed from Amaru's source code</b>: the node never reads the raw genesis at runtime and runs on a reduced integer parameter model that omits fields cardano-node validates (e.g. <code>slotLength</code>). No exploit; a design/trust point.</li>
   </ul></div>
 
   <h2>Finding 1 — cardano-node crashes on unguarded time-parameter division <span class="chip bad">confirmed · systematic</span></h2>
@@ -44,18 +43,23 @@ slotLength  = 1e-300  -&gt; Ratio has zero denominator   (underflows to 0)</pre>
   Fast-failing, not a hang — but a <i>crash</i> instead of a clean rejection. Fix: range-check <code>epochLength &gt; 0</code> and <code>slotLength &gt; 0</code> at decode.
   <p class="muted" style="margin:.5rem 0 0"><b>Also (hedged):</b> genesis validation is largely type/parse-level, not semantic — the node <i>accepts</i> <code>slotLength=-1</code> (while <code>0</code> crashes), zero <code>maxKESEvolutions</code>, and enormous <code>securityParam</code>/<code>epochLength</code>. Some may be intentionally unconstrained; the negative-vs-zero <code>slotLength</code> inconsistency is the concrete part.</p></div>
 
-  <h2>Finding 2 — the two clients validate genesis in fundamentally different ways <span class="chip warn">well-supported</span></h2>
+  <h2>Finding 2 — the Amaru node never reads the raw genesis at runtime <span class="chip warn">confirmed · from source</span></h2>
   <div class="card">
-  <table><tr><th></th><th>cardano-node</th><th>Amaru</th></tr>
-    <tr><td>Where</td><td>reads/validates raw <code>shelley-genesis.json</code> <b>directly at node startup</b></td><td>consumes <b>pre-derived</b> <code>AMARU_GLOBAL_*</code> from a separate component (<code>bootstrap-producer</code>); does <b>not</b> re-validate the raw genesis at <code>amaru run</code></td></tr>
-    <tr><td>Speed</td><td class="ok">~20 ms clean reject</td><td class="bad">seconds–minutes; intermittently <b>hangs</b></td></tr>
-    <tr><td>Determinism</td><td class="ok">deterministic</td><td class="bad">non-deterministic on bad input (<code>activeSlotsCoeff=2.0</code> → <code>1/f=1</code> one run, <code>1/f=5</code> another)</td></tr>
+  <table><tr><th></th><th>cardano-node</th><th>Amaru node</th></tr>
+    <tr><td>Genesis at runtime</td><td>reads/validates raw <code>shelley-genesis.json</code> <b>at every startup</b></td><td><b>never reads it</b> — the <code>amaru</code>/<code>amaru-consensus</code>/<code>amaru-ledger</code> crates have <b>zero</b> references to <code>shelley-genesis</code>/<code>activeSlotsCoeff</code></td></tr>
+    <tr><td>Params come from</td><td>the genesis</td><td>a <b>hardcoded per-network preset</b> (<code>TESTNET_GLOBAL_PARAMETERS</code> …) or <code>AMARU_GLOBAL_*</code> env, computed once at setup by separate tooling</td></tr>
+    <tr><td>Reject latency</td><td class="ok">~20 ms</td><td class="bad">n/a — no runtime genesis validation; setup deriver is slow/hangs/non-deterministic</td></tr>
   </table>
-  <p style="margin:.4rem 0 0">Different <b>config-trust models</b>: cardano-node treats genesis as untrusted input to validate up front; Amaru trusts a derived-params artifact and never re-checks the source. A malformed/mis-derived genesis can propagate into Amaru silently.</p>
+  <p style="margin:.4rem 0 0">Different <b>config-trust models</b>: cardano-node validates the genesis as untrusted input at every startup; the Amaru node trusts a pre-set/derived parameter artifact and never re-checks the source.</p>
   </div>
 
-  <h2>Finding 3 — Amaru leniency <span class="chip prelim">preliminary — NOT a finding</span></h2>
-  <div class="card">Some mutations hint Amaru is more lenient (clearest: <code>slotLength=0</code> — cardano-node <b>crashes</b>, Amaru <b>accepts</b> and boots on baseline params). But Amaru's derivations were non-deterministic and several runs hung, so the per-mutation verdicts are <b>not reliable</b>. Confirming this needs a <b>deterministic</b> Amaru genesis-parse surface (its own parser, or <code>amaru import</code> with a hard timeout). We deliberately do <b>not</b> claim "Amaru accepts invalid genesis" on this evidence — that would be the LEAD-001 mistake (a harness artifact dressed as a finding).</div>
+  <h2>Finding 3 — Amaru's parameter model omits fields cardano-node validates <span class="chip warn">confirmed · from source</span></h2>
+  <div class="card">The runtime hints were flaky and were held back; Amaru's <code>GlobalParameters</code> struct confirms them deterministically:
+  <ul style="margin:.4rem 0 0">
+    <li><b><code>slotLength</code> is not in Amaru's parameter model at all</b> → a malformed <code>slotLength</code> (0/negative/<code>1e-300</code>) that <b>crashes cardano-node</b> is silently <b>ignored</b> by Amaru (accepts, runs). A structural fact, not a one-off.</li>
+    <li>The active-slot coefficient is stored only as <code>active_slot_coeff_inverse: usize</code> (integer 1/f) → Amaru can't faithfully represent arbitrary-precision or out-of-range genesis <code>f</code>: <code>f=0</code> divides by zero, <code>f&gt;1</code> truncates to a nonsense integer.</li>
+  </ul>
+  <p class="muted" style="margin:.5rem 0 0">This is the disciplined path in action: withheld while the runtime was flaky, then confirmed by a source-level method that doesn't depend on the flaky harness — the opposite of the LEAD-001 mistake.</p></div>
 
   <h2>The differential (raw)</h2>
   <div class="card scroll">
@@ -72,5 +76,5 @@ slotLength  = 1e-300  -&gt; Ratio has zero denominator   (underflows to 0)</pre>
   </div>
 
   <h2>Status</h2>
-  <div class="card">Confirmed: Finding 1 (cardano-node crash) and Finding 2 (architectural asymmetry). Open: a clean Amaru accept/reject differential (Finding 3), gated on a deterministic Amaru genesis-parse surface. This is a <b>new differential class</b> — config-acceptance parity — distinct from the message/block fuzzing already in DWARF. Harness + raw data in <code>consensus-genesis-config-evidence/</code>.</div>
+  <div class="card">All three findings <b>confirmed</b>: Finding 1 (cardano-node crash) via a 417-mutation sweep; Findings 2 &amp; 3 (Amaru config-trust / parameter-model gap) via Amaru's source. No open threads. This is a <b>new differential class</b> — config-acceptance parity — distinct from the message/block fuzzing already in DWARF. Harness + raw data in <code>consensus-genesis-config-evidence/</code>.</div>
 </div></body></html>

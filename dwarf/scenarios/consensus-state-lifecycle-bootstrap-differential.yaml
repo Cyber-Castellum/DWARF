@@ -1,0 +1,85 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-state-lifecycle-bootstrap-differential",
+  "title": "State-lifecycle / bootstrap differential (Gap #4) — a freshly bootstrapped Amaru forward-syncs across epoch boundaries as cleanly as cardano-node (no warmup-window failure, no panic)",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "lifecycle",
+    "bootstrap",
+    "recovery",
+    "epoch",
+    "stake-snapshot",
+    "differential",
+    "amaru",
+    "upstream-topology"
+  ],
+  "evidence_intent": "candidate",
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x5a1e0004",
+  "iterations": 1,
+  "shrink": false,
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42
+  },
+  "setup": [
+    {
+      "primitive": "runtime_attach_topology",
+      "output_dir": "outputs/attach",
+      "topology": "cardano_amaru",
+      "network_magic": 42
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_tracer_capture",
+      "output_dir": "outputs/tracer",
+      "tracer_container": "tracer",
+      "prometheus_port": 4000
+    },
+    {
+      "primitive": "runtime_force_epoch_boundary",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "target_node": "amaru-relay-2",
+      "target_slot": 375,
+      "output_dir": "outputs/epoch-boundary",
+      "timeout_seconds": 240,
+      "expect_exit": 0
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "node_ids": [ "p1", "p2", "p3", "relay1", "relay2", "amaru-relay-2" ],
+      "observation_window_seconds": 300,
+      "sample_interval_seconds": 5,
+      "network_magic": 42,
+      "observation_primitives": [ "tip_state" ],
+      "timeout_seconds": 360,
+      "output_dir": "outputs/obs"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "chain_select_differential",
+      "reference_node_ids": [ "relay1", "relay2" ],
+      "target_node_ids": [ "amaru-relay-2" ],
+      "tolerance_slots": 6,
+      "require_real_progress": true
+    },
+    {
+      "primitive": "epoch_boundary_timing_within_bounds"
+    },
+    {
+      "primitive": "panic_path_contained"
+    }
+  ],
+  "teardown": []
+}
