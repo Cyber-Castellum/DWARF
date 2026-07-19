@@ -1,0 +1,6 @@
+# Dependencies for the DWARF validation gate (dwarf/scripts/validate_scenarios.py).
+# The gate imports profile_manager.cli for semantic validation, whose import chain
+# pulls jinja2 (via profile_manager/templating.py); jsonschema is used directly for
+# schema validation. Keep this list minimal — it is NOT the full DWARF runtime.
+jsonschema
+jinja2
