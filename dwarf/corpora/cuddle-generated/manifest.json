@@ -1,0 +1,49 @@
+{
+  "generator": "cuddle",
+  "cuddle_version": "1.8.1.1",
+  "cddl_file": "conway.cddl",
+  "era": "conway",
+  "shape_rules": {
+    "block-header": "header",
+    "block": "block",
+    "tx-body": "transaction_body",
+    "certificate": "certificate",
+    "auxiliary-data": "auxiliary_data"
+  },
+  "count": 16,
+  "negative": 4,
+  "seed_start": 1,
+  "note": "structurally-valid CBOR only; not consensus-valid (no real VRF/sigs/hashes)",
+  "corpora": {
+    "block-header": {
+      "rule": "header",
+      "seeds_ok": 16,
+      "seeds_fail": 0,
+      "dir": "/home/nigel/cuddle-build/corpora/block-header/seeds"
+    },
+    "block": {
+      "rule": "block",
+      "seeds_ok": 16,
+      "seeds_fail": 0,
+      "dir": "/home/nigel/cuddle-build/corpora/block/seeds"
+    },
+    "tx-body": {
+      "rule": "transaction_body",
+      "seeds_ok": 16,
+      "seeds_fail": 0,
+      "dir": "/home/nigel/cuddle-build/corpora/tx-body/seeds"
+    },
+    "certificate": {
+      "rule": "certificate",
+      "seeds_ok": 16,
+      "seeds_fail": 0,
+      "dir": "/home/nigel/cuddle-build/corpora/certificate/seeds"
+    },
+    "auxiliary-data": {
+      "rule": "auxiliary_data",
+      "seeds_ok": 16,
+      "seeds_fail": 0,
+      "dir": "/home/nigel/cuddle-build/corpora/auxiliary-data/seeds"
+    }
+  }
+}
