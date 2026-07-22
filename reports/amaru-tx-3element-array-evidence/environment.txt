@@ -1,0 +1,8 @@
+Evidence generated: Wed Jul 22 08:25:15 AM UTC 2026
+Amaru image:         ghcr.io/j-gainsec/amaru-baked:0.1.0 (baked testnet_42 store, /bin/amaru serve-only)
+Amaru upstream image: ghcr.io/lambdasistemi/amaru-bootstrap-producer:03d2727b71e8d1fe7c793d5036dce3c3ce294f6c
+Reference node:      ghcr.io/intersectmbo/cardano-node (10.7.1) via ghcr.io/intersectmbo/cardano-submit-api:10.7.1
+Network:             testnet_42 (k=5)
+Endpoint:            POST /api/submit/tx  (Content-Type: application/cbor)
+Amaru version:
+Amaru 10.10.0

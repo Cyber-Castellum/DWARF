@@ -1,0 +1,7 @@
+HTTP/1.1 400 Bad Request
+content-type: text/plain; charset=utf-8
+content-length: 122
+date: Wed, 22 Jul 2026 08:24:45 GMT
+
+Invalid CBOR transaction: missing value at index 2 (Transaction::is_expected_valid) in map or array starting at position 0
+---HTTP_STATUS=400---
