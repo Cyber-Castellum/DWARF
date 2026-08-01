@@ -1,0 +1,138 @@
+# DWARF Haskell-vs-Amaru transaction differential — Antithesis bundle.
+#
+# Same mutated transaction CBOR is POSTed to BOTH a Haskell node (via
+# cardano-submit-api) and the baked-store Amaru (submit-api). The workload asserts
+# the two implementations AGREE on accept/reject. A disagreement (one accepts, one
+# rejects the same bytes) is a consensus-relevant divergence = a finding.
+#
+# This is the differential extension of docker-compose.yaml (single-target Amaru).
+# It sidesteps peer-sync (broken upstream, pragma-org/amaru #736): NEITHER node
+# needs to sync — the Haskell producer forges its own testnet_42 chain, Amaru
+# serves its baked store, and each decodes the bytes we hand it.
+#
+# INTERNAL_NETWORK is supplied by the moog/Antithesis harness.
+x-fault-exclude: &fault-exclude
+  com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+
+services:
+  # --- Haskell side: configurator generates testnet_42 genesis/config/keys, a
+  #     single block-producer forges the chain, submit-api exposes POST /api/submit/tx.
+  configurator:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/configurator:0f9570b
+    container_name: diff-configurator
+    labels: *fault-exclude
+    volumes:
+      - ./testnet.yaml:/testnet.yaml
+      - p1-configs:/configs/1
+      - p2-configs:/configs/2
+      - p3-configs:/configs/3
+
+  tracer:
+    image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
+    hostname: tracer.example
+    container_name: diff-tracer
+    labels: *fault-exclude
+    volumes:
+      - tracer:/opt/cardano-tracer
+      - ./tracer-config.yaml:/tracer-config.yaml:ro
+    entrypoint: cardano-tracer
+    command: ["--config", "/tracer-config.yaml"]
+    restart: always
+
+  tracer-sidecar:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/tracer-sidecar:5271661
+    container_name: diff-tracer-sidecar
+    labels: *fault-exclude
+    hostname: tracer-sidecar.example
+    command: ["/opt/cardano-tracer/logs"]
+    environment:
+      POOLS: '3'
+      CHAINPOINT_FILEPATH: /opt/cardano-tracer/chainPoints.log
+    volumes:
+      - tracer:/opt/cardano-tracer
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  p1:
+    image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+    environment:
+      CARDANO_BLOCK_PRODUCER: "true"
+    command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n  --database-path /state\n  --socket-path /state/node.socket\n  --tracer-socket-path-connect /tracer/tracer.socket\n  --shelley-operational-certificate /configs/keys/opcert.cert\n  --shelley-kes-key /configs/keys/kes.skey\n  --shelley-vrf-key /configs/keys/vrf.skey\n  --port 3001\n  --host-addr 0.0.0.0\n  +RTS -N -A16m -qg -qb -RTS\n"
+    restart: always
+    container_name: diff-p1
+    labels: *fault-exclude
+    hostname: p1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - p1-state:/state
+      - tracer:/tracer
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      tracer-sidecar:
+        condition: service_started
+
+  cardano-submit-api:
+    image: ghcr.io/intersectmbo/cardano-submit-api:10.7.1
+    hostname: cardano-submit-api.example
+    container_name: diff-submit-api
+    labels: *fault-exclude
+    # Default entrypoint is the nix "entry-point" wrapper; with NETWORK unset it
+    # execs `cardano-submit-api $@`, so these args flow straight through.
+    command:
+      - "--config"
+      - "/cfg/submit-api-config.yaml"
+      - "--testnet-magic"
+      - "42"
+      - "--socket-path"
+      - "/ipc/node.socket"
+      - "--listen-address"
+      - "0.0.0.0"
+      - "--port"
+      - "8090"
+    volumes:
+      - p1-state:/ipc          # p1's node.socket (rw: LocalTxSubmission needs it)
+      - ./haskell:/cfg:ro
+    restart: always
+    depends_on:
+      p1:
+        condition: service_started
+
+  # --- Amaru side: baked-store serve-only node (see docker-compose.yaml / README).
+  amaru-baked:
+    image: ${AMARU_BAKED_IMAGE:-ghcr.io/j-gainsec/amaru-baked:0.1.0}
+    hostname: amaru-baked.example
+    container_name: diff-amaru-baked
+    labels: *fault-exclude
+
+  # --- DWARF differential fuzzer: same mutated tx to BOTH submit endpoints.
+  workload:
+    image: ${WORKLOAD_IMAGE:-ghcr.io/j-gainsec/dwarf-submit-workload:0.2.0}
+    hostname: workload.example
+    container_name: diff-workload
+    environment:
+      WORKLOAD_TARGETS: "amaru=amaru-baked.example:3011,cardano=cardano-submit-api.example:8090"
+      WORKLOAD_CORPUS: "/workload/corpus"
+      WORKLOAD_DELAY_SECS: "0.2"
+    depends_on:
+      amaru-baked:
+        condition: service_started
+      cardano-submit-api:
+        condition: service_started
+    labels:
+      com.antithesis.exclude_from_faults: "true"
+
+volumes:
+  tracer: null
+  p1-configs: null
+  p2-configs: null
+  p3-configs: null
+  p1-state: null
+
+networks:
+  default:
+    name: dwarf-amaru-differential
+    driver: bridge
+    internal: ${INTERNAL_NETWORK:-false}

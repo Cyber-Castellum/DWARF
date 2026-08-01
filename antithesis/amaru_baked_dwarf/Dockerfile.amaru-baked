@@ -1,0 +1,36 @@
+# Hermetic baked-store Amaru image for Antithesis.
+#
+# WHY: Amaru cannot yet sync from a single Haskell peer in the mixed-net topology
+# (pragma-org/amaru #736 "Properly handle in/out/duplex peers" is OPEN; the node
+# handshakes but the outbound chain-sync/block-fetch never progresses, so it sits
+# at zero blocks — reproduced on both our deploy and the client's 2-day deploy).
+#
+# This image sidesteps peer-sync entirely: it bakes a pre-synced testnet_42 store
+# into the image, so Amaru boots, loads its ledger, and SERVES on the N2N listen
+# port (3001) + the HTTP submit-api (3011) with no upstream needed. DWARF then
+# fuzzes mutated transaction CBOR at the submit-api and reads Amaru's own
+# accept(200)/reject(400)/crash response — a real oracle, no stub.
+#
+# The store is baked (not volume-mounted) because Antithesis pulls images from a
+# registry and gives no persistent host mounts — the image must be self-contained.
+ARG AMARU_IMAGE=ghcr.io/lambdasistemi/amaru-bootstrap-producer:03d2727b71e8d1fe7c793d5036dce3c3ce294f6c
+
+# The amaru image is minimal (no tar/rm), so extract the baked store in a builder
+# stage and COPY the ready directory into the final image.
+FROM alpine:3.20 AS store
+COPY baked-store.tgz /baked-store.tgz
+RUN mkdir -p /opt/amaru-baked/store \
+ && tar xzf /baked-store.tgz -C /opt/amaru-baked/store
+
+FROM ${AMARU_IMAGE}
+
+# Baked pre-synced testnet_42 store (chain.db + ledger.db + snapshots + era-history).
+# Read-only template; the entrypoint copies it to a writable dir at boot (RocksDB
+# needs write access).
+COPY --from=store /opt/amaru-baked/store /opt/amaru-baked/store
+
+COPY entrypoint-amaru.sh /opt/amaru-baked/entrypoint-amaru.sh
+RUN chmod +x /opt/amaru-baked/entrypoint-amaru.sh
+
+EXPOSE 3001 3011
+ENTRYPOINT ["/opt/amaru-baked/entrypoint-amaru.sh"]

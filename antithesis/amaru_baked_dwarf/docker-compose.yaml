@@ -1,0 +1,47 @@
+# DWARF baked-store Amaru + submit-api fuzz — Antithesis bundle (TEMP path).
+#
+# Purpose: get Amaru running under Antithesis NOW, without waiting on the upstream
+# peer-sync fix (pragma-org/amaru #736, OPEN). Amaru boots from a baked pre-synced
+# store and serves; the DWARF workload fuzzes mutated transaction CBOR at its HTTP
+# submit-api and reads Amaru's real accept/reject/crash response.
+#
+# This is the SINGLE-TARGET MVP (Amaru only). The Haskell-vs-Amaru differential
+# (add a cardano-submit-api service as a second WORKLOAD_TARGETS entry) is the
+# next layer — see README.dwarf.md.
+#
+# INTERNAL_NETWORK is supplied by the moog/Antithesis harness (same convention as
+# the live cardano_node_dwarf bundle).
+services:
+  amaru-baked:
+    # Pre-built + pushed public; Antithesis pulls it from the registry at setup.
+    # Build locally with: docker build -f Dockerfile.amaru-baked -t <ref> .
+    image: ${AMARU_BAKED_IMAGE:-ghcr.io/j-gainsec/amaru-baked:0.1.0}
+    hostname: amaru-baked.example
+    networks:
+      amaru-fuzz-net:
+    ports:
+      - "3001"
+      - "3011"
+    # No depends_on: it is the root — boots from its baked store with no upstream.
+    labels:
+      com.antithesis.exclude_from_faults: "false"
+
+  workload:
+    image: ${WORKLOAD_IMAGE:-ghcr.io/j-gainsec/dwarf-submit-workload:0.2.0}
+    hostname: workload.example
+    environment:
+      WORKLOAD_TARGETS: "amaru=amaru-baked.example:3011"
+      WORKLOAD_CORPUS: "/workload/corpus"
+      WORKLOAD_DELAY_SECS: "0.2"
+    networks:
+      amaru-fuzz-net:
+    depends_on:
+      amaru-baked:
+        condition: service_started
+    # The workload is the fault-driver; keep it out of the fault set itself.
+    labels:
+      com.antithesis.exclude_from_faults: "true"
+
+networks:
+  amaru-fuzz-net:
+    driver: bridge
