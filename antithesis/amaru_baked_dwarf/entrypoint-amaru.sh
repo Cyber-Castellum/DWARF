@@ -28,7 +28,11 @@ export AMARU_GLOBAL_SYSTEM_START=0
 # long removal cooldown stops a tight reconnect loop against the unreachable addr.
 DUMMY_PEER="${AMARU_DUMMY_PEER:-10.255.255.1:3001}"
 
-exec /bin/amaru run \
+# Binary path differs by base image (upstream pragma-org = /usr/local/bin/amaru;
+# older lambdasistemi = /bin/amaru). Resolve whichever exists.
+AMARU_BIN="$(command -v amaru || echo /usr/local/bin/amaru)"
+
+exec "$AMARU_BIN" run \
   --network testnet_42 \
   --ledger-dir "$STORE/ledger.testnet_42.db" \
   --chain-dir "$STORE/chain.testnet_42.db" \

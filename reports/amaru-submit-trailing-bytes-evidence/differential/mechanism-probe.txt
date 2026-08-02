@@ -1,0 +1,9 @@
+CLEAN len=197   amaru=400 id=9ec4238945773332 | cardano=400 '{"contents":{"contents":{"contents":{"era":"S'
+
+--- TRAILING-BYTE test (append junk to a valid tx) ---
++1x 0xff       amaru=400 id=9ec4238945773332 SAME-ID(trailing-ignored) | cardano=400 '{"contents":{"contents":["DecoderErrorDeserialiseFailur'
++3 bytes       amaru=400 id=9ec4238945773332 SAME-ID(trailing-ignored) | cardano=400 '{"contents":{"contents":["DecoderErrorDeserialiseFailur'
++map a26161    amaru=400 id=9ec4238945773332 SAME-ID(trailing-ignored) | cardano=400 '{"contents":{"contents":["DecoderErrorDeserialiseFailur'
+
+--- ARITY-MUTATION id test (does amaru id change vs clean?) ---
+@byte6 0x81->0x80: amaru=400 id=None (clean=9ec4238945773332) | cardano=400 '{"contents":{"contents":["DecoderErrorDeseria'

@@ -56,3 +56,32 @@ Client-facing results from DWARF campaigns against `cardano-node` and Amaru.
   bootstrap). No exploit; a model gap + new test dimension. Source, live-run log, and observed-crash
   note in `consensus-state-lifecycle-evidence/`; scenario in
   `dwarf/scenarios/consensus-state-lifecycle-bootstrap-differential.yaml`.
+
+## Transaction submit-API differential (`amaru-tx-3element-array-evidence/`)
+
+- **Amaru accepts 3-element (non-canonical) Conway transactions that cardano-node rejects at
+  decode.** DWARF submitted the same mutated transaction CBOR to both nodes' `POST /api/submit/tx`
+  and compared, with an oracle that distinguishes **decode failure** from **validation failure**.
+  Flipping a real transaction's top-level CBOR array header `0x84`→`0x83` (array-of-4 → array-of-3):
+  **cardano-node rejects at deserialization** (`DecoderErrorDeserialiseFailure`); **Amaru decodes it**
+  (its `Transaction` decoder makes the trailing `auxiliary_data: Option<_>` an omittable array
+  element under minicbor), computes the tx id, and advances to validation. `array(2)` is correctly
+  rejected (required field enforced) and `array(3)`/`array(4)` share a tx id → non-canonical-encoding
+  / malleability. **Confirmed at decode level with root cause in Amaru source**; the mempool-accept
+  (HTTP 202) and block-relay impact are **open** (a valid funded tx couldn't be built on the local
+  devnet). Write-up: `dwarf/docs/finding-amaru-tx-3element-array.md`. Raw node responses, seeds,
+  differential run, and the Amaru source (pinned commit) in `amaru-tx-3element-array-evidence/`.
+  **Update (2026-08-01): fixed upstream** — `v10.11.20260730` now rejects the 3-element form at
+  decode (`assert_len(4)`); confirmed empirically in `amaru-tx-3element-array-evidence/resolution-10.11/`.
+
+- **Amaru's submit-API accepts trailing bytes after a transaction (no end-of-input check).**
+  A follow-on hunt over a deeper certificate/governance corpus (built with `cardano-cli conway
+  transaction build-raw`). Appending arbitrary bytes to a valid tx — `<tx> ‖ 0xff` — is decoded by
+  Amaru to the **same transaction id** (trailing bytes ignored) and admitted; **cardano-node rejects**
+  the same bytes with `DecoderErrorLeftover "Shelley Tx" "\255"`. Root cause: `minicbor::decode(&body)`
+  in `crates/amaru-node/src/submit_api.rs` does not enforce end-of-input. **Still present in
+  `v10.11.20260730`** (distinct from the 3-element fix above). **Severity low** — mempool-ingress
+  conformance only: Amaru re-encodes canonically on relay (no propagation), and it is **not** a
+  resource-exhaustion vector (~2 MB request-body cap, memory flat under large-body and flood tests).
+  Write-up: `dwarf/docs/finding-amaru-submit-trailing-bytes.md`. Raw responses, seeds, mutation sweep,
+  resource analysis, and pinned source in `amaru-submit-trailing-bytes-evidence/`.

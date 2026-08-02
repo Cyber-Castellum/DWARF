@@ -1,0 +1,8 @@
+HTTP/1.1 400 Bad Request
+Transfer-Encoding: chunked
+Date: Sun, 02 Aug 2026 01:50:57 GMT
+Server: Warp/3.4.9
+
+
+--- body ---
+{"contents":{"contents":["DecoderErrorDeserialiseFailure \"Shelley Tx\" (DeserialiseFailure 1 \"Size mismatch when decoding Record RecD.\\nExpected 4, but found 3.\")","DecoderErrorDeserialiseFailure \"Shelley Tx\" (DeserialiseFailure 1 \"Size mismatch when decoding Record RecD.\\nExpected 4, but found 3.\")","DecoderErrorDeserialiseFailure \"Shelley Tx\" (DeserialiseFailure 1 \"Size mismatch when decoding Record RecD.\\nExpected 4, but found 3.\")","DecoderErrorDeserialiseFailure \"Shelley Tx\" (DeserialiseFailure 3 \"expected list len or indef\")","DecoderErrorDeserialiseFailure \"Shelley Tx\" (DeserialiseFailure 3 \"expected list len or indef\")","DecoderErrorLeftover \"Shelley Tx\" \"\\255\""],"tag":"TxCmdTxReadError"},"tag":"TxSubmitFail"}

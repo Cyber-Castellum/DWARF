@@ -3,6 +3,21 @@
 Gets **Amaru running under Antithesis now**, with DWARF fuzzing preserved, without
 waiting on the upstream peer-sync fix.
 
+## 2026-08-01 — bumped to Amaru v10.11.20260730 (image `amaru-baked:0.2.0`)
+
+Base image is now the upstream release `ghcr.io/pragma-org/amaru:v10.11.20260730`
+(Debian trixie, non-root `amaru` user, binary `/usr/local/bin/amaru`) in place of the
+old lambdasistemi 10.10 producer. The 10.10 store is **format-incompatible** with 10.11
+(panics `pools::Row TypeMismatch` on load), so `baked-store.tgz` was **regenerated in
+the 10.11 format** — a fresh testnet_42 store bootstrapped from the live `cardano_amaru`
+devnet's p1 chain (epochs 0/1/2, target epoch 3) via `amaru snapshot create` +
+`amaru node bootstrap` (full recipe recorded in the memory note `antithesis-amaru-audit`).
+Verified on cardano-box: baked image boots clean, `build_ledger tip.slot=371`, submit-api
+up, no permission/panic. **Note the tx-3element finding is now FIXED in this image** — the
+`0x83` (3-element) tx is rejected at decode (`CBOR array length mismatch: expected 4 got 3`),
+matching cardano-node; the bundle therefore now demonstrates the *fixed* decoder (and stays
+useful as a live 10.11 submit-api fuzz + differential substrate for the scenarios).
+
 ## Why this bundle exists
 
 The mixed Haskell+Amaru bundle (`../cardano_amaru_dwarf/`) can't produce a
@@ -28,8 +43,8 @@ workload  --POST mutated tx CBOR-->  amaru-baked :3011 (HTTP submit-api)
                                       amaru-baked :3001 (N2N listen)
 ```
 
-- `amaru-baked` (`Dockerfile.amaru-baked`): lambdasistemi amaru + a baked testnet_42
-  store (chain.db + ledger.db + snapshots + era-history) baked into the image, so it
+- `amaru-baked` (`Dockerfile.amaru-baked`): pragma-org amaru v10.11.20260730 + a baked
+  testnet_42 store (chain.db + ledger.db + era-history) baked into the image, so it
   is hermetic (Antithesis gives no host mounts). Entrypoint runs
   `amaru run --listen-address 0.0.0.0:3001 --submit-api-address 0.0.0.0:3011
   --peer-address <dummy> --peer-removal-cooldown-secs 86400`.
@@ -110,7 +125,7 @@ confirmation before it is a confirmed finding — see
 
 ## Launch (moog / Antithesis)
 1. Build + push the images **public** (Antithesis anon-pulls at setup):
-   - `docker build -f Dockerfile.amaru-baked -t ghcr.io/j-gainsec/amaru-baked:0.1.0 .`
+   - `docker build -f Dockerfile.amaru-baked -t ghcr.io/j-gainsec/amaru-baked:0.2.0 .`
      (build context must contain `baked-store.tgz`)
    - `docker build -f workload/Dockerfile -t ghcr.io/j-gainsec/dwarf-submit-workload:0.2.0 workload`
    - push both to a public registry. (`ghcr.io/intersectmbo/cardano-submit-api:10.7.1`
@@ -121,6 +136,9 @@ confirmation before it is a confirmed finding — see
 3. `moog create-test` with the requester secrets file (token id + wallet passphrase
    + GitHub PAT). No secrets live in this bundle.
 
-`baked-store.tgz` is the pre-synced testnet_42 store; regenerate it from a live
-Amaru relay's `*-state` volume:
-`tar czf baked-store.tgz chain.testnet_42.db ledger.testnet_42.db snapshots era-history.json`.
+`baked-store.tgz` is the pre-synced testnet_42 store (10.11 format):
+`tar czf baked-store.tgz chain.testnet_42.db ledger.testnet_42.db era-history.json`.
+To regenerate for a new Amaru version, rebuild the store with that version's
+`amaru snapshot create` + `amaru node bootstrap` against a cardano-node testnet_42 chain
+(recipe in the `antithesis-amaru-audit` memory note) — a store from a different major
+version will panic on load.

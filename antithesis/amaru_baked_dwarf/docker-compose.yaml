@@ -15,7 +15,7 @@ services:
   amaru-baked:
     # Pre-built + pushed public; Antithesis pulls it from the registry at setup.
     # Build locally with: docker build -f Dockerfile.amaru-baked -t <ref> .
-    image: ${AMARU_BAKED_IMAGE:-ghcr.io/j-gainsec/amaru-baked:0.1.0}
+    image: ${AMARU_BAKED_IMAGE:-ghcr.io/j-gainsec/amaru-baked:0.2.0}
     hostname: amaru-baked.example
     networks:
       amaru-fuzz-net:

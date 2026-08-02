@@ -1,0 +1,8 @@
+HTTP/1.1 400 Bad Request
+Transfer-Encoding: chunked
+Date: Sun, 02 Aug 2026 01:50:57 GMT
+Server: Warp/3.4.9
+
+
+--- body ---
+{"contents":{"contents":{"contents":{"era":"ShelleyBasedEraConway","error":["ConwayMempoolFailure \"All inputs are spent. Transaction has probably already been included\""],"kind":"ShelleyTxValidationError"},"tag":"TxValidationErrorInCardanoMode"},"tag":"TxCmdTxSubmitValidationError"},"tag":"TxSubmitFail"}

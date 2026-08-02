@@ -1,0 +1,6 @@
+HTTP/1.1 400 Bad Request
+content-type: text/plain; charset=utf-8
+content-length: 84
+date: Sat, 01 Aug 2026 23:36:05 GMT
+
+Invalid CBOR transaction: decode error: CBOR array length mismatch: expected 4 got 2

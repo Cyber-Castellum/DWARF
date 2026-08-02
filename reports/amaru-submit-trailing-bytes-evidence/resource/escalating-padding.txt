@@ -1,0 +1,10 @@
+# Escalating trailing-padding (Amaru vs cardano)
+clean tx = 197 bytes; amaru idle mem = 70.43MiB / 27.19GiB
+pad 1MB: amaru[400 0.003235s] failed to prepare transaction 9ec42389457733329f87 | cardano[400 0.296845s] {"contents":{"contents":["DecoderErrorDe
+pad 10MB: amaru[413 0.002914s] Failed to buffer the request body: length limit ex | cardano[400 2.124091s] {"contents":{"contents":["DecoderErrorDe
+pad 50MB: amaru[413 0.003126s] Failed to buffer the request body: length limit ex | cardano[400 11.165260s] {"contents":{"contents":["DecoderErrorDe
+pad 100MB: amaru[413 0.003146s] Failed to buffer the request body: length limit ex | cardano[400 21.206651s] {"contents":{"contents":["DecoderErrorDe
+
+# Cap boundary
+pad 1024KB -> amaru 400 failed to prepare transaction 9ec4238945
+pad 2048KB -> amaru 413 Failed to buffer the request body: lengt

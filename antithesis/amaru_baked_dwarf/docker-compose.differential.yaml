@@ -102,7 +102,7 @@ services:
 
   # --- Amaru side: baked-store serve-only node (see docker-compose.yaml / README).
   amaru-baked:
-    image: ${AMARU_BAKED_IMAGE:-ghcr.io/j-gainsec/amaru-baked:0.1.0}
+    image: ${AMARU_BAKED_IMAGE:-ghcr.io/j-gainsec/amaru-baked:0.2.0}
     hostname: amaru-baked.example
     container_name: diff-amaru-baked
     labels: *fault-exclude

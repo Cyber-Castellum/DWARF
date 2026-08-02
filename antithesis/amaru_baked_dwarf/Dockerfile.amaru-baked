@@ -13,10 +13,16 @@
 #
 # The store is baked (not volume-mounted) because Antithesis pulls images from a
 # registry and gives no persistent host mounts — the image must be self-contained.
-ARG AMARU_IMAGE=ghcr.io/lambdasistemi/amaru-bootstrap-producer:03d2727b71e8d1fe7c793d5036dce3c3ce294f6c
+#
+# 2026-08-01: bumped to the upstream pragma-org release v10.11.20260730 (Debian
+# trixie, runs as non-root user `amaru`, binary at /usr/local/bin/amaru). The store
+# is regenerated in the 10.11 on-disk format (the 10.10 store is format-incompatible
+# and panics on load); it holds chain.db + ledger.db + era-history for testnet_42
+# (target epoch 3), bootstrapped from the live cardano_amaru devnet's p1 chain.
+ARG AMARU_IMAGE=ghcr.io/pragma-org/amaru:v10.11.20260730
 
-# The amaru image is minimal (no tar/rm), so extract the baked store in a builder
-# stage and COPY the ready directory into the final image.
+# Extract the baked store in a builder stage and COPY the ready directory into the
+# final image (keeps the final image agnostic to whether its base ships tar).
 FROM alpine:3.20 AS store
 COPY baked-store.tgz /baked-store.tgz
 RUN mkdir -p /opt/amaru-baked/store \
@@ -24,13 +30,19 @@ RUN mkdir -p /opt/amaru-baked/store \
 
 FROM ${AMARU_IMAGE}
 
-# Baked pre-synced testnet_42 store (chain.db + ledger.db + snapshots + era-history).
-# Read-only template; the entrypoint copies it to a writable dir at boot (RocksDB
-# needs write access).
-COPY --from=store /opt/amaru-baked/store /opt/amaru-baked/store
+# Setup runs as root; the node runs as the image's unprivileged `amaru` user, so the
+# baked store must be owned by `amaru` (the entrypoint copies it to a writable dir at
+# boot and RocksDB needs write access).
+USER root
 
+# Baked pre-synced testnet_42 store (chain.db + ledger.db + era-history).
+COPY --from=store /opt/amaru-baked/store /opt/amaru-baked/store
 COPY entrypoint-amaru.sh /opt/amaru-baked/entrypoint-amaru.sh
-RUN chmod +x /opt/amaru-baked/entrypoint-amaru.sh
+RUN chmod +x /opt/amaru-baked/entrypoint-amaru.sh \
+ && chown -R amaru:amaru /opt/amaru-baked \
+ && mkdir -p /srv/amaru \
+ && chown -R amaru:amaru /srv/amaru
 
 EXPOSE 3001 3011
+USER amaru
 ENTRYPOINT ["/opt/amaru-baked/entrypoint-amaru.sh"]

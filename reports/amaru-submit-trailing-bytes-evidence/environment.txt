@@ -1,0 +1,5 @@
+Amaru: ghcr.io/pragma-org/amaru:v10.11.20260730 (baked as ghcr.io/j-gainsec/amaru-baked:0.2.0)
+Reference: cardano-node 10.16 via ghcr.io/intersectmbo/cardano-submit-api:10.7.1
+Network: testnet_42 (k=5)
+Endpoint: POST /api/submit/tx, Content-Type application/cbor
+Amaru submit-api :3011 ; cardano-submit-api :8090 (vs live p1 node)
