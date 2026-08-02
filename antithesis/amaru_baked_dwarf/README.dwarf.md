@@ -18,6 +18,24 @@ up, no permission/panic. **Note the tx-3element finding is now FIXED in this ima
 matching cardano-node; the bundle therefore now demonstrates the *fixed* decoder (and stays
 useful as a live 10.11 submit-api fuzz + differential substrate for the scenarios).
 
+## Antithesis observability wiring (2026-08-01)
+
+Matched to the standard `cardano-node-antithesis` setup (`docs/testnets/cardano-node-master.md`):
+
+- **Logs.** Antithesis captures each container's **stdout** natively. **Amaru logs to stdout**
+  (`AMARU_LOG=info`) → captured directly, no sidecar needed. **cardano-node does not stdout its
+  logs** (it ships to `cardano-tracer` → files), so the differential compose runs a **`log-tailer`**
+  (`cardano-node-antithesis/log-tailer`) that streams `p1`'s tracer JSON logs to its own stdout for
+  the Logs Explorer. The single-target (pure-Amaru) compose needs no tailer.
+- **Setup signal.** Antithesis will not start fault injection until the system signals *setup
+  complete*. The **workload driver** now emits it: `driver.py` waits until every target's submit-API
+  port is reachable, then calls `antithesis.lifecycle.setup_complete(...)` (verified locally:
+  `target ready → setup_complete signalled → fuzzing`). This replaces needing the cardano-centric
+  `sidecar` (which is POOLS/tip-convergence-specific and doesn't fit a pure-Amaru run).
+- **Assertions.** `workload.py` emits the SDK `always`/`sometimes` properties per fuzzed tx.
+- **Reading results:** `moog antithesis properties` currently truncates to the first 50
+  (cardano-foundation/moog #187) — paginate or you may miss real failures.
+
 ## Why this bundle exists
 
 The mixed Haskell+Amaru bundle (`../cardano_amaru_dwarf/`) can't produce a

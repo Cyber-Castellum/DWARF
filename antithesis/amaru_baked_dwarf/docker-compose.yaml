@@ -27,7 +27,7 @@ services:
       com.antithesis.exclude_from_faults: "false"
 
   workload:
-    image: ${WORKLOAD_IMAGE:-ghcr.io/j-gainsec/dwarf-submit-workload:0.2.0}
+    image: ${WORKLOAD_IMAGE:-ghcr.io/j-gainsec/dwarf-submit-workload:0.2.1}
     hostname: workload.example
     environment:
       WORKLOAD_TARGETS: "amaru=amaru-baked.example:3011"

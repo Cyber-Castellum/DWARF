@@ -55,6 +55,22 @@ services:
       tracer:
         condition: service_started
 
+  # Streams p1's cardano-tracer JSON logs (tracer volume) to its own stdout, which
+  # Antithesis indexes in the Logs Explorer. cardano-node does not log to stdout
+  # (it ships to cardano-tracer), so without this the Haskell side is invisible in a
+  # run. Amaru needs no equivalent — it logs to stdout and is captured natively.
+  log-tailer:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/log-tailer@sha256:a5d23c42408a1003bb14208fd97dd2bdda102e7002e4e2a2804e71a80df56484
+    container_name: diff-log-tailer
+    labels: *fault-exclude
+    hostname: log-tailer.example
+    volumes:
+      - tracer:/tracer:ro
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
   p1:
     image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
     environment:
@@ -109,7 +125,7 @@ services:
 
   # --- DWARF differential fuzzer: same mutated tx to BOTH submit endpoints.
   workload:
-    image: ${WORKLOAD_IMAGE:-ghcr.io/j-gainsec/dwarf-submit-workload:0.2.0}
+    image: ${WORKLOAD_IMAGE:-ghcr.io/j-gainsec/dwarf-submit-workload:0.2.1}
     hostname: workload.example
     container_name: diff-workload
     environment:
