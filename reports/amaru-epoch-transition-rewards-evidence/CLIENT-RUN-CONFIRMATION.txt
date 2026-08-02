@@ -1,0 +1,10 @@
+# Confirmation: the client cardano_amaru Antithesis run shows the SAME panic
+# run_id=0ed9a9d12a80add4184d8c32777ddfd5-56-17  repo=cardano-foundation/cardano-node-antithesis  dir=testnets/cardano_amaru
+# (moog antithesis events --run-id $RID --q ...)
+
+## panic string (amaru-relay-1):
+{"moment":{"input_hash":"-2755910775238010700","vtime":"850.7615728841629"},"IPT_bytes_out":9176488,"source":{"container":"amaru-relay-1","name":"amaru-relay-1","stream":"info"},"output_text":"discrepancy between expected total rewards (=1617230769226) and actual total rewards (=1616210769226)"}
+{"moment":{"input_hash":"-2755910775238010700","vtime":"850.8189226114191"},"IPT_bytes_out":9195264,"source":{"container":"amaru-relay-1","name":"amaru-relay-1","stream":"info"},"output_text":"discrepancy between expected total rewards (=1617230769226) and actual total rewards (=1616210769226)"}
+
+## epoch-transition context (from=2 into=3, is_dormant_epoch=true):
+{"moment":{"input_hash":"2242871023464964053","vtime":"688.7032076069154"},"IPT_bytes_out":8474864,"source":{"container":"amaru-relay-1","name":"amaru-relay-1","stream":"info"},"output_text":"2026-07-29T14:15:18.443233Z  INFO epoch_transition.compute:epoch_transition.new_governance_updates: amaru::ledger: ratification.summarize is_dormant_epoch=true \u001b[3mfrom\u001b[0m\u001b[2m=\u001b[0m2 \u001b[3minto\u001b[0m\u001b[2m=\u001b[0m3 \u001b[3mamaru.tag.cpu\u001b[0m\u001b[2m=\u001b[0mtrue \u001b[3mresuming_from\u001b[0m\u001b[2m=\u001b[0m\"Snapshot Taken\" \u001b[3mproposals_count\u001b[0m\u001b[2m=\u001b[0m0 \u001b[3mamaru.tag.cpu\u001b[0m\u001b[2m=\u001b[0mtrue"}

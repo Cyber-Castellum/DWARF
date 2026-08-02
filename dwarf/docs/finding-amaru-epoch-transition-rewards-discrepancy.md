@@ -1,0 +1,119 @@
+# Amaru panics at the epoch transition on a total-rewards discrepancy (v10.11, dormant epoch)
+
+**Component:** `amaru` ledger — epoch transition / reward distribution (`crates/amaru-ledger/src/store/epoch_transition.rs:71`)
+**Type:** Deterministic node crash (panic) at an epoch boundary — liveness / robustness
+**Status:** **Confirmed** — deterministic (600+ identical restarts locally) and **independently reproduced in the client's own Antithesis run** (see below). Recurs at **multiple** dormant epoch boundaries with a **constant 1,020 ADA** discrepancy. Exact source (which unassigned reward) is the remaining open item.
+**Found by:** DWARF adversarial mixed-net soak — an *honest* Amaru relay syncing an honest cardano-node chain crashed crossing epoch 3→4.
+**Date:** 2026-08-02
+**Version:** Amaru `v10.11.0` (lambdasistemi image `cf657b91…`), testnet_42, **k=20** (PR #186 params).
+
+---
+
+## Summary
+
+An Amaru relay, syncing a normal (honest) cardano-node chain, **panics every time it crosses
+the epoch 3→4 boundary**:
+
+```
+epoch_transition ... from=3 into=4 ... ratification.summarize is_dormant_epoch=true
+thread 'tokio-rt-worker' panicked at crates/amaru-ledger/src/store/epoch_transition.rs:71:13:
+discrepancy between expected total rewards (=1415076923074) and actual total rewards (=1414056923074)
+```
+
+The node then restarts (`restart: always`), re-syncs to the same boundary, and panics again —
+**observed 18 consecutive identical crashes**. The discrepancy is exactly **1,020,000,000 lovelace
+(1,020 ADA)** every time. This is **not adversarial** — it is the honest control relay on the honest
+chain.
+
+## Why this is (almost certainly) a genuine Amaru bug, not misconfiguration
+
+- The assertion at `epoch_transition.rs:71` compares Amaru's **own** *expected* total rewards against
+  its **own** *actual* distributed total — an **internal consistency check**. A parameter/genesis
+  mismatch would yield a self-consistent (if "wrong") value, not `expected != actual`.
+- The relay runs under the client's **intended k=20 params** (`AMARU_GLOBAL_CONSENSUS_SECURITY_PARAM=20`,
+  scale=4) + the bootstrap's cardano-genesis-derived era-history. (The `amaru-runtime/global-parameters.json`
+  k=5 file is **not mounted into the relay** — vestigial.)
+- The preceding log gives the pot: `rewards.summarize effective_rewards=1415076923074
+  total_rewards=114975000000000 available_rewards=91980000000000 treasury_tax=22995000000000
+  pots_reserves=43800000000000000` for epoch 3. `expected total rewards` == `effective_rewards`.
+
+**Candidate root cause:** on this small testnet (3 pools / 3 accounts), a reward of exactly 1,020 ADA
+is **computed into the expected pot but never assigned** — consistent with a pool reward whose target
+reward account is absent/retired, or an unregistered stake account. `cardano-node` routes such
+unclaimed rewards back to the reserves/treasury; **Amaru asserts equality and panics** instead of
+absorbing the remainder. Confirming the exact path needs an Amaru source dive around
+`epoch_transition.rs:71` and the reward-assignment step.
+
+## Confirmed in the client's own Antithesis run
+
+Searching the client's own `cardano-foundation/cardano-node-antithesis` `testnets/cardano_amaru`
+Antithesis run (run_id `0ed9a9d12a80add4184d8c32777ddfd5-56-17`) for the panic string returns the
+**identical** message from `amaru-relay-1`:
+
+```
+discrepancy between expected total rewards (=1617230769226) and actual total rewards (=1616210769226)
+```
+
+- **Same delta:** `1617230769226 − 1616210769226 = 1,020,000,000` lovelace — *identical* to the local run.
+- **Different epoch:** the client's run crashes at epoch **2→3** (`from=2 into=3`, `is_dormant_epoch=true`);
+  the local run at **3→4**. So the crash **recurs at every dormant epoch boundary**, and the discrepancy
+  is a **constant 1,020 ADA** independent of epoch — pointing to one fixed unassigned reward.
+
+This proves (a) it is **not** a DWARF-side misconfiguration — it occurs in the client's own runs; and
+(b) it is exactly the crash behind their "amaru-relay exit code 1" findings. Evidence:
+`reports/amaru-epoch-transition-rewards-evidence/CLIENT-RUN-CONFIRMATION.txt`.
+
+## Significance
+
+- **Reproduces the client's own finding with a concrete cause.** The client's
+  `cardano-foundation/cardano-node-antithesis` `testnets/cardano_amaru` Antithesis runs report
+  **`amaru-relay-1` and `amaru-relay-2` exiting with code 1** (3 failed properties) but only surface the
+  container exit. This is very likely the same crash — now with the panic message + `file:line`.
+- **PR #186 did not fix it.** #186 retuned to k=20 to work around the earlier dormant-epoch crash
+  (findings #4/#5, `RewardsSummaryNotReady`). This is a **different** panic (a rewards *total*
+  discrepancy) on the same **dormant-epoch** path, still present at k=20 on v10.11 — so the dormant-epoch
+  reward handling is still broken, just with a new symptom.
+- **Blocks sustained operation:** an Amaru node cannot cross this (dormant) epoch boundary; it
+  crash-loops. Any Amaru deployment reaching a dormant epoch boundary is affected.
+
+## Observed behaviour
+
+| | |
+|---|---|
+| Trigger | crossing epoch 3→4 (`from=3 into=4`), `is_dormant_epoch=true` |
+| Panic | `epoch_transition.rs:71` — `discrepancy between expected total rewards (=1415076923074) and actual total rewards (=1414056923074)` |
+| Delta | 1,020,000,000 lovelace, identical every crash |
+| Determinism | 18+ consecutive identical restarts (crash-loop) |
+| Adversarial? | No — honest relay, honest chain (the adversary-fed relay did not cause it) |
+
+## Reproduction
+
+Stand up a mixed cardano+Amaru testnet on the client's `cardano_amaru` topology (k=20,
+bootstrap-producer, `amaru-bootstrap-producer:cf657b91…`), let the cardano cluster run past epoch 4,
+and let an Amaru relay sync. It panics at the 3→4 boundary. (In DWARF this is
+`antithesis/cardano_amaru_adversarial/`; the honest `amaru-relay-2` is sufficient — no adversary needed.)
+
+## Suggested remediation
+
+At the epoch transition, Amaru should **not assert** `expected == actual` total rewards; unassigned /
+unclaimable rewards (retired pool, missing reward account) must be **returned to reserves/treasury**
+(matching the Haskell ledger), not treated as an invariant violation that panics. Failing that, the
+reward-assignment step should account for the full expected pot so the totals reconcile.
+
+## Open
+
+1. Pin the exact unassigned 1,020 ADA (which pool/account) via an Amaru source read of the
+   reward-assignment path around `epoch_transition.rs:71`. The constant 1,020-ADA delta across epochs
+   and independent runs suggests a single pool's fixed reward (or a single deposit/refund).
+
+*(Resolved: the client's exit-code-1 crash **is** this same panic — confirmed above; and it **recurs at
+every dormant epoch boundary** — the client's run shows it at 2→3, the local run at 3→4.)*
+
+## Aside — the adversarial soak that surfaced it
+
+This was found by DWARF's adversarial mixed-net (`antithesis/cardano_amaru_adversarial/`): one Amaru
+relay peers a byzantine adversary serving mutated block-fetch CBOR, one peers the honest chain. Over a
+**6-hour** soak the adversarial oracle recorded **0 forged blocks adopted** across **512 rejections**
+(`ORACLE_FAILS=0`) — Amaru robustly rejects mutated block CBOR. The crash came from the **honest** side,
+independent of the adversary. (Curiously, the adversary *shielded* its relay from the crash: by rejecting
+the forged blocks that relay never advanced to the epoch boundary, so only the honest relay crash-looped.)

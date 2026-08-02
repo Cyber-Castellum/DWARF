@@ -1,0 +1,1 @@
+lambdasistemi/amaru-bootstrap-producer:cf657b918787c213c09ffef3879ac4a2552dd680 (reports v10.11.0+unknown)

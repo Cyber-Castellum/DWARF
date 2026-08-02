@@ -85,3 +85,16 @@ Client-facing results from DWARF campaigns against `cardano-node` and Amaru.
   resource-exhaustion vector (~2 MB request-body cap, memory flat under large-body and flood tests).
   Write-up: `dwarf/docs/finding-amaru-submit-trailing-bytes.md`. Raw responses, seeds, mutation sweep,
   resource analysis, and pinned source in `amaru-submit-trailing-bytes-evidence/`.
+
+## Adversarial mixed-net + epoch-transition crash (`amaru-epoch-transition-rewards-evidence/`)
+
+- **Amaru v10.11 deterministically panics at the epoch transition on a total-rewards discrepancy.**
+  Found by DWARF's adversarial mixed net (`antithesis/cardano_amaru_adversarial/` — the client's k=20
+  live-bootstrap topology + a byzantine adversary feeding one Amaru relay mutated block-fetch CBOR + a
+  differential oracle). The **honest** relay crash-loops crossing a dormant epoch boundary:
+  `epoch_transition.rs:71 discrepancy between expected total rewards (=1415076923074) and actual total
+  rewards (=1414056923074)` — a constant **1,020 ADA** delta, 600+ identical restarts. **Confirmed in the
+  client's own `cardano_amaru` Antithesis run** (identical panic, same delta, epoch 2→3) — it is the crash
+  behind their "amaru-relay exit code 1" findings, and PR #186 (k=20) did not fix it. Separately, the
+  6-hour adversarial soak recorded **0 forged blocks adopted across 512 rejections** — Amaru robustly
+  rejects mutated block CBOR. Write-up: `dwarf/docs/finding-amaru-epoch-transition-rewards-discrepancy.md`.
