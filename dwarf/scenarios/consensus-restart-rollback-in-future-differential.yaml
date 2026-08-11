@@ -1,0 +1,99 @@
+{
+  "spec_version": "v1",
+  "id": "consensus-restart-rollback-in-future-differential",
+  "title": "Restart-recovery differential — a synced Amaru relay, restarted uncleanly, must resume syncing without a fatal 'Consensus died' (RollbackPointInFuture); cardano-node self-heals on restart, Amaru currently crash-loops",
+  "authors": [
+    "dwarf"
+  ],
+  "tags": [
+    "consensus",
+    "lifecycle",
+    "restart",
+    "recovery",
+    "crash",
+    "rollback",
+    "differential",
+    "amaru",
+    "upstream-topology"
+  ],
+  "evidence_intent": "candidate",
+  "promotion_blockers": [
+    "Known-failing robustness differential on Amaru 10.11 (incl. v10.11.20260807): restarting a synced Amaru relay dies with 'attempted roll back in the future' / 'Consensus died' and crash-loops, where cardano-node self-heals. This scenario is the reproduction harness, not a passing regression.",
+    "Trigger requires the Amaru chain store to have persisted ahead of the ledger store (a non-empty volatile window at the unclean stop); on a perfectly-flushed stop it may not fire.",
+    "Amaru's manual remediation 'amaru node rollback --immutable-tip' requires a chain-DB v5 store and does not recover stores from the current lambdasistemi/pr-60 bootstrap tooling (chain-DB v3)."
+  ],
+  "target": {
+    "implementation": "cardano-node",
+    "version": "10.7.1"
+  },
+  "runtime": "devnet",
+  "seed": "0x5a1e0011",
+  "iterations": 1,
+  "shrink": false,
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42
+  },
+  "setup": [
+    {
+      "primitive": "runtime_attach_topology",
+      "output_dir": "outputs/attach",
+      "topology": "cardano_amaru",
+      "network_magic": 42
+    }
+  ],
+  "load": [
+    {
+      "primitive": "runtime_tracer_capture",
+      "output_dir": "outputs/tracer",
+      "tracer_container": "tracer",
+      "prometheus_port": 4000
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "node_ids": [ "p1", "relay1", "amaru-relay-1" ],
+      "observation_window_seconds": 240,
+      "sample_interval_seconds": 5,
+      "network_magic": 42,
+      "observation_primitives": [ "tip_state" ],
+      "timeout_seconds": 300,
+      "output_dir": "outputs/obs-pre"
+    },
+    {
+      "primitive": "runtime_kill_node",
+      "target_node": "amaru-relay-1",
+      "output_dir": "outputs/kill-node"
+    },
+    {
+      "primitive": "runtime_restart_node",
+      "target_node": "amaru-relay-1",
+      "output_dir": "outputs/restart-node"
+    },
+    {
+      "primitive": "runtime_multi_node_observation",
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "node_ids": [ "p1", "relay1", "amaru-relay-1" ],
+      "observation_window_seconds": 240,
+      "sample_interval_seconds": 5,
+      "network_magic": 42,
+      "observation_primitives": [ "tip_state" ],
+      "timeout_seconds": 300,
+      "output_dir": "outputs/obs-post"
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {
+      "primitive": "panic_path_contained"
+    },
+    {
+      "primitive": "chain_select_differential",
+      "reference_node_ids": [ "relay1", "relay2" ],
+      "target_node_ids": [ "amaru-relay-1" ],
+      "tolerance_slots": 6,
+      "require_real_progress": true
+    }
+  ],
+  "teardown": []
+}
