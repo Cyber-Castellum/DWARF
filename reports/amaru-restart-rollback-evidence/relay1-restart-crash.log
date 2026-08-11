@@ -1,0 +1,14 @@
+# amaru-relay-1 (Amaru 10.11.0, testnet_42, k=5) — crash on restart, 2026-08-11
+# Node was synced to the live cardano chain (had adopted tip slot=8961), then `docker restart`ed.
+# On startup it re-loads stores, replays stake distributions, then dies:
+
+2026-08-11T07:58:53.417033Z  INFO amaru::cmd::node::run: running _command="node run" chain_dir=/srv/amaru/chain.testnet_42.db ledger_dir=/srv/amaru/ledger.testnet_42.db ... network=testnet_42 peer_address=relay1.example:3001 ...
+2026-08-11T07:58:53.534612Z  INFO stake_distribution.compute: amaru::ledger: stake_distribution.snapshot accounts=3 dreps=2 pools=3 active_stake=674711501536171 ... epoch=70
+2026-08-11T07:58:53.534616Z  INFO stake_distribution.compute: amaru::ledger: stake_distribution.snapshot accounts=3 dreps=2 pools=3 active_stake=672448114481377 ... epoch=68
+2026-08-11T07:58:53.534608Z  INFO stake_distribution.compute: amaru::ledger: stake_distribution.snapshot accounts=3 dreps=2 pools=3 active_stake=673520377740143 ... epoch=69
+2026-08-11T07:58:53.558093Z  WARN amaru_consensus::stages::validate_block: failed to validate the new block tip=1244.14708606c6ca56b93ba5ec71bc6ba7f10ba37798fad13d75817b12a822e9477a err=BlockValidationError: attempted roll back in the future: rollback point = 8961.9c4b5fe438b8abd923572da94894e5f71dca84b8439e162610a644573262f9d3, volatile tip = 8870.581b9ed8c305a44a2624c06f9bb3ad7b421f638af4b1673edf44ba5208fe5612, immutable_tip = 8870.581b9ed8c305a44a2624c06f9bb3ad7b421f638af4b1673edf44ba5208fe5612
+2026-08-11T07:58:53.558141Z ERROR amaru::cmd::node::run: Consensus died, this should not happen! Please report this incl. preceding logs to the Amaru team.
+
+# -> chain store / peer rollback point = 8961; ledger volatile_tip = immutable_tip = 8870
+# -> ledger persisted ~91 slots BEHIND the chain store; restart cannot reconcile -> fatal.
+# -> restarts climbed to 9 within ~1 min (crash loop). Recovery required wiping a1-state + re-bootstrap.

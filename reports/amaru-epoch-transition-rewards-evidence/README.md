@@ -44,3 +44,22 @@ Delta = **1,020,000,000 lovelace (1,020 ADA)**, identical every crash.
   route unassigned rewards to reserves/treasury (as cardano-node does) instead of asserting/panicking.
 - **PR #186 did not fix it** — still present at k=20 on v10.11 (a new symptom on the same dormant-epoch
   reward path as findings #4/#5).
+
+## Resolution — FIXED in `v10.11.20260807` (2026-08-11)
+
+Fixed upstream, and the fix confirms the root cause we posited. Source diff `v10.11.20260730` →
+`v10.11.20260807`:
+
+- `epoch_transition.rs`: `actual_total_rewards = rewards_paid + effective_rewards.unclaimed_rewards()`
+  → `... .total_unclaimed_rewards()`.
+- `epoch_transition/rewards_state.rs` + `summary/rewards.rs`: new `leader_recipients` / `pools_owners`
+  tracking; new `unclaimed_rewards` comment names the previously-missed category — *"The account was
+  configured as pool owner but was never registered."*
+- commit `9107c1683` *"fix: debit the treasury correctly"* — separates governance treasury withdrawals
+  from deposit refunds on the same path.
+
+Root cause (now confirmed): a **pool leader reward paid to a never-registered reward account** was not
+counted as unclaimed, so `actual` fell short of `expected` by that one pool's reward → the constant
+**1,020 ADA** delta → panic. cardano-node routes such rewards to the treasury; Amaru now does too.
+The former open item (which 1,020 ADA) is answered. Deployments on `v10.11.20260730`/`10.10.x` remain
+affected until upgraded.

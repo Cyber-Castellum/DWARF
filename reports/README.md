@@ -98,3 +98,9 @@ Client-facing results from DWARF campaigns against `cardano-node` and Amaru.
   behind their "amaru-relay exit code 1" findings, and PR #186 (k=20) did not fix it. Separately, the
   6-hour adversarial soak recorded **0 forged blocks adopted across 512 rejections** — Amaru robustly
   rejects mutated block CBOR. Write-up: `dwarf/docs/finding-amaru-epoch-transition-rewards-discrepancy.md`.
+  **Update (2026-08-11): FIXED upstream in `v10.11.20260807`** — confirmed by source diff, and the fix
+  matches our root cause exactly: the old `unclaimed_rewards()` didn't count a **pool leader reward paid
+  to a never-registered reward account** (`unclaimed_rewards → total_unclaimed_rewards`, new
+  `leader_recipients`/`pools_owners` tracking, + commit `9107c1683` "debit the treasury correctly").
+  The former open item (which 1,020 ADA) is answered: a single pool's leader reward to a never-registered
+  account. Nodes still on `v10.11.20260730`/`10.10.x` remain affected until upgraded.

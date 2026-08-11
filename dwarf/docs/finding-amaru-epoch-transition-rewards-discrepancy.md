@@ -2,7 +2,7 @@
 
 **Component:** `amaru` ledger — epoch transition / reward distribution (`crates/amaru-ledger/src/store/epoch_transition.rs:71`)
 **Type:** Deterministic node crash (panic) at an epoch boundary — liveness / robustness
-**Status:** **Confirmed** — deterministic (600+ identical restarts locally) and **independently reproduced in the client's own Antithesis run** (see below). Recurs at **multiple** dormant epoch boundaries with a **constant 1,020 ADA** discrepancy. Exact source (which unassigned reward) is the remaining open item.
+**Status:** **RESOLVED upstream in `v10.11.20260807`** (fix confirmed by source diff — see "Resolution" below). Previously **Confirmed** — deterministic (600+ identical restarts locally) and **independently reproduced in the client's own Antithesis run**. Recurred at **multiple** dormant epoch boundaries with a **constant 1,020 ADA** discrepancy. **The fix confirms the root-cause hypothesis below exactly**, and answers the former open item (the unassigned 1,020 ADA was a pool leader reward paid to a never-registered reward account).
 **Found by:** DWARF adversarial mixed-net soak — an *honest* Amaru relay syncing an honest cardano-node chain crashed crossing epoch 3→4.
 **Date:** 2026-08-02
 **Version:** Amaru `v10.11.0` (lambdasistemi image `cf657b91…`), testnet_42, **k=20** (PR #186 params).
@@ -100,14 +100,52 @@ unclaimable rewards (retired pool, missing reward account) must be **returned to
 (matching the Haskell ledger), not treated as an invariant violation that panics. Failing that, the
 reward-assignment step should account for the full expected pot so the totals reconcile.
 
-## Open
+## Resolution (fixed in `v10.11.20260807`)
 
-1. Pin the exact unassigned 1,020 ADA (which pool/account) via an Amaru source read of the
-   reward-assignment path around `epoch_transition.rs:71`. The constant 1,020-ADA delta across epochs
-   and independent runs suggests a single pool's fixed reward (or a single deposit/refund).
+Fixed upstream one week after we found it. Confirmed by diffing the Amaru source between the affected
+tag `v10.11.20260730` and `v10.11.20260807`. **The fix matches our root-cause hypothesis precisely.**
 
-*(Resolved: the client's exit-code-1 crash **is** this same panic — confirmed above; and it **recurs at
-every dormant epoch boundary** — the client's run shows it at 2→3, the local run at 3→4.)*
+At the panic site the assertion is unchanged, but its input changed
+(`crates/amaru-ledger/src/store/epoch_transition.rs`):
+
+```
+-  actual_total_rewards = rewards_paid + effective_rewards.unclaimed_rewards()
++  actual_total_rewards = rewards_paid + effective_rewards.total_unclaimed_rewards()
+```
+
+The old `unclaimed_rewards()` (`epoch_transition/rewards_state.rs`) only summed accounts that
+**unregistered during the epoch**. The new `total_unclaimed_rewards()` also counts the second category,
+spelled out in a new comment:
+
+```
+//  Resolve all accounts that have received rewards but aren't payable because they no longer
+//  exist or have never existed. This can happen because of two reasons:
+//   - The account was simply unregistered.
+//   - The account was configured as pool owner but was never registered.   <-- previously missed
+```
+
+A **pool leader reward paid to a reward-account that was never registered** was never counted as
+unclaimed → `actual_total_rewards` came up short by exactly that one pool's reward → the **constant
+1,020 ADA** delta → panic. The fix tracks `pools_owners`/`leader_recipients` at reward-computation time
+and folds those never-payable rewards back into the treasury, matching cardano-node (a coordinated
+governance fix — commit `9107c1683` *"fix: debit the treasury correctly"* — separates treasury
+withdrawals from deposit refunds on the same path). This **answers the former open item**: the unassigned
+1,020 ADA was a single pool's leader reward to a never-registered reward account.
+
+Relevant commits: the `unclaimed_rewards → total_unclaimed_rewards` rework (`summary/rewards.rs` +
+`epoch_transition/rewards_state.rs`, adds `leader_recipients`/`pools_owners`) and `9107c1683`
+*"fix: debit the treasury correctly"*, both landing in `v10.11.20260807`.
+
+**Still-crashing deployments:** any node still on `v10.11.20260730` / the older `10.10.x`
+bootstrap-producer images (including the client's `cf657b91…` and DWARF's box on `03d2727b…`/10.10.0)
+will keep crash-looping until upgraded to `v10.11.20260807`.
+
+## History (was Open, now resolved)
+
+- The client's exit-code-1 crash **is** this same panic — confirmed via their own Antithesis run
+  (`0ed9a9d1…`, epoch 2→3; local run 3→4) — so it recurred at **every dormant epoch boundary**.
+- Former open item (pin the exact unassigned 1,020 ADA) — **answered by the fix**: a pool leader reward
+  to a never-registered reward account.
 
 ## Aside — the adversarial soak that surfaced it
 
