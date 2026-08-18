@@ -77,7 +77,7 @@ shrink: true                    # optional; default true; failing iterations get
 # spec_version: v1
 # id: cbor-tx-roundtrip-fuzz
 # title: "CBOR round-trip fuzz of transaction bodies"
-# authors: [USER]
+# authors: [nigel]
 # tags: [ser-deser, parser, fuzz]
 # target:
 #   implementation: cardano-node
@@ -122,7 +122,7 @@ shrink: true                    # optional; default true; failing iterations get
 # spec_version: v1
 # id: peer-sharing-flood
 # title: "Peer sharing flood under disabled peer-sharing profile"
-# authors: [USER]
+# authors: [nigel]
 # tags: [networking, peer-selection, abuse]
 # target:
 #   implementation: cardano-node

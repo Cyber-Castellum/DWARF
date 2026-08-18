@@ -66,6 +66,12 @@ This is the **live-sync** stall (silent, no restart involved). The **restart-rec
 see `finding-amaru-restart-rollback-in-future-crash.md`. They can compound: a stalled node that is then
 restarted hits the restart crash.
 
+## Evidence
+
+`reports/amaru-consumer-sync-stall-evidence/` — `sync-stall-debug.log` (the `Connection reset by peer`
+→ non-resuming consumer trace) and `convergence-watch.log` (25 min: cardano advances ~1,520 slots while
+both Amaru relays stay pinned and never converge).
+
 ## Open
 
 1. Confirm whether the reset originates from a cardano-node mini-protocol timeout (Amaru not servicing

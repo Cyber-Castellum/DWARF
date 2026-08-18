@@ -11,13 +11,19 @@
   <a class="learn-tile" href="/learn/overview">
     <span class="learn-tile__eyebrow">The whole workbench, one page</span>
     <h2 class="learn-tile__title">Overview</h2>
-    <p class="learn-tile__sub">The full self-contained DWARF reference — DSL, the 204-primitive catalogue, Antithesis pipeline, native coverage, evidence bundles, and the live attack-cost ticker. The complete walkthrough.</p>
+    <p class="learn-tile__sub">The full self-contained DWARF reference — DSL, the 206-primitive catalogue, Antithesis pipeline, native coverage, evidence bundles, and the live attack-cost ticker. The complete walkthrough.</p>
   </a>
 
   <a class="learn-tile" href="/learn/attack-cost">
     <span class="learn-tile__eyebrow">Live · on-chain stake + ADA price</span>
     <h2 class="learn-tile__title">Attack cost (live)</h2>
     <p class="learn-tile__sub">What it costs to attack Cardano right now — the effective ~40%-of-active-stake threshold in ADA and USD, computed live from on-chain stake and price (with a snapshot fallback).</p>
+  </a>
+
+  <a class="learn-tile" href="/learn/threat-coverage">
+    <span class="learn-tile__eyebrow">Risk Register v2 × Threat Model v2 × scenarios</span>
+    <h2 class="learn-tile__title">Threat / risk coverage map</h2>
+    <p class="learn-tile__sub">Every DWARF scenario mapped to the Amaru Risk Register (RR-001…035) and Threat Model (TM-001…036) via a vetted per-concern mapping — with scripted/fuzz/smoke maturity pills, a surface bar chart, live search + filters, and explicit GAP rows for threats no scenario yet exercises.</p>
   </a>
 
   <a class="learn-tile" href="/learn/consensus">
@@ -33,9 +39,9 @@
   </a>
 
   <a class="learn-tile" href="/learn/examples">
-    <span class="learn-tile__eyebrow">10 annotated scenarios across families</span>
+    <span class="learn-tile__eyebrow">{{ example_count }} annotated scenarios across families</span>
     <h2 class="learn-tile__title">Examples</h2>
-    <p class="learn-tile__sub">Honest baseline · byzantine peer · chainsync fault · blockfetch fault · txsubmission pressure · fuzzing · docker compose · snapshot recovery · era transition · serdes codec.</p>
+    <p class="learn-tile__sub">Honest baseline · byzantine peer · chainsync fault · blockfetch fault · txsubmission pressure · resource/DoS · fuzzing · docker &amp; multi-host compose · snapshot recovery · era transition · serdes codec.</p>
   </a>
 
   <a class="learn-tile" href="/learn/walkthroughs">
@@ -57,9 +63,9 @@
   </a>
 
   <a class="learn-tile" href="/learn/glossary">
-    <span class="learn-tile__eyebrow">20 audit-grade terms</span>
+    <span class="learn-tile__eyebrow">{{ glossary_count }} terms · framework → consensus → eras</span>
     <h2 class="learn-tile__title">Glossary (audit)</h2>
-    <p class="learn-tile__sub">CGPL audit-grade terminology — substrate, primitive, assertion, manifest hash chain, replay determinism, AFL++, qemu-mode, AFLNet, SARIF, plugin, byzantine peer, era transition.</p>
+    <p class="learn-tile__sub">Audit-grade terminology spanning the DWARF framework (substrate, primitive, assertion, manifest hash chain, replay determinism, AFL++, SARIF, plugin) and Cardano itself — Praos, VRF, KES, k, common prefix, the mini-protocols, all seven eras, and peer governance.</p>
   </a>
 
   <a class="learn-tile" href="/learn/api">
@@ -111,9 +117,9 @@
   </a>
 
   <a class="learn-tile" href="/learn/coverage">
-    <span class="learn-tile__eyebrow">Coverage matrix</span>
+    <span class="learn-tile__eyebrow">Census + coverage matrices</span>
     <h2 class="learn-tile__title">Coverage</h2>
-    <p class="learn-tile__sub">Implementations × mini-protocols × fault families × fuzzer backends × CBOR shapes — what is and isn&rsquo;t under probe.</p>
+    <p class="learn-tile__sub">A scenario census that accounts for every scenario once by category (reconciling to the full catalog), plus per-surface matrices — implementations × mini-protocols, CBOR decode surfaces, fault families, and fuzzer backends — showing what is and isn&rsquo;t under probe.</p>
   </a>
 
   <a class="learn-tile" href="/learn/status">
@@ -125,7 +131,7 @@
   <a class="learn-tile" href="/learn/cli">
     <span class="learn-tile__eyebrow">Operator CLI reference</span>
     <h2 class="learn-tile__title">CLI</h2>
-    <p class="learn-tile__sub">Every <code>cardano-profile</code> top-level command group with worked examples — scenario, compare, bundle, fuzz, target, primitive, dashboard, testcase, moog, and antithesis.</p>
+    <p class="learn-tile__sub">Every <code>cardano-profile</code> command group with worked examples — scenario, compare, bundle, fuzz, primitive, dashboard, testcase, moog, and antithesis.</p>
   </a>
 
 </div>

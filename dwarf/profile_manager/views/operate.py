@@ -19,7 +19,7 @@ from profile_manager.data.operate_runs import (
 )
 from profile_manager.data.operate_targets import (
     implementation_pill_inventory,
-    operate_m2_target_rows,
+    operate_target_rows,
 )
 from profile_manager.data.profiles import _profile_rows
 from profile_manager.data.scenarios import _list_scenarios_for_compare
@@ -41,7 +41,7 @@ def render_operate_landing() -> str:
     other_count = max(len(runs) - pass_count - fail_count, 0)
     pass_rate_pct = round(100 * pass_count / len(runs)) if runs else None
 
-    targets = operate_m2_target_rows()
+    targets = operate_target_rows()
     target_pills = implementation_pill_inventory(targets)
 
     bundles = operate_bundle_rows()

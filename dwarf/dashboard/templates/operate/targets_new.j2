@@ -1,0 +1,44 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Targets · Register</span>
+<h1>Register a decode target</h1>
+<p class="page-hero">Write a target manifest so the decoder appears in the <a href="/operate/targets?token={{ token }}">targets catalog</a>. The manifest lands in <code>{{ manifests_dir }}</code>. Running the target additionally needs its <code>binary</code> present.</p>
+
+<style>
+.tn-form{max-width:640px;margin:18px 0}
+.tn-form label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin:14px 0 3px}
+.tn-form input[type=text],.tn-form select,.tn-form textarea{width:100%;background:var(--obsidian-1);border:1px solid var(--rule);color:var(--ink);border-radius:8px;padding:8px 11px;font-size:.86rem;font-family:var(--font-mono)}
+.tn-form textarea{min-height:90px;resize:vertical}
+.tn-form input:focus,.tn-form select:focus,.tn-form textarea:focus{outline:none;border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.tn-hint{color:var(--ink-muted);font-size:.75rem;margin:2px 0 0}
+.tn-submit{margin-top:18px;background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:9px 20px;font-weight:700;font-size:.88rem;cursor:pointer}
+.tn-row{display:flex;gap:14px}.tn-row>div{flex:1}
+</style>
+
+<form class="tn-form" method="post" action="/operate/targets/new?token={{ token }}">
+  <label>Target id</label>
+  <input type="text" name="id" placeholder="amaru-cbor-decode-my-thing" required>
+  <p class="tn-hint">Lowercase letters/digits/dot/underscore/dash, 3–80 chars. Becomes the manifest filename.</p>
+
+  <label>Binary path</label>
+  <input type="text" name="binary" placeholder="dwarf/targets/amaru/target/release/amaru-cbor-decode-my-thing" required>
+  <p class="tn-hint">Path to the decoder executable (relative to the repo root, or absolute).</p>
+
+  <div class="tn-row">
+    <div><label>Implementation</label><select name="implementation">{% for i in implementations %}<option>{{ i }}</option>{% endfor %}</select></div>
+    <div><label>Language</label><select name="language">{% for l in languages %}<option>{{ l }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="tn-row">
+    <div><label>Input format</label><select name="input_format">{% for f in input_formats %}<option>{{ f }}</option>{% endfor %}</select></div>
+    <div><label>Decoder type</label><select name="decoder_type">{% for d in decoder_types %}<option>{{ d }}</option>{% endfor %}</select></div>
+  </div>
+
+  <label>Upstream commit</label>
+  <input type="text" name="upstream_commit" value="local">
+
+  <label>Invariants (one per line)</label>
+  <textarea name="invariants" placeholder="deserialize-roundtrip preserved&#10;no panic on bounded input&#10;size-bounded output"></textarea>
+
+  <button class="tn-submit" type="submit">Register target</button>
+</form>
+{% endblock %}

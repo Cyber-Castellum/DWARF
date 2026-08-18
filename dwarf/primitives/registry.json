@@ -11,283 +11,24 @@
     "version": "string. Semver of the primitive itself. Bump on behavior change so that bundles record which version produced the result."
   },
   "primitives": {
+    "aflpp_smoke_exit_clean": {
+      "class": "AflppSmokeExitClean",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/aflpp_smoke_exit_clean.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node"
+      ],
+      "version": "0.1.0"
+    },
     "all_nodes_responsive": {
       "class": "AllNodesResponsive",
       "family": "assertion",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/assertion/all_nodes_responsive.schema.json",
-      "runtimes": [
-        "devnet",
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "blockfetch_invalid_block_rejected": {
-      "class": "BlockfetchInvalidBlockRejected",
-      "family": "assertion",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/assertion/blockfetch_invalid_block_rejected.schema.json",
-      "runtimes": [
-        "devnet",
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "cbor_edge_cases": {
-      "class": "CborEdgeCases",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/cbor_edge_cases.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "cbor_fuzz_structured": {
-      "class": "CborFuzzStructured",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/cbor_fuzz_structured.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "cbor_fuzz_target": {
-      "class": "CborFuzzTarget",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/cbor_fuzz_target.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "load_shell_command": {
-      "class": "LoadShellCommand",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/load_shell_command.schema.json",
-      "runtimes": [
-        "library",
-        "single-node",
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "malformed_input_parity_preserved": {
-      "class": "MalformedInputParityPreserved",
-      "family": "assertion",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/assertion/malformed_input_parity_preserved.schema.json",
-      "runtimes": [
-        "devnet",
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "parse_succeeds_or_clean_error": {
-      "class": "ParseSucceedsOrCleanError",
-      "family": "assertion",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/assertion/parse_succeeds_or_clean_error.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "parser_exit_status": {
-      "class": "ParserExitStatus",
-      "family": "probe",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/probe/parser_exit_status.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "roundtrip_equals_original": {
-      "class": "RoundtripEqualsOriginal",
-      "family": "assertion",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/assertion/roundtrip_equals_original.schema.json",
-      "runtimes": [
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_blockfetch_invalid_block_cbor": {
-      "class": "RuntimeBlockfetchInvalidBlockCbor",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_chainsync_blockfetch_fault.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_compose_substrate": {
-      "class": "RuntimeComposeSubstrate",
-      "family": "setup",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_compose_substrate.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_install_version": {
-      "class": "RuntimeInstallVersion",
-      "family": "setup",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_install_version.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_attach_topology": {
-      "class": "RuntimeAttachTopology",
-      "family": "setup",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/setup/runtime_attach_topology.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_malformed_input_differential": {
-      "class": "RuntimeMalformedInputDifferential",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_hardening_probe.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_multi_node_observation": {
-      "class": "RuntimeMultiNodeObservation",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_multi_node_observation.schema.json",
-      "runtimes": [
-        "devnet",
-        "library"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_tracer_capture": {
-      "class": "RuntimeTracerCapture",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_tracer_capture.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_teardown_substrate": {
-      "class": "RuntimeTeardownSubstrate",
-      "family": "teardown",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/teardown/runtime_teardown_substrate.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "runtime_txsubmission_unexpected_body": {
-      "class": "RuntimeTxsubmissionUnexpectedBody",
-      "family": "load",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/load/runtime_txsubmission_probe.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
-    "txsubmission_unexpected_body_rejected": {
-      "class": "TxsubmissionUnexpectedBodyRejected",
-      "family": "assertion",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/assertion/txsubmission_unexpected_body_rejected.schema.json",
       "runtimes": [
         "devnet",
         "library"
@@ -332,6 +73,21 @@
       "family": "assertion",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/assertion/blockfetch_continuity_failure_rejected.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "blockfetch_invalid_block_rejected": {
+      "class": "BlockfetchInvalidBlockRejected",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/blockfetch_invalid_block_rejected.schema.json",
       "runtimes": [
         "devnet",
         "library"
@@ -511,6 +267,48 @@
       "params_schema": "primitives/assertion/byzantine_isolation_observed.schema.json",
       "runtimes": [
         "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "cbor_edge_cases": {
+      "class": "CborEdgeCases",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/cbor_edge_cases.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "cbor_fuzz_structured": {
+      "class": "CborFuzzStructured",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/cbor_fuzz_structured.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "cbor_fuzz_target": {
+      "class": "CborFuzzTarget",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/cbor_fuzz_target.schema.json",
+      "runtimes": [
         "library"
       ],
       "supports": [
@@ -876,6 +674,22 @@
       ],
       "version": "0.1.0"
     },
+    "load_shell_command": {
+      "class": "LoadShellCommand",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/load_shell_command.schema.json",
+      "runtimes": [
+        "library",
+        "single-node",
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "local_query_amplification_bounded": {
       "class": "LocalQueryAmplificationBounded",
       "family": "assertion",
@@ -896,6 +710,21 @@
       "family": "assertion",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/assertion/local_submit_availability_preserved.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "malformed_input_parity_preserved": {
+      "class": "MalformedInputParityPreserved",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/malformed_input_parity_preserved.schema.json",
       "runtimes": [
         "devnet",
         "library"
@@ -996,6 +825,20 @@
       ],
       "version": "0.1.0"
     },
+    "parse_succeeds_or_clean_error": {
+      "class": "ParseSucceedsOrCleanError",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/parse_succeeds_or_clean_error.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "parser_bounds_enforced": {
       "class": "ParserBoundsEnforced",
       "family": "assertion",
@@ -1003,6 +846,20 @@
       "params_schema": "primitives/assertion/parser_bounds_enforced.schema.json",
       "runtimes": [
         "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "parser_exit_status": {
+      "class": "ParserExitStatus",
+      "family": "probe",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/probe/parser_exit_status.schema.json",
+      "runtimes": [
         "library"
       ],
       "supports": [
@@ -1161,6 +1018,47 @@
       ],
       "version": "0.1.0"
     },
+    "roundtrip_equals_original": {
+      "class": "RoundtripEqualsOriginal",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/roundtrip_equals_original.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_aflpp_campaign": {
+      "class": "RuntimeAflppCampaign",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_aflpp_campaign.schema.json",
+      "runtimes": [
+        "library"
+      ],
+      "supports": [
+        "cardano-node"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_attach_topology": {
+      "class": "RuntimeAttachTopology",
+      "family": "setup",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/setup/runtime_attach_topology.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "runtime_bandwidth_throttle": {
       "class": "RuntimeBandwidthThrottle",
       "family": "load",
@@ -1238,6 +1136,20 @@
       ],
       "supports": [
         "cardano-node"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_blockfetch_invalid_block_cbor": {
+      "class": "RuntimeBlockfetchInvalidBlockCbor",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_chainsync_blockfetch_fault.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
       ],
       "version": "0.1.0"
     },
@@ -1505,20 +1417,6 @@
       ],
       "version": "0.1.0"
     },
-    "runtime_network_partition": {
-      "class": "RuntimeNetworkPartition",
-      "family": "fault",
-      "module": "profile_manager.primitives",
-      "params_schema": "primitives/fault/runtime_network_partition.schema.json",
-      "runtimes": [
-        "devnet"
-      ],
-      "supports": [
-        "cardano-node",
-        "amaru"
-      ],
-      "version": "0.1.0"
-    },
     "runtime_cardano_lsq_extract": {
       "class": "RuntimeCardanoLsqExtract",
       "family": "load",
@@ -1653,6 +1551,20 @@
       ],
       "supports": [
         "cardano-node"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_compose_substrate": {
+      "class": "RuntimeComposeSubstrate",
+      "family": "setup",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_compose_substrate.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
       ],
       "version": "0.1.0"
     },
@@ -1876,6 +1788,20 @@
       ],
       "version": "0.1.0"
     },
+    "runtime_install_version": {
+      "class": "RuntimeInstallVersion",
+      "family": "setup",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_install_version.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "runtime_keepalive_failure_cascade": {
       "class": "RuntimeKeepaliveFailureCascade",
       "family": "load",
@@ -1960,6 +1886,20 @@
       ],
       "version": "0.1.0"
     },
+    "runtime_malformed_input_differential": {
+      "class": "RuntimeMalformedInputDifferential",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_hardening_probe.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "runtime_mempool_failure_probe": {
       "class": "RuntimeMempoolFailureProbe",
       "family": "load",
@@ -1988,6 +1928,21 @@
       ],
       "version": "0.1.0"
     },
+    "runtime_multi_node_observation": {
+      "class": "RuntimeMultiNodeObservation",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_multi_node_observation.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "runtime_mux_ingress_overrun": {
       "class": "RuntimeMuxIngressOverrun",
       "family": "load",
@@ -2007,6 +1962,20 @@
       "family": "load",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/load/runtime_network_impairment.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_network_partition": {
+      "class": "RuntimeNetworkPartition",
+      "family": "fault",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/fault/runtime_network_partition.schema.json",
       "runtimes": [
         "devnet"
       ],
@@ -2565,11 +2534,39 @@
       ],
       "version": "0.1.0"
     },
+    "runtime_teardown_substrate": {
+      "class": "RuntimeTeardownSubstrate",
+      "family": "teardown",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/teardown/runtime_teardown_substrate.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
     "runtime_time_skew": {
       "class": "RuntimeTimeSkew",
       "family": "load",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/load/runtime_time_skew.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_tracer_capture": {
+      "class": "RuntimeTracerCapture",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_tracer_capture.schema.json",
       "runtimes": [
         "devnet"
       ],
@@ -2595,6 +2592,20 @@
     },
     "runtime_txsubmission_batch_pressure": {
       "class": "RuntimeTxsubmissionBatchPressure",
+      "family": "load",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/load/runtime_txsubmission_probe.schema.json",
+      "runtimes": [
+        "devnet"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "runtime_txsubmission_unexpected_body": {
+      "class": "RuntimeTxsubmissionUnexpectedBody",
       "family": "load",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/load/runtime_txsubmission_probe.schema.json",
@@ -2868,6 +2879,21 @@
       "family": "assertion",
       "module": "profile_manager.primitives",
       "params_schema": "primitives/assertion/txsubmission_batch_enforced.schema.json",
+      "runtimes": [
+        "devnet",
+        "library"
+      ],
+      "supports": [
+        "cardano-node",
+        "amaru"
+      ],
+      "version": "0.1.0"
+    },
+    "txsubmission_unexpected_body_rejected": {
+      "class": "TxsubmissionUnexpectedBodyRejected",
+      "family": "assertion",
+      "module": "profile_manager.primitives",
+      "params_schema": "primitives/assertion/txsubmission_unexpected_body_rejected.schema.json",
       "runtimes": [
         "devnet",
         "library"

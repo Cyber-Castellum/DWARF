@@ -313,17 +313,25 @@ def recent_main_commits(limit: int = 20) -> list[dict]:
     return rows
 
 
-def candidate_findings() -> list[dict]:
-    """Return open candidate findings from main:agent/research/*-candidate.md.
+def _findings_from_docs(*, want_candidate: bool, status_label: str) -> list[dict]:
+    """Return finding notes parsed from dwarf/docs/finding-*.md.
 
-    Reads file list and content from main's tree; falls back to worktree
-    filesystem on git failure. The fallback marker is set when used so the
-    view can surface a caveat.
+    Findings the project has written live under dwarf/docs/. Confirmed
+    findings are named finding-<impl>-<slug>.md; unvalidated candidates are
+    named finding-candidate-<slug>.md. ``want_candidate`` selects which set.
+    Reads from main's tree; falls back to worktree filesystem on git failure.
     """
-    paths = _list_main_or_fallback("agent/research")
-    candidate_paths = sorted(p for p in paths if p.endswith("-candidate.md"))
+    paths = _list_main_or_fallback("dwarf/docs")
+    selected = []
+    for p in paths:
+        name = p.rsplit("/", 1)[-1]
+        if not (name.startswith("finding-") and name.endswith(".md")):
+            continue
+        is_candidate = name.startswith("finding-candidate-")
+        if is_candidate == want_candidate:
+            selected.append(p)
     out: list[dict] = []
-    for path in candidate_paths:
+    for path in sorted(selected):
         content = _read_main_or_fallback(path)
         if content is None:
             continue
@@ -332,11 +340,28 @@ def candidate_findings() -> list[dict]:
         out.append({
             "slug": _slug_from_path(path),
             "title": title,
-            "status": "open",
+            "status": status_label,
             "summary": summary,
             "anchor_path": path,
         })
     return out
+
+
+def candidate_findings() -> list[dict]:
+    """Return open candidate findings from main:dwarf/docs/finding-candidate-*.md.
+
+    Reads file list and content from main's tree; falls back to worktree
+    filesystem on git failure. The fallback marker is set when used so the
+    view can surface a caveat.
+    """
+    return _findings_from_docs(want_candidate=True, status_label="open")
+
+
+def confirmed_findings() -> list[dict]:
+    """Return validated findings from main:dwarf/docs/finding-*.md (excluding
+    the finding-candidate-* set). These are the divergences/crashes DWARF has
+    confirmed and written up for the Amaru team."""
+    return _findings_from_docs(want_candidate=False, status_label="confirmed")
 
 
 def _slug_from_path(path: str) -> str:

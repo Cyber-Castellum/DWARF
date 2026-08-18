@@ -1,8 +1,8 @@
 {% extends "_base.j2" %}
 {% block main %}
 <span class="eyebrow">Operate · Config</span>
-<h1>Config</h1>
-<p class="page-hero">Config view for <code>{{ config_path }}</code>{% if not config_present %} (file missing — every row falls back to its default){% endif %}. The general table remains read-only. The Moog + Antithesis setup panel below can save values into the Dwarf <code>moog</code> config block.</p>
+<h1>Config <a class="cta" style="float:right;font-size:.8rem" href="/operate/config/edit?token={{ token }}">Edit settings &rarr;</a></h1>
+<p class="page-hero">Config view for <code>{{ config_path }}</code>{% if not config_present %} (file missing — every row falls back to its default){% endif %}. This table is a read-only snapshot; <a href="/operate/config/edit?token={{ token }}"><strong>Edit settings</strong></a> opens an editable form for every field. The Moog + Antithesis setup panel below can also save values into the Dwarf <code>moog</code> config block.</p>
 
 <hr class="hairline">
 

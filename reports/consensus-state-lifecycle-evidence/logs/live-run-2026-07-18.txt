@@ -1,0 +1,71 @@
+Live run — fresh-bootstrap epoch-boundary differential (amaru-relay-2)
+=====================================================================
+Box: cardano-box, cardano_amaru mesh (testnet_42: k=5, f=0.2, epochLength=125 slots,
+systemStart 2026-07-14T18:57:43Z). Date: 2026-07-18 ~21:35-21:41Z.
+DWARF scenario: dwarf/scenarios/consensus-state-lifecycle-bootstrap-differential.yaml
+(schema-valid + registry-semantic-valid, `scenario validate --semantic` EXIT=0).
+
+PROCEDURE (fresh bootstrap of a real Amaru node)
+------------------------------------------------
+  docker stop amaru-relay-2
+  docker run --rm -v cardano_amaru_a2-state:/srv/amaru alpine sh -c 'rm -rf /srv/amaru/*'
+  docker start amaru-relay-2
+Startup script (from the image) then RE-IMPORTS the trusted bundle snapshot — this is
+the bootstrap trust-source finding (#27) live:
+  if [ ! -d /srv/amaru/ledger.testnet_42.db ]; then cp -rL /bundle/testnet_42/. /srv/amaru/; fi
+  exec /bin/amaru run --network testnet_42 --ledger-dir ... --chain-dir ...
+
+The bundle ships EXACTLY MIN_LEDGER_SNAPSHOTS = 3 epoch snapshots (points slot.hash):
+  124.894de2a518e393ce9c5ec6a5602ddf8886646d5c12a2411239396a40703b3c9d   (~epoch 0/1 boundary)
+  246.8fe7f96a990f33a239e15d2215fa12e81b5880b4ffabefccfdddb0e47605d4b3   (~epoch 1/2 boundary)
+  366.09fd019e9ba626c240fe73bfaeec2c98bdb2e1bf404e1d1eda0238bc9f8cd142   (~epoch 2/3 boundary)
+
+RESULT — CLEAN epoch-boundary crossings on fresh bootstrap (the key finding)
+----------------------------------------------------------------------------
+The freshly bootstrapped node replayed forward FROM the bundle (~epoch 2) and crossed
+epoch boundaries cleanly. Representative lines (ANSI stripped), 21:36:30-21:36:35Z:
+
+  INFO compute_rewards: ...rewards.summary epoch=20 ... current_epoch=23 stake_distribution_epoch=20
+  INFO compute_rewards:compute_stake_distribution: ...accounts=3 pools=3 active_stake=629684642068841 current_epoch=23 stake_distribution_epoch=20 epoch=22
+  INFO epoch_transition:end_epoch: amaru::ledger::epoch_transition: close ... from=23 into=24
+  INFO epoch_transition:begin_epoch:new_governance_updates: ...ratification.miscellaneous is_dormant_epoch=true from=23 into=24
+  INFO epoch_transition: amaru::ledger::epoch_transition: close time.busy=40.5ms ... from=23 into=24
+  INFO applying_overlay:snapshot: amaru::stores::ledger: close ... epoch=24 should_snapshot=true db_operation_name=checkpoint
+  INFO prune: amaru::stores::ledger: close ... functional_minimum=21 db_operation_name=delete
+  INFO compute_rewards: ...rewards.summary epoch=21 ... current_epoch=24 stake_distribution_epoch=21
+
+Interpretation: the N-2 stake-distribution machinery identified from source IS exercised
+(stake_distribution_epoch = current_epoch - 3; snapshots pruned to a functional minimum),
+and it SUCCEEDS because the bundle provides the required 3-snapshot history.
+
+Error scan across the entire fresh run:
+  panic / NoSuitableStakeDistribution / "Failed to roll forward" / unreachable  ==>  0
+
+Container state after the run:
+  state=running  restarts=0  exitcode=0  oom=false   (NO crash, NO panic)
+
+STALL (environmental — NOT a lifecycle defect)
+----------------------------------------------
+Full replay-to-tip did not complete: the post-reboot mesh was degraded (chain frozen at
+epoch 2795; nodes not producing because wall-clock had advanced ~1.5h past the tip while
+the box was down). The fresh node's upstream cardano relay dropped the chainsync session,
+so it stalled at ~block 1234 / ~epoch 49 waiting for blocks:
+
+  INFO  amaru_protocols::chainsync::responder: peer stopped chainsync
+  ERROR amaru_consensus::stages::fetch_blocks: timeout fetching blocks req_id=1103
+  INFO  amaru_protocols::manager: no connections available to fetch blocks, returning empty result
+
+Control: amaru-relay-1 (intact stores) sits at the frozen tip last_height=59082 — confirming
+the mesh is not producing, i.e. the stall is a peer/serving condition, not an Amaru bug.
+
+CONCLUSION
+----------
+1. REFUTES the strong source-analysis claim ("a valid block fails at the first epoch
+   boundary after bootstrap"). Under NORMAL bundle bootstrap, Amaru crosses epoch
+   boundaries cleanly (49+ consecutive here, 0 failures) because the bundle ships the
+   required MIN_LEDGER_SNAPSHOTS=3.
+2. CONFIRMS the mechanism is real: the N-2 snapshot / stake-distribution dependency exists
+   and is load-bearing; a bootstrap that LACKS that aligned history is the failure mode
+   (the earlier campaign crash was under a non-standard forged setup, not normal bootstrap).
+3. Full replay-to-tip across ~2,793 boundaries is DEFERRED — needs a healthy (producing,
+   serving) mesh. Re-run when the devnet clock is re-orchestrated so peers serve to tip.

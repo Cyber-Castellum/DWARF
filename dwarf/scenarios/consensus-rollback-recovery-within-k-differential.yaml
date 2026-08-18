@@ -40,7 +40,7 @@
     {
       "primitive": "runtime_network_partition",
       "runtime_metadata_path": "outputs/attach/runtime.json",
-      "target_node": "p2",
+      "target_node": "p1",
       "network_name": "cardano-amaru-testnet",
       "partition_seconds": 25,
       "settle_seconds": 80,
@@ -57,12 +57,12 @@
     {
       "primitive": "runtime_multi_node_observation",
       "runtime_metadata_path": "outputs/attach/runtime.json",
-      "node_ids": [ "p2", "relay1", "relay2", "amaru-consumer" ],
-      "observation_window_seconds": 18,
-      "sample_interval_seconds": 3,
+      "node_ids": [ "p1", "relay1", "relay2", "amaru-consumer" ],
+      "observation_window_seconds": 200,
+      "sample_interval_seconds": 5,
       "network_magic": 42,
       "observation_primitives": [ "tip_state" ],
-      "timeout_seconds": 180,
+      "timeout_seconds": 260,
       "output_dir": "outputs/obs"
     }
   ],
@@ -78,7 +78,7 @@
     {
       "primitive": "chain_select_differential",
       "reference_node_ids": [ "relay1", "relay2" ],
-      "target_node_ids": [ "p2" ],
+      "target_node_ids": [ "p1" ],
       "tolerance_slots": 8,
       "require_real_progress": true
     }

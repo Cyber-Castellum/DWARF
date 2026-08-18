@@ -1,0 +1,96 @@
+{
+  "id": "m3-blockfetch-state-machine-v1",
+  "protocol": "blockfetch",
+  "source_basis": [
+    "dwarf/corpora/m3/blockfetch-sequences.json",
+    "dwarf/targets/amaru/src/bin/decode_blockfetch.rs",
+    "dwarf/targets/cardano-node/src/DecodeBlockFetch.hs",
+    "dwarf/targets/manifests/amaru-mini-protocol-decode-blockfetch.yaml",
+    "dwarf/targets/manifests/cardano-node-mini-protocol-decode-blockfetch.yaml"
+  ],
+  "scope_note": "Modeled BlockFetch transition validation plus envelope replay only. This corpus does not prove live scheduling, timeout/retry behavior, bandwidth control, disk I/O, or persistence interactions.",
+  "sequences": [
+    {
+      "id": "request-batch-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "batch-requested",
+          "message": {
+            "name": "request-range-origin-to-a",
+            "hex": "830080820158201111111111111111111111111111111111111111111111111111111111111111",
+            "expect": "ok",
+            "notes": "A range request moves the model into a batch-requested state."
+          }
+        },
+        {
+          "from": "batch-requested",
+          "to": "batch-open",
+          "message": {
+            "name": "start-batch",
+            "hex": "8102",
+            "expect": "ok",
+            "notes": "StartBatch opens the modeled batch state."
+          }
+        },
+        {
+          "from": "batch-open",
+          "to": "batch-open",
+          "message": {
+            "name": "block-small-payload",
+            "hex": "8204d81844a1617801",
+            "expect": "ok",
+            "notes": "A tagged block payload is valid while the batch is open."
+          }
+        },
+        {
+          "from": "batch-open",
+          "to": "idle",
+          "message": {
+            "name": "batch-done",
+            "hex": "8105",
+            "expect": "ok",
+            "notes": "BatchDone closes the modeled batch and returns to idle."
+          }
+        }
+      ]
+    },
+    {
+      "id": "request-no-blocks-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "batch-requested",
+          "message": {
+            "name": "request-range-same-point",
+            "hex": "830082182a5820222222222222222222222222222222222222222222222222222222222222222282182a58202222222222222222222222222222222222222222222222222222222222222222",
+            "expect": "ok",
+            "notes": "A concrete range request moves the model into a batch-requested state."
+          }
+        },
+        {
+          "from": "batch-requested",
+          "to": "idle",
+          "message": {
+            "name": "no-blocks",
+            "hex": "8103",
+            "expect": "ok",
+            "notes": "NoBlocks satisfies the request and returns the model to idle."
+          }
+        },
+        {
+          "from": "idle",
+          "to": "done",
+          "message": {
+            "name": "client-done",
+            "hex": "8101",
+            "expect": "ok",
+            "notes": "ClientDone closes the modeled exchange."
+          }
+        }
+      ]
+    }
+  ]
+}

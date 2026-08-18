@@ -1,0 +1,315 @@
+x-cardano-node: &cardano-node
+  image: ghcr.io/intersectmbo/cardano-node@sha256:5ae211f92eac18ed27b9e2f73c190b56bf4c1a7145d282e78ca58597a385d19f
+  environment:
+    CARDANO_BLOCK_PRODUCER: true
+  command: >
+    run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --shelley-operational-certificate /configs/keys/opcert.cert
+      --shelley-kes-key /configs/keys/kes.skey
+      --shelley-vrf-key /configs/keys/vrf.skey
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+  restart: always
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+    tracer-sidecar:
+      condition: service_started
+
+x-cardano-relay: &cardano-relay
+  environment:
+    CARDANO_BLOCK_PRODUCER: false
+  command: >
+    run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+  restart: always
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+    tracer-sidecar:
+      condition: service_started
+
+services:
+  configurator:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/configurator@sha256:6e6ba428838bf754ad286b62a151c63c683ef27fbdd5dd1bb5bab11ec9a6a34d
+    container_name: configurator
+    volumes:
+      - ./testnet.yaml:/testnet.yaml #  source of configurations
+      - p1-configs:/configs/1 # configs for p1
+      - p2-configs:/configs/2 # configs for p2
+      - p3-configs:/configs/3 # configs for p3
+      - utxo-keys:/utxo-keys # funded address keys for tx-generator
+
+  tracer:
+    image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
+
+    hostname: tracer.example
+    container_name: tracer
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    volumes:
+      - tracer:/opt/cardano-tracer
+      - ./tracer-config.yaml:/tracer-config.yaml:ro
+    entrypoint: cardano-tracer
+    command:
+      - "--config"
+      - "/tracer-config.yaml"
+    restart: always
+
+  p1:
+    <<: *cardano-node
+    container_name: p1
+    hostname: p1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - tracer:/tracer
+
+  p2:
+    <<: *cardano-node
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    container_name: p2
+    hostname: p2.example
+    volumes:
+      - p2-configs:/configs:ro
+      - tracer:/tracer
+
+  p3:
+    <<: *cardano-node
+    image: ghcr.io/intersectmbo/cardano-node@sha256:45857be8d86b314a05cd46d310b74b24e5f5870469f90c6464994a7f78142271
+    container_name: p3
+    hostname: p3.example
+    volumes:
+      - p3-configs:/configs:ro
+      - tracer:/tracer
+
+  relay1:
+    <<: *cardano-relay
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    container_name: relay1
+    hostname: relay1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - ./relay-topology.json:/configs/configs/topology.json:ro
+      - relay1-state:/state
+      - tracer:/tracer
+
+  relay2:
+    <<: *cardano-relay
+    image: ghcr.io/intersectmbo/cardano-node@sha256:45857be8d86b314a05cd46d310b74b24e5f5870469f90c6464994a7f78142271
+    container_name: relay2
+    hostname: relay2.example
+    volumes:
+      - p1-configs:/configs:ro
+      # relay2 uses the dwarf topology: it lists dwarf-adversary.example
+      # as a trustable local root, so relay2 chain-syncs from the fuzz
+      # server and runs its header decoder on the mutated header CBOR.
+      - ./relay-dwarf-topology.json:/configs/configs/topology.json:ro
+      - relay2-state:/state
+      - tracer:/tracer
+
+  # Dwarf CBOR-fuzz adversary — a chain-sync UPSTREAM SERVER. relay2's
+  # topology lists it as a trustable local root, so relay2 syncs from it
+  # and decodes structurally-mutated header CBOR. It first captures a
+  # real base header from p1 (in-bundle; never external), then serves
+  # seeded mutations of it. Seeded solely by --seed (sourced from
+  # antithesis_random at launch) for deterministic recreation. Excluded
+  # from faults so the harness itself isn't the thing being chaos-tested.
+  dwarf-adversary:
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.1.0
+    container_name: dwarf-adversary
+    hostname: dwarf-adversary.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "--network-magic"
+      - "42"
+      - "--listen-port"
+      - "3001"
+      - "--mutation-rate"
+      - "0.5"
+      - "--upstream"
+      - "p1.example:3001"
+      - "--seed"
+      - "0x1"
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      p1:
+        condition: service_started
+    restart: always
+
+  # Tx-generator workload — promoted from cardano_node_tx_generator
+  # after a 0-findings 1h Antithesis validation run on commit
+  # 4687a09. The daemon connects to relay1 via N2C and the
+  # composer fires short `transact`, `refill`, `eventually`, and
+  # `finally` control-socket probes. Tag 69bf815 contains the
+  # bounded socket-probe wrapper that cleared the four previous
+  # "Commands finish with zero exit code" findings.
+  tx-generator:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/tx-generator:69bf815
+    container_name: tx-generator
+    hostname: tx-generator.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - --relay-socket
+      - /state/node.socket
+      - --control-socket
+      - /state/tx-generator-control.sock
+      - --state-dir
+      - /state/txgen
+      - --master-seed-file
+      - /state/txgen/master.seed
+      - --faucet-skey-file
+      - /utxo-keys/genesis.1.skey
+      - --network-magic
+      - "42"
+    volumes:
+      # rw - daemon writes its control socket + state dir
+      # under /state.
+      - relay1-state:/state
+      - utxo-keys:/utxo-keys:ro
+    restart: always
+    depends_on:
+      relay1:
+        condition: service_started
+      configurator:
+        condition: service_completed_successfully
+
+  sidecar:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/sidecar:1ff6913
+    environment:
+      NETWORKMAGIC: 42
+      PORT: 3001
+      POOLS: "3"
+    container_name: sidecar
+    hostname: sidecar.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    depends_on:
+      tracer-sidecar:
+        condition: service_started
+    restart: always
+    tmpfs:
+      - /tmp
+
+  # Sleep-forever container holding the cardano-adversary CLI plus
+  # its driver scripts under /opt/antithesis/test/v1/. Antithesis
+  # composer `docker exec`s into here per tick to fire one
+  # initiator-only chain-sync session against a randomly-chosen
+  # target node (any of p1/p2/p3/relay1/relay2). The container
+  # itself never receives the request and holds no shared state —
+  # if Antithesis chaos kills it, restart: always brings back an
+  # idempotent host.
+  adversary:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/adversary:5173fa8
+    container_name: adversary
+    hostname: adversary.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    volumes:
+      # Read-only — tracer-sidecar writes chainPoints.log here.
+      - tracer:/tracer:ro
+    depends_on:
+      tracer-sidecar:
+        condition: service_started
+      configurator:
+        condition: service_completed_successfully
+    restart: always
+
+  tracer-sidecar:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/tracer-sidecar:8dbf509
+    container_name: tracer-sidecar
+    hostname: tracer-sidecar.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    command:
+      - "/opt/cardano-tracer/logs"
+    environment:
+      POOLS: "3"
+      CHAINPOINT_FILEPATH: "/opt/cardano-tracer/chainPoints.log"
+    volumes:
+      - tracer:/opt/cardano-tracer
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  log-tailer:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/log-tailer@sha256:a5d23c42408a1003bb14208fd97dd2bdda102e7002e4e2a2804e71a80df56484
+    container_name: log-tailer
+    hostname: log-tailer.example
+    volumes:
+      - tracer:/tracer:ro
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  # Asteria game workload — promoted from testnets/asteria_game/ on
+  # the strength of the 0-findings 1h Antithesis run on commit
+  # 9984a1e (PR #100). Long-lived utxo-indexer follows relay1's
+  # chain via N2C, exposes ready/utxos_at/await on /tmp/idx.sock;
+  # composer scripts at /opt/antithesis/test/v1/asteria-game/ drive
+  # bootstrap (one-shot serial driver), the player loop, and the
+  # admin-singleton / consistency invariant snapshots. The player
+  # parallel_driver_ is the workload generator: builds + signs +
+  # submits spawnShip txs against relay1 every tick, providing
+  # sustained tx pressure under fault injection.
+  #
+  # Built from upstream PR #98 (035-indexer-n2c-reconnect) —
+  # supervisor with exponential-backoff reconnect handles N2C peer
+  # close in-process, so the daemon stays up across relay restarts.
+  # RocksDB persistence at /idx-db keeps state across full process
+  # restarts too. /utxo-keys is mounted so the bootstrap binary
+  # can read the genesis wallet skey; /asteria-deploy holds the
+  # per-deploy seed TxIn so player + invariant binaries see the
+  # same applied validators.
+  asteria-game:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/asteria-game:5252cad0
+    container_name: asteria-game
+    hostname: asteria-game.example
+    labels:
+      com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+    environment:
+      INDEXER_SOCK: /tmp/idx.sock
+      CARDANO_NODE_SOCKET_PATH: /state/node.socket
+      NETWORK_MAGIC: "42"
+    volumes:
+      - relay1-state:/state:ro
+      - utxo-keys:/utxo-keys:ro
+      - asteria-game-db:/idx-db
+      - asteria-deploy:/asteria-deploy
+    tmpfs:
+      - /tmp
+    depends_on:
+      relay1:
+        condition: service_started
+
+volumes:
+  tracer:
+  p1-configs:
+  p2-configs:
+  p3-configs:
+  relay1-state:
+  relay2-state:
+  utxo-keys:
+  asteria-game-db:
+  asteria-deploy:
+
+networks:
+  default:
+    name: cardano-node-testnet
+    driver: bridge
+    internal: ${INTERNAL_NETWORK}

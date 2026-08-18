@@ -1,0 +1,152 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Antithesis</span>
+<h1>Antithesis campaigns</h1>
+<p class="page-hero">Build a fuzz scenario into a hermetic Antithesis bundle, validate it, run preflight, and launch it on Antithesis through the Moog requester flow — end to end from the dashboard. Each stage streams live output below. Credentials come from <a href="/operate/config">/operate/config</a>.{% if not moog_configured %} <strong>Moog / Antithesis credentials are not fully set yet</strong> — configure them first.{% endif %}</p>
+
+<style>
+.at-grid{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 8px}
+.at-card{flex:1 1 300px;min-width:280px;background:var(--obsidian-2);border:1px solid var(--rule);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.at-card h3{margin:0;font-size:1rem;display:flex;align-items:center;gap:8px}
+.at-card h3 .at-n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;font-size:.72rem;font-weight:800;background:var(--obsidian-3);color:var(--ink)}
+.at-card .sub{color:var(--ink-muted);font-size:.82rem;margin:0}
+.at-card label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin:6px 0 2px}
+.at-card input[type=text]{width:100%;background:var(--obsidian-1);border:1px solid var(--rule);color:var(--ink);border-radius:8px;padding:7px 10px;font-size:.84rem;font-family:var(--font-mono)}
+.at-card input:focus{outline:none;border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.at-run{align-self:flex-start;margin-top:8px;background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:8px 16px;font-weight:700;font-size:.84rem;cursor:pointer}
+.at-run:disabled{opacity:.5;cursor:not-allowed}
+.at-card.at-danger{border-color:color-mix(in srgb,var(--crimson) 55%,transparent)}
+.at-card.at-danger .at-run{background:var(--crimson);color:#fff}
+.at-warn{color:var(--crimson-glow);font-size:.78rem;display:flex;gap:6px;align-items:flex-start}
+.at-approve{display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--ink);text-transform:none;letter-spacing:0}
+.at-logwrap{margin-top:16px}
+.at-logwrap h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin:0 0 6px}
+#at-log{background:var(--obsidian-0);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;min-height:180px;max-height:440px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.8rem;color:var(--ink);margin:0}
+.at-hint{font-family:var(--font-mono);font-size:.72rem;color:var(--accent)}
+</style>
+
+<div class="at-grid">
+  <div class="at-card" id="card-build">
+    <h3><span class="at-n">1</span>Build bundle</h3>
+    <p class="sub">Render a profile + scenario into a hermetic bundle. <span class="at-hint">antithesis build</span></p>
+    <label>Profile id</label>
+    <input type="text" id="b-profile" list="profiles" placeholder="profile-l-amaru-closed-devnet">
+    <label>Scenario (optional)</label>
+    <input type="text" id="b-scenario" list="scenarios" placeholder="dwarf/scenarios/cardano-node-cbor-tx-body-fuzz.yaml">
+    <label>Output dir (must be writable — under {{ build_out_root }})</label>
+    <input type="text" id="b-out" value="{{ build_out_root }}/" placeholder="{{ build_out_root }}/my-bundle">
+    <label>Registry (optional)</label>
+    <input type="text" id="b-registry" placeholder="ghcr.io/j-gainsec">
+    <label>Tag (optional)</label>
+    <input type="text" id="b-tag" placeholder="0.1.0">
+    <button class="at-run" onclick="runStage('build')">Build</button>
+  </div>
+
+  <div class="at-card" id="card-validate">
+    <h3><span class="at-n">2</span>Validate</h3>
+    <p class="sub">Confirm the bundle is well-formed + self-contained. <span class="at-hint">moog asset validate</span></p>
+    <label>Asset dir</label>
+    <input type="text" id="v-asset" list="assetdirs" placeholder="{{ build_out_root }}/my-bundle">
+    <button class="at-run" onclick="runStage('validate')">Validate</button>
+  </div>
+
+  <div class="at-card" id="card-preflight">
+    <h3><span class="at-n">3</span>Preflight</h3>
+    <p class="sub">Combined readiness: deployment, requester, asset, plan. <span class="at-hint">moog preflight</span></p>
+    <label>Asset dir</label>
+    <input type="text" id="p-asset" list="assetdirs" placeholder="{{ build_out_root }}/my-bundle">
+    <label>Repo (org/repo)</label>
+    <input type="text" id="p-repo" placeholder="Cyber-Castellum/DWARF">
+    <label>GitHub user</label>
+    <input type="text" id="p-user" placeholder="requester-user">
+    <label>Directory (repo-relative)</label>
+    <input type="text" id="p-dir" placeholder="antithesis/cardano_node_dwarf">
+    <label>Commit</label>
+    <input type="text" id="p-commit" placeholder="&lt;sha&gt;">
+    <button class="at-run" onclick="runStage('preflight')">Preflight</button>
+  </div>
+
+  <div class="at-card at-danger" id="card-launch">
+    <h3><span class="at-n">4</span>Launch</h3>
+    <p class="sub">Submit through Moog to Antithesis. <span class="at-hint">moog create-test</span></p>
+    <label>Repo (org/repo)</label>
+    <input type="text" id="l-repo" placeholder="Cyber-Castellum/DWARF">
+    <label>GitHub user</label>
+    <input type="text" id="l-user" placeholder="requester-user">
+    <label>Directory (repo-relative)</label>
+    <input type="text" id="l-dir" placeholder="antithesis/cardano_node_dwarf">
+    <label>Commit</label>
+    <input type="text" id="l-commit" placeholder="&lt;sha&gt;">
+    <label>Duration (hours)</label>
+    <input type="text" id="l-duration" placeholder="1">
+    <label class="at-approve"><input type="checkbox" id="l-nofaults" checked> First run: <code>--no-faults</code> smoke</label>
+    <label class="at-approve"><input type="checkbox" id="l-approve"> <strong>Approve live on-chain launch</strong> (spends Preprod tADA)</label>
+    <p class="at-warn">⚠ Unchecked = dry-run (prints the exact command, submits nothing). Checked = real on-chain <code>create-test</code> transaction that launches the Antithesis run.</p>
+    <button class="at-run" onclick="runStage('launch')">Submit</button>
+  </div>
+
+  <div class="at-card" id="card-status">
+    <h3><span class="at-n">5</span>Poll status</h3>
+    <p class="sub">Check the Moog-side phase of a submitted run. <span class="at-hint">moog test-status</span></p>
+    <label>Test run id</label>
+    <input type="text" id="s-id" placeholder="&lt;test-run-id&gt;">
+    <button class="at-run" onclick="runStage('status')">Check</button>
+  </div>
+</div>
+
+<datalist id="profiles">{% for p in profiles %}<option value="{{ p }}">{% endfor %}</datalist>
+<datalist id="scenarios">{% for s in scenarios %}<option value="{{ s }}">{% endfor %}</datalist>
+<datalist id="assetdirs">{% for d in asset_dirs %}<option value="{{ d }}">{% endfor %}</datalist>
+
+<div class="at-logwrap">
+  <h3>Output</h3>
+  <pre id="at-log">Ready. Configure credentials at /operate/config, then run a stage above.</pre>
+</div>
+
+<script>
+function getToken(){return new URLSearchParams(window.location.search).get("token")||"dwarf";}
+function q(id){return (document.getElementById(id).value||"").trim();}
+function add(p,k,v){if(v)p.set(k,v);}
+function buildURL(stage){
+  const p=new URLSearchParams();
+  p.set("token",getToken());
+  let path;
+  if(stage==="build"){path="/api/antithesis/build";
+    add(p,"profile",q("b-profile"));add(p,"scenario",q("b-scenario"));add(p,"out",q("b-out"));
+    add(p,"registry",q("b-registry"));add(p,"tag",q("b-tag"));
+  }else if(stage==="validate"){path="/api/moog/validate";add(p,"asset_dir",q("v-asset"));
+  }else if(stage==="preflight"){path="/api/moog/preflight";
+    add(p,"asset_dir",q("p-asset"));add(p,"repo",q("p-repo"));add(p,"github_user",q("p-user"));
+    add(p,"directory",q("p-dir"));add(p,"commit",q("p-commit"));
+  }else if(stage==="launch"){path="/api/moog/create-test";
+    add(p,"repo",q("l-repo"));add(p,"github_user",q("l-user"));add(p,"directory",q("l-dir"));
+    add(p,"commit",q("l-commit"));add(p,"duration",q("l-duration"));
+    if(document.getElementById("l-nofaults").checked)p.set("no_faults","1");
+    if(document.getElementById("l-approve").checked)p.set("approve","1");
+  }else if(stage==="status"){path="/api/moog/test-status";add(p,"test_id",q("s-id"));}
+  return path+"?"+p.toString();
+}
+async function runStage(stage){
+  if(stage==="launch" && document.getElementById("l-approve").checked){
+    if(!confirm("Submit a LIVE on-chain Moog create-test? This spends Preprod tADA and launches a real Antithesis run.")) return;
+  }
+  const log=document.getElementById("at-log");
+  const btns=document.querySelectorAll(".at-run");
+  btns.forEach(b=>b.disabled=true);
+  log.textContent="$ "+stage+"\n";
+  try{
+    const resp=await fetch(buildURL(stage),{method:"POST"});
+    if(!resp.ok){log.textContent+="HTTP "+resp.status+": "+(await resp.text());return;}
+    const reader=resp.body.getReader();const dec=new TextDecoder();let buf="";
+    while(true){const{value,done}=await reader.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});const parts=buf.split("\n\n");buf=parts.pop();
+      for(const part of parts){for(const line of part.split("\n")){
+        if(line.startsWith("data: ")){log.textContent+=line.slice(6)+"\n";log.scrollTop=log.scrollHeight;}
+        else if(line.startsWith("event: done")){log.textContent+="[done]\n";}
+      }}
+    }
+  }catch(e){log.textContent+="\n[error] "+String(e);}
+  finally{btns.forEach(b=>b.disabled=false);}
+}
+</script>
+{% endblock %}

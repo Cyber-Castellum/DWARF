@@ -1,0 +1,29 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Profiles · New</span>
+<h1>Create a deployment profile</h1>
+<p class="page-hero">Render a profile template into <code>{{ profile_root }}/&lt;name&gt;/profile.yaml</code>. It appears in <a href="/operate/profiles?token={{ token }}">/operate/profiles</a>; edit host-specific values, then deploy.</p>
+
+<style>
+.pn-form{max-width:560px;margin:18px 0}
+.pn-form label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin:14px 0 3px}
+.pn-form select,.pn-form input[type=text]{width:100%;background:var(--obsidian-1);border:1px solid var(--rule);color:var(--ink);border-radius:8px;padding:8px 11px;font-size:.86rem;font-family:var(--font-mono)}
+.pn-form select:focus,.pn-form input:focus{outline:none;border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.pn-hint{color:var(--ink-muted);font-size:.75rem;margin:2px 0 0}
+.pn-submit{margin-top:18px;background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:9px 20px;font-weight:700;font-size:.88rem;cursor:pointer}
+</style>
+
+{% if not templates %}
+<p class="empty-section-statement">No profile templates found under <code>dwarf/profiles/templates/</code>.</p>
+{% else %}
+<form class="pn-form" method="post" action="/operate/profiles/new?token={{ token }}">
+  <label>Template</label>
+  <select name="template">{% for t in templates %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
+  <p class="pn-hint">{{ templates|length }} templates available.</p>
+  <label>Profile name</label>
+  <input type="text" name="name" placeholder="my-devnet" required>
+  <p class="pn-hint">Lowercase letters/digits/dot/underscore/dash, 3–80 chars. Becomes the profile id + directory.</p>
+  <button class="pn-submit" type="submit">Create profile</button>
+</form>
+{% endif %}
+{% endblock %}

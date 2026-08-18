@@ -1,7 +1,7 @@
 """Profile template discovery and rendering."""
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 
@@ -19,7 +19,7 @@ def render_template(*, template_name: str, profile_name: str, output_path: Path)
     body = template_path.read_text(encoding="utf-8")
     body = body.replace("{{PROFILE_ID}}", profile_name)
     body = body.replace("{{PROFILE_LABEL}}", profile_name)
-    body = body.replace("{{REMOTE_RUNTIME_ROOT}}", os.path.expanduser(f"~/cardano-profiles/{profile_name}"))
+    body = body.replace("{{REMOTE_RUNTIME_ROOT}}", f"/opt/dwarf/profiles/{profile_name}")
     body = body.replace("{{COMPOSE_PROJECT}}", f"dwarf-{profile_name}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(body, encoding="utf-8")

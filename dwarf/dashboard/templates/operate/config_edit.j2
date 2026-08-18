@@ -1,0 +1,43 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Settings</span>
+<h1>Edit deployment settings</h1>
+<p class="page-hero">Every field in <code>{{ config_path }}</code>. Changes are written to the config overlay and take effect immediately. Fields marked <span class="cfg-warn">control channel</span> steer SSH / privileges — a bad edit can break deploy &amp; coverage, so change them with care. The <code>moog</code> block holds secrets (GitHub PAT etc.) and is <strong>not</strong> shown here — edit it via the secret-aware Moog panel on <a href="/operate/config?token={{ token }}">Config</a>.</p>
+
+<style>
+.cfg-form{max-width:720px;margin:20px 0;display:flex;flex-direction:column;gap:16px}
+.cfg-field{display:flex;flex-direction:column;gap:5px}
+.cfg-key{font-family:var(--font-mono);font-size:.82rem;color:var(--ink);font-weight:600}
+.cfg-key em{color:var(--ink-muted);font-style:normal;font-weight:400;font-size:.72rem;margin-left:6px}
+.cfg-warn{display:inline-block;background:rgba(226,182,88,.16);color:var(--gold,#e2b658);border:1px solid var(--rule);border-radius:5px;padding:1px 6px;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;margin-left:6px}
+.cfg-desc{color:var(--ink-muted);font-size:.76rem}
+.cfg-form input[type=text],.cfg-form input[type=number],.cfg-form select,.cfg-form textarea{
+  width:100%;background:var(--obsidian-1);border:1px solid var(--rule);color:var(--ink);border-radius:8px;
+  padding:8px 11px;font-family:var(--font-mono);font-size:.84rem}
+.cfg-form textarea{resize:vertical;min-height:84px;line-height:1.45}
+.cfg-form input:focus,.cfg-form select:focus,.cfg-form textarea:focus{outline:none;border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.cfg-save{margin-top:8px;align-self:flex-start;background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:10px 24px;font-weight:700;font-size:.9rem;cursor:pointer}
+</style>
+
+<form class="cfg-form" method="post" action="/operate/config/save?token={{ token }}">
+{% for f in fields %}
+  <label class="cfg-field">
+    <span class="cfg-key">{{ f.key }}<em>{{ f.type }}</em>{% if f.sensitive %}<span class="cfg-warn">control channel</span>{% endif %}</span>
+    <span class="cfg-desc">{{ f.description }}</span>
+    {% if f.kind == 'bool' %}
+      <select name="{{ f.key }}">
+        <option value="true" {% if f.value == 'true' %}selected{% endif %}>true</option>
+        <option value="false" {% if f.value == 'false' %}selected{% endif %}>false</option>
+      </select>
+    {% elif f.kind == 'int' %}
+      <input type="number" name="{{ f.key }}" value="{{ f.value }}">
+    {% elif f.kind == 'textarea' %}
+      <textarea name="{{ f.key }}" spellcheck="false">{{ f.value }}</textarea>
+    {% else %}
+      <input type="text" name="{{ f.key }}" value="{{ f.value }}" spellcheck="false">
+    {% endif %}
+  </label>
+{% endfor %}
+  <button class="cfg-save" type="submit">Save settings</button>
+</form>
+{% endblock %}

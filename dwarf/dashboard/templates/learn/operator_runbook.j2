@@ -2,24 +2,30 @@
 {% block main %}
 <span class="eyebrow">Learn · Operator runbook</span>
 <h1>Operator runbook</h1>
-<p class="page-hero">Deploy, day-2 operations, troubleshooting recipes, backup / restore, and health monitoring. The reader-facing version of <code>agent/research/operator-runbook.md</code>; updated as gotchas surface.</p>
+<p class="page-hero">Deploy, day-2 operations, troubleshooting recipes, backup / restore, and health monitoring. The reader-facing companion to <code>dwarf/docs/operator-handbook.md</code>; updated as gotchas surface.</p>
 
 <hr class="hairline">
 
 <section>
   <header><span class="eyebrow">Step 1</span><h2>Deploy</h2></header>
   <h3>Recommended: Docker</h3>
-  <p>The release bundle ships with a turnkey installer. From an unpacked <code>dwarf-release-v1/</code>:</p>
-  <pre class="run-payload-pre"><code>cd dwarf-release-v1/
-./scripts/install.sh
-docker compose up -d</code></pre>
-  <p>The installer pulls <code>dwarf/framework</code>, mounts <code>runs/</code>, <code>state/</code>, <code>bundles/</code> from the host into the container, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites (Docker, docker-compose, ~10 GB free disk, ~4 GB RAM) are listed in <code>dwarf-release-v1/README.md</code>.</p>
+  <p>Clone the repo and run the installer — one command seeds the catalog, builds the image, and starts the container:</p>
+  <pre class="run-payload-pre"><code>git clone https://github.com/Cyber-Castellum/DWARF.git
+cd DWARF
+delivery/scripts/install.sh                    # seed + build + start dwarf-fw on :8787
+delivery/scripts/install.sh --control-channel  # ...also enable web-driven substrate deploy/teardown
+delivery/scripts/install.sh --all              # ...plus build the host-side AFL coverage harness</code></pre>
+  <p>The installer mounts <code>runs/</code>, <code>state/</code>, <code>bundles/</code> from the package <code>var/</code> into the container and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. It calls <code>build-image.sh</code> and <code>deploy.sh</code> for you; run those two directly to rebuild/restart without re-seeding. With <code>--control-channel</code>, the dashboard's deploy/teardown/coverage buttons drive the host through a restricted forced-command SSH shim (the hardened container never gets a host shell). Prerequisites (Docker + Compose v2, ~20 GB free disk) and options are in <code>INSTALL.md</code>. Override the port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/install.sh</code>.</p>
+  <h3>Confirm it's working</h3>
+  <pre class="run-payload-pre"><code>delivery/scripts/status.sh                                    # image / container / port / inventory
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8787/operate   # expect 200
+docker exec dwarf-fw python3 dwarf/scripts/validate_scenarios.py         # expect RESULT: PASS, 0 failures</code></pre>
   <h3>Alternative: bare metal</h3>
-  <pre class="run-payload-pre"><code>git clone https://github.com/dwarf-fw/dwarf
-cd dwarf
-./scripts/setup.sh
-./cardano-profile dashboard serve --bind 0.0.0.0 --port 8787</code></pre>
-  <p>Same CLI, framework runs as host processes via tmux. <code>state/</code> · <code>runs/</code> · <code>bundles/</code> live under the repo root.</p>
+  <pre class="run-payload-pre"><code>git clone https://github.com/Cyber-Castellum/DWARF.git
+cd DWARF
+python3 -m pip install -r infrastructure/docker/requirements-framework.txt
+./dwarf/cardano-profile dashboard serve --bind 0.0.0.0 --port 8787</code></pre>
+  <p>Same CLI, framework runs as host processes. <code>state/</code> · <code>runs/</code> · <code>bundles/</code> live under <code>var/</code> at the repo root.</p>
 </section>
 
 <hr class="hairline">
@@ -28,13 +34,14 @@ cd dwarf
   <header><span class="eyebrow">Step 2</span><h2>Common operations</h2></header>
 
   <h3>Run a scenario</h3>
-  <pre class="run-payload-pre"><code># Inside Docker
-docker compose exec dwarf-fw \
-  cardano-profile scenario run \
-  scenarios/runtime-substrate-honest-baseline-example-smoke.yaml
+  <p>Run scenarios from the host CLI on a Docker-capable machine (not the hardened UI container — it has no Docker-in-Docker and ships no target binaries). Fuzz scenarios need their target binaries built once; substrate scenarios need the <code>devnet</code> runtime.</p>
+  <pre class="run-payload-pre"><code># Fuzz (CBOR / ledger-rule / mini-protocol) — build targets once
+make -C dwarf/targets amaru        # or: make -C dwarf/targets all
+./dwarf/cardano-profile scenario run \
+  dwarf/scenarios/amaru-cbor-tx-body-fuzz.yaml
 
-# Bare metal
-./cardano-profile scenario run \
+# Substrate (containerized devnet) — needs Docker + the devnet runtime
+./dwarf/cardano-profile scenario run --runtime devnet \
   dwarf/scenarios/runtime-substrate-honest-baseline-example-smoke.yaml</code></pre>
   <p>Output lands in <code>runs/&lt;timestamp&gt;-&lt;hash&gt;/</code>; the dashboard auto-discovers it. <a href="/operate/runs">/operate/runs</a> lists newest-first.</p>
 
@@ -89,7 +96,7 @@ cardano-profile wallet test moog-requester --json</code></pre>
   <p>Use <code>--json</code> for automation because it suppresses the interactive Dwarf banner and leaves stdout as machine-readable JSON.</p>
 
   <h3>Moog deployment health</h3>
-  <p>Dwarf can now check the Moog deployment on <code><remote-host></code> without reading wallet secrets. The status checks verify the Moog binary, deploy directories, public requester/oracle metadata, Preprod MPFS/token configuration, and the <code>moog-oracle.service</code> systemd user unit state.</p>
+  <p>Dwarf can now check the Moog deployment without reading wallet secrets. The status checks verify the Moog binary, deploy directories, public requester/oracle metadata, Preprod MPFS/token configuration, and the <code>moog-oracle.service</code> systemd user unit state.</p>
   <pre class="run-payload-pre"><code>cardano-profile moog config
 cardano-profile moog config --json
 cardano-profile moog status
@@ -133,11 +140,11 @@ cardano-profile moog preflight --asset-dir &lt;dir&gt; --repo &lt;org/repo&gt; -
   <p>The Moog config block is safe for public deployment metadata only. Set or replace it with a JSON object like this:</p>
   <pre class="run-payload-pre"><code>cardano-profile moog set '{
   "enabled": true,
-  "deploy_root": "/home/USER/moog-deploy",
-  "moog_binary": "/home/USER/bin/moog",
-  "secrets_root": "/home/USER/moog-secrets",
+  "deploy_root": "/home/dwarf/moog-deploy",
+  "moog_binary": "/home/dwarf/bin/moog",
+  "secrets_root": "/home/dwarf/moog-secrets",
   "mpfs_host": "https://mpfs.plutimus.com",
-  "token_id": "<moog-token-id>",
+  "token_id": "REPLACE_WITH_YOUR_MOOG_TOKEN_ID",
   "requester_wallet_id": "moog-requester",
   "oracle_service": "moog-oracle.service"
 }'</code></pre>
@@ -186,8 +193,39 @@ moog requester register-role  -w &lt;secrets&gt;/requester/requester.json -p git
 cardano-profile moog asset validate --asset-dir /tmp/moog-asset --json</code></pre>
   <p>The scaffold creates a minimal <code>docker-compose.yaml</code> and <code>README.md</code>. Replace the placeholder workload with the target-specific Dwarf security test services before any live Moog request.</p>
 
-  <h3 id="antithesis-bundles">Build the Antithesis test bundle</h3>
-  <p>Dwarf renders one profile definition to two execution backends: the local devnet (unchanged) and Antithesis. The <code>antithesis build</code> command is the real bundle generator that replaces the placeholder scaffold above. The workload container acts as the node&rsquo;s peer — it dials the Amaru node, drives fuzzed CBOR, and emits Antithesis SDK assertions (no-crash, liveness, clean-reject) — so the system is fully self-contained and hermetic.</p>
+  <h3 id="antithesis-bundles">Scenario → Antithesis: the full flow</h3>
+  <p>The path from a scenario to a launched Antithesis campaign. Today the <strong>setup and scenario authoring live in the dashboard</strong>; the <strong>build → validate → launch steps are CLI</strong> (<code>cardano-profile</code>). Each stage below shows where it runs and the command.</p>
+
+  <style>
+  .at-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:16px 0 20px}
+  .at-flow .at-stage{flex:1 1 116px;min-width:116px;background:var(--obsidian-2);border:1px solid var(--rule);border-radius:12px;padding:11px 13px;display:flex;flex-direction:column;gap:4px}
+  .at-flow .at-n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;font-size:.72rem;font-weight:800;background:var(--obsidian-3);color:var(--ink)}
+  .at-flow .at-stage b{font-size:.9rem;color:var(--ink)}
+  .at-flow .at-where{font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted)}
+  .at-flow .at-cmd{font-family:var(--font-mono);font-size:.72rem;color:var(--accent);word-break:break-word}
+  .at-flow .at-stage.at-gui{border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent) inset}
+  .at-flow .at-stage.at-gui .at-n{background:var(--accent);color:var(--obsidian-0)}
+  .at-flow .at-arrow{align-self:center;color:var(--ink-muted);font-size:1.1rem}
+  @media (max-width:720px){.at-flow .at-arrow{display:none}}
+  </style>
+  <div class="at-flow">
+    <div class="at-stage at-gui"><span class="at-n">1</span><b>Configure</b><span class="at-where">GUI · /operate/config</span><span class="at-cmd">Moog + Antithesis creds</span></div>
+    <div class="at-arrow">→</div>
+    <div class="at-stage at-gui"><span class="at-n">2</span><b>Author scenario</b><span class="at-where">GUI · /operate/scenarios/new</span><span class="at-cmd">pick / clone a scenario</span></div>
+    <div class="at-arrow">→</div>
+    <div class="at-stage at-cli"><span class="at-n">3</span><b>Build bundle</b><span class="at-where">CLI</span><span class="at-cmd">antithesis build</span></div>
+    <div class="at-arrow">→</div>
+    <div class="at-stage at-cli"><span class="at-n">4</span><b>Validate</b><span class="at-where">CLI</span><span class="at-cmd">moog asset validate</span></div>
+    <div class="at-arrow">→</div>
+    <div class="at-stage at-cli"><span class="at-n">5</span><b>Preflight</b><span class="at-where">CLI</span><span class="at-cmd">moog preflight</span></div>
+    <div class="at-arrow">→</div>
+    <div class="at-stage at-cli"><span class="at-n">6</span><b>Launch</b><span class="at-where">CLI</span><span class="at-cmd">moog create-test --approve</span></div>
+    <div class="at-arrow">→</div>
+    <div class="at-stage at-cli"><span class="at-n">7</span><b>Poll</b><span class="at-where">CLI</span><span class="at-cmd">moog test-status</span></div>
+  </div>
+  <p><strong>1–2 (dashboard):</strong> enter the Moog/GitHub/Antithesis values at <a href="/operate/config">/operate/config</a> and pick or clone a scenario at <a href="/operate/scenarios/new">/operate/scenarios/new</a>. <strong>3–7 (CLI):</strong> the commands below. The <code>antithesis build</code> command renders one profile definition to a self-contained, hermetic bundle — the workload container acts as the node&rsquo;s peer, dials the node, drives fuzzed CBOR, and emits Antithesis SDK assertions (no-crash, liveness, clean-reject).</p>
+
+  <h3>Build the bundle</h3>
   <pre class="run-payload-pre"><code>cardano-profile antithesis build profile-l-amaru-closed-devnet \
   --out antithesis/amaru-single \
   --json</code></pre>
@@ -323,13 +361,13 @@ except ImportError:
     <li><code>state/</code> — dashboard config + notifications log + chain head + lifecycle ledger.</li>
   </ul>
   <p>Snapshot all three for backup. The framework provides primitives that wrap this:</p>
-  <pre class="run-payload-pre"><code># Capture
-cardano-profile backup --output /backups/dwarf-$(date +%Y%m%d).tar.gz
+  <pre class="run-payload-pre"><code># Capture (add --include-bundles to also archive preserved bundles/)
+cardano-profile backup --to /backups/dwarf-$(date +%Y%m%d).tar.gz --include-bundles
 
-# Restore (target dir must be empty)
-cardano-profile restore --archive /backups/dwarf-20260429.tar.gz \
-                        --target /home/dwarf/dwarf-fw</code></pre>
-  <p>The backup primitive stops the dashboard, captures the three trees with their hash chain intact, and restarts. Restore is the inverse — verify the chain, unpack, restart.</p>
+# Restore (archive path is positional; --dry-run verifies the chain without unpacking)
+cardano-profile restore /backups/dwarf-20260429.tar.gz --dry-run
+cardano-profile restore /backups/dwarf-20260429.tar.gz</code></pre>
+  <p>Backup stops the dashboard, captures the state/runs (and, with <code>--include-bundles</code>, the preserved bundles) with their hash chain intact, and restarts. Restore is the inverse — <code>--dry-run</code> verifies the chain first, then the real run unpacks and restarts.</p>
 </section>
 
 <hr class="hairline">
@@ -367,7 +405,7 @@ cardano-profile restore --archive /backups/dwarf-20260429.tar.gz \
   - job_name: dwarf
     metrics_path: /metrics
     static_configs:
-      - targets: ['dwarf.example.com:443']
+      - targets: ['example.com:443']
     scheme: https</code></pre>
 </section>
 

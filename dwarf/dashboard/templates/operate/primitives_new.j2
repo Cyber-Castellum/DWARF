@@ -1,0 +1,25 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">Operate · Plugins · New primitive</span>
+<h1>Scaffold a new primitive</h1>
+<p class="page-hero">Generate the starter files for a primitive (executor, JSON schema, test, registry entry) — same as <code>cardano-profile primitive new</code>. Files land under <code>{{ scaffold_root }}/&lt;name&gt;/</code>; copy them into the repo, implement the executor, and rebuild to make it live.</p>
+
+<style>
+.mn-form{max-width:520px;margin:18px 0}
+.mn-form label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin:14px 0 3px}
+.mn-form select,.mn-form input[type=text]{width:100%;background:var(--obsidian-1);border:1px solid var(--rule);color:var(--ink);border-radius:8px;padding:8px 11px;font-size:.86rem;font-family:var(--font-mono)}
+.mn-form select:focus,.mn-form input:focus{outline:none;border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.mn-hint{color:var(--ink-muted);font-size:.75rem;margin:2px 0 0}
+.mn-submit{margin-top:18px;background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:9px 20px;font-weight:700;font-size:.88rem;cursor:pointer}
+</style>
+
+<form class="mn-form" method="post" action="/operate/primitives/new?token={{ token }}">
+  <label>Family</label>
+  <select name="family">{% for f in families %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select>
+  <p class="mn-hint">The conceptual bucket: setup / load / probe / assertion / fault / teardown.</p>
+  <label>Primitive name</label>
+  <input type="text" name="name" placeholder="my_new_primitive" required>
+  <p class="mn-hint">Starts with a letter; lowercase letters/digits/underscore; 3–80 chars.</p>
+  <button class="mn-submit" type="submit">Scaffold primitive</button>
+</form>
+{% endblock %}

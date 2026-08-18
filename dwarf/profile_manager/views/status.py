@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from profile_manager.data.status import (
     candidate_findings,
+    confirmed_findings,
     current_phase_summary,
     data_source_used_filesystem_fallback,
     open_carry_overs,
@@ -17,6 +18,7 @@ def render_learn_status() -> str:
     reset_data_source()
     phase = current_phase_summary()
     recent = recent_main_commits(limit=20)
+    confirmed = confirmed_findings()
     candidates = candidate_findings()
     carry = open_carry_overs()
     fallback = data_source_used_filesystem_fallback()
@@ -27,6 +29,7 @@ def render_learn_status() -> str:
         active_sub="status",
         phase=phase,
         recent_commits=recent,
+        confirmed=confirmed,
         candidates=candidates,
         carry_overs=carry,
         data_source_caveat=fallback,

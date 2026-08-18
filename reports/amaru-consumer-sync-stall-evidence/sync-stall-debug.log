@@ -1,0 +1,31 @@
+# amaru-relay-1 (Amaru 10.11.0, testnet_42, k=5) — consumer sync-stall, 2026-08-11
+# AMARU_LOG=debug. Relay caught up to peer tip (~slot 8961) then STOPPED adopting.
+# The stall coincides with a peer connection RESET; relay re-connects but never resumes block delivery.
+
+# --- healthy mux traffic on ConnectionId(1) to peer 192.168.0.5:3001 (cardano relay1) ---
+2026-08-11T08:21:45.598806Z DEBUG amaru_pure_stage::tokio: stage `writer-1-43` external effect: SendEffect { conn: ConnectionId(1), data: Bytes(13, 07c2aa49800800058...) }
+2026-08-11T08:21:47.134559Z DEBUG amaru_pure_stage::tokio: stage `reader-1-44` external effect: RecvEffect { conn: ConnectionId(1), bytes: 2 }
+2026-08-11T08:21:47.134616Z DEBUG amaru_pure_stage::tokio: stage `reader-1-44` external effect: RecvEffect { conn: ConnectionId(1), bytes: 8 }
+2026-08-11T08:21:47.134808Z DEBUG amaru_pure_stage::tokio: stage `reader-1-44` external effect: RecvEffect { conn: ConnectionId(1), bytes: 194 }
+2026-08-11T08:21:47.134840Z DEBUG amaru_pure_stage::tokio: stage `reader-1-44` external effect: RecvEffect { conn: ConnectionId(1), bytes: 8 }
+2026-08-11T08:21:55.600548Z DEBUG amaru_pure_stage::tokio: stage `reader-1-44` external effect: RecvEffect { conn: ConnectionId(1), bytes: 5 }
+2026-08-11T08:21:55.600647Z DEBUG amaru_pure_stage::tokio: stage `reader-1-44` external effect: RecvEffect { conn: ConnectionId(1), bytes: 8 }
+2026-08-11T08:21:55.600712Z DEBUG amaru_pure_stage::tokio: stage `writer-1-43` external effect: SendEffect { conn: ConnectionId(1), data: Bytes(13, 085b4834800800058...) }
+
+# --- the peer RESETs the connection (os error 104), Amaru tears it down and removes the peer ---
+2026-08-11T08:21:57.137155Z ERROR amaru_protocols::mux: failed to receive segment header from network role=responder err=ReceiveError on ConnectionId(1): Connection reset by peer (os error 104)
+2026-08-11T08:21:57.137184Z  WARN amaru_pure_stage::tokio: stage `reader-1-44` terminated
+2026-08-11T08:21:57.137222Z DEBUG amaru_protocols::mux: terminating muxer due to read/write error role=responder
+2026-08-11T08:21:57.137229Z  WARN amaru_pure_stage::tokio: stage `mux-39` terminated
+2026-08-11T08:21:57.137367Z  INFO amaru_protocols::connection: connection child died child=Mux peer=192.168.0.5:3001 conn_id=1
+2026-08-11T08:21:57.137469Z  INFO manager.peer.connection_died: amaru_protocols::manager: inbound connection died, removing peer peer=192.168.0.5
+
+# --- Amaru re-connects (ConnectionId(2)) and exchanges only keepalive-sized frames, but adoption never resumes ---
+2026-08-11T08:23:38.481974Z DEBUG amaru_pure_stage::tokio: stage `reader-2-62` external effect: RecvEffect { conn: ConnectionId(2), bytes: 5 }
+2026-08-11T08:23:38.482066Z DEBUG amaru_pure_stage::tokio: stage `reader-2-62` external effect: RecvEffect { conn: ConnectionId(2), bytes: 8 }
+2026-08-11T08:23:38.482127Z DEBUG amaru_pure_stage::tokio: stage `writer-2-61` external effect: SendEffect { conn: ConnectionId(2), data: Bytes(...) }
+
+# --- resulting state ---
+# last adopted tip: slot=8961  (never advances)
+# container: restarts=0 status=running   CPU=0.00%  (idle, not spinning)
+# peer (cardano relay1) meanwhile keeps producing: tip slot=12197+   -> Amaru is silently stuck ~3200 slots behind

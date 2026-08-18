@@ -19,18 +19,23 @@ def _scenarios_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "scenarios"
 
 
-def list_templates_with_preview() -> list[dict[str, Any]]:
-    """Walk scenarios/templates/*.yaml and return per-template metadata
-    + a body preview that the picker can show in a disclosure."""
+def _templates_dir() -> Path:
+    """Any existing scenario is a template — clone-and-rename."""
     try:
-        from profile_manager.scenario_templates import TEMPLATES_DIR
-    except ImportError:
-        TEMPLATES_DIR = Path(__file__).resolve().parents[2] / "scenarios" / "templates"
+        from profile_manager.scenario_templates import SCENARIOS_DIR
+        return SCENARIOS_DIR
+    except Exception:
+        return Path(__file__).resolve().parents[2] / "scenarios"
 
+
+def list_templates_with_preview() -> list[dict[str, Any]]:
+    """Every existing scenario is usable as a template; return per-scenario
+    metadata + a body preview the picker can show in a disclosure."""
+    tdir = _templates_dir()
     out: list[dict[str, Any]] = []
-    if not TEMPLATES_DIR.is_dir():
+    if not tdir.is_dir():
         return out
-    for path in sorted(TEMPLATES_DIR.glob("*.yaml")):
+    for path in sorted(tdir.glob("*.yaml")):
         try:
             body = path.read_text(encoding="utf-8")
         except OSError:
@@ -45,17 +50,25 @@ def list_templates_with_preview() -> list[dict[str, Any]]:
 
 
 def render_template_preview(template_slug: str, scenario_name: str) -> str:
-    """Substitute SCENARIO_ID + SCENARIO_TITLE without writing to disk."""
-    try:
-        from profile_manager.scenario_templates import TEMPLATES_DIR
-    except ImportError:
-        TEMPLATES_DIR = Path(__file__).resolve().parents[2] / "scenarios" / "templates"
-    p = TEMPLATES_DIR / f"{template_slug}.yaml"
+    """Preview the cloned scenario with its id/title rewritten to the new name."""
+    p = _templates_dir() / f"{template_slug}.yaml"
     if not p.is_file():
         return ""
     body = p.read_text(encoding="utf-8")
     name = scenario_name or "<unnamed>"
-    return body.replace("{{SCENARIO_ID}}", name).replace("{{SCENARIO_TITLE}}", name)
+    if "{{SCENARIO_ID}}" in body or "{{SCENARIO_TITLE}}" in body:
+        return body.replace("{{SCENARIO_ID}}", name).replace("{{SCENARIO_TITLE}}", name)
+    try:
+        import json
+        import yaml
+        data = yaml.safe_load(body)
+        if isinstance(data, dict):
+            data["id"] = name
+            if "title" in data:
+                data["title"] = name
+        return json.dumps(data, indent=2) + "\n"
+    except Exception:
+        return body
 
 
 def is_valid_scenario_name(name: str) -> bool:

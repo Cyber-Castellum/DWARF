@@ -2,7 +2,7 @@
 # For each mutated shelley-genesis, start cardano-node and classify accept/reject/crash + latency.
 # config.node.json = testnet_42 config.json with DijkstraGenesisFile added (node 10.7.1 requires it).
 set -eu
-W=/tmp/cfgdiff; CN=/home/nigel/.local/bin/cardano-node
+W=/tmp/cfgdiff; CN=/home/dwarf/.local/bin/cardano-node
 for name in $(python3 -c "import json;print(' '.join(json.load(open('$W/muts/_order.json'))))"); do
   cp "$W/muts/$name.json" "$W/configs/shelley-genesis.json"; rm -rf "$W/cndb"; mkdir -p "$W/cndb"
   s=$(date +%s.%N)

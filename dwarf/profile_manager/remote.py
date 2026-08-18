@@ -13,9 +13,27 @@ class CommandResult:
     rendered_command: str
 
 
-def render_ssh_command(config, remote_command):
+def control_shim_enabled() -> bool:
+    """Whether the deploy host runs the restricted forced-command control shim.
+
+    When enabled, deploy/remove/status/active are sent to the host as bare
+    verbs (e.g. ``deploy <profile-id>``) instead of full generated scripts —
+    the host-side shim regenerates and runs the real command. This is what
+    lets a locked-down dashboard container drive substrate lifecycle without
+    holding a key that can run arbitrary shell.
+    """
+    return os.environ.get("ADA2_DWARF_CONTROL_SHIM", "").strip().lower() in ("1", "true", "yes")
+
+
+def render_ssh_command(config, remote_command, verb=None):
     target = f"{config.ssh_user}@{config.host}"
     ssh_key_path = resolve_ssh_key_path(config)
+    # In shim mode, send the verb tokens; the host shim regenerates the real
+    # command. `remote_command` is still used for the non-shim path and for
+    # dry-run rendering, so callers always pass it.
+    wire_command = remote_command
+    if verb and control_shim_enabled():
+        wire_command = " ".join(shlex.quote(part) for part in verb)
     return [
         "ssh",
         "-n",
@@ -24,7 +42,7 @@ def render_ssh_command(config, remote_command):
         "-i",
         ssh_key_path,
         target,
-        remote_command,
+        wire_command,
     ]
 
 
@@ -60,7 +78,7 @@ def run_moog_create_test(config, moog_config, command, timeout=900):
 
     cfg = normalize_moog_config(moog_config)
     secrets_root = cfg["secrets_root"]
-    host_config = os.path.expanduser("~/dwarf-v4/var/state/config.yaml")
+    host_config = "/home/dwarf/dwarf-v4/var/state/config.yaml"
     script = (
         "set -uo pipefail\n"
         f'export MOOG_WALLET_PASSPHRASE="$(cat {secrets_root}/requester/wallet.passphrase)"\n'
@@ -90,8 +108,8 @@ def fetch_test_run_facts(config, moog_config, test_run_id, timeout=60):
         return []
 
 
-def ssh_command(config, remote_command, timeout=None, dry_run=False):
-    argv = render_ssh_command(config, remote_command)
+def ssh_command(config, remote_command, timeout=None, dry_run=False, verb=None):
+    argv = render_ssh_command(config, remote_command, verb=verb)
     rendered = shell_join(argv)
     if dry_run:
         return CommandResult(0, rendered + "\n", "", rendered)

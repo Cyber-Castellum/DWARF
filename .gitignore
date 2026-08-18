@@ -1,14 +1,20 @@
 __pycache__/
-*.py[cod]
+*.pyc
 .pytest_cache/
-.ruff_cache/
 .mypy_cache/
-.coverage
-htmlcov/
+.DS_Store
+._*
 
-var/state/*.db
-var/state/*.db-*
-var/state/*.log
-
-dwarf/antithesis_devnet/env/
+# outputs / tooling / sensitive — never commit
+dwarf/runs/
+dwarf/evidence/
+evidence/
 sp1-closure/
+notes/
+agent/
+.serena/
+cyber-castellum-payment-evidence.html
+TEST-OUTPUTS.md
+*.m2bak
+docs/superpowers/
+delivery/audit/

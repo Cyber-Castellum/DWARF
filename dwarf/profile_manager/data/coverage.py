@@ -82,6 +82,79 @@ def _protocol_slug_from_text(text: str | None) -> str | None:
     return None
 
 
+def _protocols_in_text(text: str | None) -> set[str]:
+    """Return every mini-protocol slug named anywhere in ``text``.
+
+    Unlike ``_protocol_slug_from_text`` (first-match only), this returns the
+    full set so a scenario touching several protocols counts under each.
+    Node-to-client (local*) tokens are stripped before the node-to-node
+    checks so their substrings ('txsubmission' inside 'localtxsubmission')
+    don't leak a false node-to-node hit. Abbreviations are normalized:
+    'txsub' -> 'txsubmission', 'keep-alive' -> 'keepalive'.
+    """
+    if not text:
+        return set()
+    t = text.lower()
+    found: set[str] = set()
+    for slug in ("localstatequery", "localtxsubmission", "localtxmonitor"):
+        if slug in t:
+            found.add(slug)
+    tn = (
+        t.replace("localtxsubmission", "")
+        .replace("localtxmonitor", "")
+        .replace("localstatequery", "")
+    )
+    if "blockfetch" in tn:
+        found.add("blockfetch")
+    if "chainsync" in tn:
+        found.add("chainsync")
+    if "peersharing" in tn:
+        found.add("peersharing")
+    if "handshake" in tn:
+        found.add("handshake")
+    if "keepalive" in tn or "keep-alive" in tn:
+        found.add("keepalive")
+    if "txsubmission" in tn or "txsub" in tn:
+        found.add("txsubmission")
+    return found
+
+
+_CBOR_SHAPE_LABELS = {
+    "auxiliary-data": "Auxiliary Data",
+    "block":          "Block",
+    "block-header":   "Block Header",
+    "certificate":    "Certificate",
+    "tx-body":        "Tx Body",
+}
+
+
+def _cbor_shapes_in_text(text: str | None) -> set[str]:
+    """Return every CBOR decode-surface shape named in ``text``.
+
+    Substring overlaps are handled explicitly: 'blockfetch' and
+    'block-header' must not register as the 'block' shape, and the
+    'cov-txsub' mini-protocol smoke must not register as 'tx-body'.
+    """
+    if not text:
+        return set()
+    t = text.lower()
+    found: set[str] = set()
+    if "auxiliary" in t:
+        found.add("auxiliary-data")
+    if "certificate" in t:
+        found.add("certificate")
+    if "tx-body" in t or ("cov-tx-" in t and "txsub" not in t):
+        found.add("tx-body")
+    if "block-header" in t or "cov-header" in t:
+        found.add("block-header")
+    # 'block' only after stripping the tokens that merely contain the
+    # substring 'block' without being the block shape.
+    stripped = t.replace("blockfetch", "").replace("block-header", "").replace("cov-header", "")
+    if ("cbor" in t or "cov-block" in t) and ("block" in stripped or "cov-block" in t):
+        found.add("block")
+    return found
+
+
 def _implementation_from_bundle_manifest(manifest: dict) -> str | None:
     target = manifest.get("target") or {}
     return target.get("implementation") or manifest.get("target_implementation")
@@ -189,22 +262,16 @@ def implementation_axis() -> list[dict]:
 
 
 def mini_protocol_axis() -> list[dict]:
-    """Mini-protocols mentioned in any scenario id, sorted by slug."""
+    """Mini-protocols named anywhere in any scenario id, sorted by slug.
+
+    Derives from every scenario id (not just the strict ``-mini-protocol-*``
+    naming), so runtime/substrate/coverage scenarios that exercise a protocol
+    under a different id convention still surface a row.
+    """
     from profile_manager.data.scenarios import _list_scenarios_for_compare
     found: set[str] = set()
-    marker = "-mini-protocol-"
     for entry in _list_scenarios_for_compare():
-        sid = entry["id"]
-        idx = sid.find(marker)
-        if idx < 0:
-            continue
-        rest = sid[idx + len(marker):]
-        if rest.endswith("-fuzz-structured"):
-            rest = rest[: -len("-fuzz-structured")]
-        elif rest.endswith("-fuzz"):
-            rest = rest[: -len("-fuzz")]
-        if rest:
-            found.add(rest)
+        found |= _protocols_in_text(entry["id"])
     return [
         {"slug": slug, "label": _label_for(slug, _MINI_PROTOCOL_LABELS)}
         for slug in sorted(found)
@@ -292,12 +359,17 @@ def mini_protocol_coverage() -> dict:
     scenarios = _list_scenarios_for_compare()
     evidence = mini_protocol_cell_evidence()
     cells: dict[tuple[str, str], dict] = {}
+    # Pre-index each scenario's protocol set + declared target implementation
+    # once, so the row×col loop is a set membership test rather than a rescan.
+    indexed = [
+        (_protocols_in_text(s["id"]), s.get("target_impl"))
+        for s in scenarios
+    ]
     for row in rows:
         for col in columns:
             count = sum(
-                1 for s in scenarios
-                if f"-mini-protocol-{row['slug']}" in s["id"]
-                and s["id"].startswith(col["slug"] + "-")
+                1 for protos, impl in indexed
+                if row["slug"] in protos and impl == col["slug"]
             )
             cell = (
                 _supported_cell(count, "scenario") if count > 0 else _empty_cell()
@@ -307,9 +379,170 @@ def mini_protocol_coverage() -> dict:
     return {
         "title": "Mini-protocol coverage",
         "caption": (
-            "Scenarios that exercise each Cardano mini-protocol decoder per "
-            "implementation, derived from <code>dwarf/scenarios/*-mini-protocol-*-fuzz.yaml</code> "
-            "at request time."
+            "Scenarios that exercise each Cardano mini-protocol per "
+            "implementation, counted by each scenario's declared "
+            "<code>target.implementation</code> and every mini-protocol named "
+            "in its id, derived from <code>dwarf/scenarios/</code> at request "
+            "time."
+        ),
+        "columns": columns,
+        "rows": rows,
+        "cells": cells,
+        "anchor_paths": ["dwarf/scenarios/", "dwarf/targets/manifests/"],
+    }
+
+
+# Primary-category taxonomy for the scenario census. Priority-ordered:
+# the first matching rule wins, so every scenario lands in exactly one
+# category and the census sums to the full catalog. Slugs are stable ids;
+# labels are display-only.
+_CENSUS_CATEGORIES: list[tuple[str, str, tuple[str, ...]]] = [
+    ("decode-parser", "Decode / parser robustness",
+     ("cbor", "cov-block", "cov-header", "cov-tx-", "cov-ledger", "cov-apply",
+      "edge-cases", "parser", "malformed", "serdes")),
+    ("mini-protocol-wire", "Mini-protocol wire",
+     ("mini-protocol", "cov-handshake", "cov-keepalive", "cov-txsub")),
+    ("runtime-protocol", "Runtime protocol behavior",
+     ("blockfetch", "chainsync", "txsubmission", "handshake", "keepalive",
+      "keep-alive", "peersharing")),
+    ("consensus-chain", "Consensus / chain",
+     ("consensus", "rollback", "fork", "vrf", "nonce", "epoch", "genesis",
+      "threshold", "chainhold", "leader", "praos", "slot-forging", "overlay")),
+    ("era-hardfork", "Era / hard-fork",
+     ("era", "hard-fork", "hardfork", "-hf-", "boundary")),
+    ("plutus-scripts", "Plutus / scripts",
+     ("plutus", "exunits", "isvalid", "phase2")),
+    ("topology-eclipse", "Topology / eclipse / Sybil",
+     ("eclipse", "sybil", "topology", "mesh", "partition", "churn",
+      "promotion", "duplex", "concentration", "big-ledger", "node-",
+      "byzantine")),
+    ("mempool-n2c", "Mempool / node-to-client",
+     ("mempool", "local-query", "local-submit", "localtx", "localstate",
+      "lsq", "local-")),
+    ("resource-dos", "Resource / DoS",
+     ("resource", "rss", "disk", "cpu", "slow-loris", "baseline",
+      "starvation", "impairment", "time-skew", "mux", "overrun")),
+    ("lifecycle-robustness", "Lifecycle / robustness",
+     ("snapshot", "restart", "credential", "forensic", "observability",
+      "checkpoint", "bootstrap", "panic", "recovery", "syscall", "pcap",
+      "bundle", "lifecycle", "state", "migration", "validation-path",
+      "real-adapter", "assumption", "upstream")),
+]
+_CENSUS_FALLBACK = ("other", "Other")
+
+
+def _scenario_category(scenario_id: str | None) -> tuple[str, str]:
+    """Classify a scenario into exactly one primary census category.
+
+    Priority-ordered first-match: decode/parser is tested before the
+    protocol rules so a 'blockfetch-invalid-block-cbor' scenario counts
+    as decode robustness, not runtime protocol behavior.
+    """
+    s = (scenario_id or "").lower()
+    for slug, label, keywords in _CENSUS_CATEGORIES:
+        if any(k in s for k in keywords):
+            return slug, label
+    return _CENSUS_FALLBACK
+
+
+def scenario_census() -> dict:
+    """rows: primary category. columns: implementations + Total. cells: scenario count.
+
+    Every scenario in the catalog lands in exactly one row, so the Total
+    column reconciles to the full catalog size — this is the accounting
+    view that shows nothing is dropped.
+    """
+    from collections import Counter
+    from profile_manager.data.scenarios import _list_scenarios_for_compare
+    scenarios = _list_scenarios_for_compare()
+    impl_cols = implementation_axis()
+    columns = impl_cols + [{"slug": "__total", "label": "Total"}]
+
+    per_cat_impl: dict[tuple[str, str], int] = {}
+    cat_total: Counter = Counter()
+    label_by_slug: dict[str, str] = {}
+    for s in scenarios:
+        slug, label = _scenario_category(s["id"])
+        label_by_slug[slug] = label
+        impl = s.get("target_impl") or "unknown"
+        per_cat_impl[(slug, impl)] = per_cat_impl.get((slug, impl), 0) + 1
+        cat_total[slug] += 1
+
+    # Rows: only categories that actually contain scenarios, biggest first.
+    rows = [
+        {"slug": slug, "label": label_by_slug[slug]}
+        for slug in sorted(cat_total, key=lambda k: (-cat_total[k], label_by_slug[k]))
+    ]
+    cells: dict[tuple[str, str], dict] = {}
+    for row in rows:
+        for col in columns:
+            if col["slug"] == "__total":
+                count = cat_total[row["slug"]]
+            else:
+                count = per_cat_impl.get((row["slug"], col["slug"]), 0)
+            cells[(row["slug"], col["slug"])] = (
+                _supported_cell(count, "scenario") if count > 0 else _empty_cell()
+            )
+    total = sum(cat_total.values())
+    return {
+        "title": "Scenario census",
+        "caption": (
+            f"All {total} scenarios in <code>dwarf/scenarios/</code>, each "
+            "counted once by primary category (priority-ordered) and by "
+            "declared <code>target.implementation</code>. The Total column "
+            "reconciles to the full catalog. Amaru additionally participates "
+            "in differential runtime scenarios whose declared target is "
+            "cardano-node, so its direct-target count here is a floor, not a "
+            "ceiling."
+        ),
+        "columns": columns,
+        "rows": rows,
+        "cells": cells,
+        "anchor_paths": ["dwarf/scenarios/"],
+    }
+
+
+def cbor_surface_axis() -> list[dict]:
+    """CBOR decode surfaces named anywhere in any scenario id, sorted by slug."""
+    from profile_manager.data.scenarios import _list_scenarios_for_compare
+    found: set[str] = set()
+    for entry in _list_scenarios_for_compare():
+        found |= _cbor_shapes_in_text(entry["id"])
+    return [
+        {"slug": slug, "label": _label_for(slug, _CBOR_SHAPE_LABELS)}
+        for slug in sorted(found)
+    ]
+
+
+def cbor_surface_coverage() -> dict:
+    """rows: CBOR decode surfaces. columns: implementations. cells: scenario count."""
+    from profile_manager.data.scenarios import _list_scenarios_for_compare
+    rows = cbor_surface_axis()
+    columns = implementation_axis()
+    scenarios = _list_scenarios_for_compare()
+    # Pre-index each scenario's CBOR shape set + declared target implementation.
+    indexed = [
+        (_cbor_shapes_in_text(s["id"]), s.get("target_impl"))
+        for s in scenarios
+    ]
+    cells: dict[tuple[str, str], dict] = {}
+    for row in rows:
+        for col in columns:
+            count = sum(
+                1 for shapes, impl in indexed
+                if row["slug"] in shapes and impl == col["slug"]
+            )
+            cells[(row["slug"], col["slug"])] = (
+                _supported_cell(count, "scenario") if count > 0 else _empty_cell()
+            )
+    return {
+        "title": "CBOR decode-surface coverage",
+        "caption": (
+            "Scenarios that fuzz each Cardano CBOR decode surface per "
+            "implementation, counted by each scenario's declared "
+            "<code>target.implementation</code> and the CBOR shape named in "
+            "its id, derived from <code>dwarf/scenarios/</code> at request "
+            "time."
         ),
         "columns": columns,
         "rows": rows,
@@ -391,6 +624,7 @@ def fuzzer_backend_coverage() -> dict:
     if manifests_dir.is_dir():
         manifest_names = [p.name for p in manifests_dir.glob("*-cbor-decode-*.yaml")]
 
+    covered_backends: set[str] = set()
     for row in rows:
         backend = row["slug"]
         for col in columns:
@@ -403,9 +637,17 @@ def fuzzer_backend_coverage() -> dict:
                     or (backend == "cargo-fuzz")
                 )
             )
+            if count > 0:
+                covered_backends.add(backend)
             cells[(row["slug"], col["slug"])] = (
                 _supported_cell(count, "manifest") if count > 0 else _empty_cell()
             )
+    # This matrix is per-CBOR-shape, so only backends that actually fuzz a CBOR
+    # decoder can populate. Drop rows that back no shape at all (the runtime_*
+    # campaign scripts and the aflpp coverage harness are not CBOR-shape fuzzers)
+    # so the table shows real coverage instead of a wall of empty rows.
+    rows = [row for row in rows if row["slug"] in covered_backends]
+    cells = {key: val for key, val in cells.items() if key[0] in covered_backends}
     return {
         "title": "Fuzzer backend coverage",
         "caption": (

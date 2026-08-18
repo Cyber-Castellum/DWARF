@@ -1,4 +1,5 @@
 import json
+import os
 import shlex
 from dataclasses import dataclass
 from pathlib import Path
@@ -6,11 +7,26 @@ from pathlib import Path
 from profile_manager.profile_shapes import shape_from_profile_dict
 
 
-PROFILE_ROOT = Path(__file__).resolve().parents[1] / "profiles"
+# Writable profile catalog. Honors ADA2_DWARF_PROFILES_DIR (seeded from the
+# baked profiles at install) so profiles can be created from the dashboard;
+# falls back to the baked source tree.
+PROFILE_ROOT = Path(os.environ.get("ADA2_DWARF_PROFILES_DIR") or (Path(__file__).resolve().parents[1] / "profiles"))
+
+# Single source of truth for where devnet runtimes live on the deploy host.
+# Every profile's remote_runtime_root is normalized to <base>/<id> at load
+# time (see Profile.from_dict), so the per-profile value baked in profile.yaml
+# is cosmetic — deploy target and remove archival root can never diverge.
+# Override with ADA2_DWARF_REMOTE_BASE; default matches the baked convention.
+_DEFAULT_REMOTE_BASE = "/opt/dwarf/cardano-profiles"
+
+
+def remote_base():
+    return (os.environ.get("ADA2_DWARF_REMOTE_BASE") or _DEFAULT_REMOTE_BASE).rstrip("/")
+
 
 # Default locations on the remote build host.
-REMOTE_SOURCE_PATH = "/home/USER/cardano-node"
-REMOTE_DOCKERFILE_PATH = "/home/USER/dwarf-fw/devnet-build/cardano-node.Dockerfile"
+REMOTE_SOURCE_PATH = "/home/dwarf/cardano-node"
+REMOTE_DOCKERFILE_PATH = "/home/dwarf/dwarf-fw/devnet-build/cardano-node.Dockerfile"
 
 
 @dataclass(frozen=True)
@@ -44,7 +60,8 @@ class Profile:
             amaru_node_count=shape.amaru_count,
             network_magic=int(data["network_magic"]),
             peer_sharing=bool(data["peer_sharing"]),
-            remote_runtime_root=shape.remote_runtime_root,
+            # Normalize to a single base so deploy and remove agree on the root.
+            remote_runtime_root=f"{remote_base()}/{data['id']}",
             compose_project=shape.compose_project,
             topology_pattern=shape.topology_pattern,
             shared_genesis=shape.shared_genesis,
@@ -131,17 +148,23 @@ docker compose ls --format json 2>/dev/null | grep -E 'dwarf-' || true
 echo "CARDANO_CONTAINERS"
 docker ps --filter 'label=ada2.managed=dwarf' --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' 2>/dev/null || true
 echo "RUNTIME_SIZES"
-for d in /home/USER/cardano-profiles/*/env; do
+for d in __REMOTE_BASE__/*/env; do
   [ -e "$d" ] && du -sh "$d" 2>/dev/null || true
 done
 echo "IMAGES"
 docker image ls 'dwarf/cardano-node' --format '{{.Repository}}:{{.Tag}} size={{.Size}}' 2>/dev/null || true
-"""
+""".replace("__REMOTE_BASE__", remote_base())
 
 
 def active_profile_command():
-    """Return a stdout stream of "<project>	<service>	<status>" lines for any active Dwarf devnet."""
-    return r"""docker ps --filter 'label=ada2.managed=dwarf' --format '{{.Labels}}\t{{.Names}}\t{{.Status}}' 2>/dev/null | grep 'ada2.managed=dwarf' || true"""
+    """Emit one ``DWARF_NODE`` line per live devnet node — for BOTH docker-based
+    devnets (label ada2.managed=dwarf) and host-tmux devnets (the generated-local
+    profiles run cardano-node inside ``dwarf-profile-<id>-node<N>`` tmux sessions,
+    which carry no docker label). The dashboard counts these lines to show the
+    real substrate state; a non-empty stream also means "a devnet is active" for
+    the deploy/remove pre-checks."""
+    return r"""docker ps --filter 'label=ada2.managed=dwarf' --format 'DWARF_NODE docker {{.Names}} {{.Status}}' 2>/dev/null || true
+tmux ls 2>/dev/null | grep -oE '^dwarf-profile-[^:]+' | sed 's/^/DWARF_NODE tmux /' || true"""
 
 
 def _bool_text(value):
@@ -265,8 +288,8 @@ def deploy_dry_run_text(profile):
             f"Topology pattern: {profile.topology_pattern}.\n"
             f"Shared genesis: {'yes' if profile.shared_genesis else 'no'}.\n"
             f"Would create remote runtime root: {profile.remote_runtime_root}\n"
-            "Would create the devnet env via /home/USER/.local/bin/cardano-testnet create-env.\n"
-            "Would run Haskell nodes from /home/USER/.local/bin/cardano-node under tmux sessions scoped to this profile.\n"
+            "Would create the devnet env via /home/dwarf/.local/bin/cardano-testnet create-env.\n"
+            "Would run Haskell nodes from /home/dwarf/.local/bin/cardano-node under tmux sessions scoped to this profile.\n"
             "Would auto-assign localhost listener ports and rewrite local-mesh topology from the generated node count.\n"
             "Would write runtime metadata under runtime.json for host-process inspection.\n"
             "No remote state changed.\n"
@@ -279,7 +302,7 @@ def deploy_dry_run_text(profile):
             f"Would fail fast if upstream peer {profile.upstream_peer_address} is unreachable.\n"
             f"Would copy the official {network} config set from {profile.config_source_dir}.\n"
             f"Would rewrite topology.json under the runtime root to use {profile.upstream_peer_address} as the bootstrap peer.\n"
-            f"Would start one Haskell cardano-node from /home/USER/.local/bin/cardano-node listening on {profile.listen_address}.\n"
+            f"Would start one Haskell cardano-node from /home/dwarf/.local/bin/cardano-node listening on {profile.listen_address}.\n"
             "Would write runtime metadata under runtime.json and keep logs under logs/node1/.\n"
             f"This profile depends on public {network} connectivity and is not a self-contained local devnet.\n"
             "No remote state changed.\n"
@@ -291,7 +314,7 @@ def deploy_dry_run_text(profile):
             f"Would create remote runtime root: {profile.remote_runtime_root}\n"
             f"Would fail fast if upstream peer {profile.upstream_peer_address} is unreachable.\n"
             f"Would bootstrap Amaru for network {profile.amaru_network} using the bundled upstream bootstrap config.\n"
-            f"Would start one Amaru node from /home/USER/amaru-verification/target/debug/amaru listening on {profile.listen_address}.\n"
+            f"Would start one Amaru node from /home/dwarf/amaru-verification/target/debug/amaru listening on {profile.listen_address}.\n"
             "Would write runtime metadata under runtime.json and keep logs under logs/amaru1/.\n"
             f"This profile depends on public {network} connectivity and is not a self-contained local devnet.\n"
             "No remote state changed.\n"
@@ -332,9 +355,9 @@ def deploy_command(profile):
         return f"""set -e
 runtime={runtime}
 project={project}
-cardano_node_bin=/home/USER/.local/bin/cardano-node
-cardano_cli_bin=/home/USER/.local/bin/cardano-cli
-cardano_testnet_bin=/home/USER/.local/bin/cardano-testnet
+cardano_node_bin=/home/dwarf/.local/bin/cardano-node
+cardano_cli_bin=/home/dwarf/.local/bin/cardano-cli
+cardano_testnet_bin=/home/dwarf/.local/bin/cardano-testnet
 if [ -e "$runtime/env" ]; then
   echo "Runtime assets already exist under: $runtime" >&2
   exit 4
@@ -421,7 +444,7 @@ tmux ls | grep "$project" || true
     if deploy_mode == "haskell-only" and profile.config_source_dir:
         runtime = shlex.quote(profile.remote_runtime_root)
         session = shlex.quote(profile.compose_project)
-        node_bin = shlex.quote("/home/USER/.local/bin/cardano-node")
+        node_bin = shlex.quote("/home/dwarf/.local/bin/cardano-node")
         public_network = _public_network(profile)
         testbed = _public_testbed(profile)
         listen_address_raw = profile.listen_address or "127.0.0.1:39100"
@@ -494,7 +517,7 @@ cat > "$metadata_path" <<JSON
   "upstream_peer_address": "{profile.upstream_peer_address or 'preview-node.play.dev.cardano.org:3001'}",
   "listen_address": "{profile.listen_address or '127.0.0.1:39100'}",
   "session": "{profile.compose_project}",
-  "binary": "/home/USER/.local/bin/cardano-node",
+  "binary": "/home/dwarf/.local/bin/cardano-node",
   "chain_dir": "$db_dir",
   "log_path": "$log_dir/stdout.log",
   "pid_file": "$pid_file",
@@ -510,7 +533,7 @@ tmux ls
     if deploy_mode == "amaru-only":
         runtime = shlex.quote(profile.remote_runtime_root)
         session = shlex.quote(profile.compose_project)
-        amaru_bin = shlex.quote("/home/USER/amaru-verification/target/debug/amaru")
+        amaru_bin = shlex.quote("/home/dwarf/amaru-verification/target/debug/amaru")
         amaru_network = shlex.quote(profile.amaru_network or "preview")
         public_network = _public_network(profile)
         testbed = _public_testbed(profile)
@@ -558,7 +581,7 @@ cat > "$metadata_path" <<JSON
   "upstream_peer_address": "{profile.upstream_peer_address or 'preview-node.play.dev.cardano.org:3001'}",
   "listen_address": "{profile.listen_address or '127.0.0.1:39000'}",
   "session": "{profile.compose_project}",
-  "binary": "/home/USER/amaru-verification/target/debug/amaru",
+  "binary": "/home/dwarf/amaru-verification/target/debug/amaru",
   "chain_dir": "$state_root/chain.{profile.amaru_network or 'preview'}.db",
   "ledger_dir": "$state_root/ledger.{profile.amaru_network or 'preview'}.db",
   "log_path": "$log_dir/stdout.log",
@@ -654,6 +677,12 @@ for row in d:
 done
 # Kill stragglers (direct docker containers not in a compose project)
 docker ps --filter 'label=ada2.managed=dwarf' --format '{{{{.ID}}}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+# Stop host-process (tmux) devnets — generated-local profiles run cardano-node
+# inside tmux sessions named dwarf-profile-<id>-node<N>, not docker containers.
+# Scoped strictly to the dwarf-profile- prefix so unrelated tmux is untouched.
+tmux ls 2>/dev/null | grep -oE '^dwarf-profile-[^:]+' | while read -r sess; do
+  tmux kill-session -t "$sess" 2>/dev/null || true
+done
 # Archive runtime directories.
 for path in {base}/profile-*; do
   if [ -e "$path" ]; then

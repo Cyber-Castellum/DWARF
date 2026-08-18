@@ -2,7 +2,7 @@
 {% block main %}
 <span class="eyebrow">Operate</span>
 <h1>Profiles</h1>
-<p>Runtime profiles describe how Cardano nodes are deployed for a scenario run — implementation, node count, peer-sharing setting, and network. Each entry corresponds to a <code>dwarf/profiles/&lt;id&gt;/profile.yaml</code> on disk.</p>
+<p>Runtime profiles describe how Cardano nodes are deployed for a scenario run — implementation, node count, peer-sharing setting, and network. Each entry corresponds to a <code>&lt;id&gt;/profile.yaml</code> on disk. <a href="/operate/profiles/new"><strong>+ New profile</strong></a></p>
 
 <hr class="hairline">
 
@@ -16,4 +16,27 @@
 {% include "operate/_partials/_profile_entry.j2" %}
 {% endfor %}
 {% endif %}
+<script>
+function copyDeploy(btn){
+  var cmd=btn.getAttribute('data-cmd')||'';
+  var done=function(){var o=btn.textContent;btn.textContent='Copied';setTimeout(function(){btn.textContent=o;},1200);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(cmd).then(done,function(){fallback();});}
+  else{fallback();}
+  function fallback(){var t=document.createElement('textarea');t.value=cmd;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(t);}
+}
+function pfToken(){return new URLSearchParams(location.search).get('token')||'dwarf';}
+async function runDeploy(btn){
+  var id=btn.getAttribute('data-profile');
+  var out=document.getElementById('deploy-out-'+id); out.style.display='block'; out.textContent='$ cardano-profile deploy '+id+'\n';
+  btn.disabled=true;
+  try{
+    var resp=await fetch('/api/deploy?token='+encodeURIComponent(pfToken())+'&profile='+encodeURIComponent(id),{method:'POST'});
+    if(!resp.ok){out.textContent+='HTTP '+resp.status+': '+(await resp.text());return;}
+    var rd=resp.body.getReader(),dec=new TextDecoder(),buf='';
+    while(true){var r=await rd.read();if(r.done)break;buf+=dec.decode(r.value,{stream:true});var parts=buf.split('\n\n');buf=parts.pop();
+      for(var p of parts){for(var line of p.split('\n')){if(line.indexOf('data: ')===0){out.textContent+=line.slice(6)+'\n';out.scrollTop=out.scrollHeight;}else if(line.indexOf('event: done')===0){out.textContent+='[done]\n';}}}}
+  }catch(e){out.textContent+='\n[error] '+String(e);}
+  finally{btn.disabled=false;}
+}
+</script>
 {% endblock %}

@@ -26,7 +26,7 @@ _ENV_PREFIX = "DWARF_"
 
 MOOG_SETUP_FIELDS: list[dict[str, Any]] = [
     {"key": "enabled", "label": "Enable Moog", "kind": "checkbox", "group": "Moog runtime", "env": ["DWARF_MOOG_ENABLED", "MOOG_ENABLED"], "help": "Controls whether Dwarf treats Moog as an active integration."},
-    {"key": "deploy_root", "label": "Deploy root", "group": "Moog runtime", "env": ["DWARF_MOOG_DEPLOY_ROOT", "MOOG_DEPLOY_ROOT"], "help": "Remote Moog deploy directory on <remote-host>."},
+    {"key": "deploy_root", "label": "Deploy root", "group": "Moog runtime", "env": ["DWARF_MOOG_DEPLOY_ROOT", "MOOG_DEPLOY_ROOT"], "help": "Remote Moog deploy directory on cardano-box."},
     {"key": "moog_binary", "label": "Moog binary", "group": "Moog runtime", "env": ["DWARF_MOOG_BINARY", "MOOG_BINARY"], "help": "Remote path to the release moog CLI binary."},
     {"key": "secrets_root", "label": "Secrets root", "group": "Moog runtime", "env": ["DWARF_MOOG_SECRETS_ROOT", "MOOG_SECRETS_ROOT"], "help": "Remote root for Moog wallet and service secrets."},
     {"key": "mpfs_host", "label": "MPFS host", "group": "Moog runtime", "env": ["DWARF_MOOG_MPFS_HOST", "MOOG_MPFS_HOST"], "help": "MPFS endpoint used by Moog."},
@@ -76,6 +76,28 @@ def _read_config_file(path: Path) -> dict[str, Any]:
     return out
 
 
+_SECRET_SUBKEY_TOKENS = ("password", "pat", "secret", "api_key", "apikey", "mnemonic", "private_key", "token")
+
+
+def _redact_secrets(value: Any) -> Any:
+    """Redact secret sub-fields in nested config values (e.g. the moog block)
+    so the read-only config table never renders a PAT / password / API key in
+    plaintext. The setup form masks these; this closes the same leak on the
+    KNOBS table, which otherwise stringifies the raw dict."""
+    if isinstance(value, dict):
+        out: dict[Any, Any] = {}
+        for k, v in value.items():
+            kl = str(k).lower()
+            if v not in (None, "", [], {}) and any(tok in kl for tok in _SECRET_SUBKEY_TOKENS):
+                out[k] = "***redacted***"
+            else:
+                out[k] = _redact_secrets(v)
+        return out
+    if isinstance(value, list):
+        return [_redact_secrets(v) for v in value]
+    return value
+
+
 def operate_config_payload() -> dict[str, Any]:
     try:
         from profile_manager.config import CONFIG_FIELDS, config_path
@@ -105,8 +127,8 @@ def operate_config_payload() -> dict[str, Any]:
             source = "default"
         rows.append({
             "key": key,
-            "value": _stringify(value),
-            "default": _stringify(default),
+            "value": _stringify(_redact_secrets(value)),
+            "default": _stringify(_redact_secrets(default)),
             "source": source,
             "type": meta.get("type") or "string",
             "description": meta.get("description") or "",
@@ -119,7 +141,7 @@ def operate_config_payload() -> dict[str, Any]:
             continue
         rows.append({
             "key": key,
-            "value": _stringify(value),
+            "value": _stringify(_redact_secrets(value)),
             "default": "",
             "source": "config-file (unknown to schema)",
             "type": "unknown",

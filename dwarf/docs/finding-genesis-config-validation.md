@@ -27,34 +27,38 @@ semantic — cardano-node *accepts* `slotLength=-1` (while `slotLength=0` crashe
 intentionally unconstrained at genesis; the negative-vs-zero `slotLength` inconsistency on one
 field is the concrete part.
 
-## Finding 2 (Amaru) — genesis is validated in a different component, not at run time
+## Finding 2 (Amaru) — the node never reads the raw genesis at run time (confirmed from source)
 
-cardano-node reads and validates the raw `shelley-genesis.json` **directly at node
-startup** (~20 ms clean reject). Amaru does **not** re-validate the raw genesis at
-`amaru run` — it consumes **pre-derived** `AMARU_GLOBAL_*` parameters that
-`bootstrap-producer` computes from the genesis earlier. Observed properties of that
-derivation path:
+cardano-node reads and validates the raw `shelley-genesis.json` **directly at every node
+startup** (~20 ms clean reject). The **Amaru node does not** — the `amaru`, `amaru-consensus`,
+and `amaru-ledger` crates contain *zero* references to `shelley-genesis`/`activeSlotsCoeff`.
+Amaru's consensus parameters come from a **hardcoded per-network preset**
+(`TESTNET_/PREPROD_/MAINNET_GLOBAL_PARAMETERS`, resolved by `match network`) or an
+`AMARU_GLOBAL_*` env override — computed *once, at setup*, by separate tooling
+(`bootstrap-producer`), which we observed to be slow, to intermittently hang, and to derive
+non-deterministically on invalid input.
 
-- **Orders of magnitude slower** — seconds to minutes vs cardano-node's ~20 ms.
-- **Intermittently hangs** on an internal header-extractor regardless of input.
-- **Non-deterministic** for the same invalid input — `activeSlotsCoeff=2.0` derived
-  `1/f=1, scale=25` on one run and `1/f=5` on another.
+Different **config-trust models**: cardano-node validates the genesis as untrusted input at every
+startup; the Amaru node trusts a pre-set/derived parameter artifact and never re-checks the source
+genesis. **Recommendation:** validate the genesis (bounds/type checks matching cardano-node's) at
+the point Amaru's parameters are established, and make the derivation deterministic and non-hanging
+on malformed input.
 
-The consequence is an architectural difference in the **config-trust model**: cardano-node
-treats the genesis as untrusted input to validate up front; Amaru trusts a derived-params
-artifact and never re-checks the source genesis at run time. A malformed or mis-derived
-genesis can therefore propagate into Amaru silently. **Recommendation:** validate the raw
-genesis (bounds/type checks matching cardano-node's) at the point Amaru loads it, and make
-the derivation deterministic and non-hanging on malformed input.
+## Finding 3 (Amaru) — parameter model omits fields cardano-node validates (confirmed from source; upgraded from a held-back lead)
 
-## Finding 3 (PRELIMINARY — reported as a lead, not a confirmed finding)
+The runtime hints were flaky and were held back; Amaru's `GlobalParameters` struct confirms them
+deterministically:
 
-Some mutations hint Amaru is more lenient than cardano-node — most clearly, `slotLength=0`,
-where cardano-node crashes but Amaru accepts and boots on baseline-derived params. But the
-Amaru derivations were non-deterministic and several runs hung, so the per-mutation verdicts
-are **not reliable enough to assert**. Confirming Amaru leniency requires a deterministic
-Amaru genesis-parse surface (its own config parser, or `amaru import` with a hard timeout).
-We are deliberately **not** claiming "Amaru accepts invalid genesis" on this evidence.
+- **`slotLength` is not in Amaru's parameter model.** A malformed `slotLength` (`0`, negative,
+  `1e-300`) that **crashes cardano-node** is simply **ignored** by Amaru — it accepts and runs.
+- **The active-slot coefficient is stored only as `active_slot_coeff_inverse: usize`** (integer
+  1/f). Amaru cannot faithfully represent an arbitrary-precision or out-of-range genesis
+  `activeSlotsCoeff`: `f=0` divides by zero; `f>1` truncates to a nonsense integer; a non-`1/n`
+  value is rounded.
+
+**Recommendation:** model `slotLength` and a full-precision active-slot coefficient (or explicitly
+validate/reject genesis values outside the representable set) rather than silently ignoring or
+truncating them.
 
 ## Reusable harness
 

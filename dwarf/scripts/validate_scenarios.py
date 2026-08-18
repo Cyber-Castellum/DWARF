@@ -26,6 +26,7 @@ import argparse
 import contextlib
 import io
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -122,6 +123,43 @@ def check_antithesis() -> tuple[int, int, list[str]]:
     return len(fails), ok, fails
 
 
+def check_harness_prereqs(scenarios: list[Path]) -> tuple[int, int, list[str]]:
+    """Flag scenarios whose AFL coverage harness isn't provisioned on this host.
+
+    Informational, NOT a hard failure: these scenarios skip cleanly at run time
+    (the runtime_aflpp_campaign primitive emits a "harness not provisioned" skip
+    rather than failing). This surfaces, in a fresh checkout, exactly which
+    scenarios need `delivery/scripts/build-afl-harness.sh` before they can run.
+
+    Returns (unprovisioned_count, provisioned_count, note_messages).
+    """
+    override = os.environ.get("DWARF_AFL_HARNESS")
+    needs: list[str] = []
+    provisioned = 0
+    for path in scenarios:
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        for step in doc.get("load", []) or []:
+            if step.get("primitive") != "runtime_aflpp_campaign":
+                continue
+            baked = step.get("target_binary_path")
+            if not baked:
+                continue
+            effective = override or baked
+            resolved = Path(os.path.expanduser(os.path.expandvars(str(effective))))
+            if resolved.exists():
+                provisioned += 1
+            else:
+                needs.append(
+                    f"{path.name}: AFL harness not provisioned ({effective}) — "
+                    f"run delivery/scripts/build-afl-harness.sh (or set DWARF_AFL_HARNESS)"
+                )
+            break
+    return len(needs), provisioned, needs
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="DWARF CI validation gate")
     ap.add_argument("--strict", action="store_true",
@@ -135,6 +173,7 @@ def main(argv: list[str] | None = None) -> int:
     schema_fail, schema_msgs = check_schema(scenarios)
     sem_fail, sem_warn, sem_msgs = check_semantic(scenarios)
     ant_fail, ant_ok, ant_msgs = check_antithesis()
+    harness_needs, harness_ok, harness_msgs = check_harness_prereqs(scenarios)
 
     all_msgs = schema_msgs + sem_msgs + ant_msgs
     hard_fail = schema_fail + sem_fail + ant_fail
@@ -147,11 +186,14 @@ def main(argv: list[str] | None = None) -> int:
         "semantic_warnings": sem_warn,
         "antithesis_profiles_ok": ant_ok,
         "antithesis_failures": ant_fail,
+        # Informational: harness-dependent scenarios that would skip on this host.
+        "harness_provisioned": harness_ok,
+        "harness_unprovisioned": harness_needs,
         "strict": args.strict,
         "passed": not failed,
     }
 
-    report = {"summary": summary, "messages": all_msgs}
+    report = {"summary": summary, "messages": all_msgs, "notes": harness_msgs}
     if args.report:
         Path(args.report).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
@@ -168,10 +210,17 @@ def main(argv: list[str] | None = None) -> int:
               + ("  (fatal: --strict)" if args.strict else ""))
         print(f"  antithesis profiles ok : {ant_ok}")
         print(f"  antithesis failures    : {ant_fail}")
+        print(f"  aflpp harness ready    : {harness_ok}")
+        print(f"  aflpp needs harness    : {harness_needs}"
+              + ("  (skips at run time; build-afl-harness.sh)" if harness_needs else ""))
         if all_msgs:
             print("-" * 60)
             for m in all_msgs:
                 print(f"  ✗ {m}")
+        if harness_msgs:
+            print("-" * 60)
+            for m in harness_msgs:
+                print(f"  ℹ {m}")
         print("=" * 60)
         print("RESULT:", "PASS ✅" if not failed else "FAIL ❌")
 

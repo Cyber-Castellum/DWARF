@@ -26,6 +26,8 @@ module DwarfAdversary.Fuzz
     , corruptBytes
     , byteMutationKinds
     , mutateTermSemantic
+    , grammarCorrupt
+    , grammarKinds
     ) where
 
 import Codec.CBOR.Term (Term (..))
@@ -238,6 +240,8 @@ data MutationLevel
     -- still DECODES, but corrupt a leaf value (flip a byte in a hash/signature,
     -- change an int) so it is SEMANTICALLY invalid -> exercises the node's
     -- VALIDATION layer (InvalidBlock), not just the decoder.
+    | LevelGrammar
+    -- ^ malform the protocol-message GRAMMAR (outer frame/tag/arity), not the payload
     deriving (Eq, Show)
 
 parseMutationLevel :: String -> Maybe MutationLevel
@@ -246,6 +250,7 @@ parseMutationLevel s = case s of
     "bytes" -> Just LevelBytes
     "both" -> Just LevelBoth
     "semantic" -> Just LevelSemantic
+    "grammar" -> Just LevelGrammar
     _ -> Nothing
 
 -- | The byte-corruption kinds, by name (stable order for determinism).
@@ -350,3 +355,61 @@ leafKind (TInteger _) = "int"
 leafKind (TString _) = "string"
 leafKind (TBool _) = "bool"
 leafKind _ = "other"
+
+
+-- | The grammar/framing corruption kinds (mini-protocol message frame, not payload).
+grammarKinds :: [Text]
+grammarKinds =
+    [ "msgTagFlip"
+    , "arityBump"
+    , "truncateFrame"
+    , "junkPrepend"
+    , "junkAppend"
+    , "frameByteFlip"
+    ]
+
+-- | Corrupt a full mini-protocol MESSAGE frame (the outer [tag, fields] CBOR),
+-- as opposed to the payload inside it: flip the message tag, change array
+-- arity, truncate the frame, or inject junk. @rate@ probability; pure in @gen@.
+grammarCorrupt :: StdGen -> Double -> BS.ByteString -> (BS.ByteString, MutationInfo)
+grammarCorrupt gen rate bs =
+    let (roll, g1) = randomR (0.0, 1.0) gen
+    in  if roll >= rate
+            then (bs, MutationInfo "grammar:none" 0)
+            else
+                let (kIx, g2) = randomR (0, length grammarKinds - 1) g1
+                    kind = grammarKinds !! kIx
+                in  (applyGrammar kind g2 bs, MutationInfo ("grammar:" <> kind) 0)
+
+applyGrammar :: Text -> StdGen -> BS.ByteString -> BS.ByteString
+applyGrammar kind g bs = case kind of
+    "msgTagFlip"
+        | BS.length bs >= 2 -> let (x, _) = randomR (8, 23) g :: (Int, StdGen) in setByteAt 1 (fromIntegral x) bs
+        | otherwise -> bs
+    "arityBump"
+        | not (BS.null bs) -> setByteAt 0 (bumpArr (BS.head bs)) bs
+        | otherwise -> bs
+    "truncateFrame" ->
+        let n = BS.length bs
+            (cut, _) = randomR (1, max 1 (n `div` 2)) g :: (Int, StdGen)
+        in  if n > 1 then BS.take (max 1 (n - cut)) bs else bs
+    "junkPrepend" -> let (x, _) = randomR (0xf8, 0xff) g :: (Int, StdGen) in BS.cons (fromIntegral x) bs
+    "junkAppend" ->
+        let (k, g2) = randomR (1, 8) g :: (Int, StdGen)
+        in  bs <> BS.pack (take k (randomRs (0, 255) g2 :: [Word8]))
+    "frameByteFlip" ->
+        let n = BS.length bs
+        in  if n > 0
+                then let (i, g2) = randomR (0, n - 1) g :: (Int, StdGen)
+                         (x, _) = randomR (0, 255) g2 :: (Int, StdGen)
+                     in  setByteAt i (fromIntegral x) bs
+                else bs
+    _ -> bs
+  where
+    bumpArr h
+        | h >= 0x80 && h < 0x97 = h + 1
+        | h == 0x97 = 0x80
+        | otherwise = 0x84
+    setByteAt i v b =
+        let (hh, tt) = BS.splitAt i b
+        in  if BS.null tt then b else hh <> BS.singleton v <> BS.drop 1 tt

@@ -44,10 +44,11 @@ import DwarfAdversary.Fuzz
     ( MutationInfo (..)
     , MutationLevel (..)
     , corruptBytes
+    , grammarCorrupt
     , mutateTermSemantic
     )
 import DwarfAdversary.TxSubmission.Target (TxField, mutateTxField)
-import Network.TypedProtocol.Codec (Codec)
+import Network.TypedProtocol.Codec (Codec (..))
 import Ouroboros.Network.Protocol.TxSubmission2.Codec (codecTxSubmission2)
 import Ouroboros.Network.Protocol.TxSubmission2.Type (TxSubmission2)
 import System.Random (mkStdGen)
@@ -65,8 +66,28 @@ mutatingCodecTxSubmission
         DeserialiseFailure
         IO
         LBS.ByteString
+mutatingCodecTxSubmission _field LevelGrammar seed rate =
+    grammarWrapCodec seed rate
+        (codecTxSubmission2 encTxId decTxId encTx decTx)
 mutatingCodecTxSubmission field level seed rate =
     codecTxSubmission2 encTxId decTxId (mutEncTx field level seed rate) decTx
+
+-- | Grammar-fuzz wrapper: corrupt the whole encoded TxSubmission2 MESSAGE
+-- frame (tag/arity/framing), seeded per-message. Mirrors the chain-sync
+-- grammarWrapCodec; encode is one-arg in typed-protocols 0.3.
+grammarWrapCodec
+    :: Word64
+    -> Double
+    -> Codec (TxSubmission2 (GenTxId Block) (GenTx Block)) DeserialiseFailure IO LBS.ByteString
+    -> Codec (TxSubmission2 (GenTxId Block) (GenTx Block)) DeserialiseFailure IO LBS.ByteString
+grammarWrapCodec seed rate Codec {encode = enc, decode = dec} =
+    Codec
+        { encode = \msg ->
+            let raw = LBS.toStrict (enc msg)
+                g = mkStdGen (fromIntegral (subSeed seed (LBS.fromStrict raw)))
+            in  LBS.fromStrict (fst (grammarCorrupt g rate raw))
+        , decode = dec
+        }
 
 -- | Encode a tx, then mutate it before emitting. @LevelStruct@ mutates the
 -- targeted sub-field's Term and re-encodes (valid CBOR); @LevelBytes@ corrupts
@@ -86,6 +107,7 @@ mutEncTx field level seed rate tx =
             LevelBoth ->
                 let base = maybe bytes (toLazyByteString . encodeTerm) structTerm
                 in  encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict base)))
+            LevelGrammar -> encTx tx
 
 -- | The mutation 'mutEncTx' will apply — exposed so the server can emit a
 -- matching SDK assertion (same pure function, so the reported kind agrees with
@@ -100,6 +122,7 @@ describeTxMutation field level seed rate tx =
     in  case level of
             LevelStruct -> maybe (MutationInfo "none" 0) (snd . mutateTxField field g rate) decoded
             LevelSemantic -> maybe (MutationInfo "none" 0) (snd . mutateTermSemantic g rate) decoded
+            LevelGrammar -> MutationInfo "grammar:frame" 0
             _ -> snd (corruptBytes g rate (LBS.toStrict bytes))
 
 -- | Fold the tx bytes into the seed so distinct txs mutate differently while

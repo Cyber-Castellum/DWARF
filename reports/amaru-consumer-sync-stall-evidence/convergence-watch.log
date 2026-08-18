@@ -1,0 +1,23 @@
+# 25-minute convergence watch, 2026-08-11 — cardano keeps producing; Amaru relays never converge.
+# Columns: time  cardano_tip_slot  amaru-relay-1_adopted_slot  amaru-relay-2_adopted_slot  (rst=restartcount)
+# relay-1 peers cardano relay1 (honest); relay-2 peers the dwarf-adversary. Neither reaches the cardano tip.
+
+08:08:20 cardano=11275 relay1=7953(rst0) relay2=?(rst0)
+08:09:50 cardano=11358 relay1=7953(rst0) relay2=?(rst0)
+08:11:21 cardano=11451 relay1=7953(rst0) relay2=?(rst0)
+08:12:51 cardano=11540 relay1=7953(rst0) relay2=?(rst0)
+08:14:21 cardano=11636 relay1=7953(rst0) relay2=?(rst0)
+08:15:51 cardano=11728 relay1=7953(rst0) relay2=?(rst0)
+08:17:22 cardano=11807 relay1=7953(rst0) relay2=?(rst0)
+08:18:52 cardano=11906 relay1=7953(rst0) relay2=?(rst0)
+08:20:22 cardano=11998 relay1=8961(rst0) relay2=?(rst0)
+08:21:53 cardano=12076 relay1=8961(rst0) relay2=?(rst0)
+08:23:23 cardano=12165 relay1=?(rst0)    relay2=?(rst0)
+08:25:38 cardano=12311 relay1=?(rst0)    relay2=?(rst0)
+08:28:39 cardano=12490 relay1=?(rst0)    relay2=?(rst0)
+08:31:40 cardano=12664 relay1=?(rst0)    relay2=?(rst0)
+08:33:55 cardano=12799 relay1=?(rst0)    relay2=?(rst0)
+RESULT: timeout after 25min (relay1 gap=12799 relay2 gap=12799)
+
+# cardano advanced ~1520 slots over the window; amaru-relay-1 pinned at 7953->8961 then stopped logging adopts;
+# amaru-relay-2 never reported a single adopted tip. Neither ever converged to the live cardano tip.

@@ -45,10 +45,11 @@ import DwarfAdversary.Fuzz
     ( MutationInfo (..)
     , MutationLevel (..)
     , corruptBytes
+    , grammarCorrupt
     , mutateTerm
     , mutateTermSemantic
     )
-import Network.TypedProtocol.Codec (Codec)
+import Network.TypedProtocol.Codec (Codec (..))
 import Ouroboros.Network.Block qualified as Network
 import Ouroboros.Network.Protocol.BlockFetch.Codec (codecBlockFetch)
 import Ouroboros.Network.Protocol.BlockFetch.Type (BlockFetch)
@@ -66,8 +67,28 @@ mutatingCodecBlockFetch
         DeserialiseFailure
         IO
         LBS.ByteString
+mutatingCodecBlockFetch LevelGrammar seed rate =
+    grammarWrapCodec seed rate
+        (codecBlockFetch encBlock decBlock encBlockPoint decBlockPoint)
 mutatingCodecBlockFetch level seed rate =
     codecBlockFetch (mutEncBlock level seed rate) decBlock encBlockPoint decBlockPoint
+
+-- | Grammar-fuzz wrapper: corrupt the whole encoded BlockFetch MESSAGE frame
+-- (tag/arity/framing), seeded per-message, before it goes on the wire. Mirrors
+-- the chain-sync grammarWrapCodec; encode is one-arg in typed-protocols 0.3.
+grammarWrapCodec
+    :: Word64
+    -> Double
+    -> Codec (BlockFetch Block (Network.Point Block)) DeserialiseFailure IO LBS.ByteString
+    -> Codec (BlockFetch Block (Network.Point Block)) DeserialiseFailure IO LBS.ByteString
+grammarWrapCodec seed rate Codec {encode = enc, decode = dec} =
+    Codec
+        { encode = \msg ->
+            let raw = LBS.toStrict (enc msg)
+                g = mkStdGen (fromIntegral (subSeed seed (LBS.fromStrict raw)))
+            in  LBS.fromStrict (fst (grammarCorrupt g rate raw))
+        , decode = dec
+        }
 
 -- | Encode a block, then mutate its CBOR before emitting. @LevelStruct@
 -- mutates the Term and re-encodes (valid CBOR); @LevelBytes@ corrupts the
@@ -86,6 +107,7 @@ mutEncBlock level seed rate b =
             LevelBoth ->
                 let base = maybe bytes (toLazyByteString . encodeTerm) (mut mutateTerm)
                 in  encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict base)))
+            LevelGrammar -> encBlock b
 
 -- | The mutation 'mutEncBlock' will apply to a block — exposed so the
 -- server can emit a matching SDK assertion (same pure function, so the
@@ -100,6 +122,7 @@ describeBlockMutation level seed rate b =
     in  case level of
             LevelStruct -> viaTerm mutateTerm
             LevelSemantic -> viaTerm mutateTermSemantic
+            LevelGrammar -> MutationInfo "grammar:frame" 0
             _ -> snd (corruptBytes g rate (LBS.toStrict bytes))
 
 -- | Fold a block's bytes into its seed so distinct captured blocks mutate

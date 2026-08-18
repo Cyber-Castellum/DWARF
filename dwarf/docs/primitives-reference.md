@@ -1,15 +1,15 @@
 # DWARF Primitives Reference
 
-The complete catalogue of the **204** primitives a scenario can reference — every *strategy* (what a scenario can do) and every *oracle* (what it can assert). Generated from `primitives/registry.json`; purposes/pass-conditions are curated. A scenario may only reference names listed here. Many primitives operate on CBOR (Concise Binary Object Representation), Cardano's binary wire and ledger encoding. The **Antithesis** column marks the primitives the DWARF&rarr;Antithesis generator can carry onto the Antithesis backend (CBOR-only by design &mdash; `cbor_fuzz_*` strategies, the `runtime_aflpp_campaign` coverage surface, and the assertions mapped to native SDK checks); everything else runs on the local backend only.
+The complete catalogue of the **206** primitives a scenario can reference — every *strategy* (what a scenario can do) and every *oracle* (what it can assert). Generated from `primitives/registry.json`; purposes/pass-conditions are curated. A scenario may only reference names listed here. Many primitives operate on CBOR (Concise Binary Object Representation), Cardano's binary wire and ledger encoding. The **Antithesis** column marks the primitives the DWARF&rarr;Antithesis generator can carry onto the Antithesis backend (CBOR-only by design &mdash; `cbor_fuzz_*` strategies, the `runtime_aflpp_campaign` coverage surface, and the assertions mapped to native SDK checks); everything else runs on the local backend only.
 
-> Coverage: 204/204 primitives carry a curated description (100%). Any without one is still listed with its registry metadata. Regenerate with `scripts/gen_reference.py`.
+> Coverage: 206/206 primitives carry a curated description (100%). Any without one is still listed with its registry metadata. Regenerate with `scripts/gen_reference.py`.
 
 > **Every primitive here is fully implemented** (no stubs). The **verified** column is *evidence of exercise*, not an implementation claim: `full` = exercised by a full scenario, `smoke` = exercised by an example / smoke scenario; `cn` = cardano-node, `amaru` = Amaru. So `smoke · cn` means "implemented, and exercised at smoke depth on cardano-node" — not "half-built." Note on targets: the registry declares cardano-node + Amaru support broadly, but Amaru is currently *verified* only on the CBOR-decode surfaces and a mixed-substrate baseline (19 primitives); elsewhere it is implemented but not yet exercised against Amaru. Computed from `scenarios/` at build time.
 
 Every primitive lists which **runtimes** it works in (`library` / `single-node` / `devnet`) and its **verified** status &mdash; the depth and target it has actually been exercised against (see the legend below). Common plumbing params (`timeout_seconds`, `output_dir`, `runtime_metadata_path`, `helper_script`) are omitted from the notes below; see each primitive's `params_schema` for the full list.
 
 
-## Load primitives — strategies (118)
+## Load primitives — strategies (119)
 
 What a scenario *does*. These run in the `load` phase.
 
@@ -82,11 +82,18 @@ What a scenario *does*. These run in the `load` phase.
 | `runtime_profile_restart_recovery` | Restart a node and verify recovery (profile flow). | dev | full · cn | — |
 
 
+### Coverage-guided fuzzing (American Fuzzy Lop plus-plus, AFL++)
+
+| primitive | purpose / pass-condition | runtimes | verified | Antithesis |
+|---|---|---|---|---|
+| `runtime_aflpp_campaign` | Run a coverage-guided AFL++ campaign against a built binary, then replay findings against decode targets. | lib | smoke · cn | ✓ |
+
+
 ### Epoch / era / hard-fork control
 
 | primitive | purpose / pass-condition | runtimes | verified | Antithesis |
 |---|---|---|---|---|
-| `runtime_force_epoch_boundary` | Force the chain to an epoch-boundary slot to exercise the transition. | dev | smoke · cn | — |
+| `runtime_force_epoch_boundary` | Force the chain to an epoch-boundary slot to exercise the transition. | dev | full · cn | — |
 | `runtime_force_hf_boundary` | Force the chain to a hard-fork boundary slot to exercise the transition. | dev | smoke · cn | — |
 | `runtime_force_rollback` | Force a rollback of a chosen depth to test recovery. | dev | smoke · cn | — |
 | `runtime_genesis_mode_simulate` | Force a node into Genesis-mode sync and watch for peer-set capture. | dev | smoke · cn | — |
@@ -166,8 +173,8 @@ What a scenario *does*. These run in the `load` phase.
 
 | primitive | purpose / pass-condition | runtimes | verified | Antithesis |
 |---|---|---|---|---|
-| `runtime_kill_node` | Kill a node process (ungraceful) to test peer/recovery behaviour. | dev | smoke · cn | — |
-| `runtime_restart_node` | Restart a node and verify it recovers to a healthy synced state. | dev | smoke · cn | — |
+| `runtime_kill_node` | Kill a node process (ungraceful) to test peer/recovery behaviour. | dev | full · cn | — |
+| `runtime_restart_node` | Restart a node and verify it recovers to a healthy synced state. | dev | full · cn | — |
 
 
 ### Observability / capture / baselines
@@ -240,7 +247,7 @@ What a scenario *does*. These run in the `load` phase.
 | `runtime_txsubmission_window_pressure` | Push the TxSubmission txid inflight window past its negotiated bound. | dev | smoke · cn | — |
 
 
-## Assertion primitives — oracles (75)
+## Assertion primitives — oracles (76)
 
 What a scenario *proves*. Each is evaluated after load; the **pass condition** is the expected outcome. Thresholds shown are the tunable params.
 
@@ -252,7 +259,7 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `byzantine_cardano_node_recorded_clean` | PASS iff the byzantine cardano-node fault run records >= min_completed clean events. | dev | smoke · cn+amaru | — |
 | `byzantine_isolation_observed` | PASS iff complete isolation is observed between honest and byzantine nodes. | dev·lib | smoke · cn | — |
 | `container_runtime_hardening_observed` | PASS iff captured `docker inspect` artifacts prove hardening on every required container. | dev·lib | smoke · cn+amaru | — |
-| `panic_path_contained` | PASS iff a crash-triggering input stays on a contained non-panic path and the node stays up. | dev·lib | smoke · cn | — |
+| `panic_path_contained` | PASS iff a crash-triggering input stays on a contained non-panic path and the node stays up. | dev·lib | full · cn | — |
 | `quorum_holds_despite_byzantine` | PASS iff a real byzantine event occurs and honest quorum tip-convergence holds throughout observation. | dev·lib | smoke · cn+amaru | — |
 | `runtime_starvation_bounded` | PASS iff blocking work preserves runtime liveness without starvation. | dev·lib | smoke · cn | — |
 
@@ -264,11 +271,11 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `big_ledger_peer_quorum_intact` | PASS iff the observed big-ledger-peer subset still contains >= the required expected top peers. | dev·lib | smoke · cn | — |
 | `bootstrap_assumptions_safe` | PASS iff bootstrap assumptions remain explicit and downgrade-free. | dev·lib | smoke · cn | — |
 | `chain_select_consistent` | Assert that every observed node agrees on the selected chain tip — a single-implementation Common-Prefix consistency oracle. | dev·lib | full · cn | — |
-| `chain_select_differential` | Cross-implementation Common-Prefix oracle: assert the reference node group (cardano-node) and the target group (Amaru) select the same canonical chain tip. A disagreement is a consensus divergence. | dev·lib | full · cn+amaru | — |
+| `chain_select_differential` | Cross-implementation Common-Prefix oracle: assert the reference node group (cardano-node) and the target group (Amaru) select the same canonical chain tip. A disagreement is a consensus divergence. | dev·lib | full · cn | — |
 | `chain_switch_consistent` | PASS iff all observed honest nodes reach the injected chain-switch tip. | dev·lib | smoke · cn | — |
-| `epoch_boundary_timing_within_bounds` | PASS iff the epoch boundary occurs within the configured slot window. | dev·lib | smoke · cn | — |
+| `epoch_boundary_timing_within_bounds` | PASS iff the epoch boundary occurs within the configured slot window. | dev·lib | full · cn | — |
 | `hf_boundary_rule_consistent` | PASS iff all observed nodes apply one protocol version at the hard-fork boundary. | dev·lib | smoke · cn | — |
-| `k_bound_rollback_recovered` | PASS iff a within-k rollback recovers consistently, with observed slot transitions. | dev·lib | full · cn | — |
+| `k_bound_rollback_recovered` | PASS iff a within-k rollback recovers consistently, with observed slot transitions. | dev·lib | smoke · cn | — |
 | `leadership_schedule_recomputes_clean` | PASS iff leadership-schedule recomputation matches deterministically. | dev·lib | smoke · cn | — |
 | `ledger_peer_stake_weight_preserved` | PASS iff observed ledger-peer stake weighting stays within the allowed delta. | dev·lib | smoke · cn | — |
 | `mode_switch_genesis_observed` | PASS iff the genesis-mode transition reaches caught-up mode without peer-set capture. | dev·lib | smoke · cn | — |
@@ -298,6 +305,13 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 | `snapshot_restore_succeeded` | PASS iff snapshot restore restarts the target node and recovers health. | dev | smoke · cn | — |
 | `substrate_checkpoint_recorded_clean` | PASS iff the substrate checkpoint is non-empty and the substrate restarts cleanly. | dev | smoke · cn | — |
 | `substrate_resume_succeeded` | PASS iff resume restores the checkpoint and recovers substrate health. | dev | smoke · cn | — |
+
+
+### Fuzzing harness
+
+| primitive | purpose / pass-condition | runtimes | verified | Antithesis |
+|---|---|---|---|---|
+| `aflpp_smoke_exit_clean` | PASS iff the AFL++ smoke run exits clean, meeting completed/queue/execs/cycles/bitmap-coverage floors. | lib | smoke · cn | ✓ |
 
 
 ### Mini-protocol & local inter-process-communication (IPC) behaviour
@@ -332,7 +346,7 @@ What a scenario *proves*. Each is evaluated after load; the **pass condition** i
 
 | primitive | purpose / pass-condition | runtimes | verified | Antithesis |
 |---|---|---|---|---|
-| `all_nodes_responsive` | PASS iff every observed node is responsive. | dev·lib | full · cn+amaru | — |
+| `all_nodes_responsive` | PASS iff every observed node is responsive. | dev·lib | smoke · cn+amaru | — |
 | `all_nodes_started_clean` | PASS iff the compose report has >= min_node_count nodes and >= min_completed clean start events. | dev | smoke · cn+amaru | — |
 | `honest_peer_set_uncompromised` | PASS iff each honest node retains >= minimum_honest_peers honest peers without capture. | dev·lib | smoke · cn | — |
 | `honest_quorum_preserved` | PASS iff the honest-node quorum fraction >= minimum_fraction on an ok run. | dev·lib | smoke · cn | — |

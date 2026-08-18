@@ -24,7 +24,10 @@
 module DwarfAdversary.SDK (
     reachable,
     sometimes,
+    always,
 ) where
+
+import Prelude hiding (always)
 
 import Control.Exception (try)
 import Data.Aeson (Value, encode, object, (.=))
@@ -59,6 +62,21 @@ sometimes condition assertId details =
         mkEvent
             "sometimes"
             "Sometimes"
+            condition
+            assertId
+            details
+
+-- | @always condition id details@ — emit an Always assertion (must hold every
+-- time it is hit; a single false is a failure). Use this ONLY where there is no
+-- fault-injection that could legitimately flip it false — e.g. the in-process
+-- decoder-fuzz bug oracle ("the decoder never threw an uncaught exception / never
+-- hung"), which runs deterministically and is not killed mid-evaluation.
+always :: Bool -> Text -> Value -> IO ()
+always condition assertId details =
+    emit $
+        mkEvent
+            "always"
+            "Always"
             condition
             assertId
             details

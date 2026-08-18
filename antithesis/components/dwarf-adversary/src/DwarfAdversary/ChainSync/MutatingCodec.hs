@@ -47,10 +47,11 @@ import DwarfAdversary.Fuzz
     ( MutationInfo (..)
     , MutationLevel (..)
     , corruptBytes
+    , grammarCorrupt
     , mutateTerm
     , mutateTermSemantic
     )
-import Network.TypedProtocol.Codec (Codec)
+import Network.TypedProtocol.Codec (Codec (..))
 import Ouroboros.Network.Protocol.ChainSync.Codec qualified as ChainSync
 import Ouroboros.Network.Protocol.ChainSync.Type (ChainSync)
 import System.Random (mkStdGen)
@@ -63,6 +64,9 @@ mutatingCodecChainSync
     -> Word64
     -> Double
     -> Codec (ChainSync Header Point Tip) DeserialiseFailure IO LBS.ByteString
+mutatingCodecChainSync LevelGrammar seed rate =
+    grammarWrapCodec seed rate
+        (ChainSync.codecChainSync encHeader decHeader encPoint decPoint encTip decTip)
 mutatingCodecChainSync level seed rate =
     ChainSync.codecChainSync
         (mutEncHeader level seed rate)
@@ -71,6 +75,22 @@ mutatingCodecChainSync level seed rate =
         decPoint
         encTip
         decTip
+
+-- | Grammar-fuzz wrapper: corrupt the whole encoded mini-protocol MESSAGE
+-- frame (tag/arity/framing), seeded per-message, before it goes on the wire.
+grammarWrapCodec
+    :: Word64
+    -> Double
+    -> Codec (ChainSync Header Point Tip) DeserialiseFailure IO LBS.ByteString
+    -> Codec (ChainSync Header Point Tip) DeserialiseFailure IO LBS.ByteString
+grammarWrapCodec seed rate Codec {encode = enc, decode = dec} =
+    Codec
+        { encode = \msg ->
+            let raw = LBS.toStrict (enc msg)
+                g = mkStdGen (fromIntegral (subSeed seed (LBS.fromStrict raw)))
+            in  LBS.fromStrict (fst (grammarCorrupt g rate raw))
+        , decode = dec
+        }
 
 -- | Encode a header, then mutate its CBOR before emitting. @LevelStruct@
 -- mutates the Term and re-encodes (valid CBOR); @LevelBytes@ corrupts the
@@ -89,6 +109,7 @@ mutEncHeader level seed rate h =
             LevelBoth ->
                 let base = maybe bytes (toLazyByteString . encodeTerm) (mut mutateTerm)
                 in  encodePreEncoded (fst (corruptBytes g rate (LBS.toStrict base)))
+            LevelGrammar -> encHeader h
 
 -- | The mutation that 'mutEncHeader' will apply to a header — exposed so
 -- the server can emit a matching SDK assertion (same pure function, so
@@ -103,6 +124,7 @@ describeHeaderMutation level seed rate h =
     in  case level of
             LevelStruct -> viaTerm mutateTerm
             LevelSemantic -> viaTerm mutateTermSemantic
+            LevelGrammar -> MutationInfo "grammar:frame" 0
             _ -> snd (corruptBytes g rate (LBS.toStrict bytes))
 
 -- | Per-header sub-seed: base seed XOR FNV-1a hash of the header bytes.

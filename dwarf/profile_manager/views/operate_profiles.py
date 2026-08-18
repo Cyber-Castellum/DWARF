@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from profile_manager.data.operate_profiles import operate_profile_entries
+from profile_manager.remote import control_shim_enabled
 from profile_manager.templating import render
 
 
@@ -15,4 +16,5 @@ def render_operate_profiles() -> str:
         active_sub="profiles",
         entries=entries,
         empty=not entries,
+        shim_enabled=control_shim_enabled(),
     )

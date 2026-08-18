@@ -2,14 +2,14 @@
 {% block main %}
 <span class="eyebrow">Operate</span>
 <h1>Targets</h1>
-<p>M2 serialization/deserialization target catalog. Each listed target is a per-implementation shim around an Amaru or cardano-node Concise Binary Object Representation (CBOR) or mini-protocol decoder/parser, defined by a manifest at <code>dwarf/targets/manifests/&lt;id&gt;.yaml</code>.</p>
+<p>Decode-target catalog. Each target is a per-implementation shim around an Amaru or cardano-node Concise Binary Object Representation (CBOR) or mini-protocol decoder/parser, defined by a manifest. <a href="/operate/targets/new?token={{ token }}"><strong>+ Register target</strong></a></p>
 
 <hr class="hairline">
 
 {% if empty %}
 <p class="empty-section-statement">
-  No M2 target manifests found.
-  <span class="empty-section-statement__cite">scanned <code>dwarf/targets/manifests/</code>, 0 <code>*.yaml</code> files</span>
+  No target manifests found.
+  <a href="/operate/targets/new?token={{ token }}"><strong>Register the first target &rarr;</strong></a>
 </p>
 {% else %}
 <div class="filter-bar">
@@ -19,7 +19,7 @@
     <button type="button" class="pill" data-implementation="{{ pill.slug }}" aria-pressed="{{ 'true' if pill.active else 'false' }}">{{ pill.label }} ({{ pill.count }})</button>
     {% endfor %}
   </div>
-  <p class="filter-count" aria-live="polite">{{ rows|length }} M2 targets</p>
+  <p class="filter-count" aria-live="polite">{{ rows|length }} targets</p>
 </div>
 
 <table class="targets-table" data-active-implementation="">

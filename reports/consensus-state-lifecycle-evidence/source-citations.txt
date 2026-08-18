@@ -1,0 +1,82 @@
+Bootstrap / state-lifecycle differential — source citations
+============================================================
+Amaru source: local mirror of pragma-org/amaru, main @ 060001dd (~2026-04),
+paths identical to the box checkout (/home/dwarf/codebases/amaru).
+Line numbers are from this checkout; they shift between versions — cite by symbol
+if reproducing against a newer tree.
+
+AMARU — state is split across FOUR stores that must stay cross-consistent
+-------------------------------------------------------------------------
+crates/amaru-ledger/src/state.rs
+  ~L82-107   State { stable (RocksDB, >= k old), volatile (in-memory diff seq),
+                     snapshots (per-epoch HistoricalStores), stake_distributions
+                     (VecDeque) } — four separate stores, not one ledger blob.
+  L68        pub const MIN_LEDGER_SNAPSHOTS: u64 = 3;
+                -> the ledger cannot operate without >= 3 past epoch snapshots.
+
+AMARU — epoch boundary requires the N-2 snapshot + N-2 stake distribution
+-------------------------------------------------------------------------
+crates/amaru-ledger/src/state.rs
+  L338-405   fn epoch_transition(next_epoch): on crossing an epoch boundary it reads
+  L392         self.snapshots.for_epoch(next_epoch - 2)?         and
+  L393         self.stake_distribution(next_epoch - 2)?
+  L382         snapshots.prune(next_epoch - MIN_LEDGER_SNAPSHOTS)
+  L542-545   fn stake_distribution(epoch) -> StakeDistributionView::new(guard, epoch)
+  L1026-1033 StakeDistributionView::new: .position(|d| d.epoch == epoch)
+                 .ok_or(StateError::NoSuitableStakeDistribution(epoch))?
+                -> if the deque has no entry for that epoch, this is an ERROR, not a value.
+  L1100-1124 enum StateError { ... NoSuitableStakeDistribution(Epoch),
+                 StakeDistributionNotAvailableForRewards, ... }
+
+  => A node bootstrapped from a single snapshot does NOT yet hold the N-2 stake
+     distribution / >= 3 epoch snapshots. Crossing the first epoch boundary after
+     bootstrap therefore fails until that history has been accrued (a "warmup window").
+
+AMARU — a VALID block then fails to apply; error, not divergence
+----------------------------------------------------------------
+crates/amaru-ledger/src/state.rs
+  L638-643   match self.forward(...) { Ok(()) => Valid(metrics),
+                 Err(e) => { error!(%e,"Failed to roll forward the ledger state");
+                             BlockValidation::Err(anyhow!(e)) } }
+crates/amaru-ledger/src/block_validator.rs
+  L72-79     roll_forward_block: BlockValidation::Err(err) => Err(BlockValidationError...)
+                -> NoSuitableStakeDistribution bubbles up as a roll-forward FAILURE on an
+                   otherwise-valid block. Forward sync stalls/aborts on bootstrap state alone.
+
+AMARU — hard panics on store-invariant violation (no self-heal)
+---------------------------------------------------------------
+crates/amaru-ledger/src/state.rs
+  L241       Cow::Owned(... .unwrap_or_else(|e| panic!("no tip found in stable db: {e:?}")))
+  L327       unreachable!("epoch transition reset did not succeed after first block!")
+  L463       unreachable!("pre-condition: self.volatile.len() >= consensus_security_param")
+
+AMARU — restart needs pre-populated, tip-aligned stores; no replay-from-genesis
+-------------------------------------------------------------------------------
+crates/amaru/src/stages/build_node.rs
+  L81-82     Ledger::new(...).context("Failed to create ledger. Have you bootstrapped
+                 your node?")
+  L95-96     let ledger_tip = chain_store.load_tip(&ledger_tip.hash())
+                 .ok_or(anyhow!("ledger tip header not found"))?
+                -> node run reopens existing stores and requires ledger tip == chain-store
+                   tip. There is no path that rebuilds the ledger by replaying from block 0.
+
+CARDANO-NODE — documented ChainDB behaviour (ouroboros-consensus)
+-----------------------------------------------------------------
+Storage: ImmutableDB (finalized, > k) + VolatileDB (recent, < k) + LedgerDB
+  (on-disk ledger-state snapshots + in-memory). The stake distribution (Shelley
+  "mark/set/go" snapshots) is PART OF the ledger state itself -> self-contained.
+Startup: ChainDB opens, validates, and REPLAYS blocks from the most recent usable
+  ledger snapshot (falling back to an older snapshot, or genesis) to reconstruct the
+  volatile/ledger state; VolatileDB is scanned and corrupt/truncated tails dropped.
+  => self-healing recovery; no "missing N-2 stake distribution" is possible because a
+     reload reconstructs the full self-consistent ledger state, and from-genesis replay
+     is always available as the ultimate fallback.
+
+OBSERVED (prior campaign, box)
+------------------------------
+During the false-leadership setup, a freshly bootstrapped Amaru CRASHED while
+forward-syncing across an epoch boundary (box build reported the failure at
+state.rs:514; that line differs in this checkout — the mechanism is the N-2
+stake-distribution / snapshot-history requirement above). Keeping forged blocks
+within a single epoch avoided it. cardano-node has no equivalent warmup window.
+No credentials in this file — public source references only.

@@ -11,7 +11,9 @@ types). Nothing synthesized.
 from __future__ import annotations
 
 from profile_manager.data.concepts import CONCEPTS
-from profile_manager.data.fuzz import _fuzz_rows
+from profile_manager.data.learn_docs import GLOSSARY
+from profile_manager.data.learn_examples import list_examples
+from profile_manager.data.operate_targets import operate_target_rows
 from profile_manager.data.operate_runs import (
     operate_run_rows,
     status_pill_inventory,
@@ -37,8 +39,10 @@ def render_learn_landing() -> str:
         active_sub="overview",
         implementations=impls,
         scenario_count=len(_list_scenarios_for_compare()),
-        fuzz_target_count=len(_fuzz_rows()),
+        fuzz_target_count=len(operate_target_rows()),
         concept_count=len(CONCEPTS),
+        glossary_count=len(GLOSSARY),
+        example_count=len(list_examples()),
         walkthrough_count=len(walkthrough_entries()),
         runs_total=len(runs),
         pass_rate_pct=pass_rate_pct,

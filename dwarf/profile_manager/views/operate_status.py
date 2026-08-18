@@ -11,6 +11,7 @@ from profile_manager.data.operate_status import (
     substrate_health,
     wallet_status_rows,
 )
+from profile_manager.remote import control_shim_enabled
 from profile_manager.templating import render
 
 
@@ -38,4 +39,6 @@ def render_operate_status(*, port: int | None = None, bind: str | None = None,
         profiles=all_profiles(payload),
         wallets=wallet_status_rows(payload),
         moog=moog_status_tile(payload),
+        token=token,
+        shim_enabled=control_shim_enabled(),
     )

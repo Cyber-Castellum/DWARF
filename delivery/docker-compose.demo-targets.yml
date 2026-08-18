@@ -1,0 +1,4 @@
+services:
+  dwarf-fw:
+    volumes:
+      - /home/dwarf/dwarf-shims/amaru/target/release:/home/dwarf/dwarf-fw/dwarf/targets/amaru/target/release:ro

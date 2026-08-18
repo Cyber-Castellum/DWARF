@@ -26,10 +26,14 @@ def _sort_family_slug(slug: str) -> tuple[int, str]:
     return (1 if slug == "other" else 0, slug)
 
 
-def render_operate_scenarios() -> str:
+def render_operate_scenarios(token: str | None = None) -> str:
     """Build context and render operate/scenarios.j2."""
+    import os
     from profile_manager.data.scenarios import _list_scenarios_for_compare
+    from profile_manager.remote import control_shim_enabled
     from profile_manager.templating import render
+
+    scenarios_dir = os.environ.get("ADA2_DWARF_SCENARIOS_DIR") or "dwarf/scenarios"
 
     raw = _list_scenarios_for_compare()
     rows = []
@@ -51,6 +55,12 @@ def render_operate_scenarios() -> str:
         for slug in family_slugs
     ]
 
+    # AFL coverage scenarios are host-class (run via the control channel, not
+    # in-container). Offer them in a dedicated widget when the channel is live.
+    coverage_ids = sorted(
+        r["id"] for r in rows if "aflpp" in r["id"] or "-cov-" in r["id"]
+    )
+
     return render(
         "operate/scenarios.j2",
         page_title="Scenarios",
@@ -59,4 +69,8 @@ def render_operate_scenarios() -> str:
         total=len(rows),
         families=families,
         rows=rows,
+        token=token,
+        scenarios_dir=scenarios_dir,
+        shim_enabled=control_shim_enabled(),
+        coverage_ids=coverage_ids,
     )

@@ -1,0 +1,72 @@
+{
+  "id": "m3-keepalive-state-machine-v1",
+  "protocol": "keepalive",
+  "derived_from": [
+    "dwarf/corpora/m3/keepalive-sequences.json"
+  ],
+  "scope_note": "Library-tier KeepAlive state-machine model for decoder-backed stateful fuzzing. It covers request/response and done edges only; it does not claim live timer, retry, or eviction semantics.",
+  "sequences": [
+    {
+      "id": "request-response-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "await-response",
+          "message": {
+            "name": "keepalive-cookie-7",
+            "hex": "820007",
+            "expect": "ok",
+            "notes": "A KeepAlive request enters the modeled await-response state."
+          }
+        },
+        {
+          "from": "await-response",
+          "to": "idle",
+          "message": {
+            "name": "keepalive-response-cookie-7",
+            "hex": "820107",
+            "expect": "ok",
+            "notes": "A matching response returns the model to idle."
+          }
+        },
+        {
+          "from": "idle",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8102",
+            "expect": "ok",
+            "notes": "Done closes the modeled sequence."
+          }
+        }
+      ]
+    },
+    {
+      "id": "max-cookie-response-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "await-response",
+          "message": {
+            "name": "keepalive-cookie-max",
+            "hex": "820019ffff",
+            "expect": "ok",
+            "notes": "A max-cookie KeepAlive request enters the modeled await-response state."
+          }
+        },
+        {
+          "from": "await-response",
+          "to": "idle",
+          "message": {
+            "name": "keepalive-response-cookie-zero",
+            "hex": "820100",
+            "expect": "ok",
+            "notes": "A valid KeepAlive response returns the model to idle."
+          }
+        }
+      ]
+    }
+  ]
+}

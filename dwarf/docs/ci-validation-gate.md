@@ -27,7 +27,7 @@ slipped in during an earlier reclassification).
 ## Run it locally
 
 ```bash
-python3 -m pip install jsonschema
+python3 -m pip install -r dwarf/scripts/requirements-ci.txt   # jsonschema + jinja2
 python3 dwarf/scripts/validate_scenarios.py            # non-strict: warnings allowed
 python3 dwarf/scripts/validate_scenarios.py --strict   # warnings are failures
 python3 dwarf/scripts/validate_scenarios.py --json      # machine-readable summary

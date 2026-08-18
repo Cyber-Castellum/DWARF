@@ -20,6 +20,7 @@ module DwarfAdversary.ChainSync.Codec
     , Point
     , GenTx
     , GenTxId
+    , ccfg
     ) where
 
 import Cardano.Chain.Slotting (EpochSlots (EpochSlots))

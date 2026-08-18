@@ -55,7 +55,7 @@ def _producer_state(producers: list[str], magic: int) -> tuple[bool, int, dict]:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--topo-dir", default=os.path.expanduser("~/cardano-node-antithesis"))
+    ap.add_argument("--topo-dir", default="/home/dwarf/cardano-node-antithesis")
     ap.add_argument("--compose-file", default="testnets/cardano_amaru/docker-compose.yaml")
     ap.add_argument("--network-magic", type=int, default=42)
     ap.add_argument("--producers", default="p1,p2,p3")

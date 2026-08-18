@@ -432,6 +432,10 @@ def build_parser():
     coverage_aggregate.add_argument("--runs-dir")
     coverage_aggregate.add_argument("--state-dir")
     coverage_aggregate.add_argument("--manifests-dir")
+    # Run an AFL coverage scenario ON THE HOST via the control channel (the
+    # hardened dashboard container can't run AFL's forkserver).
+    coverage_run = coverage_subcommands.add_parser("run")
+    coverage_run.add_argument("scenario_id")
 
     package = subcommands.add_parser("package")
     package_subcommands = package.add_subparsers(dest="package_command", required=True)
@@ -688,7 +692,7 @@ def _print_config_header(config):
 def cmd_status(args):
     config = _load_or_intake("status")
     _print_config_header(config)
-    result = ssh_command(config, status_command(), timeout=60, dry_run=args.dry_run)
+    result = ssh_command(config, status_command(), timeout=60, dry_run=args.dry_run, verb=("status",))
     write_evidence(
         "manual-status",
         "status-dry-run" if args.dry_run else "status",
@@ -1211,7 +1215,7 @@ def cmd_moog(args):
 
 def cmd_backup(args):
     result = dwarf_backup_script.export_backup(
-        dwarf_root=DWARF_ROOT,
+        dwarf_root=dwarf_backup_script.DWARF_ROOT,
         destination=Path(args.to),
         include_bundles=args.include_bundles,
     )
@@ -1301,7 +1305,7 @@ def cmd_antithesis(args):
 def cmd_deploy(args):
     config = _load_or_intake("deploy")
     profile = find_profile(args.profile_id)
-    active = ssh_command(config, active_profile_command(), timeout=30, dry_run=args.dry_run)
+    active = ssh_command(config, active_profile_command(), timeout=30, dry_run=args.dry_run, verb=("active",))
     if args.dry_run:
         print(deploy_dry_run_text(profile), end="")
         print("Active-profile check command:")
@@ -1338,7 +1342,7 @@ def cmd_deploy(args):
         if answer not in {"y", "yes"}:
             print("Deploy cancelled.")
             return 1
-        removal = ssh_command(config, remove_command(config.remote_base_path), timeout=120)
+        removal = ssh_command(config, remove_command(config.remote_base_path), timeout=120, verb=("remove",))
         write_evidence(
             "manual-remove",
             "remove-before-deploy",
@@ -1358,7 +1362,7 @@ def cmd_deploy(args):
     if answer not in {"y", "yes"}:
         print("Deploy cancelled.")
         return 1
-    result = ssh_command(config, deploy_command(profile), timeout=300)
+    result = ssh_command(config, deploy_command(profile), timeout=300, verb=("deploy", profile.id))
     path = write_evidence(
         profile.id,
         "deploy",
@@ -1383,7 +1387,7 @@ def cmd_deploy(args):
 
 def cmd_remove(args):
     config = _load_or_intake("remove")
-    active = ssh_command(config, active_profile_command(), timeout=30, dry_run=args.dry_run)
+    active = ssh_command(config, active_profile_command(), timeout=30, dry_run=args.dry_run, verb=("active",))
     if args.dry_run:
         print(remove_dry_run_text(), end="")
         print("Active-profile check command:")
@@ -1416,7 +1420,7 @@ def cmd_remove(args):
     if answer not in {"y", "yes"}:
         print("Remove cancelled.")
         return 1
-    result = ssh_command(config, remove_command(config.remote_base_path), timeout=120)
+    result = ssh_command(config, remove_command(config.remote_base_path), timeout=120, verb=("remove",))
     path = write_evidence(
         "manual-remove",
         "remove",
@@ -1441,7 +1445,7 @@ def cmd_remove(args):
 
 def cmd_snapshot(args):
     config = _load_or_intake("snapshot")
-    result = ssh_command(config, status_command(), timeout=60, dry_run=args.dry_run)
+    result = ssh_command(config, status_command(), timeout=60, dry_run=args.dry_run, verb=("status",))
     path = write_evidence(
         "manual-snapshot",
         "snapshot",
@@ -2003,7 +2007,7 @@ REMOTE_DWARF_ROOT_ENV = "ADA2_DWARF_REMOTE_ROOT"
 
 
 def _remote_dwarf_root():
-    return Path(os.environ.get(REMOTE_DWARF_ROOT_ENV, "/home/USER/dwarf-fw"))
+    return Path(os.environ.get(REMOTE_DWARF_ROOT_ENV, "/home/dwarf/dwarf-fw"))
 
 
 def _manifest_target_implementation(*parts):
@@ -2657,6 +2661,31 @@ def cmd_coverage(args):
         path = runtime_coverage_aggregate.write_report(report=report, state_dir=state_dir)
         print(json.dumps({"coverage_rollup": str(path), "cell_count": report["cell_count"]}, sort_keys=True))
         return 0
+    if args.coverage_command == "run":
+        # AFL coverage campaigns are host-class (the hardened container can't run
+        # the forkserver). Send a restricted `coverage <id>` verb over the control
+        # channel; the host-side shim runs the scenario with the harness env and
+        # streams the result back.
+        from profile_manager.remote import control_shim_enabled
+
+        if not control_shim_enabled():
+            print(
+                "coverage run requires the host control channel "
+                "(ADA2_DWARF_CONTROL_SHIM=1 + a provisioned shim).",
+                file=sys.stderr,
+            )
+            return 2
+        config = _load_or_intake("coverage")
+        result = ssh_command(
+            config,
+            f"# coverage {args.scenario_id} (host-run via control channel)",
+            timeout=1800,
+            verb=("coverage", args.scenario_id),
+        )
+        print(result.stdout, end="")
+        if result.stderr:
+            print(result.stderr, file=sys.stderr, end="")
+        return result.returncode
     return 2
 
 
@@ -3344,8 +3373,23 @@ def cmd_bundle(args):
         elif args.bundle_command == "sign":
             print(f"signature_artifact: {output_dir / 'signature.json'}")
         elif args.bundle_command == "export":
-            print(f"export_artifact: {output_dir / (args.run_id + '-bundle-export.tar.gz')}")
+            export_tarball = output_dir / (args.run_id + "-bundle-export.tar.gz")
+            print(f"export_artifact: {export_tarball}")
             print(f"export_signature_artifact: {output_dir / 'signature.json'}")
+            # Preserve into the forensic bundles dir so `bundle export` shows up
+            # under /operate/bundles, matching the dashboard's Export button
+            # (forensic.export_bundle). Best-effort; a copy failure is non-fatal.
+            try:
+                import shutil
+                bundles_dir = os.environ.get("ADA2_DWARF_BUNDLES_DIR")
+                bundles_path = Path(bundles_dir) if bundles_dir else (Path(__file__).resolve().parents[1] / "bundles")
+                bundles_path.mkdir(parents=True, exist_ok=True)
+                if export_tarball.exists():
+                    preserved = bundles_path / f"{args.run_id}.tar.gz"
+                    shutil.copy2(export_tarball, preserved)
+                    print(f"preserved_bundle: {preserved}")
+            except Exception as exc:
+                print(f"preserve_warning: {exc}", file=sys.stderr)
     return proc.returncode
 
 
@@ -3424,3 +3468,7 @@ def main(argv=None):
         return cmd_testcase(args)
     parser.error(f"Unhandled command: {args.command}")
     return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

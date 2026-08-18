@@ -22,8 +22,19 @@ Deliberately omitted (anti-creep rails enforced by tests):
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
+
+
+def manifests_dir() -> Path:
+    """Writable manifests catalog. Honors ADA2_DWARF_MANIFESTS_DIR (seeded from
+    the baked read-only manifests at install) so targets can be registered from
+    the dashboard; falls back to the baked source tree."""
+    env = os.environ.get("ADA2_DWARF_MANIFESTS_DIR")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parents[2] / "targets" / "manifests"
 
 
 def _target_url(target_id: str) -> str:
@@ -56,7 +67,7 @@ def _enrich_target(manifest: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-DEFAULT_MANIFESTS_DIR = Path(__file__).resolve().parents[2] / "targets" / "manifests"
+DEFAULT_MANIFESTS_DIR = manifests_dir()
 
 _M2_TARGET_MARKERS = ("-cbor-decode-", "-mini-protocol-decode-")
 

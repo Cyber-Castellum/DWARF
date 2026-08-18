@@ -1,5 +1,5 @@
 #!/bin/bash
-W=/tmp/cfgsweep; CN=/home/nigel/.local/bin/cardano-node
+W=/tmp/cfgsweep; CN=/home/dwarf/.local/bin/cardano-node
 RES=$W/results/classified.tsv; : > "$RES"
 for f in "$W"/muts/*.json; do
   name=$(basename "$f" .json); cp "$f" "$W/configs/shelley-genesis.json"; rm -rf "$W/cndb"; mkdir -p "$W/cndb"

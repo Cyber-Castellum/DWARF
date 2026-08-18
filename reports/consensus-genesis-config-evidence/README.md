@@ -17,15 +17,17 @@ semantic divergence at the configuration layer, before any block.
 - **Finding 1 (confirmed):** cardano-node crashes with an uncaught arithmetic exception on
   `epochLength=0` (`divide by zero`) and `slotLength=0` (`Ratio has zero denominator`) instead
   of cleanly rejecting. It rejects every other malformed field cleanly in **~20 ms**.
-- **Finding 2 (well-supported):** cardano-node validates the raw genesis **at startup** (~20 ms);
-  Amaru validates in a **separate component** (`bootstrap-producer` deriving `AMARU_GLOBAL_*`),
-  **slowly**, **intermittently hanging**, and **non-deterministically** on bad input — and never
-  re-validates the raw genesis at `amaru run`. Different config-trust models.
-- **Finding 3 (preliminary — NOT a finding):** Amaru appears more lenient (`slotLength=0`:
-  cardano-node crashes, Amaru accepts), but the non-deterministic/hanging derivations make the
-  per-mutation verdicts unreliable. A deterministic Amaru genesis-parse surface is needed to
-  confirm. Held back deliberately (the LEAD-001 lesson: don't report a harness artifact as a
-  finding).
+- **Finding 2 (confirmed, from source):** the Amaru node **never reads the raw genesis at runtime**
+  — the `amaru`/`amaru-consensus`/`amaru-ledger` crates have zero references to
+  `shelley-genesis`/`activeSlotsCoeff`. Params come from a hardcoded per-network preset
+  (`TESTNET_GLOBAL_PARAMETERS`) or `AMARU_GLOBAL_*` env, computed once at setup. Different
+  config-trust models.
+- **Finding 3 (confirmed, from source — upgraded from a held-back lead):** Amaru's
+  `GlobalParameters` struct **omits `slotLength`** (so a `slotLength` that crashes cardano-node is
+  silently ignored) and stores the active-slot coefficient only as an integer inverse
+  (`active_slot_coeff_inverse: usize`), so it can't faithfully represent arbitrary-precision or
+  out-of-range `f`. Confirmed via source after the runtime (`bootstrap-producer`) proved too flaky
+  — the disciplined path (withhold-while-flaky, then confirm deterministically).
 
 ## The systematic sweep (417 mutations)
 
@@ -54,7 +56,7 @@ cardano-node-only (Amaru's path is too slow/flaky to sweep — see Finding 3).
 
 - Devnet = testnet_42 (f=0.2, k=5, epoch 125). Baseline genesis + config from the
   `cardano_amaru_p1-configs` docker volume; `config.node.json` = `config.json` + `DijkstraGenesisFile`
-  (node 10.7.1 requires it). cardano-node at `/home/nigel/.local/bin/cardano-node`.
+  (node 10.7.1 requires it). cardano-node at `/home/dwarf/.local/bin/cardano-node`.
 - Amaru derivation needs a chain-db (`/tmp/fl2/db_honest2`) + `protocolMagicId`/`lock` markers.
 
 No credentials present.

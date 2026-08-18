@@ -1,0 +1,10 @@
+{% extends "_base.j2" %}
+{% block main %}
+<span class="eyebrow">{{ eyebrow }}</span>
+<h1 class="action-result__title">
+  {{ result_title }}
+  <span class="result-pill result-pill--{{ 'pass' if ok else 'fail' }}">{{ 'done' if ok else 'error' }}</span>
+</h1>
+<div class="action-result__body page-hero">{{ body_html | safe }}</div>
+<p class="action-result__back"><a class="cta" href="{{ back_href }}">&larr; {{ back_label }}</a></p>
+{% endblock %}

@@ -1,0 +1,44 @@
+{
+  "bucket_id": "tb-dbe39646b9a47746",
+  "bucket_signature": {
+    "classification": "queue",
+    "compare_behavior_signatures": "none",
+    "compare_outcome": "none",
+    "compare_resource_signatures": "none",
+    "compare_run_outcomes": "none",
+    "producer": "aflpp",
+    "replay_behavior_signatures": "cardano-node:pending",
+    "replay_outcome": "cardano-node:pending",
+    "replay_resource_signatures": "cardano-node:pending",
+    "replay_target_id": "cardano-node-cov-applyblock",
+    "source_signature": "queue:coverage_increase:id=000056",
+    "target_implementation": "cardano-node",
+    "triage_reason": "coverage_increase",
+    "version": "v2"
+  },
+  "case_id": "tc-dd985e0b1e432d1f",
+  "classification": "queue",
+  "compare_state": "none",
+  "metadata": {
+    "execs": "24794",
+    "id": "000056",
+    "op": "havoc",
+    "rep": "2",
+    "src": "000002",
+    "time": "41757"
+  },
+  "minimization_state": "none",
+  "producer": "aflpp",
+  "replay_harness": "dwarf-decode-any",
+  "replay_state": "pending",
+  "replay_target_id": "cardano-node-cov-applyblock",
+  "replay_targets": [
+    "cardano-node"
+  ],
+  "sha256": "bcd2413c1c5169d5029aaae0f9530300eb5631091d4b4ab61230f190442294e1",
+  "size_bytes": 2,
+  "source_artifact_path": "outputs/aflpp/default/queue/id:000056,src:000002,time:41757,execs:24794,op:havoc,rep:2,+cov",
+  "source_run_id": "20260817T033444Z-0aa38644",
+  "target_implementation": "cardano-node",
+  "triage_reason": "coverage_increase"
+}

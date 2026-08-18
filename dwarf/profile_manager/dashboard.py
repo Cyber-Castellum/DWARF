@@ -77,6 +77,7 @@ from profile_manager.smoke import load_smoke_tests
 from profile_manager.wallets import wallet_statuses
 from profile_manager.views.concepts import render_learn_concepts
 from profile_manager.views.coverage import render_learn_coverage
+from profile_manager.views.threat_coverage import render_learn_threat_coverage
 from profile_manager.views.learn_cli import render_learn_cli
 from profile_manager.views.architecture import render_learn_architecture
 from profile_manager.views.compare import render_operate_compare
@@ -128,12 +129,12 @@ def _pick_dashboard_root(project_root: Path) -> Path:
     Two candidate layouts:
     - ``project_root/dwarf/dashboard``  (local Mac dev checkout: dwarf/ is the
       app subdir under the parent ada2 repo)
-    - ``project_root/dashboard``        (<remote-host> flattened layout: rsync
+    - ``project_root/dashboard``        (cardano-box flattened layout: rsync
       from sync-dwarf-fw.sh strips the dwarf/ wrapper, putting dashboard/ +
       profile_manager/ at top level)
 
     Pre-slice-19 logic checked only that ``project_root/dwarf`` *existed*,
-    which on <remote-host> was true but stale -- a leftover ``dwarf/`` directory
+    which on cardano-box was true but stale -- a leftover ``dwarf/`` directory
     from an old layout containing only an ``index.html``, no ``static/``.
     Result: the picker selected ``project_root/dwarf/dashboard`` (which had
     no ``static/``), so ``/static/css/base.css`` returned 404 and all
@@ -884,8 +885,8 @@ def render_command_center_html():
     <div class="flow" id="deployment-flow">
       <div class="flow-step"><strong>Browser / CLI</strong>Local operator view and command entry point.</div>
       <div class="flow-step"><strong>SSH</strong>Read-only health polling and explicit CLI operations.</div>
-      <div class="flow-step"><strong><remote-host></strong>Ubuntu host for local Cardano profile runtime.</div>
-      <div class="flow-step"><strong>Profile Runtime</strong>Managed local testnet profile under `/home/USER/cardano-profiles`.</div>
+      <div class="flow-step"><strong>cardano-box</strong>Ubuntu host for local Cardano profile runtime.</div>
+      <div class="flow-step"><strong>Profile Runtime</strong>Managed local testnet profile under `/opt/dwarf/cardano-profiles`.</div>
       <div class="flow-step"><strong>node1 / node2 / node3</strong>Loopback node-to-node listeners, sockets, logs, and DB state.</div>
     </div>
   </section>
@@ -1059,7 +1060,7 @@ function drawDeploymentFlow(payload, active, parsed) {
     <line class="edge" x1="154" y1="119" x2="238" y2="119"/>
     <rect class="node" x="248" y="86" width="110" height="66" rx="8"/><text x="303" y="114" text-anchor="middle" font-weight="700">SSH</text><text class="muted" x="303" y="136" text-anchor="middle">read-only poll</text>
     <line class="edge" x1="358" y1="119" x2="438" y2="119"/>
-    <rect class="node" x="448" y="66" width="146" height="106" rx="8"/><text x="521" y="102" text-anchor="middle" font-weight="700"><remote-host></text><text class="muted" x="521" y="126" text-anchor="middle">${esc((payload.config || {}).host || "unknown")}</text><text class="muted" x="521" y="150" text-anchor="middle">Ubuntu host</text>
+    <rect class="node" x="448" y="66" width="146" height="106" rx="8"/><text x="521" y="102" text-anchor="middle" font-weight="700">cardano-box</text><text class="muted" x="521" y="126" text-anchor="middle">${esc((payload.config || {}).host || "unknown")}</text><text class="muted" x="521" y="150" text-anchor="middle">Ubuntu host</text>
     <line class="edge" x1="594" y1="119" x2="674" y2="119"/>
     <rect class="node" x="684" y="46" width="190" height="146" rx="8"/><text x="779" y="76" text-anchor="middle" font-weight="700">${esc(active.id || "active profile")}</text>
     <circle class="${processClass}" cx="729" cy="124" r="22"/><text x="729" y="130" text-anchor="middle">n1</text>
@@ -1259,6 +1260,19 @@ def _default_cli_command_builder(action, *, profile=None, test_id=None, approve=
         if not scenario_path:
             raise ValueError("scenario_run requires path")
         return [entry, "scenario", "run", scenario_path]
+    if action == "coverage":
+        if not test_id:
+            raise ValueError("coverage requires id")
+        return [entry, "coverage", "run", test_id]
+    if action == "backup":
+        import os as _os
+        from datetime import datetime as _dt, timezone as _tz
+        state_dir = _os.environ.get("ADA2_DWARF_STATE_DIR") or "/var/dwarf/state"
+        backups_dir = Path(_os.environ.get("ADA2_DWARF_BACKUPS_DIR") or (Path(state_dir) / "backups"))
+        backups_dir.mkdir(parents=True, exist_ok=True)
+        ts = _dt.now(_tz.utc).strftime("%Y%m%dT%H%M%SZ")
+        dest = backups_dir / f"dwarf-backup-{ts}.tar.gz"
+        return [entry, "backup", "--to", str(dest)]
     raise ValueError(f"unknown action: {action}")
 
 
@@ -1269,6 +1283,8 @@ _MUTATING_ROUTES = {
     "/api/test/smoke/run": "smoke",
     "/api/scenario/run": "scenario_run",
     "/api/scenario/compare": "compare",
+    "/api/backup/create": "backup",
+    "/api/coverage/run": "coverage",
 }
 
 
@@ -1377,7 +1393,7 @@ def dispatch_mutating_request(*, method, path, expected_token, cli_command_build
     approve = approve_raw in ("1", "true", "yes")
     if action == "deploy" and not profile:
         return (400, "text/plain; charset=utf-8", b"missing profile query parameter\n")
-    if action in ("fuzz", "smoke") and not test_id:
+    if action in ("fuzz", "smoke", "coverage") and not test_id:
         return (400, "text/plain; charset=utf-8", b"missing id query parameter\n")
     if action in ("compare", "scenario_run") and not scenario_path:
         return (400, "text/plain; charset=utf-8", b"missing path query parameter\n")
@@ -1389,6 +1405,100 @@ def dispatch_mutating_request(*, method, path, expected_token, cli_command_build
     except Exception as exc:
         release_mutating_lock()
         return (400, "text/plain; charset=utf-8", (f"bad request: {exc}\n").encode("utf-8"))
+
+    def _gen():
+        try:
+            yield from stream_subprocess_sse(cmd)
+        finally:
+            release_mutating_lock()
+    return (200, "text/event-stream; charset=utf-8", _gen())
+
+
+_ANTITHESIS_ROUTES = {
+    "/api/antithesis/build",
+    "/api/moog/validate",
+    "/api/moog/preflight",
+    "/api/moog/create-test",
+    "/api/moog/test-status",
+}
+
+
+def _build_antithesis_command(action, qs):
+    """Build the cardano-profile command for an /operate/antithesis GUI action."""
+    entry = str(DEFAULT_CLI_ENTRYPOINT)
+
+    def g(key):
+        return (qs.get(key) or [None])[0]
+
+    def need(key):
+        val = g(key)
+        if not val:
+            raise ValueError(f"missing required field: {key}")
+        return val
+
+    if action == "/api/antithesis/build":
+        cmd = [entry, "antithesis", "build", need("profile")]
+        for flag, key in (("--scenario", "scenario"), ("--out", "out"),
+                          ("--registry", "registry"), ("--tag", "tag")):
+            val = g(key)
+            if val:
+                cmd += [flag, val]
+        cmd.append("--json")
+        return cmd
+    if action == "/api/moog/validate":
+        return [entry, "moog", "asset", "validate", "--asset-dir", need("asset_dir"), "--json"]
+    if action == "/api/moog/preflight":
+        cmd = [entry, "moog", "preflight", "--json"]
+        for flag, key in (("--asset-dir", "asset_dir"), ("--repo", "repo"),
+                          ("--github-user", "github_user"), ("--directory", "directory"),
+                          ("--commit", "commit")):
+            val = g(key)
+            if val:
+                cmd += [flag, val]
+        return cmd
+    if action == "/api/moog/create-test":
+        cmd = [entry, "moog", "create-test", "--json"]
+        for flag, key in (("--repo", "repo"), ("--github-user", "github_user"),
+                          ("--directory", "directory"), ("--commit", "commit"),
+                          ("--duration", "duration")):
+            val = g(key)
+            if val:
+                cmd += [flag, val]
+        if g("no_faults") in ("1", "true", "yes"):
+            cmd.append("--no-faults")
+        # --approve = live on-chain submit; omit for a dry-run (prints the command).
+        if g("approve") in ("1", "true", "yes"):
+            cmd.append("--approve")
+        return cmd
+    if action == "/api/moog/test-status":
+        return [entry, "moog", "test-status", need("test_id"), "--json"]
+    raise ValueError(f"unknown antithesis action: {action}")
+
+
+def dispatch_antithesis_request(*, method, path, expected_token):
+    """Dispatch POST /api/antithesis/* and /api/moog/* GUI actions.
+
+    Token-gated, serialized by the global mutating lock, streamed as SSE — the
+    same guarantees as the other mutating endpoints. Returns
+    (status, content_type, body_or_generator) or None if the path isn't a match.
+    """
+    from urllib.parse import urlsplit, parse_qs
+    parts = urlsplit(path)
+    clean = parts.path
+    if clean not in _ANTITHESIS_ROUTES:
+        return None
+    if method != "POST":
+        return (405, "text/plain; charset=utf-8", b"method not allowed\n")
+    ok, err = check_token(path, expected=expected_token)
+    if not ok:
+        return (401, "text/plain; charset=utf-8", (err + "\n").encode("utf-8"))
+    qs = parse_qs(parts.query, keep_blank_values=True)
+    try:
+        cmd = _build_antithesis_command(clean, qs)
+    except ValueError as exc:
+        return (400, "text/plain; charset=utf-8", (f"bad request: {exc}\n").encode("utf-8"))
+    if not try_acquire_mutating_lock():
+        return (409, "text/plain; charset=utf-8", b"another mutating action is already in progress\n")
 
     def _gen():
         try:
@@ -2249,6 +2359,7 @@ def render_route_html(route):
         "/learn/overview": render_learn_overview,
         "/learn/consensus": render_learn_consensus,
         "/learn/coverage": render_learn_coverage,
+        "/learn/threat-coverage": render_learn_threat_coverage,
         "/learn/status": render_learn_status,
         "/operate/compare": render_operate_compare,
         "/learn/architecture": render_learn_architecture,
@@ -2440,6 +2551,42 @@ def serve_dashboard_handler_factory(expected_token, *, serving_port=None, servin
                 status, body = handle_create_post(body_bytes)
                 self._send(status, "text/html; charset=utf-8", body.encode("utf-8"))
                 return
+            if self.path.split("?", 1)[0] == "/operate/targets/new":
+                ok, err = check_token(self.path, expected=expected_token)
+                if not ok:
+                    self._send(403, "text/plain; charset=utf-8", f"{err}\n".encode("utf-8"))
+                    return
+                from profile_manager.data.operate_targets_new import handle_register_post
+                status, body = handle_register_post(body_bytes)
+                self._send(status, "text/html; charset=utf-8", body.encode("utf-8"))
+                return
+            if self.path.split("?", 1)[0] == "/operate/profiles/new":
+                ok, err = check_token(self.path, expected=expected_token)
+                if not ok:
+                    self._send(403, "text/plain; charset=utf-8", f"{err}\n".encode("utf-8"))
+                    return
+                from profile_manager.data.operate_profiles_new import handle_create_post
+                status, body = handle_create_post(body_bytes)
+                self._send(status, "text/html; charset=utf-8", body.encode("utf-8"))
+                return
+            if self.path.split("?", 1)[0] == "/operate/primitives/new":
+                ok, err = check_token(self.path, expected=expected_token)
+                if not ok:
+                    self._send(403, "text/plain; charset=utf-8", f"{err}\n".encode("utf-8"))
+                    return
+                from profile_manager.data.operate_primitives_new import handle_create_post as _prim_create
+                status, body = _prim_create(body_bytes)
+                self._send(status, "text/html; charset=utf-8", body.encode("utf-8"))
+                return
+            if self.path.split("?", 1)[0] == "/operate/config/save":
+                ok, err = check_token(self.path, expected=expected_token)
+                if not ok:
+                    self._send(403, "text/plain; charset=utf-8", f"{err}\n".encode("utf-8"))
+                    return
+                from profile_manager.data.operate_config_edit import handle_config_save
+                status, body = handle_config_save(body_bytes)
+                self._send(status, "text/html; charset=utf-8", body.encode("utf-8"))
+                return
             sched_result = dispatch_schedule_request(
                 method="POST", path=self.path, body=body_bytes,
                 expected_token=expected_token,
@@ -2455,6 +2602,16 @@ def serve_dashboard_handler_factory(expected_token, *, serving_port=None, servin
             if scen_result is not None:
                 status, ctype, body = scen_result
                 self._send(status, ctype, body if isinstance(body, (bytes, bytearray)) else b"".join(body))
+                return
+            anti_result = dispatch_antithesis_request(
+                method="POST", path=self.path, expected_token=expected_token,
+            )
+            if anti_result is not None:
+                status, ctype, body = anti_result
+                if status == 200 and "event-stream" in ctype:
+                    self._send_stream(status, ctype, body)
+                else:
+                    self._send(status, ctype, body if isinstance(body, (bytes, bytearray)) else b"".join(body))
                 return
             result = dispatch_mutating_request(
                 method="POST", path=self.path, expected_token=expected_token,
@@ -2473,7 +2630,8 @@ def serve_dashboard_handler_factory(expected_token, *, serving_port=None, servin
             mutating_paths = {
                 "/api/deploy", "/api/remove", "/api/fuzz/run", "/api/test/smoke/run",
                 "/api/scenario/paste", "/api/scenario/promote", "/api/scenario/compare",
-                "/api/scenario/run",
+                "/api/scenario/run", "/api/backup/create", "/api/coverage/run",
+                "/operate/config/save",
             }
             path_only = self.path.split("?", 1)[0]
             if path_only in mutating_paths:
@@ -2494,6 +2652,35 @@ def serve_dashboard_handler_factory(expected_token, *, serving_port=None, servin
             if path_only == "/operate/config":
                 html_body = render_operate_config(token=expected_token)
                 self._send(200, "text/html; charset=utf-8", html_body.encode("utf-8"))
+                return
+            if path_only == "/operate/config/edit":
+                from profile_manager.views.operate_config_edit import render_operate_config_edit
+                self._send(200, "text/html; charset=utf-8", render_operate_config_edit(token=expected_token).encode("utf-8"))
+                return
+            if path_only == "/operate/antithesis":
+                from profile_manager.views.operate_antithesis import render_operate_antithesis
+                html_body = render_operate_antithesis(token=expected_token)
+                self._send(200, "text/html; charset=utf-8", html_body.encode("utf-8"))
+                return
+            if path_only == "/operate/targets":
+                from profile_manager.views.operate_targets import render_operate_targets
+                self._send(200, "text/html; charset=utf-8", render_operate_targets(token=expected_token).encode("utf-8"))
+                return
+            if path_only == "/operate/targets/new":
+                from profile_manager.views.operate_targets_new import render_operate_targets_new
+                self._send(200, "text/html; charset=utf-8", render_operate_targets_new(token=expected_token).encode("utf-8"))
+                return
+            if path_only == "/operate/profiles/new":
+                from profile_manager.views.operate_profiles_new import render_operate_profiles_new
+                self._send(200, "text/html; charset=utf-8", render_operate_profiles_new(token=expected_token).encode("utf-8"))
+                return
+            if path_only == "/operate/primitives/new":
+                from profile_manager.views.operate_primitives_new import render_operate_primitives_new
+                self._send(200, "text/html; charset=utf-8", render_operate_primitives_new(token=expected_token).encode("utf-8"))
+                return
+            if path_only == "/operate/scenarios":
+                from profile_manager.views.scenarios import render_operate_scenarios
+                self._send(200, "text/html; charset=utf-8", render_operate_scenarios(token=expected_token).encode("utf-8"))
                 return
             html_body = render_route_html(self.path)
             if html_body is not None:

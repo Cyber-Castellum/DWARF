@@ -1,6 +1,6 @@
 # Runtime image for dwarf-decoder-fuzz (#4/FU5 — in-process decoder fuzzing as an
 # Antithesis workload). Like the adversary image, the binary is built on the host
-# (build-host, GHC 9.6.7) and staged into ./dist-fuzz by build-fuzz-image.sh; we
+# (cardano-box, GHC 9.6.7) and staged into ./dist-fuzz by build-fuzz-image.sh; we
 # ship the linked binary on a glibc-matching base rather than recompiling in Docker.
 FROM ubuntu:24.04
 

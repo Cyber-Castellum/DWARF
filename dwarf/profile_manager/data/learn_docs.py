@@ -114,7 +114,7 @@ FAQ: list[dict[str, str]] = [
     {"q": "What are the substrate-evidence tiles?", "a": "Six rolled-up summaries the inspector shows above the assertions table when a run produces the matching outputs: Topology (compose-report), Multi-node observation (tip_group_count per node), Byzantine peer (intercepted/mutated counts), HF boundary (per-node protocol versions), Era transition (pre/post rules observed), Genesis mode (final mode + peer-set capture). Each tile turns crimson when its verdict flips error."},
     {"q": "Can I scrape the dashboard?", "a": "Use /metrics for Prometheus, /healthz for liveness, /api/* for JSON. /operate/* and /learn/* are HTML and not stable contracts — see <a href=\"/learn/api\">/learn/api</a> for the machine-readable surface."},
     {"q": "What does the breathing background mean?", "a": "Pure decoration — drift gradient + sparse cyan motes. Reads as 'the substrate is alive.' prefers-reduced-motion freezes it. No state coupling — motion doesn't change with substrate health."},
-    {"q": "How do I export a bundle for an audit package?", "a": "From the inspector header, click 'Export bundle (.tar.gz)' — the framework streams the verified bundle archive directly. CLI equivalent: cardano-profile bundle &lt;run-id&gt; (preserves into bundles/ directory). For SARIF export: cardano-profile scenario run dwarf/scenarios/runtime-bundle-export-sarif-example-smoke.yaml after editing target_run_id."},
+    {"q": "How do I export a bundle for an audit package?", "a": "From the inspector header, click 'Export bundle (.tar.gz)' — the framework streams the verified bundle archive directly. CLI equivalent: cardano-profile bundle export &lt;run-id&gt; (writes the signed tar.gz; add --to &lt;path&gt;). For SARIF export: cardano-profile scenario run dwarf/scenarios/runtime-bundle-export-sarif-example-smoke.yaml after editing target_run_id."},
 ]
 
 
@@ -129,8 +129,8 @@ TROUBLESHOOTING: list[dict[str, str]] = [
      "diagnosis": "The framework's <code>./cardano-profile dashboard serve</code> spawns a python child that owns the listening socket; the parent shell wrapper has a different PID. <code>head -1</code> returns the first match in PID order, which is sometimes the wrapper, not the listener.",
      "fix": "Target the listener directly: <code>PID=$(ss -tlnp 2>/dev/null | grep 8787 | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2); kill -9 $PID</code>. The ss approach reads the socket→pid mapping from the kernel and is unambiguous."},
     {"symptom": "Code on /home/&lt;user&gt;/dwarf-fw is updated but the running dashboard serves the old version",
-     "diagnosis": "The dashboard is running inside the V3 Docker container (dwarf-fw-june-m2, image dwarf/framework:june-20260604-m2). The framework source inside the image is baked at build time; host-side runtime directories are mounted only for runs, state, and bundles.",
-     "fix": "<code>delivery/scripts/build-image.sh && delivery/scripts/deploy.sh</code>. Verify with <code>docker exec dwarf-fw-june-m2 python3 dwarf/cardano-profile dashboard status</code>."},
+     "diagnosis": "The dashboard is running inside the V3 Docker container (dwarf-fw, image dwarf/framework:current). The framework source inside the image is baked at build time; host-side runtime directories are mounted only for runs, state, and bundles.",
+     "fix": "<code>delivery/scripts/build-image.sh && delivery/scripts/deploy.sh</code>. Verify with <code>docker exec dwarf-fw python3 dwarf/cardano-profile dashboard status</code>."},
     {"symptom": "ImportError: cannot import name 'X' from 'profile_manager.Y'",
      "diagnosis": "The container's profile_manager predates the import the dashboard now needs (e.g. plugin_loader added after the image was built; CONFIG_FIELDS added after, etc.). The image-rebuild pipeline lags head-of-tree.",
      "fix": "Either docker cp the missing module into the container (short-term), or add a graceful fallback in the importer (preferred for code that has to ship before the next image build). Pattern: <code>try: from profile_manager.X import Y; except ImportError: Y = &lt;fallback&gt;</code>."},
@@ -145,7 +145,7 @@ TROUBLESHOOTING: list[dict[str, str]] = [
      "fix": "Re-run with a current scenario; the canonical templates emit mode. Existing bundles can be patched manually if needed (edit outputs/substrate-compose/compose-report.json, set 'mode': 'host'|'docker'|'multi-host')."},
     {"symptom": "/operate/runs/&lt;id&gt; shows 'Run not found' for a real run-id",
      "diagnosis": "The run directory isn't where the dashboard expects. Check ADA2_DWARF_RUNS_DIR env var, /var/dwarf/runs (container), or the host-side dwarf/runs/. Also: the container has a runs-dir mount at /var/dwarf/runs; if that mount missed, the dashboard falls back to its own internal path.",
-     "fix": "<code>docker inspect dwarf-fw-june-m2 --format '{{ json .Mounts }}'</code> to verify the runs-dir mount is wired. If it's missing, redeploy with the delivery scripts."},
+     "fix": "<code>docker inspect dwarf-fw --format '{{ json .Mounts }}'</code> to verify the runs-dir mount is wired. If it's missing, redeploy with the delivery scripts."},
     {"symptom": "AFL++ fuzzer crashes on cargo-fuzz target with 'Inconsistent timing' warning",
      "diagnosis": "cgroup CPU-quota throttling. Containers with cpu-shares set will trip AFL's timing-consistency check.",
      "fix": "Drop the cpu cap on the fuzzer container, or pass <code>AFL_NO_AFFINITY=1</code> + <code>AFL_SKIP_CPUFREQ=1</code> in the fuzzer env. Trade-off: the latter ignores the timing variance and proceeds anyway."},

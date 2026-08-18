@@ -1,9 +1,9 @@
-name: dwarf-june-m2
+name: dwarf
 
 services:
   dwarf-fw:
-    image: ${DWARF_IMAGE:-dwarf/framework:june-20260604-m2}
-    container_name: ${DWARF_CONTAINER_NAME:-dwarf-fw-june-m2}
+    image: ${DWARF_IMAGE:-dwarf/framework:current}
+    container_name: ${DWARF_CONTAINER_NAME:-dwarf-fw}
     command:
       - dashboard
       - serve
@@ -19,8 +19,31 @@ services:
       ADA2_DWARF_RUNS_DIR: /var/dwarf/runs
       ADA2_DWARF_STATE_DIR: /var/dwarf/state
       ADA2_DWARF_BUNDLES_DIR: /var/dwarf/bundles
+      ADA2_DWARF_SCENARIOS_DIR: /var/dwarf/state/scenarios
+      ADA2_DWARF_MANIFESTS_DIR: /var/dwarf/state/targets/manifests
+      ADA2_DWARF_PROFILES_DIR: /var/dwarf/state/profiles
+      # Single runtime-root base — every profile normalizes to <base>/<id>, so
+      # the deploy target and remove archival root can never diverge. Must match
+      # REMOTE_BASE_PATH in the deploy host's dwarf-control.conf.
+      ADA2_DWARF_REMOTE_BASE: ${ADA2_DWARF_REMOTE_BASE:-/opt/dwarf/cardano-profiles}
       ADA2_PROFILE_MANAGER_CONFIG: /var/dwarf/state/config.yaml
+      # Evidence (deploy/remove/status/snapshot writeups) must land in the
+      # writable overlay, not the read-only baked tree.
+      ADA2_PROFILE_MANAGER_EVIDENCE_ROOT: /var/dwarf/state/evidence
+      # AFL coverage harness (dwarf-decode-any) + its pinned 4.40c runtime, built
+      # out-of-repo via delivery/scripts/build-afl-harness.sh. NOTE: this hardened
+      # container (read_only, cap_drop ALL, no-new-privileges) CANNOT run the AFL
+      # forkserver, so the 9 cardano-node-cov-*-aflpp scenarios always SKIP cleanly
+      # here (the path isn't mounted in) and are meant to run on the host via the
+      # CLI. These vars keep the skip well-labelled and support host-mode runs.
+      DWARF_AFL_HARNESS: ${DWARF_AFL_HARNESS:-/opt/dwarf/afl-harness/dwarf-decode-any}
+      DWARF_AFL_FUZZ: ${DWARF_AFL_FUZZ:-/opt/dwarf/afl-harness/afl-fuzz}
       ADA2_DWARF_TOKEN: ${ADA2_DWARF_TOKEN:-dwarf}
+      # Web-driven substrate control channel. When set to 1 (and the deploy
+      # host has been provisioned via delivery/control-plane/provision-control-channel.sh),
+      # deploy/remove/status/active are sent to the host as restricted verbs
+      # through the forced-command shim instead of arbitrary SSH scripts.
+      ADA2_DWARF_CONTROL_SHIM: ${ADA2_DWARF_CONTROL_SHIM:-}
       DWARF_MOOG_ENABLED: ${DWARF_MOOG_ENABLED:-}
       DWARF_MOOG_DEPLOY_ROOT: ${DWARF_MOOG_DEPLOY_ROOT:-}
       DWARF_MOOG_BINARY: ${DWARF_MOOG_BINARY:-}
@@ -49,7 +72,7 @@ services:
       - ${DWARF_RUNTIME_ROOT:-../var}/runs:/var/dwarf/runs
       - ${DWARF_RUNTIME_ROOT:-../var}/state:/var/dwarf/state
       - ${DWARF_RUNTIME_ROOT:-../var}/bundles:/var/dwarf/bundles
-      - ${DWARF_SSH_KEY_PATH:-/home/USER/.ssh/<remote-host>}:/home/dwarf/.ssh/<remote-host>:ro
+      - ${DWARF_SSH_KEY_PATH:-../var/state/ssh_deploy_key}:/home/dwarf/.ssh/dwarf-deploy:ro
       - ${DWARF_SSH_KNOWN_HOSTS:-../var/state/ssh_known_hosts}:/home/dwarf/.ssh/known_hosts:ro
     read_only: true
     cap_drop:
@@ -60,3 +83,9 @@ services:
       - /tmp
       - /run
     restart: unless-stopped
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.201.0.0/24

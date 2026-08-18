@@ -1,7 +1,7 @@
 {
   "spec_version": "v1",
   "id": "runtime-substrate-large-10-node-honest-mesh-example-smoke",
-  "title": "Large-N 10-node honest mesh baseline on single-host Docker (remote-host, 12 GiB ceiling)",
+  "title": "Large-N 10-node honest mesh baseline on single-host Docker (cardano-box, 12 GiB ceiling)",
   "authors": [
     "dwarf"
   ],
@@ -29,10 +29,10 @@
     "network": "preview",
     "hosts": [
       {
-        "id": "remote-host",
-        "ssh_target": "remote-host",
+        "id": "cardano-box",
+        "ssh_target": "cardano-box",
         "remote_runtime_base": "~/cardano-profiles",
-        "published_host": "203.0.113.10"
+        "published_host": "127.0.0.1"
       }
     ],
     "nodes": [
@@ -41,70 +41,70 @@
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node2",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node3",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node4",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node5",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node6",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node7",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node8",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node9",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       },
       {
         "id": "node10",
         "impl": "cardano-node",
         "version": "10.7.1",
         "role": "honest",
-        "host": "remote-host"
+        "host": "cardano-box"
       }
     ],
     "topology": {

@@ -10,10 +10,10 @@ keyed by their full invocation. Anchor paths point at the parser stanza
 so the page can deep-link readers to the source of truth.
 
 Discipline (slice 26): no fabricated commands. Every entry below maps
-to a parser entry in dwarf/profile_manager/cli.py. Structural rails in
-test_cli_catalog enforce slug uniqueness, anchor-path existence, and
-example-command shape; semantic accuracy of the prose is reviewed by
-hand at slice authoring.
+to a real subcommand of dwarf/cardano-profile — verified against the
+running parser. Introspection-only surfaces (browsing the full target
+and primitive catalogues) live in the dashboard at /operate/targets and
+/operate/primitives, not the CLI, and are noted as such.
 """
 from __future__ import annotations
 
@@ -29,7 +29,9 @@ CLI_GROUPS: list[dict[str, Any]] = [
             "of test work — one YAML binds a target, a runtime, a sequence of "
             "primitives, and the assertions the runner expects to record. "
             "Each execution produces one forensic bundle under "
-            "<code>dwarf/runs/&lt;run-id&gt;/</code>."
+            "<code>dwarf/runs/&lt;run-id&gt;/</code>. Subcommands: "
+            "<code>run</code>, <code>new</code>, <code>validate</code>, "
+            "<code>verify</code>."
         ),
         "anchor_path": "dwarf/profile_manager/cli.py",
         "commands": [
@@ -42,24 +44,25 @@ CLI_GROUPS: list[dict[str, Any]] = [
                 ],
             },
             {
-                "name": "cardano-profile scenario list",
-                "summary": "List every scenario currently visible (live corpus + pending).",
+                "name": "cardano-profile scenario new --template <template-id> --name <id>",
+                "summary": "Scaffold a new scenario YAML from an existing template into the writable catalog.",
                 "examples": [
-                    {"label": "All scenarios", "command": "cardano-profile scenario list"},
+                    {"label": "From a template", "command": "cardano-profile scenario new --template amaru-cbor-tx-body-fuzz --name my-draft"},
                 ],
             },
             {
                 "name": "cardano-profile scenario validate <path>",
-                "summary": "Validate a scenario YAML against the dwarf v1 schema without running it.",
+                "summary": "Validate a scenario YAML against the dwarf v1 schema without running it. Add <code>--semantic</code> for deeper checks.",
                 "examples": [
-                    {"label": "Single file", "command": "cardano-profile scenario validate dwarf/scenarios/pending/my-draft.yaml"},
+                    {"label": "Single file", "command": "cardano-profile scenario validate dwarf/scenarios/amaru-cbor-tx-body-fuzz.yaml"},
+                    {"label": "Semantic pass", "command": "cardano-profile scenario validate --semantic dwarf/scenarios/amaru-cbor-tx-body-fuzz.yaml"},
                 ],
             },
             {
-                "name": "cardano-profile scenario promote --id <id>",
-                "summary": "Promote a pending scenario into the live corpus once its declared promotion blockers clear.",
+                "name": "cardano-profile scenario verify <path>",
+                "summary": "Re-run a scenario and verify its recorded outputs/assertions reproduce against the current registry.",
                 "examples": [
-                    {"label": "Promote by id", "command": "cardano-profile scenario promote --id my-draft"},
+                    {"label": "Verify a scenario", "command": "cardano-profile scenario verify dwarf/scenarios/amaru-cbor-tx-body-fuzz.yaml"},
                 ],
             },
         ],
@@ -89,32 +92,42 @@ CLI_GROUPS: list[dict[str, Any]] = [
         "slug": "bundle",
         "title": "bundle",
         "summary": (
-            "Inspect, verify, sign, and chain forensic bundles. Each bundle is "
+            "Search, verify, sign, and chain forensic bundles. Each bundle is "
             "tamper-evident: <code>chain.json</code> links to the previous run's "
             "hash, and <code>verify</code> recomputes the manifest hash and "
-            "validates the chain end-to-end."
+            "validates the chain end-to-end. Full subcommand set: promote, "
+            "dedupe, sign, export, import, verify, search, stats, list-promoted, "
+            "audit-trail, replay-and-diff, reproduce."
         ),
         "anchor_path": "dwarf/profile_manager/cli.py",
         "commands": [
             {
-                "name": "cardano-profile bundle list",
-                "summary": "List preserved bundles in the catalog.",
+                "name": "cardano-profile bundle search [--tag <t>] [--status <s>] [--since <d>] [--until <d>]",
+                "summary": "Search runs/bundles by tag, status (signed/unsigned/promoted/deduped), and date window. Use <code>bundle list-promoted</code> for just the curated set and <code>bundle stats</code> for aggregate counts.",
                 "examples": [
-                    {"label": "All bundles", "command": "cardano-profile bundle list"},
+                    {"label": "Signed bundles", "command": "cardano-profile bundle search --status signed"},
+                    {"label": "Curated set", "command": "cardano-profile bundle list-promoted"},
                 ],
             },
             {
-                "name": "cardano-profile bundle inspect <run-id>",
-                "summary": "Print the manifest, hash chain, assertions, and resource snapshot for one run.",
+                "name": "cardano-profile bundle verify <run-id>",
+                "summary": "Recompute the manifest hash and validate the tamper-evident chain end-to-end for one run.",
                 "examples": [
-                    {"label": "Inspect a run", "command": "cardano-profile bundle inspect 20260427T100000Z-abc123"},
+                    {"label": "Verify a run", "command": "cardano-profile bundle verify 20260427T100000Z-abc123"},
                 ],
             },
             {
-                "name": "cardano-profile bundle promote <run-id>",
-                "summary": "Move a run's bundle into the curated set under <code>dwarf/bundles/</code>.",
+                "name": "cardano-profile bundle export <run-id> [--to <path>]",
+                "summary": "Write the signed bundle as a tar.gz — the archive an audit package ships.",
                 "examples": [
-                    {"label": "Promote to curated", "command": "cardano-profile bundle promote 20260427T100000Z-abc123"},
+                    {"label": "Export a run", "command": "cardano-profile bundle export 20260427T100000Z-abc123 --to /tmp/run.tar.gz"},
+                ],
+            },
+            {
+                "name": "cardano-profile bundle promote <run-id> --reason-code <c> --reason-text <t>",
+                "summary": "Promote a run into the curated set with governance metadata (reason code + text).",
+                "examples": [
+                    {"label": "Promote to curated", "command": "cardano-profile bundle promote 20260427T100000Z-abc123 --reason-code finding --reason-text \"tx-3element divergence\""},
                 ],
             },
             {
@@ -131,44 +144,26 @@ CLI_GROUPS: list[dict[str, Any]] = [
         "slug": "fuzz",
         "title": "fuzz",
         "summary": (
-            "Run a fuzz campaign against a registered target. In this V3 "
-            "delivery, registered targets are the retained M2 decoder "
-            "manifests under <code>dwarf/targets/manifests/</code>."
+            "Run a fuzz campaign against a registered fuzz id. In this delivery "
+            "the ids are the retained M2 decoder manifests under "
+            "<code>dwarf/targets/manifests/</code>. Browse the full target "
+            "catalogue in the dashboard at <code>/operate/targets</code>."
         ),
         "anchor_path": "dwarf/profile_manager/cli.py",
         "commands": [
             {
-                "name": "cardano-profile fuzz run --target <id>",
-                "summary": "Run a fuzz campaign against a registered target.",
+                "name": "cardano-profile fuzz list",
+                "summary": "List the registered fuzz ids.",
                 "examples": [
-                    {"label": "CBOR tx-body", "command": "cardano-profile fuzz run --target amaru-cbor-decode-tx-body"},
-                ],
-            },
-        ],
-    },
-    {
-        "slug": "target",
-        "title": "target",
-        "summary": (
-            "Inspect registered fuzz targets. Each target is a per-implementation "
-            "shim that reads bytes from stdin, invokes one upstream parser or "
-            "decoder, and reports the outcome. Manifests live under "
-            "<code>dwarf/targets/manifests/</code>."
-        ),
-        "anchor_path": "dwarf/profile_manager/cli.py",
-        "commands": [
-            {
-                "name": "cardano-profile target list",
-                "summary": "List registered targets.",
-                "examples": [
-                    {"label": "All targets", "command": "cardano-profile target list"},
+                    {"label": "All fuzz ids", "command": "cardano-profile fuzz list"},
                 ],
             },
             {
-                "name": "cardano-profile target inspect <id>",
-                "summary": "Print one target's manifest fields (implementation, language, upstream commit, invariants).",
+                "name": "cardano-profile fuzz run <fuzz-id> [--dry-run] [--approve]",
+                "summary": "Run a fuzz campaign against a registered fuzz id. The id is a positional argument.",
                 "examples": [
-                    {"label": "Inspect tx-body shim", "command": "cardano-profile target inspect amaru-cbor-tx-body"},
+                    {"label": "CBOR tx-body", "command": "cardano-profile fuzz run amaru-cbor-decode-tx-body"},
+                    {"label": "Preview only", "command": "cardano-profile fuzz run amaru-cbor-decode-tx-body --dry-run"},
                 ],
             },
         ],
@@ -177,188 +172,22 @@ CLI_GROUPS: list[dict[str, Any]] = [
         "slug": "primitive",
         "title": "primitive",
         "summary": (
-            "List and describe primitives — the typed building blocks scenarios "
-            "reference by name (setup, load, probe, assertion, fault, teardown). "
-            "The registry under <code>dwarf/primitives/registry.json</code> is "
-            "the canonical mapping. Each entry below is one primitive plus a "
-            "scenario that uses it; copy-paste the second example to run the "
-            "primitive end-to-end through the scenario harness."
+            "Scaffold new primitives — the typed building blocks scenarios "
+            "reference by name. Family is one of setup, load, probe, assertion, "
+            "fault, teardown; the registry under "
+            "<code>dwarf/primitives/registry.json</code> is the canonical "
+            "mapping. The CLI exposes scaffolding only; browse and inspect the "
+            "full catalogue of 206 primitives in the dashboard at "
+            "<code>/operate/primitives</code>."
         ),
         "anchor_path": "dwarf/primitives/registry.json",
         "commands": [
             {
-                "name": "cardano-profile primitive list",
-                "summary": "List every primitive in the registry, grouped by family.",
+                "name": "cardano-profile primitive new --family <family> --name <name>",
+                "summary": "Scaffold a new primitive: writes the params schema under <code>dwarf/primitives/&lt;family&gt;/</code>, a <code>dwarf/scripts/runtime_&lt;name&gt;.py</code> helper, and a <code>tests/test_runtime_&lt;name&gt;.py</code> test, and appends the entry to the registry.",
                 "examples": [
-                    {"label": "All primitives", "command": "cardano-profile primitive list"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe <name>",
-                "summary": "Print one primitive's parameter schema and supported runtimes.",
-                "examples": [
-                    {"label": "Describe a fault primitive", "command": "cardano-profile primitive describe runtime_local_port_delay"},
-                ],
-            },
-            # ---- Bundle-workflow primitives (post-run evidence operations) ----
-            {
-                "name": "cardano-profile primitive describe runtime_bundle_attestation",
-                "summary": "Sign a bundle's manifest with a per-actor key and write the signature into the run dir. Establishes provenance: who staged this bundle, when, and against what manifest hash.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_bundle_attestation"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-bundle-attestation-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_bundle_chain_verify",
-                "summary": "Walk the hash chain from a target run back to genesis and assert every link's manifest_hash recomputes. Mirrors what <code>cardano-profile verify</code> does, but is invokable as a scenario step so the verdict is itself a forensic bundle.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_bundle_chain_verify"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-bundle-chain-verify-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_bundle_replay",
-                "summary": "Re-execute a previously recorded run against the current target, write the replay's outputs into a new bundle, and surface a side-by-side compare with the original. Default <code>compare_relpaths</code> covers manifest, assertions, and probes.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_bundle_replay"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-bundle-replay-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_bundle_diff",
-                "summary": "Diff two bundles by run-id pair (left/right) across configurable relpaths. Produces a structured diff artifact in the new bundle.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_bundle_diff"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-bundle-diff-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_bundle_export_sarif",
-                "summary": "Render a bundle's findings into SARIF v2.1.0 for upstream tooling (GitHub code scanning, Sonar, etc.). Schema path is configurable; defaults to the v2.1.0 schema bundled with Dwarf.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_bundle_export_sarif"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-bundle-export-sarif-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_bundle_timeline",
-                "summary": "Roll a set of bundles into a single chronological timeline document — useful for post-incident review or evidence package authoring. Filters by scenario id and/or signature token.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_bundle_timeline"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-bundle-timeline-example-smoke.yaml"},
-                ],
-            },
-            # ---- Coverage primitives ----
-            {
-                "name": "cardano-profile primitive describe runtime_coverage_report",
-                "summary": "Aggregate coverage from one or more AFL++ campaign bundles into an HTML report. <code>merge_mode</code> picks per-input replay, file-level bitmap merge, or both.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_coverage_report"},
-                    {"label": "File-level AFL++ merge example", "command": "cardano-profile scenario run dwarf/scenarios/runtime-coverage-report-file-level-aflpp-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_aggregate_coverage",
-                "summary": "Roll coverage across many bundles (cargo-fuzz + AFL++ campaign IDs) into one merged report. Complements runtime_coverage_report by spanning bundle boundaries.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_aggregate_coverage"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-aggregate-coverage-example-smoke.yaml"},
-                ],
-            },
-            # ---- Fuzz / campaign primitives ----
-            {
-                "name": "cardano-profile primitive describe runtime_aflpp_campaign",
-                "summary": "Drive an AFL++ persistent-mode campaign for a configured target binary, with optional sanitizer toolchain and seed corpus directories. Outputs land in the bundle's outputs/ tree.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_aflpp_campaign"},
-                    {"label": "Run an AFL++ smoke", "command": "cardano-profile scenario run dwarf/scenarios/amaru-cargo-fuzz-blockfetch-aflpp-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_fuzz_campaign",
-                "summary": "Multi-target × multi-engine campaign orchestrator. Schedules sub-campaigns within a total time budget (cargo-fuzz, AFL++, custom mutator) and writes a unified summary.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_fuzz_campaign"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-fuzz-campaign-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_long_campaign",
-                "summary": "Long-running campaign harness with periodic checkpoint exports — emits intermediate bundles every <code>checkpoint_seconds</code> so progress is preserved across day-or-multi-day runs.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_long_campaign"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-long-campaign-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_crash_triage",
-                "summary": "Walk a bundle's crash directory, classify and minimize each input (afl-tmin or libFuzzer-min), and emit a triage record with reproduction commands.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_crash_triage"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_afl_corpus_min",
-                "summary": "Run <code>afl-cmin</code> against an AFL++ queue and write the minimised corpus to an output directory. Smaller, equivalent-coverage corpus for downstream campaigns.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_afl_corpus_min"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-afl-corpus-min-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_custom_mutator_template",
-                "summary": "Drive a libFuzzer custom-mutator harness when a structural mutator implementation is available. Enforces the structural-mutator pattern.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_custom_mutator_template"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-custom-mutator-template-block-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_differential_rule_harness",
-                "summary": "Run a differential rule-execution harness — feed one input through both a target and a reference implementation and assert behavioural equivalence.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_differential_rule_harness"},
-                ],
-            },
-            # ---- Static-analysis primitives ----
-            {
-                "name": "cardano-profile primitive describe runtime_static_analysis_clippy",
-                "summary": "Run <code>cargo clippy</code> against a configured crate directory and write the report into the bundle's outputs/. The report itself is the evidence; the harness does not promote any clippy warning into a verdict.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_static_analysis_clippy"},
-                    {"label": "Run the example scenario", "command": "cardano-profile scenario run dwarf/scenarios/runtime-static-analysis-clippy-example-smoke.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_static_analysis_audit",
-                "summary": "Run <code>cargo audit</code> for advisory-database checks on a crate. Captures the JSON report and the advisory IDs as evidence.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_static_analysis_audit"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_static_analysis_deny",
-                "summary": "Run <code>cargo deny</code> against a crate's policy (licences, advisories, banned crates, sources) and write the report.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_static_analysis_deny"},
-                ],
-            },
-            # ---- Extraction primitives ----
-            {
-                "name": "cardano-profile primitive describe runtime_cardano_lsq_extract",
-                "summary": "Drive the LSQ (LocalStateQuery) extractor against a running cardano-node socket; capture <code>DebugEpochState</code> and friends as a JSON record. Era-specific; supply <code>era</code> + <code>network_magic</code>.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_cardano_lsq_extract"},
-                    {"label": "Extract DebugEpochState", "command": "cardano-profile scenario run dwarf/scenarios/cardano-lsq-extract-debug-epoch-state.yaml"},
-                ],
-            },
-            {
-                "name": "cardano-profile primitive describe runtime_corpus_synthesize",
-                "summary": "Generate structurally-valid CBOR seed inputs for a target by combining a grammar dictionary with a structure spec. Output count and selection strategy are configurable.",
-                "examples": [
-                    {"label": "Describe the schema", "command": "cardano-profile primitive describe runtime_corpus_synthesize"},
-                    {"label": "Synthesize blockfetch seeds", "command": "cardano-profile scenario run dwarf/scenarios/runtime-corpus-synthesize-blockfetch-smoke.yaml"},
+                    {"label": "New load primitive", "command": "cardano-profile primitive new --family load --name my_new_primitive"},
+                    {"label": "New assertion", "command": "cardano-profile primitive new --family assertion --name my_invariant_holds"},
                 ],
             },
         ],
@@ -370,7 +199,8 @@ CLI_GROUPS: list[dict[str, Any]] = [
             "Generate the static dashboard or serve it over HTTP. Live mode "
             "polls the configured target host over read-only SSH; "
             "mutating endpoints (run, compare, paste, promote) require the "
-            "dashboard token and are serialised by a global lock."
+            "dashboard token and are serialised by a global lock. "
+            "Subcommands: status, generate, serve."
         ),
         "anchor_path": "dwarf/profile_manager/cli.py",
         "commands": [
@@ -517,29 +347,38 @@ CLI_GROUPS: list[dict[str, Any]] = [
         "summary": (
             "Triage state machine commands. Cluster runs into buckets, manage "
             "the replay and compare queues, run minimization, and promote a "
-            "case from candidate to confirmed-anomaly."
+            "case from candidate to confirmed-anomaly. Subcommands: replay, "
+            "minimize, compare, ingest-run, replay-queue, compare-queue, "
+            "promote, buckets, repair-state."
         ),
         "anchor_path": "dwarf/profile_manager/cli.py",
         "commands": [
             {
-                "name": "cardano-profile testcase list",
-                "summary": "List every catalogued test case across buckets.",
+                "name": "cardano-profile testcase replay --target {amaru,cardano-node}",
+                "summary": "Replay a recorded testcase against one implementation and record the outcome.",
                 "examples": [
-                    {"label": "All cases", "command": "cardano-profile testcase list"},
+                    {"label": "Replay against Amaru", "command": "cardano-profile testcase replay --target amaru"},
                 ],
             },
             {
-                "name": "cardano-profile testcase buckets list",
-                "summary": "List bucket groupings (by classification, triage reason, target).",
+                "name": "cardano-profile testcase minimize / compare / promote",
+                "summary": "Minimize a crashing input, compare two implementations' outcomes, and promote a candidate to a confirmed anomaly.",
                 "examples": [
-                    {"label": "Buckets", "command": "cardano-profile testcase buckets list"},
+                    {"label": "Promote a case", "command": "cardano-profile testcase promote <case-id>"},
                 ],
             },
             {
-                "name": "cardano-profile testcase replay-queue list",
-                "summary": "Show pending replay work.",
+                "name": "cardano-profile testcase buckets summary",
+                "summary": "Summarize the triage buckets (by classification, reason, target).",
                 "examples": [
-                    {"label": "Pending replays", "command": "cardano-profile testcase replay-queue list"},
+                    {"label": "Bucket summary", "command": "cardano-profile testcase buckets summary"},
+                ],
+            },
+            {
+                "name": "cardano-profile testcase replay-queue run",
+                "summary": "Drain the pending replay queue.",
+                "examples": [
+                    {"label": "Run the replay queue", "command": "cardano-profile testcase replay-queue run"},
                 ],
             },
         ],

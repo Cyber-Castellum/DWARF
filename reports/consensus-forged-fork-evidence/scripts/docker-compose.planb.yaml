@@ -51,7 +51,7 @@ services:
     command: ["-c", "exec /entry.sh"]
     volumes:
       - cardano_amaru_amaru-bundle:/bundle:ro
-      - /home/nigel/cardano-node-antithesis/testnets/cardano_amaru/amaru-runtime:/amaru-runtime:ro
+      - /home/dwarf/cardano-node-antithesis/testnets/cardano_amaru/amaru-runtime:/amaru-runtime:ro
       - pb-amaru-state:/srv/amaru
       - /tmp/planB/amaru-victim-entry.sh:/entry.sh:ro
     networks:

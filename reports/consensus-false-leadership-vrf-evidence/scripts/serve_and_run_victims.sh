@@ -7,7 +7,7 @@ W=/tmp/fl2
 NET=fl2net
 AIMG=ghcr.io/lambdasistemi/amaru-bootstrap-producer:03d2727b71e8d1fe7c793d5036dce3c3ce294f6c
 CN_IMG=dwarf/cardano-node:10.7.1
-RT=/home/nigel/cardano-node-antithesis/testnets/cardano_amaru/amaru-runtime
+RT=/home/dwarf/cardano-node-antithesis/testnets/cardano_amaru/amaru-runtime
 
 docker network create $NET 2>/dev/null || true
 

@@ -1,6 +1,6 @@
 # Dwarf Target Catalog
 
-`dwarf/targets/` is the source tree for Dwarf's M2 decoder targets. The
+`dwarf/targets/` is the source tree for Dwarf's decoder targets. The
 manifests under `dwarf/targets/manifests/` are the canonical catalog consumed by
 the CLI, the dashboard, and scenario validation.
 
@@ -10,11 +10,11 @@ the CLI, the dashboard, and scenario validation.
 dwarf/targets/
   amaru/                                   Rust CBOR and mini-protocol decoder binaries
   cardano-node/                            Haskell CBOR and mini-protocol decoder binaries
-  manifests/                               one manifest per M2 registered target
+  manifests/                               one manifest per registered target
   target/                                  gitignored build output
 ```
 
-The V3 delivery catalog is intentionally scoped to the M2 registered targets:
+The delivery catalog is intentionally scoped to the registered targets:
 Amaru and cardano-node Concise Binary Object Representation (CBOR) decoders plus
 mini-protocol decoders.
 
@@ -33,7 +33,7 @@ Each manifest records:
 - `invariants`
 
 `decoder_type` is the dashboard-facing taxonomy used by `/operate/targets`.
-Current M2 values are:
+Current values are:
 
 - `CBOR codec`
 - `Mini-protocol decoder`

@@ -121,7 +121,7 @@
 
 <section class="status-moog" aria-labelledby="moog-heading">
   <header><span class="eyebrow">Moog</span><h2 id="moog-heading">Deployment health</h2>
-    <p class="page-subhero">Read-only Moog deployment checks on <remote-host>. Public metadata only; wallet secrets and PATs are not inspected here.</p>
+    <p class="page-subhero">Read-only Moog deployment checks. Public metadata only; wallet secrets and PATs are not inspected here.</p>
   </header>
   <div class="status-tile-grid">
     <article class="status-tile status-tile--state-{{ 'stale' if moog.state == 'warn' else moog.state }}">
@@ -137,7 +137,7 @@
     </article>
     <article class="status-tile">
       <span class="eyebrow">Preprod linkage</span>
-      <span class="status-tile__metric"><code>token</code></span>
+      <span class="status-tile__metric">{{ moog.linkage_state }}</span>
       <dl class="status-tile__rows">
         <div><dt>asset id</dt><dd><code>{{ moog.token_id }}</code></dd></div>
         <div><dt>requester</dt><dd><code>{{ moog.requester_address }}</code></dd></div>
@@ -260,6 +260,86 @@
   </div>
 </section>
 {% endif %}
+
+<hr class="hairline">
+
+<section class="maintenance" aria-labelledby="maint-heading">
+  <span class="eyebrow">Operate · Maintenance</span>
+  <h2 id="maint-heading">Backup &amp; recovery</h2>
+  <p class="page-subhero">Back up DWARF's own control-plane state — scenarios, target manifests, profiles, config, plugin roots. This is not blockchain data; it is what you'd restore to stand this framework back up on a new host or after a bad config change.</p>
+
+  <div style="margin:12px 0;background:var(--obsidian-2);border:1px solid var(--rule);border-radius:12px;padding:14px 16px">
+    <span class="eyebrow">Backup</span>
+    <p class="page-subhero" style="margin:4px 0 8px;font-size:.78rem">Writes a checksummed <code>.tar.gz</code> (state + plugins) into the container's backups directory. Runs in-container; output streams below.</p>
+    <button id="bk-btn" type="button" onclick="runBackup()" style="background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer">Create backup</button>
+    <pre id="bk-out" style="margin:10px 0 0;background:#04060a;border:1px solid var(--rule);border-radius:10px;padding:12px 14px;min-height:48px;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.78rem;color:#cfeaea;display:none"></pre>
+  </div>
+
+  <div style="margin:12px 0;background:var(--obsidian-2);border:1px solid var(--rule);border-radius:12px;padding:14px 16px">
+    <span class="eyebrow">Snapshot</span>
+    <p class="page-subhero" style="margin:4px 0 8px;font-size:.78rem">Captures a forensic evidence snapshot of a <em>deployed</em> devnet's node status over SSH — so it runs on the deployment host, not from this container. Copy and paste:</p>
+    <div style="display:flex;gap:8px;align-items:stretch">
+      <code style="flex:1;background:#04060a;border:1px solid var(--rule);border-radius:8px;padding:8px 11px;font-family:var(--font-mono);font-size:.78rem;color:#cfeaea;overflow-x:auto;white-space:nowrap">cardano-profile snapshot</code>
+      <button type="button" data-cmd="cardano-profile snapshot" onclick="copyMaint(this)" style="background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap">Copy</button>
+    </div>
+  </div>
+
+  <p class="page-subhero" style="font-size:.75rem;color:var(--ink-muted)">Restoring is intentionally CLI-only — <code>cardano-profile restore &lt;archive&gt;</code> overwrites the live state tree, so it is kept off the one-click surface.</p>
+</section>
+
+{% if shim_enabled %}
+<hr class="hairline">
+
+<section class="substrate-control" aria-labelledby="subctl-heading">
+  <span class="eyebrow">Operate · Substrate</span>
+  <h2 id="subctl-heading">Devnet teardown</h2>
+  <p class="page-subhero">The substrate control channel is provisioned, so deploy is web-driven from each profile card. Teardown stops every DWARF-managed devnet on the substrate host and archives its runtime directories.</p>
+  <div style="margin:12px 0;background:var(--obsidian-2);border:1px solid var(--rule);border-radius:12px;padding:14px 16px">
+    <span class="eyebrow">Teardown active devnet(s)</span>
+    <p class="page-subhero" style="margin:4px 0 8px;font-size:.78rem">Runs <code>cardano-profile remove</code> over the restricted channel — only containers labelled <code>ada2.managed=dwarf</code> are affected. Output streams below.</p>
+    <button id="td-btn" type="button" onclick="runTeardown()" style="background:#7a1f1f;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer">Teardown</button>
+    <pre id="td-out" style="display:none;margin:10px 0 0;background:#04060a;border:1px solid var(--rule);border-radius:10px;padding:12px 14px;max-height:280px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.76rem;color:#cfeaea"></pre>
+  </div>
+</section>
+
+<script>
+async function runTeardown(){
+  if(!confirm('Tear down all DWARF-managed devnets on the substrate host?')){return;}
+  var out=document.getElementById('td-out'); out.style.display='block'; out.textContent='$ cardano-profile remove\n';
+  var btn=document.getElementById('td-btn'); btn.disabled=true;
+  try{
+    var resp=await fetch('/api/remove?token='+encodeURIComponent(maintToken())+'&approve=1',{method:'POST'});
+    if(!resp.ok){out.textContent+='HTTP '+resp.status+': '+(await resp.text());return;}
+    var rd=resp.body.getReader(),dec=new TextDecoder(),buf='';
+    while(true){var r=await rd.read();if(r.done)break;buf+=dec.decode(r.value,{stream:true});var parts=buf.split('\n\n');buf=parts.pop();
+      for(var p of parts){for(var line of p.split('\n')){if(line.indexOf('data: ')===0){out.textContent+=line.slice(6)+'\n';out.scrollTop=out.scrollHeight;}else if(line.indexOf('event: done')===0){out.textContent+='[done]\n';}}}}
+  }catch(e){out.textContent+='\n[error] '+String(e);}
+  finally{btn.disabled=false;}
+}
+</script>
+{% endif %}
+
+<script>
+function maintToken(){return new URLSearchParams(location.search).get('token')||'{{ token }}'||'dwarf';}
+function copyMaint(btn){
+  var cmd=btn.getAttribute('data-cmd')||'';
+  var done=function(){var o=btn.textContent;btn.textContent='Copied';setTimeout(function(){btn.textContent=o;},1200);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(cmd).then(done,done);}
+  else{var t=document.createElement('textarea');t.value=cmd;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(t);}
+}
+async function runBackup(){
+  var out=document.getElementById('bk-out'); out.style.display='block'; out.textContent='$ cardano-profile backup\n';
+  var btn=document.getElementById('bk-btn'); btn.disabled=true;
+  try{
+    var resp=await fetch('/api/backup/create?token='+encodeURIComponent(maintToken()),{method:'POST'});
+    if(!resp.ok){out.textContent+='HTTP '+resp.status+': '+(await resp.text());return;}
+    var rd=resp.body.getReader(),dec=new TextDecoder(),buf='';
+    while(true){var r=await rd.read();if(r.done)break;buf+=dec.decode(r.value,{stream:true});var parts=buf.split('\n\n');buf=parts.pop();
+      for(var p of parts){for(var line of p.split('\n')){if(line.indexOf('data: ')===0){out.textContent+=line.slice(6)+'\n';out.scrollTop=out.scrollHeight;}else if(line.indexOf('event: done')===0){out.textContent+='[done]\n';}}}}
+  }catch(e){out.textContent+='\n[error] '+String(e);}
+  finally{btn.disabled=false;}
+}
+</script>
 
 <script type="module" src="/static/js/copy-cell.js"></script>
 {% endblock %}

@@ -64,6 +64,7 @@ def _parse_scenario_file(path: Path) -> dict[str, Any] | None:
         "title": s.title,
         "path": str(path),
         "runtime": s.runtime,
+        "target_impl": (getattr(s, "target", {}) or {}).get("implementation"),
         "related_milestones": list(getattr(s, "related_milestones", []) or []),
         "m1_trace": dict(getattr(s, "m1_trace", {}) or {}),
         "evidence_intent": getattr(s, "evidence_intent", None),

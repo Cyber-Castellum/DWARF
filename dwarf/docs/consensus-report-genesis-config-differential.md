@@ -13,14 +13,14 @@ expectations honestly:
   network — so there is **no attack surface**. The bug is that cardano-node *crashes* (a loud,
   fast startup exception) instead of cleanly rejecting a malformed genesis. It belongs upstream
   as a `cardano-node` (IntersectMBO) robustness issue, not a security advisory.
-- **Finding 2 is the Amaru-relevant result** — an architectural observation about how Amaru
-  validates (or rather, doesn't re-validate) the genesis. No exploit; a design observation worth
-  the team's attention.
-- **Finding 3 is a preliminary lead, deliberately not claimed as a finding** (the data was flaky).
+- **Findings 2 & 3 are the Amaru-relevant result** — confirmed *from Amaru's source code*: the
+  Amaru node never reads the raw genesis at runtime and runs on a reduced, integer parameter model
+  that omits fields cardano-node validates (e.g. `slotLength`). No exploit; a design/trust
+  observation worth the team's attention.
 
 Nothing here is a critical or exploitable security finding. The value is the **method** (a
-config-acceptance differential is a new surface DWARF didn't cover) and two concrete, honest
-observations.
+config-acceptance differential is a new surface DWARF didn't cover) and concrete, honest,
+source-confirmed observations.
 
 ## What it tests
 
@@ -69,26 +69,33 @@ intentionally unconstrained at the genesis layer, so we flag them as observation
 but the *negative-slotLength-accepted vs zero-slotLength-crashes* inconsistency on one field is a
 concrete robustness gap.
 
-### Finding 2 (WELL-SUPPORTED) — the two implementations validate genesis in fundamentally different ways
+### Finding 2 (CONFIRMED, from source) — the Amaru node never reads the raw genesis; it runs on a reduced, pre-set parameter model
 
-This is the substantive gap-#2 result:
+This is the substantive gap-#2 result, and it is confirmed by reading Amaru's source (not the
+flaky runtime):
 
-- **cardano-node** reads and validates the raw `shelley-genesis.json` **directly, at node startup**, and rejects a bad one in **~20 ms**, before any heavy initialisation.
-- **Amaru** does **not** validate the raw genesis at `amaru run`. It consumes **pre-derived** `AMARU_GLOBAL_*` parameters that a *separate* component (`bootstrap-producer`) computes from the genesis earlier. That derivation is **orders of magnitude slower** (seconds to minutes), **intermittently hangs** on its internal header-extractor regardless of input, and — most concerning — produced **non-deterministic** derivations for the same invalid input across runs (`activeSlotsCoeff=2.0` yielded `1/f=1, scale=25` on one run and `1/f=5` on another).
+- **cardano-node** reads and validates the raw `shelley-genesis.json` **directly, at node startup**, rejecting a bad one in **~20 ms**.
+- **The Amaru node does not read `shelley-genesis.json` at all at run time.** The `amaru`, `amaru-consensus`, and `amaru-ledger` crates contain *zero* references to `shelley-genesis` / `activeSlotsCoeff`. Amaru's consensus parameters come from a **hardcoded per-network preset** (`TESTNET_/PREPROD_/MAINNET_GLOBAL_PARAMETERS`, resolved by a `match network`) or an `AMARU_GLOBAL_*` env override — a value computed *once, at setup*, by separate tooling (`bootstrap-producer`).
 
-So the two clients have different **config-trust models**: cardano-node treats the genesis as untrusted input to validate up-front; Amaru trusts a derived-params artifact and never re-checks the source genesis at run time. A malformed genesis that the deriver mis-handles can propagate silently into Amaru.
+So the two clients have fundamentally different **config-trust models**: cardano-node treats the genesis as untrusted input to validate at every startup; Amaru trusts a pre-set/derived parameter artifact and never re-checks the source genesis. Any genesis-level validation happens (if at all) only in the setup/derivation tooling — which we observed to be slow, to intermittently hang, and to derive **non-deterministically** on invalid input.
 
-### Finding 3 (PRELIMINARY — not yet a confirmed Amaru finding)
+### Finding 3 (CONFIRMED, from source — upgraded from a held-back lead) — Amaru's parameter model omits fields cardano-node validates, and can't represent all valid genesis values
 
-Several mutations *hint* that Amaru is more lenient than cardano-node, but the results are not clean enough to assert:
+The earlier runtime hints were flaky, so they were held back. Reading the source confirms them
+deterministically via the `GlobalParameters` struct Amaru actually uses:
 
-- `slotLength = 0`: cardano-node **crashes**; Amaru **accepts** and derives baseline params, booting normally. (Amaru's derivation doesn't use `slotLength`, so it ignores the zero.) — the clearest divergence, but seen once.
-- `activeSlotsCoeff = 2.0` (out of bounds): cardano-node rejects; Amaru does **not** cleanly reject — it produces a mangled, non-deterministic derivation and then hangs.
-- `activeSlotsCoeff = 0`: **both** fail (cardano-node bounds-rejects; Amaru errors with a division-by-zero) — rough agreement.
+- **`slotLength` is not in Amaru's parameter model at all.** So a malformed `slotLength` (`0`, negative, `1e-300`) that **crashes cardano-node** is simply **ignored** by Amaru — it accepts and runs. This is the clearest divergence, and it is now a *structural fact*, not a one-off observation.
+- **The active-slot coefficient is stored only as `active_slot_coeff_inverse: usize` — an integer 1/f.** Amaru therefore cannot faithfully represent an arbitrary-precision or out-of-range genesis `activeSlotsCoeff`: `f=0` divides by zero in derivation (matching the observed `asc_0` error); `f>1` truncates to a nonsense small integer; a non-`1/n` value is rounded.
 
-**These are leads, not findings.** Amaru's derivation was non-deterministic and several runs hung, so the per-mutation Amaru verdicts are not reliable. Confirming Amaru's leniency needs a **deterministic** Amaru genesis-parse surface (its own config parser, or `amaru import` with a hard timeout that classifies a hang as its own outcome) rather than the flaky `bootstrap-producer` path. We are explicitly **not** reporting "Amaru accepts invalid genesis" as a finding on this evidence — that would be the LEAD-001 mistake (a harness artifact dressed as a security finding).
+**Net (Findings 2 + 3 together):** genesis-level validation that cardano-node performs at every
+startup does not happen in the Amaru node, because the node runs on a reduced integer parameter
+model derived once by external tooling. This is not an exploit — but it is a real, source-confirmed
+difference in how the two implementations trust and model the protocol's foundational parameters,
+and it is the kind of thing worth the Amaru team's attention.
 
-## Status & next step
+## Status
 
-Confirmed: the cardano-node crash (Finding 1) and the architectural asymmetry (Finding 2). Open: a clean Amaru accept/reject differential (Finding 3), gated on a deterministic Amaru genesis-validation surface. Raw data and the mutation battery are in
+All three findings are now **confirmed**: the cardano-node crash (Finding 1, via a 417-mutation
+sweep) and the Amaru config-trust/parameter-model gap (Findings 2 & 3, via Amaru's source code).
+No open threads remain on this line of work. Raw data, the mutation battery, and the sweep are in
 `reports/consensus-genesis-config-evidence/`.

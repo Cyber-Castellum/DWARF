@@ -46,4 +46,19 @@
     <span class="eyebrow">Runtime root</span>
     <code>{{ entry.remote_runtime_root }}</code>
   </p>
+  <div class="profile-entry__deploy" style="margin-top:12px">
+    <span class="eyebrow">Deploy</span>
+    {% if shim_enabled %}
+    <p class="page-subhero" style="margin:2px 0 6px;font-size:.72rem">Deploys this profile to the substrate host over the restricted control channel. Output streams below.</p>
+    <button type="button" class="profile-entry__deploy-btn" data-profile="{{ entry.id }}" onclick="runDeploy(this)" style="background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:8px 18px;font-weight:700;font-size:.82rem;cursor:pointer">Deploy</button>
+    <pre class="profile-entry__deploy-out" id="deploy-out-{{ entry.id }}" style="display:none;margin:10px 0 0;background:#04060a;border:1px solid var(--rule);border-radius:10px;padding:12px 14px;max-height:280px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.76rem;color:#cfeaea"></pre>
+    <p class="page-subhero" style="margin:8px 0 0;font-size:.7rem;color:var(--ink-muted)">Or run manually: <code>cardano-profile deploy {{ entry.id }}</code></p>
+    {% else %}
+    <p class="page-subhero" style="margin:2px 0 6px;font-size:.72rem">Spins up a devnet on the substrate host. The control channel is not provisioned on this deployment, so copy-paste and run on the host:</p>
+    <div style="display:flex;gap:8px;align-items:stretch">
+      <code class="profile-entry__deploy-cmd" style="flex:1;background:#04060a;border:1px solid var(--rule);border-radius:8px;padding:8px 11px;font-family:var(--font-mono);font-size:.78rem;color:#cfeaea;overflow-x:auto;white-space:nowrap">cardano-profile deploy {{ entry.id }}</code>
+      <button type="button" class="profile-entry__deploy-copy" data-cmd="cardano-profile deploy {{ entry.id }}" onclick="copyDeploy(this)" style="background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap">Copy</button>
+    </div>
+    {% endif %}
+  </div>
 </article>

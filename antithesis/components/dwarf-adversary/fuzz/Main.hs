@@ -37,6 +37,7 @@ import DwarfAdversary.Fuzz
     , parseMutationLevel
     )
 import DwarfAdversary.SDK qualified as SDK
+import DwarfAdversary.TxSubmission.Target (TxField (GovAction, PlutusWitness), mutateTxField)
 import System.IO (IOMode (ReadMode), withBinaryFile)
 import Numeric (showHex)
 import System.Directory (doesFileExist, listDirectory)
@@ -77,13 +78,25 @@ runOne target limitUs bytes = do
         AbAccepted -> DecodedOk
 
 -- | Mutate the seed bytes by the chosen level (reuses the adversary engine).
-mutate :: MutationLevel -> StdGen -> BS.ByteString -> BS.ByteString
-mutate lvl g bs = case lvl of
+-- @shape@ selects WHERE the structural term-mutation lands: "whole" (default)
+-- perturbs the whole decoded Term — which for a wire GenTx mostly hits the
+-- envelope; "governance" routes it through the field targeter so it perturbs
+-- tx_body key 20 (proposal_procedures), and "plutus" perturbs witness_set key 5
+-- (redeemers) — landing the subsequent 'decTx' IN the Conway governance / Plutus
+-- witness decoder. @shape@ only affects the 'mutateTerm'-based levels (struct,
+-- both); bytes and semantic are unchanged. With shape="whole" every level is
+-- byte-for-behavior identical to before.
+mutate :: String -> MutationLevel -> StdGen -> BS.ByteString -> BS.ByteString
+mutate shape lvl g bs = case lvl of
     LevelBytes -> fst (corruptBytes g 1.0 bs)
-    LevelStruct -> viaTerm (\t -> fst (mutateTerm g 1.0 t))
+    LevelStruct -> viaTerm termMut
     LevelSemantic -> viaTerm (\t -> fst (mutateTermSemantic g 1.0 t))
-    LevelBoth -> fst (corruptBytes g 1.0 (viaTerm (\t -> fst (mutateTerm g 1.0 t))))
+    LevelBoth -> fst (corruptBytes g 1.0 (viaTerm termMut))
   where
+    termMut t
+        | shape == "governance" = fst (mutateTxField GovAction g 1.0 t)
+        | shape == "plutus"     = fst (mutateTxField PlutusWitness g 1.0 t)
+        | otherwise             = fst (mutateTerm g 1.0 t)
     viaTerm f = case deserialiseFromBytes decodeTerm (LBS.fromStrict bs) of
         Right (rest, t) | LBS.null rest -> toStrictByteString (encodeTerm (f t))
         _ -> bs
@@ -96,6 +109,7 @@ main = do
         iters = maybe 1000000 read (lookupArg "--iters" args) :: Int
         maxSecs = maybe 0 read (lookupArg "--seconds" args) :: Double -- 0 = iter-bound
         lvl = maybe LevelBytes id (lookupArg "--level" args >>= parseMutationLevel)
+        shape = maybe "whole" id (lookupArg "--shape" args)
         limitUs = maybe 1000000 read (lookupArg "--timeout-us" args) :: Int
         sdkOn = "--sdk" `elem` args
         keepN = 25 :: Int
@@ -108,6 +122,7 @@ main = do
                 ( "dwarf-decoder-fuzz: target=" <> target <> " corpus=" <> corpus
                     <> " seeds=" <> show (length seeds)
                     <> " iters=" <> show iters <> " level=" <> show lvl
+                    <> " shape=" <> shape
                     <> " seed=" <> show seed0
                 )
             okR <- newIORef (0 :: Int)
@@ -145,7 +160,7 @@ main = do
                         let (g1, g2) = split g
                             (si, g3) = randomR (0, nSeeds - 1) g1
                             base = seedVec !! si
-                            mutated = mutate lvl g3 base
+                            mutated = mutate shape lvl g3 base
                         o <- runOne target limitUs mutated
                         case o of
                             DecodedOk -> modifyIORef' okR (+ 1) >> onceSometimes sawOkR "dwarf_decoder_decoded_ok"
@@ -193,6 +208,7 @@ main = do
                     ( object
                         [ "target" .= target
                         , "level" .= show lvl
+                        , "shape" .= shape
                         , "seed" .= seed0
                         , "iterations" .= done
                         , "wallSeconds" .= secs

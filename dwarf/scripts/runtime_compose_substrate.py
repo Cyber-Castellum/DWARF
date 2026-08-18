@@ -381,7 +381,12 @@ def _launch_amaru_node(node: dict, *, network_name: str, binary_path: str, runti
     else:
         Path(node["bootstrap_stdout"]).write_text("", encoding="utf-8")
         Path(node["bootstrap_stderr"]).write_text("", encoding="utf-8")
-    peer_addresses = list(node["peer_addresses"])
+    # In a containerised (docker) substrate the host-mapped peer_addresses
+    # (127.0.0.1:<host-port>) resolve to the Amaru container's own loopback, so
+    # it never connects. Prefer the container-network addresses (prod1:3001)
+    # when the compose layer provided them; fall back to host addresses for
+    # host-process substrates.
+    peer_addresses = list(node.get("container_peer_addresses") or node["peer_addresses"])
     if node.get("fallback_peer_addresses"):
         for peer_address in node["fallback_peer_addresses"]:
             if peer_address not in peer_addresses:

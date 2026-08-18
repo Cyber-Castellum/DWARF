@@ -1,13 +1,12 @@
-import os
 from profile_manager.config import DeploymentConfig, save_config
 
 
 DEFAULTS = {
-    "deployment_name": "<remote-host>",
-    "host": "<box-lan-ip>",
-    "ssh_user": "USER",
-    "ssh_key_path": "/Users/USER/.ssh/<remote-host>",
-    "remote_base_path": os.path.expanduser("~/cardano-profiles"),
+    "deployment_name": "dwarf-devnet",
+    "host": "127.0.0.1",
+    "ssh_user": "dwarf",
+    "ssh_key_path": "~/.ssh/dwarf-deploy",
+    "remote_base_path": "/opt/dwarf/profiles",
 }
 
 
@@ -44,6 +43,14 @@ def run_intake():
 def ensure_config_or_intake(command_name):
     if command_name == "intake":
         return None
+    import sys
+    if not sys.stdin or not sys.stdin.isatty():
+        # Non-interactive caller (dashboard action, CI, cron): don't block on a
+        # prompt that can never be answered — fail with a clear next step.
+        raise SystemExit(
+            "No deployment config found. Configure it in the dashboard at "
+            "/operate/config, or run `cardano-profile intake`, before running this command."
+        )
     print("No deployment config found.")
     print()
     print("1. New deployment")

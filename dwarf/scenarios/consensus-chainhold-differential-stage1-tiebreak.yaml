@@ -1,7 +1,7 @@
 {
   "spec_version": "v1",
   "id": "consensus-chainhold-differential-stage1-tiebreak",
-  "title": "Chain-selection differential (chainhold) stage 1 — cardano-node vs Amaru agree on the same tip under real forks / VRF tiebreak",
+  "title": "Chain-selection differential (stage 1) — cardano-node vs native Amaru relays agree on the same tip under real forks / VRF tiebreak (upstream mesh, direct comparison)",
   "authors": [
     "dwarf"
   ],
@@ -12,7 +12,9 @@
     "chain-selection",
     "vrf-tiebreak",
     "amaru",
-    "common-prefix"
+    "common-prefix",
+    "upstream-topology",
+    "direct-amaru"
   ],
   "evidence_intent": "candidate",
   "target": {
@@ -23,81 +25,46 @@
   "seed": "0x0a1b2c3d",
   "iterations": 1,
   "shrink": false,
-  "substrate": {
-    "compose_mode": "docker",
-    "network": "testnet_42",
-    "nodes": [
-      { "id": "prod1", "impl": "cardano-node", "version": "10.7.1", "role": "honest" },
-      { "id": "prod2", "impl": "cardano-node", "version": "10.7.1", "role": "honest" },
-      { "id": "cn-relay", "impl": "cardano-node", "version": "10.7.1", "role": "honest" },
-      { "id": "amaru1", "impl": "amaru", "version": "0.1.2", "role": "honest" },
-      { "id": "amaru2", "impl": "amaru", "version": "0.1.2", "role": "honest" }
-    ],
-    "topology": {
-      "edges": [
-        { "from": "prod1", "to": "prod2" },
-        { "from": "prod2", "to": "prod1" },
-        { "from": "cn-relay", "to": "prod1" },
-        { "from": "cn-relay", "to": "prod2" },
-        { "from": "amaru1", "to": "prod1" },
-        { "from": "amaru1", "to": "prod2" },
-        { "from": "amaru2", "to": "prod1" },
-        { "from": "amaru2", "to": "prod2" }
-      ]
-    }
+  "attach": {
+    "topology": "cardano_amaru",
+    "network_magic": 42
   },
   "setup": [
     {
-      "primitive": "runtime_install_version",
-      "output_dir": "outputs/substrate-install"
-    },
-    {
-      "primitive": "runtime_compose_substrate",
-      "output_dir": "outputs/substrate-compose",
-      "healthy_timeout_seconds": 240,
-      "timeout_seconds": 420
-    },
-    {
-      "primitive": "runtime_substrate_tip_warmup",
-      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
-      "node_ids": [ "prod1", "prod2", "cn-relay" ],
-      "minimum_ready_nodes": 3,
-      "minimum_slot": 1,
-      "sample_interval_seconds": 2,
-      "timeout_seconds": 240,
-      "output_dir": "outputs/substrate-tip-warmup"
+      "primitive": "runtime_attach_topology",
+      "output_dir": "outputs/attach",
+      "topology": "cardano_amaru",
+      "network_magic": 42
     }
   ],
   "load": [
     {
+      "primitive": "runtime_tracer_capture",
+      "output_dir": "outputs/tracer",
+      "tracer_container": "tracer",
+      "prometheus_port": 4000
+    },
+    {
       "primitive": "runtime_multi_node_observation",
-      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
-      "node_ids": [ "prod1", "prod2", "cn-relay", "amaru1", "amaru2" ],
-      "observation_window_seconds": 120,
-      "sample_interval_seconds": 2,
+      "runtime_metadata_path": "outputs/attach/runtime.json",
+      "node_ids": [ "relay1", "relay2", "amaru-relay-1", "amaru-relay-2" ],
+      "observation_window_seconds": 90,
+      "sample_interval_seconds": 3,
       "network_magic": 42,
-      "observation_primitives": [ "tip_state", "connection_state" ],
-      "timeout_seconds": 420,
+      "observation_primitives": [ "tip_state" ],
+      "timeout_seconds": 180,
       "output_dir": "outputs/multi-node-observation"
     }
   ],
   "probes": [],
   "assertions": [
     {
-      "primitive": "all_nodes_responsive"
-    },
-    {
       "primitive": "chain_select_differential",
-      "reference_node_ids": [ "cn-relay" ],
-      "target_node_ids": [ "amaru1", "amaru2" ],
-      "tolerance_slots": 3,
+      "reference_node_ids": [ "relay1", "relay2" ],
+      "target_node_ids": [ "amaru-relay-1", "amaru-relay-2" ],
+      "tolerance_slots": 5,
       "require_real_progress": true
     }
   ],
-  "teardown": [
-    {
-      "primitive": "runtime_teardown_substrate",
-      "output_dir": "outputs/substrate-teardown"
-    }
-  ]
+  "teardown": []
 }

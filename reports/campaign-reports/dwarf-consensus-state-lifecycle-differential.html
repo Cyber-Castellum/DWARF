@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DWARF — State-Lifecycle / Recovery Differential</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:34px 22px 70px}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.5}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
+  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  table{border-collapse:collapse;width:100%;margin:6px 0} .scroll{overflow-x:auto}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid;color:var(--warn);border-color:#fde68a;background:#fffbeb}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)} .muted{color:var(--muted)}
+  @media print{.wrap{max-width:none;padding:0} .card,.hero{break-inside:avoid}}
+</style></head><body><div class="wrap">
+  <h1>DWARF — State-Lifecycle / Recovery Differential</h1>
+  <div class="sub">"What happens across restart, crash-recovery, and cold-start?" · cardano-node vs Amaru · source analysis + live DWARF run · 2026-07-18</div>
+
+  <div class="hero">DWARF's oracles watch two nodes' chain <b>tips</b>. They don't test a node's own <b>life events</b> — restart, crash-recovery, cold-start after bootstrap. <b>Result: cardano-node keeps a self-contained ledger state and replays from the newest snapshot (falling back to genesis) to self-heal on startup; Amaru splits state across four cross-consistent stores, needs three epochs of snapshot history to operate, and cannot rebuild from genesis. The durable difference is the recovery model.</b> A live run <b>corrected</b> one predicted finding: a freshly bootstrapped Amaru crosses epoch boundaries <b>cleanly</b> on the normal bundle path (the bundle ships the 3 required snapshots) — no warmup crash. No exploit — a lifecycle model gap DWARF should test.</div>
+
+  <h2>The two lifecycle models <span class="chip">confirmed · from source</span></h2>
+  <div class="card scroll">
+  <table>
+    <tr><th></th><th>cardano-node</th><th>Amaru</th></tr>
+    <tr><td>State layout</td><td class="ok">one <b>self-contained</b> ledger state (stake dist. inside it) + ImmutableDB/VolatileDB</td><td class="warn"><b>four</b> stores — stable RocksDB + volatile diffs + epoch snapshots + stake-dist deque — that must stay consistent</td></tr>
+    <tr><td>Operational readiness</td><td class="ok"><b>immediate</b></td><td class="warn">needs <code>MIN_LEDGER_SNAPSHOTS = 3</code> — shipped in the bundle</td></tr>
+    <tr><td>Epoch boundary right after bootstrap</td><td class="ok">fine</td><td class="ok"><b>clean</b> on the normal bundle path (verified live); fails only if the aligned <code>N-2</code> history is missing</td></tr>
+    <tr><td>Restart recovery</td><td class="ok"><b>replay</b> newest snapshot → older → <b>genesis</b>; drop corrupt volatile tail</td><td class="bad">reopen existing stores; <b>must</b> be bootstrapped &amp; tip-aligned; <b>no from-genesis rebuild</b></td></tr>
+    <tr><td>Store inconsistency</td><td class="ok">ChainDB validates &amp; truncates — self-heals</td><td class="bad"><b>panics</b> (<code>no tip found</code>, <code>unreachable!</code> ×2)</td></tr>
+  </table>
+  </div>
+
+  <h2>Live run — a freshly bootstrapped Amaru crosses epoch boundaries cleanly <span class="chip" style="color:var(--ok);border-color:#bbf7d0;background:#f0fdf4">verified · on box</span></h2>
+  <div class="card">We fresh-bootstrapped a real Amaru node (<code>amaru-relay-2</code>): wiped its stores, restarted; its startup re-imported the trusted <b>bundle</b> — which ships exactly <code>MIN_LEDGER_SNAPSHOTS = 3</code> snapshots (slots 124/246/366) — then forward-synced from ~epoch 2. It crossed epoch boundaries <b>cleanly</b>: <b>49+ consecutive transitions, 0 panics, 0 <code>NoSuitableStakeDistribution</code>, 0 roll-forward errors, <code>restarts=0</code></b>. The <code>N-2</code> machinery is exercised (<code>stake_distribution_epoch = current_epoch − 3</code>, snapshot + prune each boundary) and <b>succeeds</b> because the bundle satisfies it. (Full replay-to-tip didn't finish — the post-reboot mesh was frozen and the upstream relay dropped chainsync; environmental, not a lifecycle defect.) <b>This corrects the earlier predicted "valid block fails at first boundary" claim.</b> Evidence: <code>consensus-state-lifecycle-evidence/logs/live-run-2026-07-18.txt</code>.</div>
+
+  <h2>Why the dependency is real (the mechanism, when history is missing)</h2>
+  <div class="card">Crossing an epoch boundary reads state from <b>two epochs ago</b>. If a bootstrap does <i>not</i> supply that aligned history, the read fails:
+  <pre>// crates/amaru-ledger/src/state.rs
+pub const MIN_LEDGER_SNAPSHOTS: u64 = 3;
+
+fn epoch_transition(next_epoch) {
+    ... self.snapshots.for_epoch(next_epoch - 2)?        // N-2 snapshot
+    ... self.stake_distribution(next_epoch - 2)?         // N-2 stake distribution
+}
+
+// StakeDistributionView::new -> if the deque lacks that epoch:
+//   Err(StateError::NoSuitableStakeDistribution(epoch))
+// -> forward(): Err => "Failed to roll forward the ledger state"  (a VALID block)</pre>
+  This is the failure mode <b>only for a bootstrap that lacks the aligned <code>N-2</code> snapshots</b> — not the normal bundle path (see the live run above). The earlier false-leadership-campaign crash was under a non-standard forged setup, not a normal bootstrap. cardano-node has no equivalent constraint: its stake distribution is part of a self-contained ledger state reconstructed by replay.</div>
+
+  <h2>Why it matters (no exploit — a model gap)</h2>
+  <div class="card">Splitting state into snapshot/stake stores and bootstrapping from a snapshot are legitimate designs. The finding is that the two nodes <b>recover differently, and DWARF's convergence oracles can't see it.</b> A lost/corrupt store that cardano-node would <b>replay past</b> (down to genesis) becomes, in Amaru, unrecoverable without a re-imported snapshot — and a store-invariant violation is a <b>panic</b>, not a recovery. The <code>N-2</code> snapshot dependency is real but satisfied on the normal bootstrap path (verified live); it becomes a liveness edge only for an incomplete bootstrap — which a tip oracle would register only as "Amaru stopped advancing."</div>
+
+  <h2>What DWARF should add</h2>
+  <div class="card">A <b>lifecycle dimension</b> to the differential harness: for each node drive <b>restart mid-epoch</b>, <b>restart across an epoch boundary immediately after bootstrap</b>, <b>kill&nbsp;-9 mid-write then reopen</b>, and (later) <b>on-disk-format upgrade</b>; assert the node returns on the <i>same</i> state and does not crash, and compare the two implementations. Amaru's warmup window and cardano-node's replay recovery are the first two behaviours to encode; the observed epoch-boundary crash is the seed case. Source citations in <code>consensus-state-lifecycle-evidence/</code>.</div>
+</div></body></html>

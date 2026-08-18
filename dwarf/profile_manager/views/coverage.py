@@ -2,17 +2,21 @@
 from __future__ import annotations
 
 from profile_manager.data.coverage import (
+    cbor_surface_coverage,
     fault_family_coverage,
     fuzzer_backend_coverage,
     mini_protocol_coverage,
+    scenario_census,
 )
 from profile_manager.templating import render
 
 
 def render_learn_coverage() -> str:
-    """Render /learn/coverage with three auto-derived matrices."""
+    """Render /learn/coverage: a scenario census plus per-surface matrices."""
     matrices = [
+        scenario_census(),
         mini_protocol_coverage(),
+        cbor_surface_coverage(),
         fault_family_coverage(),
         fuzzer_backend_coverage(),
     ]

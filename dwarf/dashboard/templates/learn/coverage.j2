@@ -3,6 +3,7 @@
 <span class="eyebrow">Learn</span>
 <h1>Coverage</h1>
 <p>What Dwarf actually supports today, derived from current repo state at request time. Each matrix below is auto-populated from real artifacts — scenarios, target manifests, primitive schemas, campaign scripts. Empty cells mean no artifact backs that combination yet; <span class="caveat-label">needs source</span> appears where the right answer can't be determined from disk.</p>
+<p><strong>Scenario census</strong> accounts for every scenario exactly once — its Total column reconciles to the full catalog. The matrices below it are <em>overlapping technical slices</em> of the same catalog (a scenario can exercise a mini-protocol <em>and</em> a CBOR surface, or neither), so their counts intentionally do not sum to the catalog total.</p>
 <hr class="hairline">
 
 {% for matrix in matrices %}

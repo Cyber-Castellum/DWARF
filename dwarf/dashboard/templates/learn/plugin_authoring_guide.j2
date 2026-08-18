@@ -47,21 +47,20 @@
   </ul>
 
   <h3><code>register(registry)</code></h3>
-  <p>The Python entrypoint exports a single function:</p>
+  <p>The Python entrypoint exports a single function. It receives the framework's <strong>merged registry dict</strong> (primitive-name → entry) and mutates it in place. There are no <code>register_primitive()</code> / <code>register_assertion()</code> helper methods — you add dict entries directly, in the exact shape used by <code>dwarf/primitives/registry.json</code>:</p>
   <pre class="run-payload-pre"><code># entrypoint.py
 def register(registry):
-    """Add primitives to the framework's registry."""
-    registry.register_primitive(
-        name="my_load_primitive",
-        family="runtime",
-        params_schema="params_schema.json",
-        executor=my_executor,
-    )
-
-def my_executor(params, *, output_dir):
-    # ... do the thing, write outputs, return a result dict
-    return {"healthy": True, "load_seen": params["target_qps"]}</code></pre>
-  <p>The registry exposes <code>register_primitive</code>, <code>register_assertion</code>, and <code>register_observer</code>. The framework merges every plugin's registrations into the global registry; conflicts (same name) raise at startup.</p>
+    """Add primitives to the framework's registry (a plain dict)."""
+    registry["hello_load"] = {
+        "class": "HelloLoad",                 # Primitive subclass name
+        "module": "dwarf_plugin_hello_world", # importable module holding the class
+        "family": "load",                     # setup | load | probe | assertion | fault | teardown
+        "runtimes": ["library"],              # library | devnet
+        "supports": ["cardano-node", "amaru"],
+        "params_schema": "hello_load.schema.json",  # relative to the plugin dir
+        "version": "0.1.0",
+    }</code></pre>
+  <p>Each entry declares <code>class</code> + <code>module</code> (the framework runs the primitive via <code>importlib.import_module(module)</code> then instantiates the class), a <code>family</code> from the fixed set above, its <code>runtimes</code> and <code>supports</code>, and a <code>params_schema</code> path. The executor itself is a <code>Primitive</code> subclass — the reliable way to get a correct skeleton (schema + helper + test) is the scaffold: <code>cardano-profile primitive new --family load --name hello_load</code>. Every plugin's entries are merged into the global registry; a name that collides with a built-in or another plugin raises at startup. Data-only primitives can skip the entrypoint entirely and ship a declarative <code>registry.json</code> (below).</p>
 </section>
 
 <hr class="hairline">
@@ -98,38 +97,49 @@ cd ~/.dwarf/plugins/hello-world</code></pre>
 }</code></pre>
 
   <h3>3. Write <code>entrypoint.py</code></h3>
-  <pre class="run-payload-pre"><code>import json
+  <pre class="run-payload-pre"><code>import inspect
+import sys
 import time
-from pathlib import Path
+
+from profile_manager.primitives import LoadPrimitive
+
+
+class HelloLoad(LoadPrimitive):
+    """Load-family primitive: sleep params.duration_seconds, then report."""
+
+    def run(self, handle, rng):
+        duration = float(self.params.get("duration_seconds") or 1.0)
+        started_at = time.monotonic()
+        time.sleep(duration)
+        return {
+            "healthy": True,
+            "duration_seconds": duration,
+            "elapsed_seconds": time.monotonic() - started_at,
+        }
 
 
 def register(registry):
-    registry.register_primitive(
-        name="hello_load",
-        family="runtime",
-        params_schema={
-            "type": "object",
-            "properties": {
-                "duration_seconds": {"type": "number", "minimum": 0, "default": 1.0}
-            },
-            "required": ["duration_seconds"],
-        },
-        executor=hello_load_executor,
-    )
-
-
-def hello_load_executor(params, *, output_dir):
-    duration = float(params.get("duration_seconds") or 1.0)
-    started_at = time.monotonic()
-    time.sleep(duration)
-    elapsed = time.monotonic() - started_at
-    report = {"healthy": True, "duration_seconds": duration, "elapsed_seconds": elapsed}
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    (Path(output_dir) / "hello-load-report.json").write_text(json.dumps(report))
-    return report</code></pre>
+    # The framework resolves the class via importlib.import_module(entry["module"]).
+    # The loader execs this file without adding it to sys.modules, so publish it
+    # under a stable name the entry can point at.
+    module = inspect.getmodule(register)
+    sys.modules.setdefault("dwarf_plugin_hello_world", module)
+    registry["hello_load"] = {
+        "class": "HelloLoad",
+        "module": "dwarf_plugin_hello_world",
+        "family": "load",
+        "runtimes": ["library"],
+        "supports": ["cardano-node", "amaru"],
+        "params_schema": "hello_load.schema.json",
+        "version": "0.1.0",
+    }</code></pre>
+  <p>Ship the referenced schema alongside it as <code>hello_load.schema.json</code> (a JSON-schema for the params), so <code>/operate/plugins</code> and scenario validation can check inputs.</p>
 
   <h3>4. Restart the dashboard so the loader picks it up</h3>
-  <pre class="run-payload-pre"><code>cardano-profile dashboard restart</code></pre>
+  <pre class="run-payload-pre"><code># Docker deployment
+docker restart dwarf-fw
+# Bare metal: stop the running `dashboard serve` and start it again
+./dwarf/cardano-profile dashboard serve --bind 0.0.0.0 --port 8787</code></pre>
 
   <h3>5. Verify it loaded</h3>
   <p>Open <a href="/operate/plugins">/operate/plugins</a> — you should see one row for <code>hello-world</code>, version 0.1.0, with one primitive.</p>
@@ -140,8 +150,11 @@ def hello_load_executor(params, *, output_dir):
   "spec_version": "v1",
   "id": "hello-world-smoke",
   "title": "Hello world plugin smoke",
-  "primitive": "hello_load",
-  "params": {"duration_seconds": 2.0}
+  "target": {"implementation": "cardano-node", "version": "any"},
+  "runtime": "library",
+  "load": [
+    {"primitive": "hello_load", "duration_seconds": 2.0}
+  ]
 }</code></pre>
 </section>
 

@@ -9,11 +9,11 @@ CONFIG_ENV = "ADA2_PROFILE_MANAGER_CONFIG"
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "state" / "config.yaml"
 
 CONFIG_FIELDS = {
-    "deployment_name": {"type": "string", "default": "<remote-host>", "description": "Human-readable deployment label."},
-    "host": {"type": "string", "default": "<box-lan-ip>", "description": "Remote SSH host or IP."},
-    "ssh_user": {"type": "string", "default": "USER", "description": "Remote SSH username."},
-    "ssh_key_path": {"type": "string", "default": "/Users/USER/.ssh/<remote-host>", "description": "SSH private-key path used for remote commands."},
-    "remote_base_path": {"type": "string", "default": os.path.expanduser("~/cardano-profiles"), "description": "Remote base directory for deployment artifacts."},
+    "deployment_name": {"type": "string", "default": "dwarf-devnet", "description": "Human-readable deployment label."},
+    "host": {"type": "string", "default": "127.0.0.1", "description": "Remote SSH host or IP."},
+    "ssh_user": {"type": "string", "default": "dwarf", "description": "Remote SSH username."},
+    "ssh_key_path": {"type": "string", "default": "~/.ssh/id_ed25519", "description": "SSH private-key path used for remote commands."},
+    "remote_base_path": {"type": "string", "default": "/opt/dwarf/cardano-profiles", "description": "Remote base directory for deployment artifacts."},
     "allow_prereq_install": {"type": "boolean", "default": False, "description": "Allow prerequisite installation via CLI."},
     "allow_sudo": {"type": "boolean", "default": False, "description": "Allow sudo-backed remote commands."},
     "log_level": {"type": "string", "default": "info", "description": "Operator-facing CLI log level."},

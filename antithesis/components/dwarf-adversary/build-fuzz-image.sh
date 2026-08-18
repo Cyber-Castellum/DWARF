@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # build-fuzz-image.sh — stage the host-built dwarf-decoder-fuzz binary + IOG libs
-# + seed corpus into ./dist-fuzz and build the runtime image. Run on build-host
+# + seed corpus into ./dist-fuzz and build the runtime image. Run on cardano-box
 # after `cabal build -w ghc-9.6.7 exe:dwarf-decoder-fuzz`.
 # Usage: ./build-fuzz-image.sh <image-tag> [corpus-dir]   (corpus default: /tmp/harvest)
 set -euo pipefail
 cd "$(dirname "$0")"
 
-TAG="${1:-ghcr.io/cyber-castellum/dwarf-decoder-fuzz:dev}"
+TAG="${1:-ghcr.io/j-gainsec/dwarf-decoder-fuzz:dev}"
 CORPUS_SRC="${2:-/tmp/harvest}"
 BIN="dist-newstyle/build/x86_64-linux/ghc-9.6.7/dwarf-adversary-0.1.0.0/x/dwarf-decoder-fuzz/build/dwarf-decoder-fuzz/dwarf-decoder-fuzz"
 

@@ -1,5 +1,31 @@
 # dwarf-decode-any — coverage-guided cardano-node (Haskell) fuzz harness
 
+## Provisioning & where it runs (read first)
+
+The harness is a ~268 MB instrumented GHC binary (a 1.7 GB `dist-newstyle` build
+tree) — a build artifact, **not committed**. The repo ships the source (this
+package), the vendored AFL 4.40c runtime (`coverage-docker/sancov/afl-fuzz`), and
+the seed corpora (`corpora/`). Turn them into a runnable harness with:
+
+```
+bash delivery/scripts/build-afl-harness.sh   # cabal build + install to /opt/dwarf/afl-harness/
+```
+
+That installs `dwarf-decode-any`, `afl-fuzz` (4.40c), and `corpora/` to
+`/opt/dwarf/afl-harness/`, which the 9 `cardano-node-cov-*-aflpp-smoke` scenarios
+reference by default (override with `DWARF_AFL_HARNESS` / `DWARF_AFL_FUZZ`).
+
+**These scenarios are host-class.** AFL's forkserver needs runtime privileges the
+hardened dashboard container (`read_only`, `cap_drop: ALL`, `no-new-privileges`)
+does not grant — the handshake fails there. So run them **on the host** via the
+CLI (`cardano-profile scenario run …` with the env exported). In the dashboard
+container they **skip cleanly** ("harness not provisioned") rather than fail, and
+the CI validation gate lists them under "aflpp needs harness". Before this wiring
+they hardcoded machine-specific absolute paths and failed cryptically on any other
+host; now the path is env-derived and a missing harness is a clean skip.
+
+---
+
 The cardano-node (Haskell) counterpart of the `amaru-cargo-fuzz-*` (Rust/libFuzzer)
 targets. `amaru` coverage measures amaru's Rust code; this measures **cardano-node's
 own Haskell code paths** (cborg + cardano-ledger + ouroboros), which amaru cannot.
@@ -78,13 +104,13 @@ GHC emits no SanitizerCoverage natively. The whole dep tree is compiled with
 `-fllvm` + a new-PM LLVM pass plugin that injects `trace-pc-guard` edge coverage,
 linked against AFL's `afl-compiler-rt.o`. Recipe + fixes:
 `docs/superpowers/specs/2026-06-17-coverage-guided-haskell-decoder-fuzzing.md`
-and memory `ghc-sancov-coverage-recipe`. Toolchain lives on build-host at
+and memory `ghc-sancov-coverage-recipe`. Toolchain lives on cardano-box at
 `~/dwarf-sancov/` (plugin, opt/link wrappers, `with-compiler` ghcw.sh, libsancovrt).
 
-## Build (build-host, GHC 9.6.7 + LLVM-15)
+## Build (cardano-box, GHC 9.6.7 + LLVM-15)
 ```bash
 cd antithesis/components/dwarf-adversary
-export PATH=$HOME/.ghcup/bin:$PATH LD_PRELOAD=${SANCOV_TOOLCHAIN}/libsancovrt.so
+export PATH=$HOME/.ghcup/bin:$PATH LD_PRELOAD=/home/dwarf/dwarf-sancov/libsancovrt.so
 cabal build dwarf-decode-any        # cabal.project.local pins with-compiler=ghcw.sh
 ```
 

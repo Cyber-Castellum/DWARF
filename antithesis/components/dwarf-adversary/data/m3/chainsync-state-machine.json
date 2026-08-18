@@ -1,0 +1,164 @@
+{
+  "id": "m3-chainsync-state-machine-v2",
+  "protocol": "chainsync",
+  "source_basis": [
+    "dwarf/corpora/m3/chainsync-sequences.json",
+    "dwarf/targets/amaru/src/bin/decode_chainsync.rs",
+    "dwarf/targets/cardano-node/src/DecodeChainSync.hs",
+    "dwarf/targets/manifests/amaru-mini-protocol-decode-chainsync.yaml",
+    "dwarf/targets/manifests/cardano-node-mini-protocol-decode-chainsync.yaml"
+  ],
+  "scope_note": "Modeled ChainSync transition validation plus envelope replay only. This corpus deepens request-next, await-reply, roll-forward, roll-backward, intersect-found, intersect-not-found, and done paths without modeling a live chain database.",
+  "sequences": [
+    {
+      "id": "request-await-rollback-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "must-reply",
+          "message": {
+            "name": "request-next",
+            "hex": "8100",
+            "expect": "ok",
+            "notes": "A RequestNext moves the model into a reply-expected state."
+          }
+        },
+        {
+          "from": "must-reply",
+          "to": "can-await",
+          "message": {
+            "name": "await-reply",
+            "hex": "8101",
+            "expect": "ok",
+            "notes": "AwaitReply keeps the responder in a waiting state until it can answer the request."
+          }
+        },
+        {
+          "from": "can-await",
+          "to": "idle",
+          "message": {
+            "name": "rollback-origin-tip",
+            "hex": "830380828000",
+            "expect": "ok",
+            "notes": "A rollback reply satisfies the pending request and returns the model to idle."
+          }
+        },
+        {
+          "from": "idle",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8107",
+            "expect": "ok",
+            "notes": "Done closes the modeled exchange."
+          }
+        }
+      ]
+    },
+    {
+      "id": "request-rollforward-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "must-reply",
+          "message": {
+            "name": "request-next",
+            "hex": "8100",
+            "expect": "ok"
+          }
+        },
+        {
+          "from": "must-reply",
+          "to": "idle",
+          "message": {
+            "name": "roll-forward-origin-tip",
+            "hex": "8302828000828000",
+            "expect": "ok",
+            "notes": "A minimal RollForward response completes the in-flight request."
+          }
+        },
+        {
+          "from": "idle",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8107",
+            "expect": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "id": "intersect-found-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "awaiting-intersect-reply",
+          "message": {
+            "name": "find-intersect-three-points",
+            "hex": "8204838082015820111111111111111111111111111111111111111111111111111111111111111182182a58202222222222222222222222222222222222222222222222222222222222222222",
+            "expect": "ok",
+            "notes": "FindIntersect moves the model into an intersect-reply-expected state."
+          }
+        },
+        {
+          "from": "awaiting-intersect-reply",
+          "to": "idle",
+          "message": {
+            "name": "intersect-found-point-a",
+            "hex": "830582015820111111111111111111111111111111111111111111111111111111111111111182820158201111111111111111111111111111111111111111111111111111111111111111182a",
+            "expect": "ok",
+            "notes": "IntersectFound satisfies the pending query and returns the model to idle."
+          }
+        },
+        {
+          "from": "idle",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8107",
+            "expect": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "id": "intersect-not-found-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "awaiting-intersect-reply",
+          "message": {
+            "name": "find-intersect-empty",
+            "hex": "820480",
+            "expect": "ok",
+            "notes": "An empty FindIntersect query still requires an intersect response."
+          }
+        },
+        {
+          "from": "awaiting-intersect-reply",
+          "to": "idle",
+          "message": {
+            "name": "intersect-not-found-origin",
+            "hex": "830680828000",
+            "expect": "ok",
+            "notes": "IntersectNotFound completes the query and returns the model to idle."
+          }
+        },
+        {
+          "from": "idle",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8107",
+            "expect": "ok"
+          }
+        }
+      ]
+    }
+  ]
+}

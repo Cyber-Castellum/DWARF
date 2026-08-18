@@ -56,6 +56,30 @@
 </section>
 <hr class="hairline">
 
+<section class="status-section" id="confirmed-findings">
+  <span class="eyebrow">Confirmed findings</span>
+  <p>Validated findings DWARF has written up for the Amaru team — divergences, crashes, and semantic gaps confirmed against a real node. Sourced from <code>dwarf/docs/finding-*.md</code>.</p>
+  {% if confirmed %}
+  {% for entry in confirmed %}
+  <article class="candidate-note" id="{{ entry.slug }}">
+    <span class="eyebrow">Finding</span>
+    <h2 class="candidate-note__title">{{ entry.title }}</h2>
+    <p class="candidate-note__status"><span class="eyebrow">Status</span> {{ entry.status }}</p>
+    {% for paragraph in entry.summary.split('\n\n') if paragraph %}
+    <p class="candidate-note__body">{{ paragraph }}</p>
+    {% endfor %}
+    <p class="candidate-note__anchor"><span class="eyebrow">Reference</span> <code>{{ entry.anchor_path }}</code></p>
+  </article>
+  {% endfor %}
+  {% else %}
+  <p class="empty-section-statement">
+    No confirmed findings on record.
+    <span class="empty-section-statement__cite">scanned dwarf/docs/finding-*.md, 0 files</span>
+  </p>
+  {% endif %}
+</section>
+<hr class="hairline">
+
 <section class="status-section" id="open-candidate-findings">
   <span class="eyebrow">Open candidate findings</span>
   <p>Candidate observations are open items under investigation, not validated findings.</p>

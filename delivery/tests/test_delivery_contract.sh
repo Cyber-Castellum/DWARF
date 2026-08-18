@@ -88,8 +88,8 @@ for script in "${required_executables[@]}" "delivery/scripts/common.sh"; do
   bash -n "${PACKAGE_ROOT}/${script}"
 done
 
-grep -q "dwarf/framework:june-20260604-m2" "${PACKAGE_ROOT}/delivery/docker-compose.dwarf.yml"
-grep -q "dwarf-fw-june-m2" "${PACKAGE_ROOT}/delivery/docker-compose.dwarf.yml"
+grep -q "dwarf/framework:current" "${PACKAGE_ROOT}/delivery/docker-compose.dwarf.yml"
+grep -q "dwarf-fw" "${PACKAGE_ROOT}/delivery/docker-compose.dwarf.yml"
 grep -q 'seed_example_runs' "${PACKAGE_ROOT}/delivery/scripts/deploy.sh"
 grep -q 'seed_example_runs' "${PACKAGE_ROOT}/delivery/scripts/install.sh"
 grep -q 'seed_example_bundles' "${PACKAGE_ROOT}/delivery/scripts/deploy.sh"
@@ -155,7 +155,7 @@ if find "${PACKAGE_ROOT}/dwarf/grammars" -mindepth 1 -maxdepth 1 -type d \
   exit 1
 fi
 
-if grep -R -E '/Users/USER|/home/USER|cardano-box|192\.168\.30\.16' "${PACKAGE_ROOT}/dwarf/targets/manifests" "${PACKAGE_ROOT}/dwarf/targets/README.md" "${PACKAGE_ROOT}/dwarf/grammars/README.md"; then
+if grep -R -E '/Users/operator|/home/dwarf|cardano-box|192\.168\.30\.16' "${PACKAGE_ROOT}/dwarf/targets/manifests" "${PACKAGE_ROOT}/dwarf/targets/README.md" "${PACKAGE_ROOT}/dwarf/grammars/README.md"; then
   echo "public target or grammar catalog contains local host paths" >&2
   exit 1
 fi

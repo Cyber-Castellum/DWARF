@@ -1,6 +1,6 @@
 # Install Guide
 
-This guide is written for a new operator receiving Dwarf Version 3 (V3) as a delivery package.
+This guide is written for a new operator setting up Dwarf.
 
 The recommended path is to install on a Linux host with Docker. The package is not hard-coded to a specific host.
 
@@ -22,30 +22,26 @@ Expected:
 
 If Docker is installed but permission is denied, add the deploying user to the Docker group or run from an account with Docker access. Do not run the Dwarf container privileged by default.
 
-## 2. Copy The Package To The Target Host
+## 2. Get The Package Onto The Target Host
 
-Example:
+Clone the repository directly on the target host:
 
 ```bash
-rsync -a --delete dwarf-v3/ user@host:/opt/dwarf-v3/
+git clone https://github.com/Cyber-Castellum/DWARF.git
+cd DWARF
 ```
 
-Then connect with Secure Shell (SSH) to the target:
+Or, if you already have the tree on another machine, copy it over and connect with Secure Shell (SSH):
 
 ```bash
+rsync -a --delete DWARF/ user@host:/opt/DWARF/
 ssh user@host
-cd /opt/dwarf-v3
+cd /opt/DWARF
 ```
 
-For a different host, copy the directory anywhere the deploying user can write, for example:
+The package is not hard-coded to a specific host or path; put it anywhere the deploying user can write.
 
-```bash
-scp -r dwarf-v3 user@host:/opt/dwarf-v3
-ssh user@host
-cd /opt/dwarf-v3
-```
-
-## 3. Prepare Runtime Directories
+## 3. Install (one command)
 
 Run:
 
@@ -53,12 +49,25 @@ Run:
 delivery/scripts/install.sh
 ```
 
-This validates the package layout and creates:
+This performs the full bring-up: it validates the package layout, seeds the
+scenario/manifest/profile catalog, creates the runtime directories, builds the
+framework image, and starts the dashboard container. In other words, `install.sh`
+runs sections 4 and 5 below for you — they document what it does under the hood and
+how to run each step standalone (e.g. to rebuild or restart without re-seeding).
 
 ```text
 var/runs
 var/state
 var/bundles
+```
+
+Optional capabilities (off by default):
+
+```bash
+delivery/scripts/install.sh --control-channel   # drive substrate deploy/teardown from the dashboard
+delivery/scripts/install.sh --afl                # build the host-side AFL coverage harness
+delivery/scripts/install.sh --all                # both of the above
+delivery/scripts/install.sh --prepare-only       # seed the catalog only (no build, no start)
 ```
 
 The script does not install host packages, modify Docker daemon configuration, or start Cardano services.
@@ -74,7 +83,7 @@ delivery/scripts/build-image.sh
 This builds:
 
 ```text
-dwarf/framework:june-20260604-m2
+dwarf/framework:current
 ```
 
 The build uses:
@@ -83,7 +92,7 @@ The build uses:
 infrastructure/docker/dwarf-fw.Dockerfile
 ```
 
-The Dockerfile uses Debian snapshot repositories for reproducibility. V3 includes a regression check ensuring expired snapshot Release files do not break the build:
+The Dockerfile uses Debian snapshot repositories for reproducibility. The build includes a regression check ensuring expired snapshot Release files do not break the build:
 
 ```text
 Acquire::Check-Valid-Until "false";
@@ -151,14 +160,14 @@ The status command reports:
 - mapped port
 - in-container `cardano-profile dashboard status` output
 
-Expected June M2 inventory:
+Expected inventory:
 
 ```text
-Profiles: 9
+Profiles: 13
 Evidence packages: 4
 Smoke tests: 5
 Fuzz tests: 0
-Scenario catalog: 28 scenarios
+Scenario catalog: 239 scenarios
 ```
 
 ## 7. Optional Browser Verification
@@ -188,7 +197,7 @@ Then open locally:
 http://127.0.0.1:8877/operate
 ```
 
-The dashboard should render the Operate page and the Scenarios page should show the scoped June M2 scenario catalog.
+The dashboard should render the Operate page and the Scenarios page should show the scenario catalog.
 
 For a recipient-facing visual overview of the expected graphical user interface (GUI), open:
 
@@ -203,8 +212,8 @@ That HyperText Markup Language (HTML) file is self-contained and is the GitHub P
 Override deployment defaults with environment variables:
 
 ```bash
-export DWARF_IMAGE=dwarf/framework:june-20260604-m2
-export DWARF_CONTAINER_NAME=dwarf-fw-june-m2
+export DWARF_IMAGE=dwarf/framework:current
+export DWARF_CONTAINER_NAME=dwarf-fw
 export DWARF_DASHBOARD_BIND=0.0.0.0
 export DWARF_DASHBOARD_PORT=8787
 export DWARF_RUNTIME_ROOT=/absolute/path/to/var
@@ -263,10 +272,10 @@ The approved path creates only Moog deploy/state/ops and requester/oracle secret
 After any bootstrap or manual Moog change, run:
 
 ```bash
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile wallet healthcheck moog-requester --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog readiness --repo <org/repo> --github-user <user> --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile wallet healthcheck moog-requester --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog readiness --repo <org/repo> --github-user <user> --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json
 ```
 
 ## SSH Keys

@@ -2,6 +2,9 @@ module DwarfAdversary.ChainSync.Connection
     ( runChainSyncApplication
     , runChainSyncServer
     , runAdversaryServerIR
+    , runAdversaryServerSM
+    , smInitiatorApp
+    , runSMInitiatorOnce
     , runBlockFetchApplication
     , fetchBlock
     , servingBlockFetchResponder
@@ -49,8 +52,14 @@ import Control.Monad.Class.MonadAsync (wait)
 import Control.Tracer (nullTracer)
 import Data.ByteString.Lazy (LazyByteString)
 import Data.List.NonEmpty qualified as NE
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import System.Timeout (timeout)
 import Data.Void (Void)
 import Network.Mux qualified as Mx
+import Data.Text (Text)
+import DwarfAdversary.StateMachine (scriptedSequenceResponder, scriptedSequenceInitiator)
+import DwarfAdversary.Sequencing.Model (allModels)
+import DwarfAdversary.Sequencing.Generate (DepartureClass)
 import Network.Socket
     ( AddrInfo (..)
     , AddrInfoFlag (AI_PASSIVE)
@@ -85,6 +94,7 @@ import Ouroboros.Network.Mux
     , mkMiniProtocolCbFromPeer
     , mkMiniProtocolCbFromPeerPipelined
     )
+import Ouroboros.Network.Context (MinimalInitiatorContext)
 import Ouroboros.Network.NodeToNode
     ( DiffusionMode (InitiatorAndResponderDiffusionMode, InitiatorOnlyDiffusionMode)
     , NodeToNodeVersion (NodeToNodeV_14)
@@ -143,6 +153,7 @@ import Ouroboros.Network.Protocol.TxSubmission2.Type
     )
 import Network.TypedProtocol.Core (N (Z))
 import Data.Word (Word16)
+import Data.Word (Word64)
 import Ouroboros.Network.Protocol.Handshake.Codec
     ( cborTermVersionDataCodec
     , noTimeLimitsHandshake
@@ -295,6 +306,106 @@ blockFetchToOuroboros app =
             ]
         }
 
+-- | Initiator-only application that runs a single RAW callback @cb@ on
+-- mini-protocol @protoNum@ — the per-protocol app for the SP4 injector pool.
+-- Mirrors 'blockFetchToOuroboros' but: (1) ANY protocol number, (2) a raw
+-- 'MiniProtocolCb' (not 'mkMiniProtocolCbFromPeer' — we drive illegal frames, not
+-- a typed peer), and (3) 'StartEagerly' so the injector fires immediately on
+-- connect rather than waiting for demand (block-fetch waits on demand; we drive).
+smInitiatorApp
+    :: Word16
+    -> MiniProtocolCb (MinimalInitiatorContext addr) LazyByteString IO ()
+    -> OuroborosApplicationWithMinimalCtx Mx.InitiatorMode addr LazyByteString IO () Void
+smInitiatorApp protoNum cb =
+    OuroborosApplication
+        { getOuroborosApplication =
+            [ MiniProtocol
+                { miniProtocolNum = MiniProtocolNum protoNum
+                , miniProtocolStart = StartEagerly
+                , miniProtocolLimits = maximumMiniProtocolLimits
+                , miniProtocolRun = InitiatorProtocolOnly cb
+                }
+            ]
+        }
+
+-- | Dial the node ONCE as the mux initiator and inject a single generated illegal
+-- sequence on mini-protocol @protoNum@ for protocol @protoName@, then return.
+-- Mirrors 'runChainSyncApplication' (connectToNode + N2N handshake +
+-- InitiatorOnlyDiffusionMode) but drives 'smInitiatorApp' over a raw
+-- 'scriptedSequenceInitiator' callback.
+--
+-- Per-connection lifetime is capped at @budgetMicros@ via 'timeout': we inject in
+-- microseconds, but the node then keeps the connection open for its idle /
+-- connection-manager lifecycle (~tens of seconds), so we FORCE-CLOSE early and
+-- reconnect — that early close is the normal fast-path here, not an error.
+-- 'timeout' delivers an async exception to 'connectToNode', whose socket/mux
+-- bracket closes the fd and tears down the mini-protocol threads during unwinding,
+-- so there is no fd/thread leak per timed-out connection; the fixed pool size caps
+-- concurrent fds regardless.
+--
+-- Productivity is classified by whether the injector actually RAN (the
+-- @establishedRef@ that the wrapped @onDeparture@ sets), NOT by connectToNode's
+-- return value: connectToNode's @Either SomeException@ result means it catches
+-- @SomeException@ internally, so it could swallow our intentional timeout into a
+-- @Left@ — indistinguishable from a real connect failure. The inject flag is
+-- robust either way. Returns @True@ when we established + injected (the caller
+-- loops immediately) and @False@ when we failed before injecting (connect /
+-- handshake refused — e.g. the node's AcceptedConnectionsLimit — so the caller
+-- backs off to avoid a busy-spin). Does NOT log per call (the per-injection log
+-- lives in 'scriptedSequenceInitiator').
+runSMInitiatorOnce
+    :: NetworkMagic
+    -> String                              -- ^ node host
+    -> PortNumber                          -- ^ node port
+    -> Text                                -- ^ protocol name (key into 'allModels')
+    -> Word16                              -- ^ mini-protocol number
+    -> Int                                 -- ^ per-connection budget (microseconds)
+    -> (String -> IO ())                   -- ^ logger
+    -> (Text -> DepartureClass -> IO ())   -- ^ onDeparture
+    -> (Text -> IO ())                     -- ^ onAccepted
+    -> IORef Int                           -- ^ per-connection counter
+    -> Word64                              -- ^ seed
+    -> IO Bool                             -- ^ True = injected (loop fast); False = failed before injecting (backoff)
+runSMInitiatorOnce magic host port protoName protoNum budgetMicros logMsg onDeparture onAccepted ctr seed =
+    case Map.lookup protoName allModels of
+        Nothing -> pure False   -- no model for this protocol (cannot happen for the four live ones)
+        Just model -> do
+            establishedRef <- newIORef False
+            let onDeparture' p c = writeIORef establishedRef True >> onDeparture p c
+                cb = scriptedSequenceInitiator model logMsg onDeparture' onAccepted ctr seed
+            _ <- try @SomeException $ withIOManager $ \iocp -> do
+                AddrInfo{addrAddress} <- resolve host port
+                timeout budgetMicros $
+                    connectToNode
+                        (socketSnocket iocp)
+                        makeSocketBearer
+                        ConnectToArgs
+                            { ctaHandshakeCodec = nodeToNodeHandshakeCodec
+                            , ctaHandshakeTimeLimits = noTimeLimitsHandshake
+                            , ctaVersionDataCodec = cborTermVersionDataCodec nodeToNodeCodecCBORTerm
+                            , ctaConnectTracers = nullNetworkConnectTracers
+                            , ctaHandshakeCallbacks =
+                                HandshakeCallbacks
+                                    { acceptCb = acceptableVersion
+                                    , queryCb = queryVersion
+                                    }
+                            }
+                        mempty
+                        ( simpleSingletonVersions
+                            NodeToNodeV_14
+                            ( NodeToNodeVersionData
+                                { networkMagic = magic
+                                , diffusionMode = InitiatorOnlyDiffusionMode
+                                , peerSharing = PeerSharingDisabled
+                                , query = False
+                                }
+                            )
+                            (const (smInitiatorApp protoNum cb))
+                        )
+                        Nothing
+                        addrAddress
+            readIORef establishedRef
+
 -- | Fetch the block at @point@ from an in-bundle node via block-fetch.
 -- Returns the real, unmutated block (or Nothing if the node served none).
 -- Hermetic: the host is an in-bundle node, never external.
@@ -438,6 +549,89 @@ runAdversaryServerIR magic port onAccept csCodec csServer bfCodec bfServer txCod
             )
             nullErrorPolicies
             (\_addr serverAsync -> wait serverAsync)
+
+-- | State-machine fuzz server: identical handshake/mux to the IR server, but
+-- every live slot (#2 ChainSync, #3 BlockFetch, #4 TxSubmission2, #8 KeepAlive)
+-- is driven by a RAW model-driven responder that emits well-formed messages in
+-- ILLEGAL sequence/agency (DwarfAdversary.StateMachine.scriptedSequenceResponder),
+-- concurrently over the one mux. A protocol violation makes the node drop us; the
+-- caller loops, so the per-connection counter advances the generated sequences.
+runAdversaryServerSM
+    :: NetworkMagic
+    -> PortNumber
+    -> (String -> IO ())
+    -> (String -> IO ())
+    -> (Text -> DepartureClass -> IO ())
+    -> (Text -> IO ())
+    -> IORef Int
+    -> Word64
+    -> IO Void
+runAdversaryServerSM magic port onAccept logMsg onDeparture onAccepted ctr seed =
+    withIOManager $ \iocp -> do
+        AddrInfo{addrAddress} <- resolveBind port
+        mutableState <- newNetworkMutableState
+        withServerNode
+            (socketSnocket iocp)
+            makeSocketBearer
+            (\_fd peerAddr -> onAccept (show peerAddr))
+            nullNetworkServerTracers
+            mutableState
+            acceptedConnectionsLimit
+            addrAddress
+            nodeToNodeHandshakeCodec
+            noTimeLimitsHandshake
+            (cborTermVersionDataCodec nodeToNodeCodecCBORTerm)
+            (HandshakeCallbacks {acceptCb = acceptableVersion, queryCb = queryVersion})
+            ( simpleSingletonVersions
+                NodeToNodeV_14
+                ( NodeToNodeVersionData
+                    { networkMagic = magic
+                    , diffusionMode = InitiatorAndResponderDiffusionMode
+                    , peerSharing = PeerSharingDisabled
+                    , query = False
+                    }
+                )
+                ( \_ ->
+                    SomeResponderApplication
+                        (adversarySMApp logMsg onDeparture onAccepted ctr seed)
+                )
+            )
+            nullErrorPolicies
+            (\_addr serverAsync -> wait serverAsync)
+
+-- | The state-machine app: every live slot drives its own M3-model-driven
+-- illegal-sequence responder, concurrently over the one mux — #2 ChainSync,
+-- #3 BlockFetch, #4 TxSubmission2, #8 KeepAlive. Each responder generates a
+-- distinct sequence per connection; the per-protocol selector salt (connSelector)
+-- decorrelates the four. Mirrors adversaryIRApp's MiniProtocol shape.
+adversarySMApp
+    :: (String -> IO ())
+    -> (Text -> DepartureClass -> IO ())
+    -> (Text -> IO ())
+    -> IORef Int
+    -> Word64
+    -> OuroborosApplicationWithMinimalCtx Mx.InitiatorResponderMode addr LazyByteString IO () ()
+adversarySMApp logMsg onDeparture onAccepted ctr seed =
+    OuroborosApplication
+        { getOuroborosApplication =
+            [ both 2 idleInitiator (resp "chainsync")
+            , both 3 idleInitiator (resp "blockfetch")
+            , both 4 idleInitiator (resp "txsubmission")
+            , both 8 idleInitiator (resp "keepalive")
+            ]
+        }
+  where
+    resp name =
+        case Map.lookup name allModels of
+            Just m  -> scriptedSequenceResponder m logMsg onDeparture onAccepted ctr seed
+            Nothing -> idleInitiator   -- model missing => slot idles
+    both num ini res =
+        MiniProtocol
+            { miniProtocolNum = MiniProtocolNum num
+            , miniProtocolStart = StartOnDemand
+            , miniProtocolLimits = maximumMiniProtocolLimits
+            , miniProtocolRun = InitiatorAndResponderProtocol ini res
+            }
 
 -- | The Initiator+Responder application: #2 chain-sync (responder), #3
 -- block-fetch (responder), #4 tx-submission (INITIATOR provider + responder

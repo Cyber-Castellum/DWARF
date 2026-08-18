@@ -2,7 +2,7 @@
 
 **Component:** `amaru` transaction CBOR decoder (submit‑API / mempool ingress)
 **Type:** CBOR decode conformance divergence vs. the Haskell reference node (non‑canonical encoding / transaction malleability)
-**Status:** Confirmed at the decode level (root cause identified in source and verified empirically). Mempool‑accept and block‑relay impact are **open** (see *Severity*).
+**Status:** Confirmed (root cause in source; decode *and* encode behaviour verified against minicbor 0.25.1). Amaru both **accepts** and **emits** the non‑canonical 3‑element transaction encoding that cardano‑node rejects. Scoped to the **tx‑submission / submit‑API** path (not block consensus). The only item not directly observed is a live `HTTP 202` accept (blocked: no funded tx on the local devnet) — supported by source. See *Severity*.
 **Found by:** DWARF differential fuzzing — same mutated transaction submitted to Amaru and cardano‑node, comparing decode/accept behaviour.
 **Date:** 2026‑07‑22
 
@@ -86,26 +86,60 @@ array(2) failing on the required field while array(3) succeeds confirms the leni
 specifically the trailing `Option<AuxiliaryData>` being omittable — not a length‑agnostic
 decoder — and array(3)/array(4) sharing a tx id confirms the malleability.
 
-## Severity
+## Severity (graded from source)
 
-**Confirmed:** a genuine decode‑conformance divergence. Amaru accepts a transaction encoding the
-reference node rejects.
+**Confirmed — decode‑conformance divergence.** Amaru accepts a transaction encoding the reference
+node rejects (empirical + source root cause above).
 
-**Open (not yet demonstrated):** In the test environment both nodes ultimately return `400` — the
-synthetic seed transaction fails Amaru’s validation for unrelated reasons (it spends no real
-UTxO), *not* because of the arity. To grade real‑world impact, on a network where a valid, funded
-transaction can be built:
+**Confirmed by source — mempool‑admission divergence.** Amaru’s validation pipeline only inspects
+the *outer* array structure at decode; everything downstream operates on the decoded fields
+(`amaru-ledger/src/rules.rs::prepare_transaction` takes `&transaction.body`, and validation loads the
+body’s inputs from the UTxO store). In the test both nodes returned `400`, but Amaru’s failure was
+`failed to prepare transaction … for validation` — i.e. it failed loading the **synthetic seed’s
+non‑existent inputs**, *not* because of the arity. It follows that an *otherwise‑valid* transaction
+submitted in 3‑element form would pass decode + preparation and be **accepted (HTTP 202)** by Amaru’s
+mempool, while cardano‑node rejects the same bytes at deserialization. (Not yet shown with a live
+`202`: the local devnet’s configurator does not expose the genesis UTxO key, so a valid funded tx
+could not be built here.)
 
-1. **Mempool divergence** — does Amaru’s mempool **accept** (`HTTP 202`) the 3‑element form of an
-   otherwise‑valid transaction while cardano‑node rejects it? Nodes would then hold different
-   mempool contents for the “same” transaction id.
-2. **Block‑relay / chain‑split potential** — when Amaru (as a block producer) includes such a
-   transaction, does it re‑serialize canonically or preserve the 3‑element bytes? If preserved, a
-   block produced by Amaru would contain a transaction encoding that cardano‑node rejects on block
-   validation.
+**Confirmed — Amaru also EMITS the non‑canonical form.** `Transaction` carries **no original‑bytes
+field** (unlike `Block`), and Amaru re‑encodes it via the derived encoder (`to_cbor`, used by the
+mempool and the tx‑submission relay — `amaru-protocols/src/tx_submission/messages.rs` does
+`e.encode(tx)`). minicbor’s derive **omits a trailing `None` `Option`**, so
+`encode(Transaction { auxiliary_data: None, .. })` produces a **3‑element array (`0x83…`)** — verified
+directly against minicbor 0.25.1:
 
-These were not reachable in this setup (the local devnet’s configurator does not expose the
-genesis UTxO signing key, so a valid funded transaction could not be built).
+```
+encode(None):  header=0x83  bytes=[83, 01, 02, f5]        # Amaru's canonical output for a no-aux tx
+encode(Some):  header=0x84  bytes=[84, 01, 02, f5, 09]
+decode(0x83…): OK  -> auxiliary_data: None                # accepts 3-element
+decode(0x84…f6): OK -> auxiliary_data: None               # also accepts canonical 4-element
+```
+
+So for **every transaction with no auxiliary data** (a very common case), Amaru’s own serialization is
+the 3‑element form that cardano‑node rejects at decode. In a mixed network, a no‑metadata transaction
+relayed **by** Amaru over node‑to‑node tx‑submission (or its submit‑API) would be **rejected by
+cardano‑node peers as malformed CBOR** → a transaction‑propagation asymmetry.
+
+**Scope — tx‑submission path, NOT block consensus.** The 4‑tuple `[body, witnesses, is_valid, aux]`
+encoding is used only for a *standalone* transaction (the submit‑API and the node‑to‑node
+tx‑submission mini‑protocol). In a **block**, transactions are decomposed into parallel arrays
+(`transaction_bodies`, `transaction_witnesses`, `auxiliary_data` map — confirmed in Amaru’s own
+`Block` type), so this encoding is not used there and the finding does **not** by itself cause a
+block‑validation / chain split. Impact is transaction relay + mempool admission + malleability.
+
+## Scope (bug‑class audit)
+
+The root cause is a minicbor‑derive footgun (a trailing `Option` field makes an array element
+omittable). An audit of `amaru-kernel` shows it is **contained to `Transaction`**, not a broad class:
+
+- **`Transaction`** — `#[derive(cbor::Decode)]`, array‑encoded, trailing `auxiliary_data: Option<_>` → **vulnerable** (this finding).
+- **`Block`** — hand‑written `Decode` using `heterogeneous_array(…, assert_len(CBOR_FIELD_COUNT))` → **enforces arity** (safe), even though its last field is also `Option`.
+- **`WitnessSet`** — `#[derive(cbor::Decode)]` but `#[cbor(map)]` → optional keys are legal CBOR‑map behaviour (safe).
+- Other array‑encoded ledger types use hand‑written decoders with explicit length assertions.
+
+So the reference node’s stricter decoders and Amaru’s own *manual* decoders agree; only the *derived*
+`Transaction` decoder is lenient.
 
 ## Reproduction
 

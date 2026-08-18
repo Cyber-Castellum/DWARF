@@ -1,0 +1,116 @@
+{
+  "id": "m3-txsubmission-state-machine-v1",
+  "protocol": "txsubmission",
+  "source_basis": [
+    "dwarf/corpora/m3/txsubmission-sequences.json",
+    "dwarf/targets/amaru/src/bin/decode_txsubmission.rs",
+    "dwarf/targets/cardano-node/src/DecodeTxSubmission.hs",
+    "dwarf/targets/manifests/amaru-mini-protocol-decode-txsubmission.yaml",
+    "dwarf/targets/manifests/cardano-node-mini-protocol-decode-txsubmission.yaml"
+  ],
+  "scope_note": "Modeled TxSubmission transition validation plus envelope replay only. This corpus does not prove live mempool admission, relay policy, duplicate handling, validation cost, or Submit API behavior.",
+  "sequences": [
+    {
+      "id": "request-reply-done-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "requesting-txids",
+          "message": {
+            "name": "request-txids-basic",
+            "hex": "8400f40001",
+            "expect": "ok",
+            "notes": "A baseline request enters the modeled txid-request state."
+          }
+        },
+        {
+          "from": "requesting-txids",
+          "to": "txids-replied",
+          "message": {
+            "name": "reply-txids-one",
+            "hex": "8201818258201111111111111111111111111111111111111111111111111111111111111111190200",
+            "expect": "ok",
+            "notes": "A one-entry txid reply transitions the model to the txid-replied state."
+          }
+        },
+        {
+          "from": "txids-replied",
+          "to": "requesting-txs",
+          "message": {
+            "name": "request-txs-one",
+            "hex": "82028158201111111111111111111111111111111111111111111111111111111111111111",
+            "expect": "ok",
+            "notes": "A concrete transaction request transitions the model to requesting-txs."
+          }
+        },
+        {
+          "from": "requesting-txs",
+          "to": "txs-replied",
+          "message": {
+            "name": "reply-txs-one",
+            "hex": "82038144a1617801",
+            "expect": "ok",
+            "notes": "A one-transaction reply transitions the model to txs-replied."
+          }
+        },
+        {
+          "from": "txs-replied",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8104",
+            "expect": "ok",
+            "notes": "Done closes the modeled sequence."
+          }
+        }
+      ]
+    },
+    {
+      "id": "init-empty-path",
+      "initial_state": "idle",
+      "transitions": [
+        {
+          "from": "idle",
+          "to": "initialized",
+          "message": {
+            "name": "init",
+            "hex": "8106",
+            "expect": "ok",
+            "notes": "Init moves the modeled state into an initialized session."
+          }
+        },
+        {
+          "from": "initialized",
+          "to": "requesting-txids",
+          "message": {
+            "name": "request-txids-basic",
+            "hex": "8400f40001",
+            "expect": "ok",
+            "notes": "The initialized session issues a basic txid request."
+          }
+        },
+        {
+          "from": "requesting-txids",
+          "to": "txids-replied",
+          "message": {
+            "name": "reply-txids-empty",
+            "hex": "820180",
+            "expect": "ok",
+            "notes": "An empty reply keeps the exchange valid at the envelope layer."
+          }
+        },
+        {
+          "from": "txids-replied",
+          "to": "done",
+          "message": {
+            "name": "done",
+            "hex": "8104",
+            "expect": "ok",
+            "notes": "Done closes the modeled initialized-empty sequence."
+          }
+        }
+      ]
+    }
+  ]
+}

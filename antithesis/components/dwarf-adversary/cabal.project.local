@@ -1,0 +1,12 @@
+-- Whole-node SanCov instrumentation. ghcw.sh adds -fllvm + GhcSancov plugin
+-- (+ linkwrap.sh for exe links), NCG fallback per package. Static-only so the
+-- linker (not ar) is invoked only for executables -- avoids -shared/-no-pie
+-- conflicts. CPP define forces a full rebuild distinct from the NCG store.
+with-compiler: /home/dwarf/dwarf-sancov/ghcw.sh
+with-hc-pkg:   /home/dwarf/.ghcup/bin/ghc-pkg-9.6.7
+
+shared: False
+executable-dynamic: False
+
+package *
+  ghc-options: -optP-DDWARF_SANCOV

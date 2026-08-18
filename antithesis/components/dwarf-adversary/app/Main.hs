@@ -12,12 +12,15 @@
 module Main (main) where
 
 import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.Async (mapConcurrently_)
 import Control.Concurrent.Class.MonadSTM.Strict (atomically, newTVarIO, readTVar, writeTVar)
 import Control.Exception (SomeException, catch)
-import Control.Monad (forever)
+import Control.Monad (forever, void)
+import Data.IORef (newIORef)
 import Data.Aeson (object, (.=))
 import Data.ByteString qualified as BS
-import Data.Word (Word32, Word64)
+import Data.Text qualified as T
+import Data.Word (Word16, Word32, Word64)
 import DwarfAdversary (originPoint)
 import DwarfAdversary.Application (Limit (..), adversaryApplication, runChainProducerInto)
 import Ouroboros.Network.Mock.Chain qualified as Chain
@@ -34,21 +37,23 @@ import DwarfAdversary.ChainSync.Connection
     , plainBlockFetchCodec
     , plainTxSubmissionCodec
     , runAdversaryServerIR
+    , runAdversaryServerSM
     , runChainSyncServer
+    , runSMInitiatorOnce
     , servingBlockFetchResponderMap
     )
-import DwarfAdversary.TxSource (getBaseTxsFromChain)
+import DwarfAdversary.TxSource (getBaseTxsFromChain, harvestTxs, loadSeedTxs)
 import DwarfAdversary.TxSubmission.Client (txProviderClient)
 import DwarfAdversary.TxSubmission.MutatingCodec
     ( describeTxMutation
     , mutatingCodecTxSubmission
     )
-import DwarfAdversary.TxSubmission.Target (TxField (AuxData, Certificate, WholeTx))
+import DwarfAdversary.TxSubmission.Target (TxField (AuxData, Certificate, GovAction, PlutusWitness, Witness, WholeTx))
 import DwarfAdversary.ChainSync.MutatingCodec
     ( describeHeaderMutation
     , mutatingCodecChainSync
     )
-import DwarfAdversary.ChainSync.Server (advancingChainSyncServer, chainSyncServer, tipFromHeaders)
+import DwarfAdversary.ChainSync.Server (advancingChainSyncServer, chainSyncServer, deepRollbackChainSyncServer, tipFromHeaders)
 import DwarfAdversary.Fuzz (MutationInfo (..), MutationLevel (..), parseMutationLevel)
 import DwarfAdversary.HeaderSource (getBaseHeaders)
 import DwarfAdversary.SDK qualified as SDK
@@ -66,11 +71,13 @@ import Options.Applicative
     , helper
     , info
     , long
+    , many
     , metavar
     , option
     , optional
     , progDesc
     , str
+    , switch
     , value
     , (<**>)
     , (<|>)
@@ -96,12 +103,41 @@ data Args = Args
     -- ^ Resolved RNG seed (set in 'main' from 'argSeedSpec'); NOT parsed directly.
     , argUpstream :: Maybe (String, Int)
     , argSelftest :: Bool
+    , argStateMachine :: Bool
     , argProtocol :: String
     , argShape :: String
     , argLevel :: MutationLevel
-    -- ^ struct (default) | bytes (malformed CBOR) | both
+    -- ^ struct (default) | bytes (malformed CBOR) | both | semantic | grammar
     , argCaptureTo :: Maybe FilePath
     , argBakedChain :: Maybe FilePath
+    , argSeedTxFiles :: [FilePath]
+    -- ^ Wire-GenTx files (what 'encTx' emits) always included as base txs to
+    -- mutate, so sub-field targeting engages even when the synced chain carries
+    -- no matching tx (e.g. the hermetic Antithesis devnet has no cert/metadata).
+    , argHarvestTo :: Maybe FilePath
+    -- ^ Dev tool: write each distinct captured tx's wire bytes here (to build a
+    -- seed corpus from a live cert/metadata-carrying devnet).
+    , argSmConnections :: Int
+    -- ^ SP4 state-machine POOL: number of concurrent initiator workers
+    -- (--sm-connections, default 64). Throughput ~ N / per-connection latency.
+    , argSmServerMode :: Bool
+    -- ^ SP4: use the legacy inbound responder server (the already-soaked slot-#2
+    -- surface) instead of the default concurrent initiator pool.
+    , argSmConnMs :: Int
+    -- ^ SP4 pool: per-connection lifetime budget in milliseconds (--sm-conn-ms,
+    -- default 750). After injecting we force-close at this budget instead of
+    -- idling ~26s waiting for the node's connection-manager teardown.
+    , argRollbackDepth :: Int
+    -- ^ Long-range (Plan A): if > 0, once the eclipsed node has caught up, the
+    -- advancing block-fetch server injects ONE deep RollBackward this many blocks
+    -- behind the served tip (pick > k). A correct node must refuse and disconnect.
+    , argRollbackMinTip :: Int
+    -- ^ Long-range (Plan A): only inject the deep rollback once the served chain
+    -- has reached this length/height (so it fires at the true honest tip). 0 = any.
+    , argRollbackRepeatSecs :: Int
+    -- ^ Long-range (Plan A) SOAK: if > 0, re-arm the one-shot injection every N
+    -- seconds so the deep rollback is injected repeatedly (a durable differential
+    -- soak). 0 = inject once.
     }
 
 argsParser :: Parser Args
@@ -157,6 +193,14 @@ argsParser =
                 )
                 <|> pure False
             )
+        <*> switch
+                ( long "state-machine-fuzz"
+                    <> help
+                        "SP4 state-machine fuzz: serve ChainSync with scripted\
+                        \ ILLEGAL message sequences (well-formed CBOR, illegal\
+                        \ protocol state / agency) — exercises the node's\
+                        \ mini-protocol state machine, not its decoder."
+                )
         <*> option
             str
             ( long "protocol"
@@ -179,7 +223,12 @@ argsParser =
                 <> help
                     "Mutation layer: struct (default, valid CBOR / hostile structure) |\
                     \ bytes (malformed CBOR — truncate/flip/oversize-length/deep-nest/garbage,\
-                    \ exercises the deserializer's error handling) | both."
+                    \ exercises the deserializer's error handling) | both |\
+                    \ semantic (type-valid but rule-violating field values) |\
+                    \ grammar (malform the mini-protocol MESSAGE frame itself —\
+                    \ message-tag flip / array-arity bump / frame truncate / junk\
+                    \ prepend-append / frame byte-flip — exercises the codec/mux\
+                    \ envelope decoder, not just the payload)."
             )
         <*> optional
             ( option
@@ -196,6 +245,84 @@ argsParser =
                     <> metavar "FILE"
                     <> help "Serve a baked chain from FILE (no --upstream) — producer-less eclipse blockfetch."
                 )
+            )
+        <*> many
+            ( option
+                str
+                ( long "seed-tx"
+                    <> metavar "FILE"
+                    <> help
+                        ( "Wire GenTx bytes (as encTx emits) always offered as a base tx to "
+                            <> "mutate. Repeatable. Lets --cbor-shape certificate/auxiliary-data "
+                            <> "engage on a chain that carries no such tx."
+                        )
+                )
+            )
+        <*> optional
+            ( option
+                str
+                ( long "harvest-to"
+                    <> metavar "DIR"
+                    <> help "Dev tool: write each distinct captured tx's wire bytes to DIR/cap-<fnv>.cbor."
+                )
+            )
+        <*> option
+            auto
+            ( long "sm-connections"
+                <> metavar "N"
+                <> value 64
+                <> help
+                    "SP4 state-machine pool: number of concurrent initiator workers\
+                    \ that dial --upstream and inject illegal sequences (default 64)."
+            )
+        <*> switch
+            ( long "sm-server-mode"
+                <> help
+                    "SP4 state-machine fuzz: use the legacy inbound responder server\
+                    \ (the already-soaked slot-#2 surface) instead of the default\
+                    \ concurrent initiator pool."
+            )
+        <*> option
+            auto
+            ( long "sm-conn-ms"
+                <> metavar "MS"
+                <> value 750
+                <> help
+                    "SP4 state-machine pool: per-connection lifetime budget in\
+                    \ milliseconds (default 750). The injector force-closes at this\
+                    \ budget instead of idling for the node's connection-manager\
+                    \ teardown."
+            )
+        <*> option
+            auto
+            ( long "rollback-depth"
+                <> metavar "N"
+                <> value 0
+                <> help
+                    "Long-range (Plan A): if > 0, once the eclipsed node has caught\
+                    \ up, inject ONE deep RollBackward N blocks behind the served\
+                    \ tip (pick N > k). A correct node refuses and disconnects;\
+                    \ accepting it is a safety violation. Used with --protocol blockfetch."
+            )
+        <*> option
+            auto
+            ( long "rollback-min-tip"
+                <> metavar "N"
+                <> value 0
+                <> help
+                    "Long-range (Plan A): only inject the deep rollback once the\
+                    \ served chain length reaches N (so it fires at the true honest\
+                    \ tip, not during rebuild). 0 = fire as soon as caught up."
+            )
+        <*> option
+            auto
+            ( long "rollback-repeat-secs"
+                <> metavar "N"
+                <> value 0
+                <> help
+                    "Long-range (Plan A) SOAK: if > 0, re-arm the injection every N\
+                    \ seconds so the deep rollback fires repeatedly (durable\
+                    \ differential soak). 0 = inject once."
             )
 
 parseSeed :: String -> Either String Word64
@@ -264,6 +391,11 @@ main = do
                     "blockfetch" -> runBlockFetchSelftest logMsg magic port
                     "txsubmission" -> runTxSubmissionSelftest logMsg magic port
                     _ -> runSelftest logMsg magic port
+                else if argStateMachine args
+                    then
+                        if argSmServerMode args
+                            then runStateMachineFuzz logMsg args magic port
+                            else runStateMachineFuzzPool logMsg args magic
                 else case argProtocol args of
                     "blockfetch" -> case argBakedChain args of
                         Just bp -> runServeBakedBlockFetch logMsg args bp magic port
@@ -390,7 +522,23 @@ runServeBlockFetch logMsg args magic port = do
             Left e -> logMsg ("producer: chain-sync client ENDED (chainLen=" <> show n <> "): " <> show e)
             Right _ -> logMsg ("producer: chain-sync client returned cleanly (chainLen=" <> show n <> ")")
         threadDelay 1_000_000
-    let csServer = advancingChainSyncServer logMsg (\_ -> pure ()) chainVar
+    firedVar <- newTVarIO False
+    -- SOAK: re-arm the one-shot injection every --rollback-repeat-secs so the deep
+    -- rollback is injected repeatedly (durable differential soak).
+    _ <-
+        if argRollbackDepth args > 0 && argRollbackRepeatSecs args > 0
+            then fmap Just $ forkIO $ forever $ do
+                threadDelay (argRollbackRepeatSecs args * 1_000_000)
+                already <- atomically (readTVar firedVar)
+                atomically (writeTVar firedVar False)
+                if already
+                    then logMsg ("deep-rb SOAK: re-armed injection (repeat every " <> show (argRollbackRepeatSecs args) <> "s)")
+                    else pure ()
+            else pure Nothing
+    let csServer =
+            if argRollbackDepth args > 0
+                then deepRollbackChainSyncServer logMsg (\_ -> pure ()) chainVar (argRollbackDepth args) (argRollbackMinTip args) firedVar
+                else advancingChainSyncServer logMsg (\_ -> pure ()) chainVar
         bfCodec = mutatingCodecBlockFetch (argLevel args) (argSeed args) (argRate args)
         onServeBlk b = do
             let inf = describeBlockMutation (argLevel args) (argSeed args) (argRate args) b
@@ -539,6 +687,9 @@ runTxSubmissionSelftest logMsg magic port = do
 txFieldOfShape :: String -> TxField
 txFieldOfShape "certificate" = Certificate
 txFieldOfShape "auxiliary-data" = AuxData
+txFieldOfShape "witness" = Witness
+txFieldOfShape "governance" = GovAction
+txFieldOfShape "plutus" = PlutusWitness
 txFieldOfShape _ = WholeTx
 
 -- | Production tx-submission path: serve a real chain (so relay2 peers happily),
@@ -602,14 +753,23 @@ runServeTxSubmission logMsg args magic port = do
     -- each fresh txid once — so as the tx-generator's txs land in new blocks the
     -- adversary keeps serving NEW mutated txs, instead of capturing one batch at
     -- startup (empty before any tx lands) and never refreshing.
-    txsVar <- newTVarIO []
+    -- Seed-corpus: wire-GenTx files (what encTx emits) always offered as base
+    -- txs, so --cbor-shape certificate/auxiliary-data engages even when the
+    -- synced chain has no matching tx (the hermetic Antithesis devnet carries
+    -- only payment + Plutus txs). Loaded once; prepended to every refresh.
+    seedTxs <- loadSeedTxs logMsg (argSeedTxFiles args)
+    logMsg ("seed-corpus: " <> show (length seedTxs) <> " seed tx(s) loaded")
+    txsVar <- newTVarIO seedTxs
     _ <- forkIO $ forever $ do
         batch <- getBaseTxsFromChain logMsg chainVar magic hp 10
-        atomically (writeTVar txsVar batch)
+        case argHarvestTo args of
+            Just dir -> harvestTxs logMsg dir batch
+            Nothing -> pure ()
+        atomically (writeTVar txsVar (seedTxs <> batch))
         SDK.sometimes
-            (not (null batch))
+            (not (null seedTxs && null batch))
             "dwarf_base_tx_obtained"
-            (object ["count" .= length batch])
+            (object ["count" .= (length seedTxs + length batch), "seeds" .= length seedTxs])
         threadDelay 8_000_000
     -- LISTEN IMMEDIATELY — do NOT gate the server on the producer having synced
     -- a chain. Under approach B the downstream node reaches GSM CaughtUp via the
@@ -647,3 +807,101 @@ runServeTxSubmission logMsg args magic port = do
                 logMsg ("tx server exception (restart): " <> show e)
                 threadDelay 1_000_000
         threadDelay 2_000_000
+
+-- | SP4 state-machine fuzz serve loop. Drives ChainSync (#2), BlockFetch (#3),
+-- TxSubmission2 (#4) and KeepAlive (#8) concurrently with raw model-driven
+-- responders emitting generative ILLEGAL sequences; a protocol violation makes
+-- the node drop us, so we loop (the per-connection counter advances the
+-- generated sequences). The node REJECTING the violation is the success path.
+runStateMachineFuzz :: (String -> IO ()) -> Args -> NetworkMagic -> PortNumber -> IO ()
+runStateMachineFuzz logMsg args magic port = do
+    SDK.reachable "dwarf_fuzz_server_started" (object ["mode" .= ("state-machine" :: String)])
+    SDK.reachable "dwarf_fuzz_server_listening" (object ["port" .= argPort args])
+    logMsg
+        "state-machine fuzz: serving ChainSync#2/BlockFetch#3/TxSubmission2#4/KeepAlive#8 \
+        \with generative ILLEGAL sequences"
+    ctr <- newIORef 0
+    let onAccept p = do
+            logMsg ("inbound connection accepted from " <> p)
+            SDK.reachable "dwarf_node_connected" (object ["peer" .= p])
+        -- Per-protocol x departure-class exploration signal: tells Antithesis the
+        -- space so it can steer entropy to cover every class on every protocol.
+        onDeparture proto cls = do
+            SDK.reachable
+                ("dwarf_sm_" <> proto <> "_" <> T.pack (show cls))
+                (object ["protocol" .= proto, "class" .= show cls])
+            -- breadth: we served an illegal sequence for this protocol at least once
+            SDK.sometimes True
+                ("dwarf_sm_served_" <> proto)
+                (object ["protocol" .= proto])
+        -- HEURISTIC accepted-illegal exploration signal (reachable only, NEVER a
+        -- pass/fail oracle; see StateMachine.isAcceptedIllegal). The real win/lose
+        -- liveness Always is asserted by the harness / bundle, not here.
+        onAccepted proto =
+            SDK.reachable
+                ("dwarf_sm_illegal_accepted_" <> proto)
+                (object ["protocol" .= proto])
+    forever $
+        void (runAdversaryServerSM magic port onAccept logMsg onDeparture onAccepted ctr (argSeed args))
+            `catch` \(e :: SomeException) -> do
+                logMsg ("state-machine server restart on: " <> show e)
+                threadDelay 1_000_000
+
+-- | SP4 state-machine fuzz POOL (the default for @--state-machine-fuzz@): N
+-- concurrent workers each DIAL the node (@--upstream@), inject one generated
+-- illegal sequence as the mux initiator, tear down, and reconnect immediately.
+-- Throughput is @N / per-connection latency@, decoupled from the node's serial
+-- reconnect backoff that gated the inbound responder server. As initiator the
+-- adversary also opens BlockFetch (#3), closing the on-wire gap, and exercises the
+-- node's SERVER-side mini-protocol state machines.
+runStateMachineFuzzPool :: (String -> IO ()) -> Args -> NetworkMagic -> IO ()
+runStateMachineFuzzPool logMsg args magic = do
+    (host, port) <- case argUpstream args of
+        Just (h, p) -> pure (h, fromIntegral p :: PortNumber)
+        Nothing ->
+            error "--state-machine-fuzz (pool mode) requires --upstream HOST:PORT (the node to dial)"
+    let n = max 1 (argSmConnections args)
+        budgetMicros = max 1 (argSmConnMs args) * 1000
+        protos = [("chainsync", 2), ("blockfetch", 3), ("txsubmission", 4), ("keepalive", 8)]
+            :: [(T.Text, Word16)]
+        target = host <> ":" <> show (fromIntegral port :: Int)
+    SDK.reachable
+        "dwarf_fuzz_server_started"
+        (object ["mode" .= ("state-machine-pool" :: String), "connections" .= n, "target" .= target])
+    logMsg
+        ( "state-machine fuzz POOL: " <> show n <> " concurrent initiators dialing " <> target
+            <> " (ChainSync#2/BlockFetch#3/TxSubmission2#4/KeepAlive#8, generative ILLEGAL sequences)"
+        )
+    ctr <- newIORef 0
+    let onDeparture proto cls = do
+            SDK.reachable
+                ("dwarf_sm_" <> proto <> "_" <> T.pack (show cls))
+                (object ["protocol" .= proto, "class" .= show cls])
+            SDK.sometimes True ("dwarf_sm_served_" <> proto) (object ["protocol" .= proto])
+        onAccepted proto =
+            SDK.reachable
+                ("dwarf_sm_illegal_accepted_" <> proto)
+                (object ["protocol" .= proto])
+        worker workerId = loop (0 :: Int)
+          where
+            -- Round-robin protocol selection, offset by workerId: deterministic
+            -- (reproducible from --seed) AND evenly covers all four protocols, with
+            -- the N workers spread across protocols at any instant.
+            loop iteration = do
+                let (proto, protoNum) = protos !! ((workerId + iteration) `mod` length protos)
+                    -- Decorrelate workers: fold the worker id into the seed (on top
+                    -- of the shared counter's per-connection index inside
+                    -- scriptedSequenceInitiator) so no two workers run identical
+                    -- selectors.
+                    workerSeed = argSeed args + fromIntegral workerId * 0x9E3779B97F4A7C15
+                injected <-
+                    runSMInitiatorOnce
+                        magic host port proto protoNum budgetMicros
+                        logMsg onDeparture onAccepted ctr workerSeed
+                -- Injected (established + ran, incl. the force-close fast path): loop
+                -- immediately. Failed before injecting (node down/refused, e.g.
+                -- AcceptedConnectionsLimit): small backoff to avoid a busy-spin.
+                if injected then pure () else threadDelay 50000
+                loop (iteration + 1)
+    -- Fixed N concurrency bounds fd/resource use; each worker loops forever.
+    mapConcurrently_ worker [0 .. n - 1]

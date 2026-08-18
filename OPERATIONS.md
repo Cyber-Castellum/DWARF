@@ -1,14 +1,18 @@
 # Operations Guide
 
-This guide covers normal operation after Dwarf Version 3 (V3) has been installed and the framework image has been built.
+This guide covers normal operation after Dwarf has been installed and the framework image has been built.
 
 ## Lifecycle Commands
 
-Prepare package-local runtime directories:
+Full bring-up in one command — seeds the catalog, builds the image, and starts the
+container:
 
 ```bash
 delivery/scripts/install.sh
 ```
+
+`install.sh` calls the two scripts below for you; run them individually to rebuild or
+restart without re-seeding.
 
 Build the Docker image:
 
@@ -16,7 +20,7 @@ Build the Docker image:
 delivery/scripts/build-image.sh
 ```
 
-Deploy:
+Deploy (or restart) the container:
 
 ```bash
 delivery/scripts/deploy.sh
@@ -94,16 +98,16 @@ python3 dwarf/cardano-profile
 Examples:
 
 ```bash
-docker exec dwarf-fw-june-m2 python3 dwarf/cardano-profile dashboard status
-docker exec dwarf-fw-june-m2 python3 dwarf/cardano-profile test smoke list
-docker exec dwarf-fw-june-m2 python3 dwarf/cardano-profile fuzz list
-docker exec dwarf-fw-june-m2 python3 dwarf/cardano-profile scenario validate dwarf/scenarios/throughput-regression-floor-example-smoke.yaml
+docker exec dwarf-fw python3 dwarf/cardano-profile dashboard status
+docker exec dwarf-fw python3 dwarf/cardano-profile test smoke list
+docker exec dwarf-fw python3 dwarf/cardano-profile fuzz list
+docker exec dwarf-fw python3 dwarf/cardano-profile scenario validate dwarf/scenarios/throughput-regression-floor-example-smoke.yaml
 ```
 
 Open a shell:
 
 ```bash
-docker exec -it dwarf-fw-june-m2 bash
+docker exec -it dwarf-fw bash
 ```
 
 ## Running With A Non-Default Port
@@ -144,11 +148,11 @@ Approved bootstrap creates only the Moog directory skeleton and a remote operato
 Use this healthcheck sequence after bootstrap or manual Moog changes:
 
 ```bash
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile wallet healthcheck moog-requester --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog readiness --repo <org/repo> --github-user <user> --json
-docker exec dwarf-fw-june-m2 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile wallet healthcheck moog-requester --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog readiness --repo <org/repo> --github-user <user> --json
+docker exec dwarf-fw /home/dwarf/dwarf-fw/dwarf/cardano-profile moog preflight --asset-dir <dir> --repo <org/repo> --github-user <user> --directory <path> --commit <sha> --json
 ```
 
 ## Runtime Data Layout
@@ -254,7 +258,7 @@ DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh
 Run:
 
 ```bash
-docker logs dwarf-fw-june-m2
+docker logs dwarf-fw
 delivery/scripts/status.sh
 ```
 

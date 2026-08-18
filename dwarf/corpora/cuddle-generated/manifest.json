@@ -19,31 +19,31 @@
       "rule": "header",
       "seeds_ok": 16,
       "seeds_fail": 0,
-      "dir": "/home/nigel/cuddle-build/corpora/block-header/seeds"
+      "dir": "/home/dwarf/cuddle-build/corpora/block-header/seeds"
     },
     "block": {
       "rule": "block",
       "seeds_ok": 16,
       "seeds_fail": 0,
-      "dir": "/home/nigel/cuddle-build/corpora/block/seeds"
+      "dir": "/home/dwarf/cuddle-build/corpora/block/seeds"
     },
     "tx-body": {
       "rule": "transaction_body",
       "seeds_ok": 16,
       "seeds_fail": 0,
-      "dir": "/home/nigel/cuddle-build/corpora/tx-body/seeds"
+      "dir": "/home/dwarf/cuddle-build/corpora/tx-body/seeds"
     },
     "certificate": {
       "rule": "certificate",
       "seeds_ok": 16,
       "seeds_fail": 0,
-      "dir": "/home/nigel/cuddle-build/corpora/certificate/seeds"
+      "dir": "/home/dwarf/cuddle-build/corpora/certificate/seeds"
     },
     "auxiliary-data": {
       "rule": "auxiliary_data",
       "seeds_ok": 16,
       "seeds_fail": 0,
-      "dir": "/home/nigel/cuddle-build/corpora/auxiliary-data/seeds"
+      "dir": "/home/dwarf/cuddle-build/corpora/auxiliary-data/seeds"
     }
   }
 }

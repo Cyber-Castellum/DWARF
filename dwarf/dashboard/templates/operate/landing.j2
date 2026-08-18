@@ -67,8 +67,14 @@
       <span class="tile__sub">scenarios available to replay</span>
     </a>
 
+    <a class="tile" href="/operate/antithesis">
+      <span class="tile__eyebrow">Antithesis campaigns</span>
+      <span class="tile__metric tile__metric--label">build · validate · launch</span>
+      <span class="tile__sub">scenario → hermetic bundle → Moog launch</span>
+    </a>
+
     <a class="tile" href="/operate/targets">
-      <span class="tile__eyebrow">Registered M2 targets</span>
+      <span class="tile__eyebrow">Registered targets</span>
       <span class="tile__metric">{{ target_count }}</span>
       <span class="tile__sub">
         {% for pill in target_pills %}{% if not loop.first %} <span class="tile__sub-sep">·</span> {% endif %}<code>{{ pill.label }}</code> {{ pill.count }}{% endfor %}

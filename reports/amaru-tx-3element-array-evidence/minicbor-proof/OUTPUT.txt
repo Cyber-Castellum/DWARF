@@ -1,0 +1,5 @@
+encode(None):  header=0x83  bytes=[83, 01, 02, f5]
+  -> ARRAY(3): Amaru RE-EMITS non-canonical 3-elem => relays bytes cardano-node rejects
+encode(Some):  header=0x84  bytes=[84, 01, 02, f5, 09]
+decode(0x83…): OK -> TxLike { body: 1, witnesses: 2, is_valid: true, auxiliary_data: None }
+decode(0x84…f6): OK -> TxLike { body: 1, witnesses: 2, is_valid: true, auxiliary_data: None }

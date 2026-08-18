@@ -21,6 +21,7 @@ OPERATE_SUB_NAV: list[dict[str, str]] = [
     {"slug": "scenarios", "label": "Scenarios", "url": "/operate/scenarios"},
     {"slug": "compare", "label": "Compare", "url": "/operate/compare"},
     {"slug": "bundles", "label": "Bundles", "url": "/operate/bundles"},
+    {"slug": "antithesis", "label": "Antithesis", "url": "/operate/antithesis"},
     {"slug": "targets", "label": "Targets", "url": "/operate/targets"},
     {"slug": "profiles", "label": "Profiles", "url": "/operate/profiles"},
     {"slug": "status", "label": "Status", "url": "/operate/status"},

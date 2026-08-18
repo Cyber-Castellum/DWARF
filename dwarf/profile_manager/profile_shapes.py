@@ -1,10 +1,9 @@
 from __future__ import annotations
-import os
 
 from dataclasses import dataclass
 
 
-DEFAULT_RUNTIME_ROOT_BASE = os.path.expanduser("~/cardano-profiles")
+DEFAULT_RUNTIME_ROOT_BASE = "/opt/dwarf/cardano-profiles"
 DEFAULT_COMPOSE_PROJECT_PREFIX = "dwarf-"
 VALID_TOPOLOGY_PATTERNS = {"local-mesh"}
 

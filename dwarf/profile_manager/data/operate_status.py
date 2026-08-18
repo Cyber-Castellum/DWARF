@@ -93,6 +93,14 @@ def substrate_health(payload: dict[str, Any]) -> dict[str, Any]:
     else:
         state = "stale"
 
+    # A successful poll that finds zero running nodes means no substrate is
+    # composed — present it as the clean "idle / no substrate" surface rather
+    # than a live-but-stale tile. (status.j2 maps source=="missing" to idle,
+    # not to the alarming error-red.)
+    if node_processes == 0:
+        source = "missing"
+        state = "error"
+
     pills = []
     for idx in range(expected_nodes or 0):
         name = f"node{idx + 1}"
@@ -106,17 +114,20 @@ def substrate_health(payload: dict[str, Any]) -> dict[str, Any]:
             pill_state = "error"
         pills.append({"name": name, "state": pill_state})
 
+    # When no substrate is composed (idle), the per-node probes are simply not
+    # applicable — show an em-dash rather than a misleading "unknown".
+    _idle = not node_processes
     return {
         "source": source,
         "state": state,
         "transport": live.get("transport"),
-        "tip_block": parsed.get("tip_block") or _UNKNOWN,
-        "sync_progress": parsed.get("sync_progress") or _UNKNOWN,
+        "tip_block": _DASH if _idle else (parsed.get("tip_block") or _UNKNOWN),
+        "sync_progress": _DASH if _idle else (parsed.get("sync_progress") or _UNKNOWN),
         "node_processes": node_processes,
         "expected_nodes": expected_nodes,
         "socket_count": socket_count,
         "listener_count": listener_count,
-        "loopback_only": loopback_only,
+        "loopback_only": _DASH if _idle else loopback_only,
         "evidence_path": health.get("evidence_path") or last_local.get("evidence_path"),
         "node_pills": pills,
     }
@@ -256,17 +267,52 @@ def moog_status_tile(payload: dict[str, Any]) -> dict[str, Any]:
     moog = payload.get("moog") or {}
     summary = moog.get("summary") or {}
     state = str(summary.get("state") or moog.get("state") or "unknown")
-    metric = state.upper() if state else "UNKNOWN"
+    raw_error = moog.get("error")
+    # Graceful degradation. The deployment-health probe reaches the Moog *host*
+    # over SSH to inspect its systemd service + deploy directories. From the
+    # isolated dashboard container that host/key isn't reachable, so a raw SSH
+    # failure would otherwise render as a scary ERROR. Detect the connectivity
+    # case and show a clean "not reachable" instead. (Moog's requester flow
+    # itself is Cardano tx + MPFS — it does not use SSH.)
+    _ssh_markers = ("identity file", "host key verification", "permission denied",
+                    "connection refused", "could not resolve", "no route to host",
+                    "connection timed out", "ssh:", "not accessible",
+                    # The deploy key is a restricted forced-command key; any probe
+                    # that isn't a whitelisted verb comes back refused. Treat that
+                    # the same as "not reachable from here", not a scary ERROR.
+                    "dwarf-deploy-shim", "refused", "verb-not-allowed",
+                    "bad-token-count", "forced command", "not permitted")
+    _err_l = (raw_error or "").lower()
+    token_id = summary.get("token_id") or _DASH
+    if token_id == _DASH:
+        # Moog isn't linked in this deployment (no requester token bound). Present
+        # a neutral "not configured" — this is an expected unconfigured state, not
+        # a failure. (Reuse the non-red "unreachable" tile styling.)
+        state = "unreachable"
+        metric = "NOT CONFIGURED"
+        clean_error = ("Moog is not linked in this deployment (no requester token bound). "
+                       "Set it up via the Moog panel on Config — the requester flow uses "
+                       "Cardano / MPFS, not SSH.")
+    elif state == "error" and any(m in _err_l for m in _ssh_markers):
+        state = "unreachable"
+        metric = "NOT REACHABLE"
+        clean_error = ("Moog deployment host not reachable from the dashboard container "
+                       "(SSH access not configured). Run deployment checks on the Moog host; "
+                       "the Moog requester flow itself uses Cardano / MPFS, not SSH.")
+    else:
+        metric = state.upper() if state else "UNKNOWN"
+        clean_error = raw_error
     return {
         "state": state,
         "metric": metric,
+        "linkage_state": "linked" if token_id != _DASH else "not linked",
         "check_count": summary.get("check_count") or 0,
         "ok_count": summary.get("ok_count") or 0,
         "warn_count": summary.get("warn_count") or 0,
         "error_count": summary.get("error_count") or 0,
         "deploy_root": summary.get("deploy_root") or _DASH,
         "mpfs_host": summary.get("mpfs_host") or _DASH,
-        "token_id": summary.get("token_id") or _DASH,
+        "token_id": token_id,
         "oracle_service": summary.get("oracle_service") or _DASH,
         "requester_address": summary.get("requester_address") or _DASH,
         "oracle_address": summary.get("oracle_address") or _DASH,
@@ -279,5 +325,5 @@ def moog_status_tile(payload: dict[str, Any]) -> dict[str, Any]:
             for check in (moog.get("checks") or [])
             if isinstance(check, dict)
         ],
-        "error": moog.get("error"),
+        "error": clean_error,
     }

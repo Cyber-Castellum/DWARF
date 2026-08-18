@@ -164,14 +164,36 @@ def _live_health(profile_id):
     # through SSH-to-self (which requires loopback authorized_keys and
     # path-portable ssh_key_path — neither holds on the deployed box).
     transport = "local" if _is_local_host(cfg.host) else "ssh"
+    from profile_manager.remote import control_shim_enabled
     if transport == "local":
         result = _local_command(command, timeout=30)
+        health = _health_from_body(result.stdout, returncode=result.returncode, stderr=result.stderr)
+    elif control_shim_enabled():
+        # Over the restricted control-channel shim the full inspect script is
+        # refused (it isn't a whitelisted verb). Use the `active` verb — which is
+        # whitelisted — to count live devnet nodes (docker + host-tmux) and
+        # synthesize the health body, so a deployed devnet shows as live instead
+        # of a misleading IDLE.
+        from profile_manager.profiles import active_profile_command
+        result = ssh_command(cfg, active_profile_command(), timeout=30, verb=("active",))
+        health = {
+            "parsed": {"cardano_node_processes": _count_active_nodes(result.stdout)},
+            "returncode": 0 if result.returncode == 0 else result.returncode,
+            "raw": result.stdout,
+        }
     else:
         result = ssh_command(cfg, command, timeout=30)
+        health = _health_from_body(result.stdout, returncode=result.returncode, stderr=result.stderr)
     return {
         "enabled": True,
         "profile_id": profile.id,
         "runtime_root": profile.remote_runtime_root,
         "transport": transport,
-        "health": _health_from_body(result.stdout, returncode=result.returncode, stderr=result.stderr),
+        "health": health,
     }
+
+
+def _count_active_nodes(stdout: str) -> int:
+    """Count devnet node lines the `active` verb emits (DWARF_NODE per node)."""
+    return sum(1 for line in (stdout or "").splitlines()
+               if line.strip().startswith("DWARF_NODE"))

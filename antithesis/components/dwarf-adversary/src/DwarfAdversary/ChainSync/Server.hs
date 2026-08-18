@@ -12,11 +12,12 @@
 module DwarfAdversary.ChainSync.Server
     ( chainSyncServer
     , advancingChainSyncServer
+    , deepRollbackChainSyncServer
     , tipFromHeaders
     ) where
 
 import Control.Concurrent (threadDelay)
-import Control.Concurrent.Class.MonadSTM.Strict (MonadSTM (..), StrictTVar, readTVar)
+import Control.Concurrent.Class.MonadSTM.Strict (MonadSTM (..), StrictTVar, readTVar, writeTVar)
 import Control.Monad (forever)
 import DwarfAdversary.ChainSync.Codec (Header, Point, Tip)
 import Ouroboros.Consensus.Block (headerPoint)
@@ -253,6 +254,157 @@ advancingChainSyncServer log_ onServe chainVar =
                 <> " ourTipBlockNo="
                 <> tipNo
             )
+
+-- | Like 'advancingChainSyncServer', but injects ONE deliberate DEEP rollback
+-- the first time the downstream node has caught up to our tip. It serves the
+-- real advancing chain normally until the node is caught up, then — instead of
+-- awaiting the next block — sends a single 'SendMsgRollBackward' to a point
+-- @depth@ blocks behind the latest served header. Choose @depth@ > the security
+-- parameter k: a correct chain-sync client MUST refuse a rollback that deep (the
+-- target sits in its immutable DB / beyond its k-bounded candidate fragment) and
+-- disconnect. A node that ACCEPTS the deep rollback is the safety violation this
+-- probes. After firing once, it resumes normal advancing service.
+deepRollbackChainSyncServer
+    :: (String -> IO ())
+    -> (Header -> IO ())
+    -> StrictTVar IO (Chain Header)
+    -> Int
+    -- ^ rollback depth in blocks behind the real chain head; pick > k
+    -> Int
+    -- ^ minTip: only inject once the chain head block number reaches this (so the
+    --   rollback happens at the true honest tip, not a partial rebuild). 0 = any.
+    -> StrictTVar IO Bool
+    -- ^ fired flag (initialised False; set True after the injection)
+    -> ChainSyncServer Header Point Tip IO ()
+deepRollbackChainSyncServer log_ onServe chainVar depth minTip firedVar =
+    ChainSyncServer (pure (idle [Net.genesisPoint]))
+  where
+    chainTip :: Chain Header -> Tip
+    chainTip = tipFromHeaders . Chain.toOldestFirst
+
+    onChain :: Chain Header -> Point -> Bool
+    onChain c p = Chain.pointOnChain (castPoint p) c
+
+    servedCap :: Int
+    servedCap = 2200
+
+    push :: Point -> [Point] -> [Point]
+    push p served = take servedCap (p : served)
+
+    idle :: [Point] -> ServerStIdle Header Point Tip IO ()
+    idle [] = idle [Net.genesisPoint]
+    idle served@(readPtr : _) =
+        ServerStIdle
+            { recvMsgRequestNext = do
+                c <- atomically (readTVar chainVar)
+                if not (onChain c readPtr)
+                    then do
+                        let served' = case dropWhile (not . onChain c) served of
+                                [] -> [Net.genesisPoint]
+                                ps -> ps
+                        log_ ("chain-sync(deep-rb): reorg; RollBackward to " <> show (head served'))
+                        pure
+                            ( Left
+                                ( SendMsgRollBackward
+                                    (head served')
+                                    (chainTip c)
+                                    (ChainSyncServer (pure (idle served')))
+                                )
+                            )
+                    else case Chain.successorBlock (castPoint readPtr) c of
+                        Just h -> do
+                            onServe h
+                            pure
+                                ( Left
+                                    ( SendMsgRollForward
+                                        h
+                                        (chainTip c)
+                                        (ChainSyncServer (pure (idle (push (castPoint (headerPoint h)) served))))
+                                    )
+                                )
+                        Nothing -> do
+                            -- Caught up to our tip. Inject the deep rollback ONCE,
+                            -- but only once the chain head has reached minTip (the
+                            -- real honest tip) so the rollback is a genuine deep
+                            -- reorg from the tip, not a shallow one during rebuild.
+                            fired <- atomically (readTVar firedVar)
+                            let clen = Chain.length c
+                                mature = clen >= minTip
+                            if not fired && mature && clen > depth
+                                then do
+                                    -- target = the point @depth@ blocks behind the
+                                    -- real chain head (from the chain, not the
+                                    -- freshly-served list), so depth is exact.
+                                    let target = castPoint (Chain.headPoint (Chain.drop depth c))
+                                    atomically (writeTVar firedVar True)
+                                    log_
+                                        ( "chain-sync(deep-rb): INJECTING deep RollBackward "
+                                            <> show depth
+                                            <> " blocks (> k) from chainLen="
+                                            <> show clen
+                                            <> " to "
+                                            <> show target
+                                        )
+                                    pure
+                                        ( Left
+                                            ( SendMsgRollBackward
+                                                target
+                                                (chainTip c)
+                                                (ChainSyncServer (pure (idle (target : served)))))
+                                        )
+                                else pure (Right (awaitNext served))
+            , recvMsgFindIntersect = \points -> do
+                log_ "chain-sync(deep-rb): node sent MsgFindIntersect"
+                c <- atomically (readTVar chainVar)
+                case Chain.findFirstPoint (map castPoint points) c of
+                    Just p ->
+                        pure
+                            ( SendMsgIntersectFound
+                                (castPoint p)
+                                (chainTip c)
+                                (ChainSyncServer (pure (idle [castPoint p, Net.genesisPoint])))
+                            )
+                    Nothing ->
+                        pure
+                            ( SendMsgIntersectNotFound
+                                (chainTip c)
+                                (ChainSyncServer (pure (idle served)))
+                            )
+            , recvMsgDoneClient = do
+                log_ "chain-sync(deep-rb): node sent MsgDone"
+                pure ()
+            }
+
+    awaitNext :: [Point] -> IO (ServerStNext Header Point Tip IO ())
+    awaitNext served@(readPtr : _) = do
+        res <- atomically $ do
+            c <- readTVar chainVar
+            if not (onChain c readPtr)
+                then pure (Left c)
+                else case Chain.successorBlock (castPoint readPtr) c of
+                    Just h' -> pure (Right h')
+                    Nothing -> retry
+        case res of
+            Right h -> do
+                onServe h
+                c <- atomically (readTVar chainVar)
+                pure
+                    ( SendMsgRollForward
+                        h
+                        (chainTip c)
+                        (ChainSyncServer (pure (idle (push (castPoint (headerPoint h)) served))))
+                    )
+            Left c -> do
+                let served' = case dropWhile (not . onChain c) served of
+                        [] -> [Net.genesisPoint]
+                        ps -> ps
+                pure
+                    ( SendMsgRollBackward
+                        (head served')
+                        (chainTip c)
+                        (ChainSyncServer (pure (idle served')))
+                    )
+    awaitNext [] = awaitNext [Net.genesisPoint]
 
 -- | Build the advertised tip from the captured headers (the last one),
 -- or genesis if none were captured.

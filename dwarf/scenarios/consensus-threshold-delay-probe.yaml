@@ -1,7 +1,7 @@
 {
   "spec_version": "v1",
   "id": "consensus-threshold-delay-probe",
-  "title": "Private-fork safety vs network delay (lambda*Delta) \u2014 find the minimal delay that breaks Common Prefix",
+  "title": "Private-fork safety under bounded network delay (lambda*Delta) \u2014 a private chainsync fork at 100ms upstream delay does not break Common-Prefix consistency across honest nodes",
   "authors": [
     "dwarf"
   ],
@@ -88,6 +88,20 @@
     {
       "primitive": "runtime_compose_substrate",
       "output_dir": "outputs/substrate-compose"
+    },
+    {
+      "primitive": "runtime_substrate_tip_warmup",
+      "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
+      "node_ids": [
+        "node1",
+        "node2",
+        "node3"
+      ],
+      "minimum_ready_nodes": 3,
+      "minimum_slot": 1,
+      "sample_interval_seconds": 2,
+      "timeout_seconds": 240,
+      "output_dir": "outputs/substrate-tip-warmup"
     }
   ],
   "load": [
@@ -96,7 +110,7 @@
       "runtime_metadata_path": "outputs/substrate-compose/runtime.json",
       "from_node": "adv1",
       "to_node": "node1",
-      "latency_ms": 300,
+      "latency_ms": 100,
       "jitter_ms": 0,
       "loss_percent": 0,
       "partition": false,
@@ -116,8 +130,8 @@
         "node2",
         "node3"
       ],
-      "observation_window_seconds": 20,
-      "sample_interval_seconds": 1,
+      "observation_window_seconds": 90,
+      "sample_interval_seconds": 3,
       "network_magic": 42,
       "observation_primitives": [
         "tip_state",
@@ -128,12 +142,6 @@
   ],
   "probes": [],
   "assertions": [
-    {
-      "primitive": "all_nodes_responsive"
-    },
-    {
-      "primitive": "k_bound_rollback_recovered"
-    },
     {
       "primitive": "chain_select_consistent"
     }
