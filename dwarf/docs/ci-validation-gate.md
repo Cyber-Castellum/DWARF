@@ -77,15 +77,27 @@ python3 dwarf/scripts/ci_fuzz_library.py --iterations 500 --out dwarf-fuzz-repor
 
 Exit code `0` = no crash, `1` = at least one crash (with crashers saved), `2` = harnesses not built.
 
-## Why the devnet tier isn't in hosted CI yet
+## Stage 3 — Devnet smoke (self-hosted runner)
 
-- Antithesis runs go through **moog**, which is **approved-wallet-only** — a CI runner can't
-  authenticate, so it can't trigger a real Antithesis run.
-- The **devnet** differential scenarios need **docker multi-node meshes** and minutes of epoch
-  warmup per run — too heavy for a stock GitHub-hosted runner (2 vCPU, ~7 GB RAM).
+`dwarf-devnet-smoke.yml` runs a curated subset of self-provisioning cardano-node **devnet**
+scenarios through the composer (`dwarf/scripts/ci_devnet_smoke.sh`), standing up real Docker
+multi-node meshes and asserting liveness. Because that needs Docker + epoch warmup — too heavy for a
+stock hosted runner (2 vCPU, ~7 GB RAM) — it runs on a **self-hosted runner**. Setup, host
+requirements, and the self-hosted-runner **security model** are in
+[`ci-devnet-smoke-runner.md`](ci-devnet-smoke-runner.md).
 
-Running a curated **smoke subset** of devnet scenarios on a **self-hosted runner** (built on top of
-these two stages) is the planned next step.
+- **Curated, deterministic:** the subset is liveness-only 2-node `testnet_42` scenarios that pass
+  reliably, so a red result means a real regression. Fault-injection / differential / soak scenarios
+  are deliberately excluded from the gate (their oracles are timing-sensitive).
+- **Isolated teardown:** the wrapper removes only the substrate projects **this run** created and
+  never touches other containers, so long-running devnets on the same host are safe.
+- **Triggers:** `push` to `main`, nightly `schedule`, manual `workflow_dispatch` — **never**
+  `pull_request` (a fork PR must not execute on the self-hosted host).
+
+## Not yet in CI
+
+Antithesis runs go through **moog**, which is **approved-wallet-only** — a CI runner can't
+authenticate, so those stay on-demand (see the operator runbook's Moog section), not in CI.
 
 ## Note: CLI entrypoint
 

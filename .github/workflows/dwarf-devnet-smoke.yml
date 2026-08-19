@@ -1,0 +1,57 @@
+name: DWARF devnet smoke
+
+# Phase 2 of "run the tests in CI": runs a curated subset of self-provisioning
+# cardano-node devnet scenarios through the composer on a SELF-HOSTED runner (the
+# hosted runners are too small for docker multi-node meshes + epoch warmup).
+#
+# SECURITY — self-hosted runner + public repo:
+#   Untrusted fork PRs must NEVER execute on the self-hosted runner (they could run
+#   arbitrary code on the host). This workflow therefore triggers ONLY on push to
+#   main and manual dispatch — NOT on pull_request. Keep it that way. If PR coverage
+#   is ever wanted, gate it behind an explicit "approve and run" environment.
+#
+# The runner host must have: docker + compose v2, the dwarf/cardano-node images the
+# scenarios pin (e.g. 10.7.1), host cardano-cli/cardano-testnet on PATH, and the
+# DWARF runtime Python deps. The wrapper guarantees teardown of only what this run
+# creates and never touches other containers (e.g. long-running client devnets).
+
+# Manual-dispatch only for now: with no self-hosted runner registered, any push- or
+# schedule-triggered job would just sit "waiting for a runner" (and eventually fail on
+# timeout). Keeping it dispatch-only means the workflow stays completely idle until you
+# click "Run workflow". AFTER registering the runner, re-enable the nightly by
+# uncommenting the `schedule` block below (and add a `push` trigger if wanted).
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: "Space-separated scenario paths (blank = curated subset)"
+        default: ""
+  # schedule:
+  #   - cron: "30 5 * * *"        # nightly — enable once the runner is registered
+
+# One devnet smoke at a time on the host — never run two meshes concurrently.
+concurrency:
+  group: dwarf-devnet-smoke
+  cancel-in-progress: false
+
+jobs:
+  devnet-smoke:
+    # The self-hosted runner must be registered with these labels.
+    runs-on: [self-hosted, dwarf-devnet]
+    timeout-minutes: 40
+    steps:
+      - name: Checkout DWARF
+        uses: actions/checkout@v4
+
+      - name: Run devnet smoke
+        run: |
+          chmod +x dwarf/scripts/ci_devnet_smoke.sh
+          dwarf/scripts/ci_devnet_smoke.sh ${{ github.event.inputs.scenarios }}
+
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dwarf-devnet-smoke-runs
+          path: ci-devnet-runs/
+          if-no-files-found: ignore

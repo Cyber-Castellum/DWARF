@@ -51,7 +51,9 @@ make -C dwarf/targets amaru        # or: make -C dwarf/targets all
     <li><strong>Validation gate</strong> (<code>.github/workflows/dwarf-validate.yml</code>) — wallet-free, infra-free. Proves every scenario and Antithesis bundle is well-formed.</li>
     <li><strong>Library fuzz</strong> (<code>.github/workflows/dwarf-fuzz.yml</code>) — <em>actually executes the decoders</em>. Builds the 15 Amaru decoder harnesses (pinned <code>amaru</code> v10.11.20260807 + <code>pallas</code>) and fuzzes every registered decode target with seeded, mutated input. It enforces the harness contract (<code>OK</code> / clean <code>ERR</code> / <strong>crash</strong>) and <strong>fails the build on any crash</strong>, uploading the crashing bytes as an artifact. Budget: 500 inputs/target on push/PR, 20,000 nightly.</li>
   </ul>
-  <p>Run the fuzz stage locally after building the harnesses: <code>python3 dwarf/scripts/ci_fuzz_library.py --iterations 500</code>. The multi-node <strong>devnet</strong> scenarios need Docker meshes + epoch warmup and run on a self-hosted runner (planned next), not on stock hosted runners. See <code>dwarf/docs/ci-validation-gate.md</code>.</p>
+    <li><strong>Devnet smoke</strong> (<code>.github/workflows/dwarf-devnet-smoke.yml</code>) — stands up a curated subset of self-provisioning cardano-node <strong>devnet</strong> meshes and asserts liveness. Needs Docker + epoch warmup, so it runs on a <strong>self-hosted runner</strong> (setup + security model in <code>dwarf/docs/ci-devnet-smoke-runner.md</code>); triggers on push to main / nightly / manual only, never fork PRs. The wrapper tears down only what it creates, so co-hosted devnets are safe.</li>
+  </ul>
+  <p>Run the fuzz stage locally after building the harnesses: <code>python3 dwarf/scripts/ci_fuzz_library.py --iterations 500</code>; run the devnet smoke with <code>dwarf/scripts/ci_devnet_smoke.sh</code>. <strong>Antithesis</strong> runs stay on-demand via Moog (approved-wallet-only, not in CI). See <code>dwarf/docs/ci-validation-gate.md</code>.</p>
 
   <h3>View runs &amp; bundles</h3>
   <ul>
