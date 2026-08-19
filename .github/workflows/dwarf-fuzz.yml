@@ -1,0 +1,100 @@
+name: DWARF library fuzz
+
+# Phase 1 of "run the tests in CI": builds the Amaru decoder harnesses and runs the
+# library-tier CBOR / mini-protocol fuzz over every registered decoder target,
+# failing the build on any crash (panic / abort / hang). Unlike the validation gate
+# (dwarf-validate.yml), this ACTUALLY EXECUTES the decoders — it does not stand up a
+# devnet, need a wallet, or touch the paid Antithesis service.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dwarf/targets/**"
+      - "dwarf/scripts/ci_fuzz_library.py"
+      - ".github/workflows/dwarf-fuzz.yml"
+  pull_request:
+    paths:
+      - "dwarf/targets/**"
+      - "dwarf/scripts/ci_fuzz_library.py"
+      - ".github/workflows/dwarf-fuzz.yml"
+  schedule:
+    - cron: "0 5 * * *"        # nightly, deeper budget
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: "Inputs per target"
+        default: "500"
+
+# Pinned so the harness path-deps resolve and the build is reproducible.
+env:
+  AMARU_REPO: pragma-org/amaru
+  AMARU_REF: 493bffba0cc4db2291643cdd6698197c374958b3   # v10.11.20260807
+  PALLAS_REPO: txpipe/pallas
+  PALLAS_REF: 3951639df88bfe18a41cb179bef3021f8ab27c82
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout DWARF
+        uses: actions/checkout@v4
+
+      # The harness Cargo.toml uses path-deps at <repo>/codebases/{amaru,pallas}.
+      - name: Checkout Amaru (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.AMARU_REPO }}
+          ref: ${{ env.AMARU_REF }}
+          path: codebases/amaru
+
+      - name: Checkout Pallas (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PALLAS_REPO }}
+          ref: ${{ env.PALLAS_REF }}
+          path: codebases/pallas
+
+      # rust-toolchain.toml in dwarf/targets/amaru pins the required nightly;
+      # rustup installs it automatically on first cargo invocation there.
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            dwarf/targets/amaru/target
+          key: dwarf-fuzz-cargo-${{ env.AMARU_REF }}-${{ hashFiles('dwarf/targets/amaru/Cargo.lock') }}
+
+      - name: Build decoder harnesses
+        working-directory: dwarf/targets/amaru
+        run: cargo build --release
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run library fuzz
+        run: |
+          ITERS="${{ github.event.inputs.iterations || (github.event_name == 'schedule' && '20000' || '500') }}"
+          python3 dwarf/scripts/ci_fuzz_library.py \
+            --iterations "$ITERS" \
+            --out dwarf-fuzz-report.json \
+            --crashers-dir fuzz-crashers
+
+      - name: Upload fuzz report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dwarf-fuzz-report
+          path: dwarf-fuzz-report.json
+
+      - name: Upload crashers
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dwarf-fuzz-crashers
+          path: fuzz-crashers/
+          if-no-files-found: ignore

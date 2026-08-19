@@ -1,0 +1,6 @@
+# Pin the harness build to the same toolchain amaru v10.11.20260807 uses
+# (crates/amaru-kernel requires rustc >= 1.97; amaru pins this nightly).
+# Keep in sync with codebases/amaru/rust-toolchain.toml.
+[toolchain]
+channel = "nightly-2026-08-03"
+components = ["rustc", "rust-src"]

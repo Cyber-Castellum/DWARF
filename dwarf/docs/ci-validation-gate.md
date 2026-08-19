@@ -1,10 +1,19 @@
-# DWARF CI validation gate
+# DWARF CI (validation gate + library fuzz)
 
-A wallet-free, infra-free GitHub Action that validates the DWARF scenario corpus and the
-Antithesis bundles on every push / PR. It **does not run** scenarios, fuzzers, a devnet, or any
-Antithesis job — those need a self-hosted runner or a wallet-gated moog run (tracked separately as
-"full scenario runs"). This gate just proves the definitions are well-formed **before** anyone
-spends a real run on a broken one.
+DWARF's GitHub Actions run in **two stages** on every push / PR:
+
+1. **Validation gate** (`dwarf-validate.yml`) — wallet-free, infra-free. Proves the scenario corpus
+   and Antithesis bundles are well-formed **before** anyone spends a real run on a broken one.
+2. **Library fuzz** (`dwarf-fuzz.yml`) — actually **executes** the decoders. Builds the Amaru
+   decoder harnesses and fuzzes every registered decode target, failing the build on any crash.
+
+The remaining tier — the docker multi-node **devnet** scenarios — needs a self-hosted runner and is
+the planned next step (see the end of this doc).
+
+## Stage 1 — Validation gate
+
+Validates the DWARF scenario corpus and the Antithesis bundles. It **does not run** scenarios,
+fuzzers, a devnet, or any Antithesis job. This gate just proves the definitions are well-formed.
 
 ## What it checks
 
@@ -36,16 +45,47 @@ python3 dwarf/scripts/validate_scenarios.py --report out.json   # write summary 
 
 Exit code `0` = pass, `1` = fail. In `--strict` mode, semantic warnings also fail.
 
-## Why it's only validation (not runs)
+## Stage 2 — Library fuzz (real decoder execution)
+
+`dwarf-fuzz.yml` builds the Amaru decoder harnesses (`dwarf/targets/amaru`, package
+`dwarf-amaru-shims`, 15 binaries) and runs `dwarf/scripts/ci_fuzz_library.py` — a seeded,
+deterministic stream of mutated CBOR / mini-protocol inputs against every registered decode target.
+
+It enforces the harness contract and **fails the build on any crash**:
+
+| Harness result | Meaning |
+|---|---|
+| exit 0, stdout `OK` | input parsed cleanly |
+| exit 1, stdout `ERR …` | input rejected with a clean decode error |
+| **anything else** | **CRASH** (panic / abort / signal / hang) → build fails, crashing bytes uploaded |
+
+This is the `runtime: library` scenario tier executed for real — no devnet, no wallet, no Antithesis
+service. The harness sources are pinned path-deps on Amaru `v10.11.20260807` (commit `493bffba`) and
+pallas (`3951639d`), built with the nightly toolchain pinned in `dwarf/targets/amaru/rust-toolchain.toml`.
+
+- **Budget:** 500 inputs/target on push/PR (fast); 20,000/target on the nightly `schedule`; overridable
+  via `workflow_dispatch`.
+- **Artifacts:** the JSON report always; the exact crashing inputs on failure.
+
+Run it locally (after building the harnesses):
+
+```bash
+# harnesses need Amaru + pallas checked out at codebases/{amaru,pallas} (see the workflow for pins)
+(cd dwarf/targets/amaru && cargo build --release)
+python3 dwarf/scripts/ci_fuzz_library.py --iterations 500 --out dwarf-fuzz-report.json
+```
+
+Exit code `0` = no crash, `1` = at least one crash (with crashers saved), `2` = harnesses not built.
+
+## Why the devnet tier isn't in hosted CI yet
 
 - Antithesis runs go through **moog**, which is **approved-wallet-only** — a CI runner can't
   authenticate, so it can't trigger a real Antithesis run.
-- The real differential scenarios need **docker multi-node meshes** or **AFL++ with built target
-  binaries** — too heavy for a stock GitHub-hosted runner.
+- The **devnet** differential scenarios need **docker multi-node meshes** and minutes of epoch
+  warmup per run — too heavy for a stock GitHub-hosted runner (2 vCPU, ~7 GB RAM).
 
-Actually running scenarios in CI (a light docker scenario on a hosted runner, fuzz scenarios with
-prebuilt targets, and the multi-node mesh scenarios on a **self-hosted runner**) is the planned
-next step, built on top of this gate.
+Running a curated **smoke subset** of devnet scenarios on a **self-hosted runner** (built on top of
+these two stages) is the planned next step.
 
 ## Note: CLI entrypoint
 
