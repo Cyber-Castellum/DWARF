@@ -11,12 +11,14 @@
     <header><span class="eyebrow">Step 1</span><h2>Install</h2></header>
 
     <h3>Recommended: Docker deployment</h3>
-    <p>Clone the repository and run the installer — one command seeds the catalog, builds the image, and starts the dashboard. Any Docker-capable Linux host with Compose v2 and ~20&nbsp;GB free disk works; no credentials or wallet are needed for local use.</p>
+    <p>Clone the repository and run the four delivery scripts in order. Any Docker-capable Linux host with Compose v2 and ~20&nbsp;GB free disk works; no credentials or wallet are needed for local use.</p>
     <pre class="run-payload-pre"><code>git clone https://github.com/Cyber-Castellum/DWARF.git
 cd DWARF
-delivery/scripts/install.sh        # seed catalog + build image + start dwarf-fw on :8787</code></pre>
-    <p>The installer starts the <code>dwarf/framework:current</code> image, mounts <code>runs/</code> · <code>state/</code> · <code>bundles/</code> from the package runtime directory, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. To also drive substrate deploy/teardown from the web dashboard, add <code>--control-channel</code>; to build the host-side AFL coverage harness, add <code>--afl</code> (or <code>--all</code> for both). Prerequisites and options are in <code>INSTALL.md</code>. Use a different port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/install.sh</code>.</p>
-    <p>This is the primary deploy path. <code>install.sh</code> calls <code>build-image.sh</code> and <code>deploy.sh</code> for you; you can still run those two individually to rebuild or restart without re-seeding. The container layer pins framework dependencies so installs are reproducible across Docker-capable Linux hosts.</p>
+delivery/scripts/install.sh       # create ./var/{runs,state,bundles}
+delivery/scripts/build-image.sh   # build dwarf/framework:current
+delivery/scripts/deploy.sh        # start container dwarf-fw on :8787</code></pre>
+    <p>The deployment starts the <code>dwarf/framework:current</code> image, mounts <code>runs/</code> · <code>state/</code> · <code>bundles/</code> from the package runtime directory, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites and options are in <code>INSTALL.md</code>. Use a different port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh</code>.</p>
+    <p>This is the primary deploy path. The container layer pins framework dependencies so installs are reproducible across Docker-capable Linux hosts.</p>
 
     <h3>Confirm it's working</h3>
     <pre class="run-payload-pre"><code>delivery/scripts/status.sh                                    # image / container / port / inventory
@@ -37,6 +39,7 @@ python3 -m pip install -r infrastructure/docker/requirements-framework.txt
   <article class="learn-step">
     <header><span class="eyebrow">Step 2</span><h2>Pick a scenario and run it</h2></header>
     <p>Deploying the dashboard and passing the validation gate (Step 1) needs no extra dependencies. <em>Executing</em> a scenario needs its runtime layer, and is run from the <strong>host CLI on a Docker-capable machine</strong> — not from inside the hardened UI container (which has no Docker-in-Docker and ships no target binaries).</p>
+    <p>The same fuzz scenarios also run in CI: the public repo's <strong>library-fuzz</strong> GitHub Action (<code>.github/workflows/dwarf-fuzz.yml</code>) builds the Amaru decoder harnesses and fuzzes every decode target on each push / PR, failing the build on any crash — see the operator runbook's <em>Continuous integration</em> note.</p>
     <p><strong>Fuzz scenarios</strong> (CBOR / ledger-rule / mini-protocol) decode into a target binary, so build the targets once — Rust for <code>amaru</code>, GHC/cabal for <code>cardano-node</code>:</p>
     <pre class="run-payload-pre"><code>make -C dwarf/targets amaru        # or: make -C dwarf/targets all
 ./dwarf/cardano-profile scenario run \
@@ -63,10 +66,10 @@ python3 -m pip install -r infrastructure/docker/requirements-framework.txt
     <header><span class="eyebrow">Step 4</span><h2>Preserve a forensic bundle</h2></header>
     <p>The framework keeps every run in <code>runs/</code> by default but bundles you want to keep across cleanup runs go to <code>bundles/</code> as signed tar.gz archives:</p>
     <pre class="run-payload-pre"><code># Inside Docker
-docker exec dwarf-fw dwarf/cardano-profile bundle export &lt;run-id&gt;
+docker exec dwarf-fw dwarf/cardano-profile bundle &lt;run-id&gt;
 
 # Bare metal
-./dwarf/cardano-profile bundle export &lt;run-id&gt;</code></pre>
+./dwarf/cardano-profile bundle &lt;run-id&gt;</code></pre>
     <p>From the dashboard, the <code>Export bundle (.tar.gz)</code> button on the run inspector header does the same thing. To re-import a bundle on another box, drop it on <a href="/operate/bundles">/operate/bundles</a> via the Import form (or run <code>cardano-profile bundle import &lt;path&gt;</code>).</p>
   </article>
 

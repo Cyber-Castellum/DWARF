@@ -2,20 +2,20 @@
 {% block main %}
 <span class="eyebrow">Learn · Operator runbook</span>
 <h1>Operator runbook</h1>
-<p class="page-hero">Deploy, day-2 operations, troubleshooting recipes, backup / restore, and health monitoring. The reader-facing companion to <code>dwarf/docs/operator-handbook.md</code>; updated as gotchas surface.</p>
+<p class="page-hero">Deploy, day-2 operations, troubleshooting recipes, backup / restore, and health monitoring. The reader-facing version of <code>agent/research/operator-runbook.md</code>; updated as gotchas surface.</p>
 
 <hr class="hairline">
 
 <section>
   <header><span class="eyebrow">Step 1</span><h2>Deploy</h2></header>
   <h3>Recommended: Docker</h3>
-  <p>Clone the repo and run the installer — one command seeds the catalog, builds the image, and starts the container:</p>
+  <p>Clone the repo and run the four delivery scripts in order:</p>
   <pre class="run-payload-pre"><code>git clone https://github.com/Cyber-Castellum/DWARF.git
 cd DWARF
-delivery/scripts/install.sh                    # seed + build + start dwarf-fw on :8787
-delivery/scripts/install.sh --control-channel  # ...also enable web-driven substrate deploy/teardown
-delivery/scripts/install.sh --all              # ...plus build the host-side AFL coverage harness</code></pre>
-  <p>The installer mounts <code>runs/</code>, <code>state/</code>, <code>bundles/</code> from the package <code>var/</code> into the container and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. It calls <code>build-image.sh</code> and <code>deploy.sh</code> for you; run those two directly to rebuild/restart without re-seeding. With <code>--control-channel</code>, the dashboard's deploy/teardown/coverage buttons drive the host through a restricted forced-command SSH shim (the hardened container never gets a host shell). Prerequisites (Docker + Compose v2, ~20 GB free disk) and options are in <code>INSTALL.md</code>. Override the port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/install.sh</code>.</p>
+delivery/scripts/install.sh       # create ./var/{runs,state,bundles}
+delivery/scripts/build-image.sh   # build dwarf/framework:current
+delivery/scripts/deploy.sh        # start container dwarf-fw on :8787</code></pre>
+  <p>The deployment mounts <code>runs/</code>, <code>state/</code>, <code>bundles/</code> from the package <code>var/</code> into the container and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites (Docker + Compose v2, ~20 GB free disk) and options are in <code>INSTALL.md</code>. Override the port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh</code>.</p>
   <h3>Confirm it's working</h3>
   <pre class="run-payload-pre"><code>delivery/scripts/status.sh                                    # image / container / port / inventory
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8787/operate   # expect 200
@@ -44,6 +44,14 @@ make -C dwarf/targets amaru        # or: make -C dwarf/targets all
 ./dwarf/cardano-profile scenario run --runtime devnet \
   dwarf/scenarios/runtime-substrate-honest-baseline-example-smoke.yaml</code></pre>
   <p>Output lands in <code>runs/&lt;timestamp&gt;-&lt;hash&gt;/</code>; the dashboard auto-discovers it. <a href="/operate/runs">/operate/runs</a> lists newest-first.</p>
+
+  <h3>Continuous integration (GitHub Actions)</h3>
+  <p>The public repo runs CI in <strong>two stages</strong> on every push / PR:</p>
+  <ul>
+    <li><strong>Validation gate</strong> (<code>.github/workflows/dwarf-validate.yml</code>) — wallet-free, infra-free. Proves every scenario and Antithesis bundle is well-formed.</li>
+    <li><strong>Library fuzz</strong> (<code>.github/workflows/dwarf-fuzz.yml</code>) — <em>actually executes the decoders</em>. Builds the 15 Amaru decoder harnesses (pinned <code>amaru</code> v10.11.20260807 + <code>pallas</code>) and fuzzes every registered decode target with seeded, mutated input. It enforces the harness contract (<code>OK</code> / clean <code>ERR</code> / <strong>crash</strong>) and <strong>fails the build on any crash</strong>, uploading the crashing bytes as an artifact. Budget: 500 inputs/target on push/PR, 20,000 nightly.</li>
+  </ul>
+  <p>Run the fuzz stage locally after building the harnesses: <code>python3 dwarf/scripts/ci_fuzz_library.py --iterations 500</code>. The multi-node <strong>devnet</strong> scenarios need Docker meshes + epoch warmup and run on a self-hosted runner (planned next), not on stock hosted runners. See <code>dwarf/docs/ci-validation-gate.md</code>.</p>
 
   <h3>View runs &amp; bundles</h3>
   <ul>
@@ -140,11 +148,11 @@ cardano-profile moog preflight --asset-dir &lt;dir&gt; --repo &lt;org/repo&gt; -
   <p>The Moog config block is safe for public deployment metadata only. Set or replace it with a JSON object like this:</p>
   <pre class="run-payload-pre"><code>cardano-profile moog set '{
   "enabled": true,
-  "deploy_root": "/home/dwarf/moog-deploy",
-  "moog_binary": "/home/dwarf/bin/moog",
-  "secrets_root": "/home/dwarf/moog-secrets",
+  "deploy_root": "/home/nigel/moog-deploy",
+  "moog_binary": "/home/nigel/bin/moog",
+  "secrets_root": "/home/nigel/moog-secrets",
   "mpfs_host": "https://mpfs.plutimus.com",
-  "token_id": "REPLACE_WITH_YOUR_MOOG_TOKEN_ID",
+  "token_id": "21c523c3b4565f1fc1ad7e54e82ca976f60997d8e7e9946826813fabf341069b",
   "requester_wallet_id": "moog-requester",
   "oracle_service": "moog-oracle.service"
 }'</code></pre>
@@ -361,13 +369,13 @@ except ImportError:
     <li><code>state/</code> — dashboard config + notifications log + chain head + lifecycle ledger.</li>
   </ul>
   <p>Snapshot all three for backup. The framework provides primitives that wrap this:</p>
-  <pre class="run-payload-pre"><code># Capture (add --include-bundles to also archive preserved bundles/)
-cardano-profile backup --to /backups/dwarf-$(date +%Y%m%d).tar.gz --include-bundles
+  <pre class="run-payload-pre"><code># Capture
+cardano-profile backup --output /backups/dwarf-$(date +%Y%m%d).tar.gz
 
-# Restore (archive path is positional; --dry-run verifies the chain without unpacking)
-cardano-profile restore /backups/dwarf-20260429.tar.gz --dry-run
-cardano-profile restore /backups/dwarf-20260429.tar.gz</code></pre>
-  <p>Backup stops the dashboard, captures the state/runs (and, with <code>--include-bundles</code>, the preserved bundles) with their hash chain intact, and restarts. Restore is the inverse — <code>--dry-run</code> verifies the chain first, then the real run unpacks and restarts.</p>
+# Restore (target dir must be empty)
+cardano-profile restore --archive /backups/dwarf-20260429.tar.gz \
+                        --target /home/dwarf/dwarf-fw</code></pre>
+  <p>The backup primitive stops the dashboard, captures the three trees with their hash chain intact, and restarts. Restore is the inverse — verify the chain, unpack, restart.</p>
 </section>
 
 <hr class="hairline">
@@ -405,7 +413,7 @@ cardano-profile restore /backups/dwarf-20260429.tar.gz</code></pre>
   - job_name: dwarf
     metrics_path: /metrics
     static_configs:
-      - targets: ['example.com:443']
+      - targets: ['dwarf.gainpalfam.com:443']
     scheme: https</code></pre>
 </section>
 

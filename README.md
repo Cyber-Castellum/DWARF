@@ -93,6 +93,22 @@ Docker-capable host (the CLI, not the hardened UI container):
 - **Native coverage-guided fuzz** and **Antithesis campaigns** use the published
   GHCR images — see [Container images](#container-images) below.
 
+### Continuous integration (GitHub Actions)
+
+DWARF's CI runs in **two stages** on every push / PR (see
+[`dwarf/docs/ci-validation-gate.md`](dwarf/docs/ci-validation-gate.md)):
+
+1. **Validation gate** (`.github/workflows/dwarf-validate.yml`) — wallet-free, infra-free.
+   Proves every scenario and Antithesis bundle is well-formed before anyone spends a real run.
+2. **Library fuzz** (`.github/workflows/dwarf-fuzz.yml`) — **actually executes the decoders.**
+   Builds the 15 Amaru decoder harnesses (pinned `amaru` v10.11.20260807 + `pallas`) and fuzzes
+   every registered decode target with seeded, mutated CBOR / mini-protocol input. It enforces the
+   harness contract (`OK` / clean `ERR` / **crash**) and **fails the build on any crash**, uploading
+   the crashing bytes as an artifact. Budget: 500 inputs/target on push/PR, 20,000/target nightly.
+
+The multi-node **devnet** scenarios need Docker meshes + epoch warmup and run on a self-hosted
+runner (planned next), not on stock hosted runners.
+
 ---
 
 ## What it does
