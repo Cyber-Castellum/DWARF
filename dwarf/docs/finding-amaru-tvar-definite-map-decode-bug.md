@@ -20,8 +20,9 @@ UTxO section is a small/definite map (custom or local testnets, minimal genesis,
 
 The decoder *fails closed* (it rejects a valid snapshot rather than accepting a bad one), so the
 security impact is low. The operational impact is that Amaru cannot bootstrap such a network without
-a source patch, compounding the custom‑testnet bootstrap gap
-(`finding-amaru-custom-testnet-bootstrap-wall.md`).
+a source patch, compounding the broader gap that Amaru cannot bootstrap a from‑scratch / custom
+Cardano network out of the box (`amaru node bootstrap` supports only the three Amaru‑published
+networks).
 
 ## Environment
 

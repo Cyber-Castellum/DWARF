@@ -1,7 +1,7 @@
 # Evidence bundle — Amaru snapshot importer aborts on definite-length UTxO maps
 
 Supporting source, proof bytes, and reproduction for the finding
-`finding-amaru-tvar-definite-map-decode-bug.md` (included). Generated 2026-08-19 on cardano-box
+`finding-amaru-tvar-definite-map-decode-bug.md` (included). Generated 2026-08-19 on a DWARF test host
 while bootstrapping Amaru v10.11.20260807 on a DWARF-owned custom `testnet_42` from cardano-node
 `db-analyser` snapshots.
 

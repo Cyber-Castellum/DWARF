@@ -1,4 +1,4 @@
-Evidence generated:   2026-08-19 (cardano-box)
+Evidence generated:   2026-08-19 (a DWARF test host)
 Amaru:                v10.11.20260807 (git 493bffba0cc4db2291643cdd6698197c374958b3)
 Amaru --version:      Amaru 10.11.0 (493bffb+dirty)   [+dirty = the DWARF patch applied]
 Snapshot tool:        cardano-node db-analyser 11.0.1 / 11.1.0 (identical tablesCodecVersion:1 output)

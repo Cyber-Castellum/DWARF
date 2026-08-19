@@ -1,0 +1,1 @@
+PROOF: Imported 3 snapshot(s) successfully — epochs 0,1,2 (UTxO size=8 each), ledger.testnet_42.db=136K

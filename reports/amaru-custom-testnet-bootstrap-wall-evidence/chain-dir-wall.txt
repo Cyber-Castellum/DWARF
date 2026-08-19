@@ -1,0 +1,4 @@
+# node run wall
+2026-08-19T08:12:48.120156Z ERROR amaru::cli: error description=OpenError: Invalid argument: <devnet-root>/amaru-state/chain.testnet_42.db/CURRENT: does not exist (create_if_missing is false)
+# nonces set wall
+OpenError create_if_missing is false (confirmed 2026-08-19)

@@ -1,0 +1,7 @@
+Evidence generated:   2026-08-19 (a DWARF test host)
+Amaru:                v10.11.20260807 (git 493bffba0cc4db2291643cdd6698197c374958b3) + 3 DWARF patches
+Reference producer:   cardano-node 11.1.0 (intersectmbo/cardano-node:11.1.0), testnet_42
+Reference submit-api: cardano-submit-api 10.7.1
+Snapshot tool:        cardano-node db-analyser 11.0.1 / 11.1.0
+Network:              DWARF-owned testnet_42 (k=5, epochLength=500, slotLength=0.1s, activeSlotsCoeff=0.05)
+Path exercised:       amaru snapshot create -> amaru node bootstrap (local manifest) -> amaru node run (serve-only)

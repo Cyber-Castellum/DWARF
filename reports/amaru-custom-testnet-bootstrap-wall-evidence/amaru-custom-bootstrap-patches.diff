@@ -1,0 +1,130 @@
+diff --git a/crates/amaru/src/bin/amaru/cmd/dev/ledger/states/import.rs b/crates/amaru/src/bin/amaru/cmd/dev/ledger/states/import.rs
+index bed38a46..2ddaefd3 100644
+--- a/crates/amaru/src/bin/amaru/cmd/dev/ledger/states/import.rs
++++ b/crates/amaru/src/bin/amaru/cmd/dev/ledger/states/import.rs
+@@ -19,7 +19,7 @@ use amaru::{
+     default_ledger_dir,
+     lifecycle::{Runnable, RuntimeKind},
+ };
+-use amaru_kernel::NetworkName;
++use amaru_kernel::{GlobalParameters, NetworkName};
+ use clap::Parser;
+ use tracing::info;
+ 
+@@ -44,6 +44,10 @@ pub struct Args {
+         env = amaru::env_vars::NETWORK,
+     )]
+     network: NetworkName,
++
++    /// Override network's global parameters for custom testnets.
++    #[command(flatten)]
++    global_parameters: GlobalParameters,
+ }
+ 
+ pub(crate) fn runnable(args: Args) -> Runnable {
+@@ -65,9 +69,10 @@ async fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
+     let global_parameters = args
+         .network
+         .as_global_parameters()
+-        .ok_or_else(|| format!("no global parameters available for network {}", args.network))?;
++        .cloned()
++        .unwrap_or(args.global_parameters);
+ 
+-    import_snapshots(args.network, global_parameters, &args.snapshot_paths, &ledger_dir).await?;
++    import_snapshots(args.network, &global_parameters, &args.snapshot_paths, &ledger_dir).await?;
+ 
+     println!("Imported {} snapshot(s) successfully", args.snapshot_paths.len());
+ 
+diff --git a/crates/amaru/src/bootstrap/mod.rs b/crates/amaru/src/bootstrap/mod.rs
+index 9b12000d..e647aa5c 100644
+--- a/crates/amaru/src/bootstrap/mod.rs
++++ b/crates/amaru/src/bootstrap/mod.rs
+@@ -22,7 +22,8 @@ use std::{
+ };
+ 
+ use amaru_kernel::{
+-    BlockHeader, Epoch, GlobalParameters, Hash, HeaderHash, IsHeader, NetworkName, Nonce, Peer, Point, RawBlock, Slot,
++    BlockHeader, Epoch, EraHistory, GlobalParameters, Hash, HeaderHash, IsHeader, NetworkName, Nonce, Peer, Point,
++    RawBlock, Slot,
+     StakeCredential, extract_block_header_cbor, from_cbor, num::CheckedSub, utils::string::display_collection,
+ };
+ use amaru_ledger::store::{EpochTransitionProgress, Store, TransactionalContext};
+@@ -110,6 +111,38 @@ fn snapshot_hash(snapshot: &Snapshot) -> Result<HeaderHash, Box<dyn Error>> {
+     }
+ }
+ 
++// DWARF patch: build the bootstrap manifest from local `.tar.zst` archives + a local era-history,
++// for custom testnets that are not on S3 and have no bundled era-history.
++fn local_bootstrap_snapshots(snapshots_dir: &Path) -> Result<Option<Vec<Snapshot>>, Box<dyn Error>> {
++    let era_path = match std::env::var("AMARU_ERA_HISTORY") {
++        Ok(p) => p,
++        Err(_) => return Ok(None),
++    };
++    let entries = match std::fs::read_dir(snapshots_dir) {
++        Ok(e) => e,
++        Err(_) => return Ok(None),
++    };
++    let era_history = EraHistory::load(Path::new(&era_path))
++        .map_err(|err| format!("failed to load AMARU_ERA_HISTORY {era_path}: {err:?}"))?;
++    let mut snapshots = Vec::new();
++    for entry in entries.flatten() {
++        let path = entry.path();
++        if is_snapshot_archive_file(&path) {
++            if let Some(fname) = path.file_name().and_then(|s| s.to_str()) {
++                let point = fname.trim_end_matches(".tar.zst").to_string();
++                let slot = parse_slot_from_point(&point)?;
++                let epoch = era_history.slot_to_epoch_unchecked_horizon(Slot::from(slot))?;
++                snapshots.push(Snapshot { epoch, point, key: String::new() });
++            }
++        }
++    }
++    if snapshots.len() >= 3 {
++        Ok(Some(snapshots))
++    } else {
++        Ok(None)
++    }
++}
++
+ /// List S3 objects under `<network>/`, derive epoch from slot via era history, return `Vec<Snapshot>`.
+ async fn bootstrap_snapshots(
+     network: NetworkName,
+@@ -117,6 +150,14 @@ async fn bootstrap_snapshots(
+ ) -> Result<(PathBuf, Vec<Snapshot>), Box<dyn Error>> {
+     let snapshots_dir: PathBuf = default_snapshots_dir(network).into();
+ 
++    // DWARF patch: local / custom-network bootstrap. When the snapshots dir already holds the three
++    // `.tar.zst` bootstrap archives, build the manifest from them using a local era-history
++    // (AMARU_ERA_HISTORY) and skip S3 listing + the bundled-era-history requirement (custom testnets
++    // have neither). This is what lets `node bootstrap` CREATE the chain store for a DWARF-owned net.
++    if let Some(local) = local_bootstrap_snapshots(&snapshots_dir)? {
++        return Ok((snapshots_dir, local));
++    }
++
+     let era_history = network
+         .as_era_history()
+         .ok_or_else(|| format!("no era history available for network {network}; S3 bootstrap is only supported for mainnet, preprod, and preview"))?;
+diff --git a/crates/amaru/src/cardano_node/tvar.rs b/crates/amaru/src/cardano_node/tvar.rs
+index 247e836c..9a373437 100644
+--- a/crates/amaru/src/cardano_node/tvar.rs
++++ b/crates/amaru/src/cardano_node/tvar.rs
+@@ -145,13 +145,17 @@ where
+             let mut chunk_size = 0;
+ 
+             loop {
+-                if d.datatype()? == cbor::data::Type::Break {
+-                    d.skip()?;
++                // DWARF patch: check the known (definite) map length BEFORE probing for a
++                // Break. db-analyser emits small UTxO sets as a definite-length map with no
++                // trailing bytes; probing datatype() past the last pair hit EOF and raised
++                // \"end of input bytes\". For indefinite maps size is None so Break still governs.
++                if size.is_some_and(|len| actual_size + chunk_size >= len) {
+                     done = true;
+                     break;
+                 }
+ 
+-                if size.is_some_and(|len| actual_size + chunk_size >= len) {
++                if d.datatype()? == cbor::data::Type::Break {
++                    d.skip()?;
+                     done = true;
+                     break;
+                 }
