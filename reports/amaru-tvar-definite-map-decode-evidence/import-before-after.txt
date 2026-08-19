@@ -1,0 +1,11 @@
+# BEFORE fix (amaru v10.11.20260807 stock) — definite-map tvar:
+2026-08-19T07:59:45  INFO amaru::bootstrap: constitutional_committee.import state=trusted ...
+2026-08-19T07:59:45 ERROR amaru::cli: error description=end of input bytes
+# -> import aborts immediately after the UTxO section begins.
+
+# AFTER fix (size-check before Break-probe):
+2026-08-19T08:11:00  INFO amaru::bootstrap: import.utxo size=8
+2026-08-19T08:11:00  INFO ledger.epoch.create_snapshot: amaru::stores: epoch=0
+2026-08-19T08:11:00  INFO amaru::bootstrap: import.utxo size=8   # epoch 1
+2026-08-19T08:11:00  INFO amaru::bootstrap: import.utxo size=8   # epoch 2
+Imported 3 snapshot(s) successfully

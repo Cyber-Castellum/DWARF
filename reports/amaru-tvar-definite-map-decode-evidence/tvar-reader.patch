@@ -1,0 +1,25 @@
+diff --git a/crates/amaru/src/cardano_node/tvar.rs b/crates/amaru/src/cardano_node/tvar.rs
+index 247e836c..9a373437 100644
+--- a/crates/amaru/src/cardano_node/tvar.rs
++++ b/crates/amaru/src/cardano_node/tvar.rs
+@@ -145,13 +145,17 @@ where
+             let mut chunk_size = 0;
+ 
+             loop {
+-                if d.datatype()? == cbor::data::Type::Break {
+-                    d.skip()?;
++                // DWARF patch: check the known (definite) map length BEFORE probing for a
++                // Break. db-analyser emits small UTxO sets as a definite-length map with no
++                // trailing bytes; probing datatype() past the last pair hit EOF and raised
++                // \"end of input bytes\". For indefinite maps size is None so Break still governs.
++                if size.is_some_and(|len| actual_size + chunk_size >= len) {
+                     done = true;
+                     break;
+                 }
+ 
+-                if size.is_some_and(|len| actual_size + chunk_size >= len) {
++                if d.datatype()? == cbor::data::Type::Break {
++                    d.skip()?;
+                     done = true;
+                     break;
+                 }

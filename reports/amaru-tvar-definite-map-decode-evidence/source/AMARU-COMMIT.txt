@@ -1,0 +1,6 @@
+pragma-org/amaru
+commit: 493bffba0cc4db2291643cdd6698197c374958b3
+tag:    v10.11.20260807
+file:   crates/amaru/src/cardano_node/tvar.rs
+note:   tvar.rs here is the PATCHED file (DWARF fix applied). The stock loop ordering
+        and the one-line fix are shown in ../tvar-reader.patch (git diff).

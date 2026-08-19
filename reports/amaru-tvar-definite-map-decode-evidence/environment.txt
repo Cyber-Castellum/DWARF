@@ -1,0 +1,8 @@
+Evidence generated:   2026-08-19 (cardano-box)
+Amaru:                v10.11.20260807 (git 493bffba0cc4db2291643cdd6698197c374958b3)
+Amaru --version:      Amaru 10.11.0 (493bffb+dirty)   [+dirty = the DWARF patch applied]
+Snapshot tool:        cardano-node db-analyser 11.0.1 / 11.1.0 (identical tablesCodecVersion:1 output)
+Network:              DWARF-owned testnet_42 (k=5, epochLength=500, slotLength=0.1s, activeSlotsCoeff=0.05)
+UTxO at epoch 0:      8 entries -> serialized as a DEFINITE CBOR map (a8)
+Path exercised:       amaru node bootstrap / amaru dev ledger states import -> import_tvar_utxo
+Source file:          crates/amaru/src/cardano_node/tvar.rs
