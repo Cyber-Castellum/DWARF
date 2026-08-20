@@ -1,0 +1,26 @@
+# High-yield configuration — attacked relay holds an HONEST peer + the ADVERSARY
+# (superseded the earlier adversary-only wiring, which stalled the relay so that
+#  the safety assertion was near-vacuous and the restart path unreachable)
+
+## Design
+  amaru-relay-1 (TARGET)  peers: relay1.example:3001 (honest) + dwarf-adversary.example:3001 (malicious)
+  amaru-relay-2 (CONTROL) peers: relay2.example:3001 (honest only)
+  adversary: --protocol blockfetch --cbor-shape block --mutation-rate 0.5 --seed 20260820
+
+## RESULT A — safety holds NON-vacuously (target is actively adopting while attacked)
+  relay-1 adoptions : 69
+  relay-1 rejections: 7
+  relay-1 tip : tip.adopt slot=8454 header_hash=c79eb0275e1623724a298c531dd1d07f985473f7f3ce5d9edb6156945be899b3 block_height=1144
+  relay-2 tip : tip.adopt slot=8454 header_hash=c79eb0275e1623724a298c531dd1d07f985473f7f3ce5d9edb6156945be899b3 block_height=1144
+  => target tracks the SAME honest chain as the control while being fed forged blocks
+
+## RESULT B — restart/recovery under attack (the hypothesised high-yield bug)
+  graceful restart (SIGTERM): recovered, resumed adopting, 0 bug signatures
+  UNCLEAN kill    (SIGKILL) : recovered, resumed adopting, 0 bug signatures
+  => the RollbackPointInFuture restart crash did NOT reproduce on amaru 807 here.
+     Single manual kills only sample ONE interleaving; systematic timing exploration
+     (Antithesis) is the only practical way to search for a rare one.
+
+## Crash/robustness totals
+  relay-1 restarts=0 panics=0
+  relay-2 restarts=1 panics=0

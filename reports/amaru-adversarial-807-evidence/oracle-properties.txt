@@ -1,0 +1,20 @@
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 585}
+[reachable] honest amaru relay reached a new tip {'block_height': 585}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 585}
+[reachable] honest amaru relay reached a new tip {'block_height': 585}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 585}
+[reachable] honest amaru relay reached a new tip {'block_height': 585}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 585}
+[reachable] honest amaru relay reached a new tip {'block_height': 585}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 586}
+[reachable] honest amaru relay reached a new tip {'block_height': 586}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+[sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 588}
+[reachable] honest amaru relay reached a new tip {'block_height': 588}
+[sometimes-ok] adversarial amaru relay rejected a forged block at decode {}

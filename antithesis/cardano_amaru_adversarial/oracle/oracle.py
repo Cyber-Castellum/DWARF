@@ -43,7 +43,14 @@ POLL = float(os.environ.get("ORACLE_POLL_SECS", "5"))
 # ordinary bootstrap/propagation skew; a real forged advance grows without bound.
 AHEAD_MARGIN = int(os.environ.get("ORACLE_AHEAD_MARGIN", "3"))
 
-ADOPT_RE = re.compile(r"adopted tip tip\.slot=(\d+) tip\.hash=([0-9a-f]+).*?block_height=(\d+)")
+# amaru v10.11.20260807 renamed this trace: "adopted tip tip.slot=.. tip.hash=.."
+# became "tip.adopt slot=.. header_hash=.. block_height=..". Accept BOTH so the
+# oracle works against old and new amaru (a stale pattern silently vacuums the
+# safety assertions, which would make a paid run meaningless).
+ADOPT_RE = re.compile(
+    r"tip\.adopt slot=(?P<slot>\d+) header_hash=(?P<hash>[0-9a-f]+).*?block_height=(?P<height>\d+)"
+    r"|adopted tip tip\.slot=(?P<slot2>\d+) tip\.hash=(?P<hash2>[0-9a-f]+).*?block_height=(?P<height2>\d+)"
+)
 DECODE_ERR_RE = re.compile(r"failed to decode message from network|Invalid CBOR|decode error")
 FATAL_RE = re.compile(r"\bpanic(ked)?\b|\bFATAL\b|amaru::fatal")
 
@@ -79,7 +86,7 @@ def main():
         adv_new = follow(ADV_LOG, state)
 
         for m in ADOPT_RE.finditer(hon_new):
-            h, bh = m.group(2), int(m.group(3))
+            h, bh = (m.group("hash") or m.group("hash2")), int((m.group("height") or m.group("height2")))
             honest_hashes.add(h)
             honest_by_height[bh] = h
             honest_max_bh = max(honest_max_bh, bh)
@@ -99,7 +106,7 @@ def main():
             sometimes(True, "adversarial amaru relay rejected a forged block at decode", {})
 
         for m in ADOPT_RE.finditer(adv_new):
-            slot, h, bh = int(m.group(1)), m.group(2), int(m.group(3))
+            slot, h, bh = int((m.group("slot") or m.group("slot2"))), (m.group("hash") or m.group("hash2")), int((m.group("height") or m.group("height2")))
             # SAFETY 1: any tip relay-1 adopts at a height the honest relay has also
             # reached must be the SAME hash (i.e. on the honest chain). A mismatch
             # means relay-1 adopted a forged fork the honest node rejected.

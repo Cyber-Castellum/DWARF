@@ -86,21 +86,28 @@ Client-facing results from DWARF campaigns against `cardano-node` and Amaru.
   Write-up: `dwarf/docs/finding-amaru-submit-trailing-bytes.md`. Raw responses, seeds, mutation sweep,
   resource analysis, and pinned source in `amaru-submit-trailing-bytes-evidence/`.
 
-## Adversarial mixed-net + epoch-transition crash (`amaru-epoch-transition-rewards-evidence/`)
+## Amaru under adversarial input × faults (`amaru-adversarial-807-evidence/`)
 
-- **Amaru v10.11 deterministically panics at the epoch transition on a total-rewards discrepancy.**
-  Found by DWARF's adversarial mixed net (`antithesis/cardano_amaru_adversarial/` — the client's k=20
-  live-bootstrap topology + a byzantine adversary feeding one Amaru relay mutated block-fetch CBOR + a
-  differential oracle). The **honest** relay crash-loops crossing a dormant epoch boundary:
-  `epoch_transition.rs:71 discrepancy between expected total rewards (=1415076923074) and actual total
-  rewards (=1414056923074)` — a constant **1,020 ADA** delta, 600+ identical restarts. **Confirmed in the
-  client's own `cardano_amaru` Antithesis run** (identical panic, same delta, epoch 2→3) — it is the crash
-  behind their "amaru-relay exit code 1" findings, and PR #186 (k=20) did not fix it. Separately, the
-  6-hour adversarial soak recorded **0 forged blocks adopted across 512 rejections** — Amaru robustly
-  rejects mutated block CBOR. Write-up: `dwarf/docs/finding-amaru-epoch-transition-rewards-discrepancy.md`.
-  **Update (2026-08-11): FIXED upstream in `v10.11.20260807`** — confirmed by source diff, and the fix
-  matches our root cause exactly: the old `unclaimed_rewards()` didn't count a **pool leader reward paid
-  to a never-registered reward account** (`unclaimed_rewards → total_unclaimed_rewards`, new
-  `leader_recipients`/`pools_owners` tracking, + commit `9107c1683` "debit the treasury correctly").
-  The former open item (which 1,020 ADA) is answered: a single pool's leader reward to a never-registered
-  account. Nodes still on `v10.11.20260730`/`10.10.x` remain affected until upgraded.
+Local validation of the `antithesis/cardano_amaru_adversarial` bundle: a cardano-node 10.7.1
+cluster (`k=20`, `epochLength=400`, `f=0.2`) with two Amaru **v10.11.20260807** relays, where the
+target relay peers an **honest relay and `dwarf-adversary` at the same time** and the adversary
+mutates block-fetch CBOR at `--mutation-rate 0.5`.
+
+- **Amaru rejected every forged block at decode, with no panic** — it killed block-fetch and banned
+  the adversary rather than adopting anything forged.
+- **The target tracked the honest chain while under attack**: 514 adoptions, identical tip hash to
+  the honest control at equal height. This is what makes the safety assertion meaningful — an
+  earlier wiring gave the target *only* the adversary, and it simply stalled at its bootstrap tip
+  (block 172 while the chain reached 1052), leaving the assertion near-vacuous.
+- **The 807 epoch-transition fix holds**: ran to epoch 20 with `RestartCount=0` and no
+  rewards-discrepancy signatures. The previous image crash-looped at the 3→4 transition.
+- **The hypothesised restart/recovery bug did not reproduce.** Restarting the synced, under-attack
+  relay recovered cleanly under both `SIGTERM` and an unclean `SIGKILL` — no `RollbackPointInFuture`,
+  no `Consensus died`. Reported as a negative result rather than left implied.
+
+A related near-miss is worth recording: Amaru 807 renamed its adoption trace
+(`adopted tip tip.slot=…` → `tip.adopt slot=… header_hash=…`). The oracle's old regex no longer
+matched, so both `always` safety properties would have evaluated over **zero** samples and reported
+green while testing nothing. Fixed in `dwarf-adversarial-oracle:0.1.1`, which accepts both formats.
+
+Design and expected outcome: `antithesis/cardano_amaru_adversarial/RUN-DESIGN.md`.

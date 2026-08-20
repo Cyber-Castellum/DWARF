@@ -8,6 +8,22 @@ protocol messages**, plus a **differential oracle** that asserts Amaru rejects t
 This is a **separate** bundle — it does not modify `cardano_amaru_dwarf` or
 `amaru_baked_dwarf`.
 
+> **Read `RUN-DESIGN.md` first — it is authoritative.** This file records the *original* design.
+> The shipped `docker-compose.yaml` is the later, locally-validated **807 dual-peer** topology and
+> differs from the diagram below in two ways that matter:
+>
+> 1. **The Amaru relays run a baked `amaru-adv:807-k20` image**, not `bootstrap-producer` +
+>    `amaru-consumer`. Amaru **v10.11.20260807** fixes the epoch-transition rewards crash, so the
+>    control relay now survives past epoch 4; the older image crash-looped there, which made a
+>    sustained differential impossible.
+> 2. **`amaru-relay-1` peers the honest relay *and* the adversary**, not the adversary alone. With
+>    the adversary as sole peer the relay stalled at its bootstrap tip (block 172 while the chain
+>    reached 1052): the safety assertions were near-vacuous and the restart path unreachable. The
+>    dual peer set is also the realistic attack model — one good peer, one malicious.
+>
+> The previous topology is kept as `docker-compose.upstream-original.yaml` for provenance. It is
+> **not** what runs: Antithesis and moog consume `docker-compose.yaml` only.
+
 ## Why it exists
 
 The client's own Antithesis runs (`cardano-foundation/cardano-node-antithesis`,
@@ -74,19 +90,33 @@ normally. The differential works.
 
 ## Launch (moog / Antithesis)
 
-1. Build + push public: `dwarf-adversary` (exists) and
-   `docker build -t ghcr.io/j-gainsec/dwarf-adversarial-oracle:0.1.0 oracle` (push it).
+Full procedure, including the pre-flight checklist: **`SUBMIT-RUNBOOK.md`**.
+
+1. **Images — already published and public** under `ghcr.io/j-gainsec/*`:
+   `amaru-adv:807-k20`, `dwarf-adversary-anti:0.10.0`, `dwarf-adversarial-oracle:0.1.1`.
+   `docker-compose.yaml` pins all three **by digest**, so a run uses exactly the validated bytes.
 2. Commit this dir to `Cyber-Castellum/DWARF`.
 3. `moog requester create-test -r Cyber-Castellum/DWARF -d antithesis/cardano_amaru_adversarial …`
-   (`--duration`, faults ON). Antithesis runs `docker-compose.yaml`.
+   (`-t <hours>`, faults ON — with faults off this is just the local validation at a price).
+   Antithesis runs **`docker-compose.yaml`** and nothing else.
 
-The Antithesis harness substitutes `$(antithesis_random)` for the literal `random` in the
-adversary's `--seed` at runtime; for a local run pass a numeric seed.
+### Seeding the adversary
+
+There is **no `$(antithesis_random)` substitution** — earlier notes here claimed one, and it is
+wrong: `dwarf-adversary` 0.10.0 rejects `--seed random` outright (it wants a `uint64`). Instead
+`dwarf-adversary-anti` wraps the binary with an entrypoint that reads the seed from
+**`antithesis.random.get_random()`** at startup. Antithesis therefore explores *mutations × faults*
+rather than many fault schedules against one fixed attack, and any failure it finds still replays
+deterministically. Set `DWARF_ADV_SEED` to pin the seed for a local run.
 
 ## Local run
 
 ```bash
+# 0.1.1 is the compose default; the override is only needed to test a different oracle build
 INTERNAL_NETWORK=false docker compose -p caadv up -d
-docker logs -f dwarf-oracle          # watch the differential properties
+docker logs -f d807-dwarf-oracle     # watch the differential properties
 docker compose -p caadv down -v      # tear down
 ```
+
+Note the containers and networks carry a `d807-` prefix so the bundle can run alongside other
+deployments on the same host without colliding. Antithesis does not care either way.

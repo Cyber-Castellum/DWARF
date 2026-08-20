@@ -1,0 +1,38 @@
+# DWARF mixed adversarial differential — LOCAL validation (cardano-box, Thu Aug 20 04:27:43 AM UTC 2026)
+
+## Substrate (project d807adv, fully isolated: own containers + own networks)
+  cardano cluster : cardano-node 10.7.1  p1,p2,p3 + relay1,relay2   (k=20, epochLength=400, f=0.2)
+  amaru relays    : dwarf/amaru-adv:807-k20  = amaru v10.11.20260807 (+DWARF patches)
+                    + baked store bootstrapped FROM THIS cluster (epochs 0/1/2)
+  adversary       : dwarf-adversary:0.10.0 --protocol blockfetch --cbor-shape block
+                    --mutation-rate 0.5 --seed 20260820 (fixed => reproducible)
+  topology        : relay1 -> dwarf-adversary -> amaru-relay-1 (ADVERSARIAL)
+                    relay2 ----------------->  amaru-relay-2 (HONEST CONTROL)
+
+## Cluster tip at validation
+  {
+      "block": 306,
+      "epoch": 5,
+      "era": "Conway",
+      "hash": "75cadea5ee78dc2bb2e01bc71627d3e38d2069e617f28aaf1e47e3e3372464ba",
+      "slot": 2257,
+      "slotInEpoch": 257,
+      "slotsToEpochEnd": 143,
+      "syncProgress": "100.00"
+  }
+
+## RESULT 1 — Amaru rejects forged blocks at decode, without crashing
+       35 connection child died
+       35 expected tag
+       35 failed to decode message
+       36 handshake completed
+       11 three strikes
+       35 unexpected type
+
+## RESULT 2 — 807 epoch-transition fix holds (old cf657b91 crashed at 3->4)
+  d807-amaru-relay-1: RestartCount=0 crash-signatures=0
+  d807-amaru-relay-2: RestartCount=0 crash-signatures=0
+
+## Known limitation (upstream pragma-org/amaru#736)
+  Relays run serve-only: amaru does not forward-sync from a single static peer,
+  so neither relay adopts blocks. The decoder IS exercised (see RESULT 1).

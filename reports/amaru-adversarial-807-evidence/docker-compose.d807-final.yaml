@@ -131,7 +131,7 @@ services:
     - relay2-state:/state
     - tracer:/tracer
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary-anti:0.10.0@sha256:0eb58fbfd2e77515abf13780cf5861bddc0bf40bc86ca7ced943b726e0163f15
+    image: ghcr.io/j-gainsec/dwarf-adversary:0.10.0
     container_name: d807-dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
@@ -145,6 +145,8 @@ services:
     - '0.5'
     - --upstream
     - relay1.example:3001
+    - --seed
+    - '20260820'
     - --protocol
     - blockfetch
     - --cbor-shape
@@ -158,7 +160,7 @@ services:
         aliases:
         - dwarf-adversary.example
   amaru-relay-1:
-    image: ghcr.io/j-gainsec/amaru-adv:807-k20@sha256:e7d3aa4ce3bd14bd08a08b998b6486fbe13cfd4430aa0c9489ab4de5e8e6934c
+    image: dwarf/amaru-adv:807-k20
     entrypoint:
     - /bin/sh
     - -c
@@ -193,7 +195,7 @@ services:
         aliases:
         - amaru-relay-1.example
   amaru-relay-2:
-    image: ghcr.io/j-gainsec/amaru-adv:807-k20@sha256:e7d3aa4ce3bd14bd08a08b998b6486fbe13cfd4430aa0c9489ab4de5e8e6934c
+    image: dwarf/amaru-adv:807-k20
     entrypoint:
     - /bin/sh
     - -c
@@ -273,7 +275,7 @@ services:
       tracer:
         condition: service_started
   dwarf-oracle:
-    image: ${DWARF_ORACLE_IMAGE:-ghcr.io/j-gainsec/dwarf-adversarial-oracle:0.1.1@sha256:d94dc5b787a4a3e0a031d0f7fcc4ce53f375f58da473e7c4803e640299a70c41}
+    image: ${DWARF_ORACLE_IMAGE:-ghcr.io/j-gainsec/dwarf-adversarial-oracle:0.1.0}
     container_name: d807-dwarf-oracle
     hostname: dwarf-oracle.example
     labels:

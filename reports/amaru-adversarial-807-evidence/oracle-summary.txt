@@ -1,0 +1,14 @@
+# Oracle property evaluation (print-fallback forced; the real SDK is silent off-platform)
+# NOTE: required a fix — amaru 807 renamed the adoption trace
+#   old: adopted tip tip.slot=.. tip.hash=..   new: tip.adopt slot=.. header_hash=..
+#   With the stale regex BOTH always-safety properties + honest-advance were VACUOUS.
+
+      8 [sometimes-ok] adversarial amaru relay rejected a forged block at decode {}
+      4 [sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 585}
+      4 [reachable] honest amaru relay reached a new tip {'block_height': 585}
+      1 [sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 588}
+      1 [sometimes-ok] honest amaru relay advances the real chain during the attack {'block_height': 586}
+      1 [reachable] honest amaru relay reached a new tip {'block_height': 588}
+      1 [reachable] honest amaru relay reached a new tip {'block_height': 586}
+
+ALWAYS-FAIL count: 0
