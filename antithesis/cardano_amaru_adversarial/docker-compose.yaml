@@ -273,7 +273,7 @@ services:
       tracer:
         condition: service_started
   dwarf-oracle:
-    image: ${DWARF_ORACLE_IMAGE:-ghcr.io/j-gainsec/dwarf-adversarial-oracle:0.1.1@sha256:d94dc5b787a4a3e0a031d0f7fcc4ce53f375f58da473e7c4803e640299a70c41}
+    image: ghcr.io/j-gainsec/dwarf-adversarial-oracle:0.1.1@sha256:d94dc5b787a4a3e0a031d0f7fcc4ce53f375f58da473e7c4803e640299a70c41
     container_name: d807-dwarf-oracle
     hostname: dwarf-oracle.example
     labels:

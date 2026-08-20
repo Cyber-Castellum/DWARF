@@ -94,8 +94,10 @@ Green is still a reportable result: *"Amaru held consensus safety under fault ×
 
 ## Recommended parameters
 
-- **Duration 3h**, **faults ON**. The extra hours are worth it *specifically because* the seed is
-  randomised — at a fixed seed they buy much less.
+- **`--try 1 -t 1` first, then `--try 2 -t 3`**, faults ON throughout. A first-try 3-hour request
+  is not adjudicated by the oracle — see `SUBMIT-RUNBOOK.md` §3; the 2026-08-20 attempt hung in
+  `pending` indefinitely for exactly this reason. The extra hours at `try 2` are worth it
+  *specifically because* the seed is randomised — at a fixed seed they buy much less.
 - Adversary: `--protocol blockfetch --cbor-shape block --mutation-rate 0.5`.
 
 ## Prerequisites before submitting
@@ -105,7 +107,10 @@ Green is still a reportable result: *"Amaru held consensus safety under fault ×
    `ghcr.io/j-gainsec/*` and **public**, verified with an anonymous registry token. The compose
    pins all three **by digest**, so the run uses exactly the validated bytes.
 2. Commit this bundle (compose + both image contexts + fixed oracle) and note the commit SHA.
-3. Submit via moog (`moog requester create-test … -t 3`), faults ON. **Gated on explicit approval.**
+3. Submit via moog, faults ON — **`--try 1 -t 1` first**, then `--try 2 -t 3` at the same commit.
+   **Gated on explicit approval.**
+4. Keep every `image:` reference **literal** — no `${VAR:-default}`. Both bundles that failed to
+   launch had one; all that ran had none. See `SUBMIT-RUNBOOK.md` §3.
 
 ## Files
 

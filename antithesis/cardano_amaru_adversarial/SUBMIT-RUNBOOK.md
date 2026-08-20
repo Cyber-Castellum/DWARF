@@ -90,24 +90,79 @@ commit, so the SHA must contain this compose, both image contexts, and the fixed
 
 ## 3. Submit (SPENDS A PAID RUN)
 
+> ### Submit `try 1` at **`-t 1`**, never `try 1` at `-t 3`
+>
+> The first attempt at this (2026-08-20, commit `46f3089`) used `--try 1 -t 3` and the oracle
+> **never adjudicated it** — it sat in `phase: pending` indefinitely while requests submitted after
+> it were processed, and it was the only pending test-run out of 1505 on the token.
+>
+> Across all 41 DWARF requests ever submitted the pattern is absolute:
+>
+> | try / duration | count |
+> |---|---|
+> | `try 1`, 1h | 28 |
+> | `try 2`, 3h | 10 |
+> | `try 2`, 1h | 2 |
+> | **`try 1`, 3h** | **1 — the one that hung** |
+>
+> Every 3-hour run in history was `try 2`, always preceded by a `try 1` 1-hour run at the same
+> commit. This matches CF's own guidance (moog workbench,
+> `dwarf-antithesis-live-run-checklist.html`, 2026-06-08): **"1-hour tests by default (3-hour only
+> with a compelling reason)"** — a first-try 3h request appears to need manual approval rather than
+> being auto-adjudicated.
+>
+> So: **`--try 1 -t 1` first. Then `--try 2 -t 3` at the same commit.**
+
 ```bash
 export MOOG_TOKEN_ID=$(python3 -c "import yaml;print(yaml.safe_load(open('/home/nigel/dwarf-v4/var/state/config.yaml'))['moog']['token_id'])")
 export MOOG_MPFS_HOST=https://mpfs.plutimus.com
 export MOOG_GITHUB_PAT=$(python3 -c "import yaml;print(yaml.safe_load(open('/home/nigel/dwarf-v4/var/state/config.yaml'))['moog']['github_pat'])")
 export MOOG_WALLET_PASSPHRASE="$(cat /home/nigel/moog-secrets/requester/wallet.passphrase)"
+# NB the wallet file is requester.json (holds `encryptedMnemonics`); there is no wallet.json.
 
 /home/nigel/bin/moog requester create-test \
-  -w /home/nigel/moog-secrets/requester/wallet.json \
+  -w /home/nigel/moog-secrets/requester/requester.json \
   -p github \
   -r Cyber-Castellum/DWARF \
   -d antithesis/cardano_amaru_adversarial \
-  -c daada6e50c704aeb938da5526684b2e1eee0363b \
+  -c <COMMIT_SHA_OF_THE_FIXED_BUNDLE_ON_THE_PUBLIC_REPO> \
   --try 1 \
   -u j-gainsec \
-  -t 3                      # 3 hours; omit --no-faults so FAULTS ARE ON
+  -t 1                      # 1 hour; omit --no-faults so FAULTS ARE ON
 ```
 
 Faults **must** be on — with faults off this is just the local validation at a price.
+
+Once `try 1` reaches `phase: finished`, escalate to the full run at the **same commit**:
+
+```bash
+/home/nigel/bin/moog requester create-test \
+  -w /home/nigel/moog-secrets/requester/requester.json \
+  -p github -r Cyber-Castellum/DWARF -d antithesis/cardano_amaru_adversarial \
+  -c <SAME_COMMIT_SHA> \
+  --try 2 \
+  -u j-gainsec \
+  -t 3
+```
+
+An hour of faults × adversarial input is already a real result — the properties are the same, only
+the number of explored interleavings differs. Treat `try 1` as the experiment, not as a formality.
+
+### Image references must be literal
+
+Do **not** use `${VAR:-default}` in an `image:` field. Both DWARF bundles that failed to launch
+carried one, and every bundle that ran had none:
+
+| bundle | `${}` in `image:` | outcome |
+|---|---|---|
+| `amaru_baked_dwarf` | 2 | **rejected — `reasons: ["broken instructions"]`** |
+| `cardano_amaru_adversarial` (first attempt) | 1 | **stuck `pending`** |
+| `cardano_node_dwarf`, `_baked`, `_eclipse`, `cardano_amaru_dwarf` | 0 | all launched |
+
+If the config builder does not expand environment variables the reference stays literal and cannot
+resolve. The forensic run ledger records the same failure class: of 29 runs, the 4 that never
+produced a result were "2 image-build failures and 2 setup-deaths on stripped bundles — both
+packaging/registry issues, not node defects."
 
 ## 4. Monitor
 
@@ -131,7 +186,10 @@ moog antithesis logs --run-id <ID>
 
 - [x] Three images pushed **and public** (verified with an anonymous registry token)
 - [x] Compose references the published images by digest, oracle pinned to `0.1.1`
-- [x] Bundle committed locally: `daada6e50c704aeb938da5526684b2e1eee0363b`
-- [ ] Pushed to the public `Cyber-Castellum/DWARF` (moog fetches the repo — it must be reachable there)
+- [x] Published to `Cyber-Castellum/DWARF` @ **`46f308943b38e02cf26084d7286eee2ad1800ecc`**
+      ("New Reports", 2026-08-20). Verified: all 19 bundle files are SHA-256 identical to the
+      locally-validated copy, and the public `docker-compose.yaml` passes pre-flight (dual-peer
+      target, honest-only control, all four custom images digest-pinned, oracle `0.1.1`).
+      **Submit this SHA, not the local one** — moog fetches the public repo.
 - [ ] `-t 3`, faults ON (no `--no-faults`)
 - [ ] Approval to spend the run
