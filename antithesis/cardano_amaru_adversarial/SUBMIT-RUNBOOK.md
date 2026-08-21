@@ -7,16 +7,60 @@ All commands run on **cardano-box**.
 
 ---
 
+## Mandatory MOOG fault-exclusion preflight
+
+MOOG does **not** interpret `com.antithesis.exclude_from_faults` as a Boolean.
+The value is a comma-separated vocabulary, and every token must be one of:
+
+```text
+network,kill,pause,stop
+```
+
+Never use `"true"`, `"false"`, YAML booleans, or an unrecognised token. The
+invalid form below fails inside `moog agent push-test` before the Antithesis
+launch POST, leaving the on-chain test fact in `pending` with no tenant run:
+
+```yaml
+# WRONG
+com.antithesis.exclude_from_faults: "true"
+
+# CORRECT: exclude this harness service from all supported fault classes
+com.antithesis.exclude_from_faults: network,kill,pause,stop
+```
+
+Before spending a run, execute both gates from the repository root:
+
+```bash
+PYTHONPATH=dwarf python3 -m pytest -q \
+  tests/test_antithesis_validation_gate.py \
+  tests/test_moog_integration.py -k 'fault_exclusion or adversarial_bundle'
+python3 dwarf/scripts/validate_scenarios.py
+```
+
+For the real MOOG parser boundary without contacting GAR or Antithesis, run
+release MOOG `0.5.1.3` with the registry and launch URL pointed at a closed
+localhost port. The expected result is `dockerPushFailure` for
+`127.0.0.1:9`; `composeFaultExclusionParseFailure` means the bundle is still
+invalid. Never use `moog-head` for this check.
+
+This incident was fixed and live-verified on 2026-08-21. Public commit
+`421c618e5170f75ee2c079fa58df4d4ac40ef6d7` produced MOOG test
+`be5699260277d59ec13c29af54e6f88c473574683185b9bd19e6022e9dc1d0bc`,
+which advanced to `accepted`; Antithesis run
+`85b603edd96c90b12f0ca3e75cf00f3e-59-13` advanced to `in_progress` on the
+`amaru-cardano` tenant.
+
+---
+
 ## 0. Registry-publish blocker — RESOLVED (2026-08-20)
 
 `docker login ghcr.io` succeeded as `J-GainSec`, but every push was refused with
 `permission_denied: The token provided does not match expected scopes.`
 
-Diagnosis: the token in `var/state/config.yaml` (`moog.github_pat`) is a **fine-grained** PAT —
+Diagnosis: the configured package-publishing token was a **fine-grained** PAT —
 `GET /user` returns **no `x-oauth-scopes` header**, the signature of fine-grained tokens — and
 **ghcr.io only accepts classic PATs**. Ruled out along the way: no
-`~/moog-secrets/requester/secrets.yaml` (wallet + passphrase only), no GCP Artifact Registry
-credentials on the box, no other token on the moog workbench. Also discovered
+alternate package credential source was configured. Also discovered
 `dwarf-adversarial-oracle` had **never actually been published**, so all three pushes had to
 *create* packages — exactly what a restricted token blocks.
 
@@ -24,9 +68,9 @@ credentials on the box, no other token on the moog workbench. Also discovered
 image was already third-party public (intersectmbo / cardano-foundation / lambdasistemi). This
 bundle is the first to require **custom** images (807 relay, seeded adversary, fixed oracle).
 
-**Resolution:** a **classic** PAT with `write:packages` + `delete:packages` + `repo`, written by the
-token owner to `~/moog-secrets/ghcr.token` (mode 0600) and read via a pipe, never echoed. `repo` is
-required as well because moog reads the same GitHub identity for the submit flow.
+**Resolution:** a **classic** PAT with `write:packages` + `delete:packages` + `repo`, stored outside
+the repository with mode 0600 and read without echoing. `repo` is required as well because MOOG
+reads the same GitHub identity for the submit flow.
 
 ## 1. Publish the three images — DONE
 
@@ -114,14 +158,9 @@ commit, so the SHA must contain this compose, both image contexts, and the fixed
 > So: **`--try 1 -t 1` first. Then `--try 2 -t 3` at the same commit.**
 
 ```bash
-export MOOG_TOKEN_ID=$(python3 -c "import yaml;print(yaml.safe_load(open('/home/nigel/dwarf-v4/var/state/config.yaml'))['moog']['token_id'])")
-export MOOG_MPFS_HOST=https://mpfs.plutimus.com
-export MOOG_GITHUB_PAT=$(python3 -c "import yaml;print(yaml.safe_load(open('/home/nigel/dwarf-v4/var/state/config.yaml'))['moog']['github_pat'])")
-export MOOG_WALLET_PASSPHRASE="$(cat /home/nigel/moog-secrets/requester/wallet.passphrase)"
-# NB the wallet file is requester.json (holds `encryptedMnemonics`); there is no wallet.json.
-
-/home/nigel/bin/moog requester create-test \
-  -w /home/nigel/moog-secrets/requester/requester.json \
+# <protected-requester-secrets.yaml> is outside the repository, mode 0600,
+# and supplies tokenId, mpfsHost, githubPAT, walletFile, and walletPassphrase.
+moog --secrets-file <protected-requester-secrets.yaml> requester create-test \
   -p github \
   -r Cyber-Castellum/DWARF \
   -d antithesis/cardano_amaru_adversarial \
@@ -136,8 +175,7 @@ Faults **must** be on — with faults off this is just the local validation at a
 Once `try 1` reaches `phase: finished`, escalate to the full run at the **same commit**:
 
 ```bash
-/home/nigel/bin/moog requester create-test \
-  -w /home/nigel/moog-secrets/requester/requester.json \
+moog --secrets-file <protected-requester-secrets.yaml> requester create-test \
   -p github -r Cyber-Castellum/DWARF -d antithesis/cardano_amaru_adversarial \
   -c <SAME_COMMIT_SHA> \
   --try 2 \
@@ -186,10 +224,9 @@ moog antithesis logs --run-id <ID>
 
 - [x] Three images pushed **and public** (verified with an anonymous registry token)
 - [x] Compose references the published images by digest, oracle pinned to `0.1.1`
-- [x] Published to `Cyber-Castellum/DWARF` @ **`46f308943b38e02cf26084d7286eee2ad1800ecc`**
-      ("New Reports", 2026-08-20). Verified: all 19 bundle files are SHA-256 identical to the
-      locally-validated copy, and the public `docker-compose.yaml` passes pre-flight (dual-peer
-      target, honest-only control, all four custom images digest-pinned, oracle `0.1.1`).
-      **Submit this SHA, not the local one** — moog fetches the public repo.
-- [ ] `-t 3`, faults ON (no `--no-faults`)
-- [ ] Approval to spend the run
+- [x] Fault-exclusion labels contain only `network,kill,pause,stop`; no Boolean-like values
+- [x] `python3 dwarf/scripts/validate_scenarios.py` reports `moog asset failures: 0`
+- [x] Published to `Cyber-Castellum/DWARF` @ **`421c618e5170f75ee2c079fa58df4d4ac40ef6d7`**
+- [x] `try 1`, `-t 1`, faults ON submitted through release MOOG `0.5.1.3`
+- [x] MOOG fact reached `accepted`; matching `amaru-cardano` run reached `in_progress`
+- [ ] Wait for `try 1` to finish and triage properties before deciding whether to submit `try 2`
