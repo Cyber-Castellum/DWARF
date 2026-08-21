@@ -36,6 +36,12 @@ DWARF_DIR = Path(__file__).resolve().parents[1]          # .../dwarf
 REPO_ROOT = DWARF_DIR.parent                              # repo root
 SCENARIO_DIR = DWARF_DIR / "scenarios"
 SCHEMA_PATH = DWARF_DIR / "spec" / "v1" / "schema.json"
+# Checked-in, submission-ready MOOG assets. Experimental and reference bundles
+# are intentionally excluded until their README documents a MOOG launch path.
+MOOG_ASSET_DIRS = (
+    REPO_ROOT / "antithesis" / "cardano_amaru_adversarial",
+    REPO_ROOT / "antithesis" / "cardano_node_dwarf",
+)
 if str(DWARF_DIR) not in sys.path:
     sys.path.insert(0, str(DWARF_DIR))
 
@@ -123,6 +129,35 @@ def check_antithesis() -> tuple[int, int, list[str]]:
     return len(fails), ok, fails
 
 
+def check_moog_assets() -> tuple[int, int, list[str]]:
+    """Validate fault exclusions in every documented MOOG launch asset."""
+    from profile_manager.antithesis_validation import moog_fault_exclusion_errors
+
+    fails: list[str] = []
+    ok = 0
+    for asset_dir in MOOG_ASSET_DIRS:
+        compose_path = asset_dir / "docker-compose.yaml"
+        display_dir = (
+            asset_dir.relative_to(REPO_ROOT)
+            if asset_dir.is_relative_to(REPO_ROOT)
+            else asset_dir
+        )
+        if not compose_path.is_file():
+            fails.append(f"{display_dir}: missing docker-compose.yaml")
+            continue
+        errors = moog_fault_exclusion_errors(compose_path)
+        if errors:
+            display_path = (
+                compose_path.relative_to(REPO_ROOT)
+                if compose_path.is_relative_to(REPO_ROOT)
+                else compose_path
+            )
+            fails.extend(f"{display_path}: {error}" for error in errors)
+        else:
+            ok += 1
+    return len(fails), ok, fails
+
+
 def check_harness_prereqs(scenarios: list[Path]) -> tuple[int, int, list[str]]:
     """Flag scenarios whose AFL coverage harness isn't provisioned on this host.
 
@@ -173,10 +208,11 @@ def main(argv: list[str] | None = None) -> int:
     schema_fail, schema_msgs = check_schema(scenarios)
     sem_fail, sem_warn, sem_msgs = check_semantic(scenarios)
     ant_fail, ant_ok, ant_msgs = check_antithesis()
+    moog_fail, moog_ok, moog_msgs = check_moog_assets()
     harness_needs, harness_ok, harness_msgs = check_harness_prereqs(scenarios)
 
-    all_msgs = schema_msgs + sem_msgs + ant_msgs
-    hard_fail = schema_fail + sem_fail + ant_fail
+    all_msgs = schema_msgs + sem_msgs + ant_msgs + moog_msgs
+    hard_fail = schema_fail + sem_fail + ant_fail + moog_fail
     failed = hard_fail > 0 or (args.strict and sem_warn > 0)
 
     summary = {
@@ -186,6 +222,8 @@ def main(argv: list[str] | None = None) -> int:
         "semantic_warnings": sem_warn,
         "antithesis_profiles_ok": ant_ok,
         "antithesis_failures": ant_fail,
+        "moog_assets_ok": moog_ok,
+        "moog_asset_failures": moog_fail,
         # Informational: harness-dependent scenarios that would skip on this host.
         "harness_provisioned": harness_ok,
         "harness_unprovisioned": harness_needs,
@@ -210,6 +248,8 @@ def main(argv: list[str] | None = None) -> int:
               + ("  (fatal: --strict)" if args.strict else ""))
         print(f"  antithesis profiles ok : {ant_ok}")
         print(f"  antithesis failures    : {ant_fail}")
+        print(f"  moog assets ok         : {moog_ok}")
+        print(f"  moog asset failures    : {moog_fail}")
         print(f"  aflpp harness ready    : {harness_ok}")
         print(f"  aflpp needs harness    : {harness_needs}"
               + ("  (skips at run time; build-afl-harness.sh)" if harness_needs else ""))

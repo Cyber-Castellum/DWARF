@@ -24,6 +24,7 @@ import re
 from pathlib import Path
 
 from profile_manager import antithesis_conventions as conv
+from profile_manager.antithesis_validation import moog_fault_exclusion_errors
 from profile_manager.backends.base import BackendArtifacts, write_artifacts
 
 SUPPORTED_IMPLEMENTATIONS = {"cardano-node"}
@@ -402,6 +403,7 @@ def verify_generated_bundle(bundle_dir):
         reasons.append("adversary image not referenced in compose")
     if "com.antithesis.exclude_from_faults" not in compose:
         reasons.append("no exclude_from_faults label on harness services")
+    reasons.extend(moog_fault_exclusion_errors(compose_p))
     # topology resolves: adversary reachable as a relay root. Eclipse bundles
     # (block-fetch) ship relay-eclipse-topology.json (node's sole peer = the
     # adversary, on an isolated network); others ship relay-dwarf-topology.json

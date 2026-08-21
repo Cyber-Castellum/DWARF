@@ -4,3 +4,4 @@
 # schema validation. Keep this list minimal — it is NOT the full DWARF runtime.
 jsonschema
 jinja2
+PyYAML

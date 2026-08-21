@@ -9,6 +9,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from profile_manager.antithesis_validation import moog_fault_exclusion_errors
 from profile_manager.remote import CommandResult, ssh_command
 from profile_manager.wallets import wallet_statuses
 
@@ -1096,6 +1097,13 @@ def build_moog_create_test_plan(
             if compose_path:
                 asset["docker_compose"] = str(compose_path)
                 check("docker_compose", "ok", compose_path)
+                fault_errors = moog_fault_exclusion_errors(compose_path)
+                check(
+                    "fault_exclusions",
+                    "error" if fault_errors else "ok",
+                    "; ".join(fault_errors) if fault_errors else "MOOG fault exclusions valid",
+                    "Use only network, kill, pause, and stop fault classes.",
+                )
             else:
                 check("docker_compose", "error", "missing docker-compose.yaml", "Add docker-compose.yaml or docker-compose.yml.")
             asset["file_count"] = _asset_file_count(path)
@@ -1212,6 +1220,13 @@ def validate_moog_asset(asset_dir: str | None) -> dict[str, Any]:
             "ok" if "services:" in compose_text else "error",
             "services section present" if "services:" in compose_text else "services section missing",
             "Add at least one service under docker-compose.yaml services.",
+        )
+        fault_errors = moog_fault_exclusion_errors(compose_path)
+        check(
+            "fault_exclusions",
+            "error" if fault_errors else "ok",
+            "; ".join(fault_errors) if fault_errors else "MOOG fault exclusions valid",
+            "Use only network, kill, pause, and stop fault classes.",
         )
     else:
         check("docker_compose", "error", "missing docker-compose.yaml", "Add docker-compose.yaml or docker-compose.yml.")

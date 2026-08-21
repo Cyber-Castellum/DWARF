@@ -14,6 +14,9 @@ on:
       - "dwarf/primitives/**"
       - "dwarf/profile_manager/**"
       - "dwarf/scripts/validate_scenarios.py"
+      - "dwarf/scripts/requirements-ci.txt"
+      - "antithesis/**"
+      - "tests/**"
       - ".github/workflows/dwarf-validate.yml"
   pull_request:
     paths:
@@ -22,6 +25,9 @@ on:
       - "dwarf/primitives/**"
       - "dwarf/profile_manager/**"
       - "dwarf/scripts/validate_scenarios.py"
+      - "dwarf/scripts/requirements-ci.txt"
+      - "antithesis/**"
+      - "tests/**"
       - ".github/workflows/dwarf-validate.yml"
   workflow_dispatch:
     inputs:

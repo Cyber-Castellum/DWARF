@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from profile_manager.cli import build_parser, cmd_moog
 from profile_manager.config import DeploymentConfig, parse_config_value
@@ -662,6 +663,73 @@ def test_moog_create_test_plan_validates_local_asset_directory(tmp_path):
     assert checks["docker_compose"]["detail"].endswith("docker-compose.yaml")
     assert plan["asset"]["docker_compose"].endswith("docker-compose.yaml")
     assert "moog requester create-test" in plan["command"]
+
+
+def test_moog_create_test_plan_rejects_unknown_fault_exclusion(tmp_path):
+    asset_dir = tmp_path / "antithesis"
+    asset_dir.mkdir()
+    (asset_dir / "docker-compose.yaml").write_text(
+        """services:
+  oracle:
+    image: example/oracle:latest
+    labels:
+      com.antithesis.exclude_from_faults: "true"
+""",
+        encoding="utf-8",
+    )
+
+    plan = build_moog_create_test_plan(
+        DEFAULT_MOOG_CONFIG,
+        repo="example/repo",
+        github_user="example",
+        directory="antithesis",
+        commit="abc123",
+        asset_dir=str(asset_dir),
+    )
+    checks = {row["id"]: row for row in plan["checks"]}
+
+    assert plan["state"] == "blocked"
+    assert checks["fault_exclusions"]["state"] == "error"
+    assert 'oracle: unknown fault class "true"' in checks["fault_exclusions"]["detail"]
+
+
+def test_moog_create_test_plan_accepts_supported_list_fault_exclusions(tmp_path):
+    asset_dir = tmp_path / "antithesis"
+    asset_dir.mkdir()
+    (asset_dir / "docker-compose.yaml").write_text(
+        """services:
+  oracle:
+    image: example/oracle:latest
+    labels:
+      - com.antithesis.exclude_from_faults=network,kill,pause,stop
+""",
+        encoding="utf-8",
+    )
+
+    plan = build_moog_create_test_plan(
+        DEFAULT_MOOG_CONFIG,
+        repo="example/repo",
+        github_user="example",
+        directory="antithesis",
+        commit="abc123",
+        asset_dir=str(asset_dir),
+    )
+    checks = {row["id"]: row for row in plan["checks"]}
+
+    assert plan["state"] == "ready"
+    assert checks["fault_exclusions"]["state"] == "ok"
+
+
+def test_cardano_amaru_adversarial_bundle_passes_moog_asset_validation():
+    root = Path(__file__).resolve().parents[1]
+
+    result = validate_moog_asset(
+        str(root / "antithesis" / "cardano_amaru_adversarial")
+    )
+    checks = {row["id"]: row for row in result["checks"]}
+
+    assert result["state"] == "ready"
+    assert checks["fault_exclusions"]["state"] == "ok"
 
 
 def test_moog_create_test_plan_reports_deferred_target_fields(tmp_path):

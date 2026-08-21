@@ -1,6 +1,8 @@
 from pathlib import Path
 import yaml
 
+from profile_manager.antithesis_generator import verify_generated_bundle
+
 ROOT = Path(__file__).resolve().parents[1]
 TESTNET = ROOT / "antithesis" / "cardano_node_dwarf"
 
@@ -31,6 +33,24 @@ def test_harness_containers_have_fault_exclusion_label():
         if isinstance(svc, dict) and "com.antithesis.exclude_from_faults" in (svc.get("labels") or {})
     ]
     assert labeled, "expected fault-exclusion labels on harness containers"
+
+
+def test_generated_bundle_verifier_rejects_unknown_fault_exclusion(tmp_path):
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    (config_dir / "docker-compose.yaml").write_text(
+        """services:
+  harness:
+    image: ghcr.io/example/harness:latest
+    labels:
+      com.antithesis.exclude_from_faults: "true"
+""",
+        encoding="utf-8",
+    )
+
+    result = verify_generated_bundle(tmp_path)
+
+    assert 'harness: unknown fault class "true"' in result["reasons"]
 
 
 def test_compute_next_try_counts_matching_runs():

@@ -259,7 +259,7 @@ services:
     container_name: d807-dwarf-oracle
     hostname: dwarf-oracle.example
     labels:
-      com.antithesis.exclude_from_faults: 'true'
+      com.antithesis.exclude_from_faults: network,kill,pause,stop
     environment:
       AMARU_LOG_DIR: /opt/amaru-logs
       ADV_RELAY_LOG: amaru-relay-1.log
