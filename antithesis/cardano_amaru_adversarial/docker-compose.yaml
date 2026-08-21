@@ -20,24 +20,6 @@ x-cardano-relay-10-7-1:
       condition: service_completed_successfully
     tracer-sidecar:
       condition: service_started
-x-amaru:
-  image: ghcr.io/lambdasistemi/amaru-bootstrap-producer:cf657b918787c213c09ffef3879ac4a2552dd680@sha256:72906da307862ee5652a35d2e6569fcd929ddd5785ad6d633b42e4912faef147
-  entrypoint:
-  - /bin/sh
-  environment:
-    AMARU_LOG: info
-    AMARU_TRACE: info
-    AMARU_COLOR: never
-    AMARU_GLOBAL_CONSENSUS_SECURITY_PARAM: '20'
-    AMARU_GLOBAL_ACTIVE_SLOT_COEFF_INVERSE: '5'
-    AMARU_GLOBAL_EPOCH_LENGTH_SCALE_FACTOR: '4'
-    AMARU_GLOBAL_MAX_LOVELACE_SUPPLY: '45000000000000000'
-    AMARU_GLOBAL_SLOTS_PER_KES_PERIOD: '129600'
-    AMARU_GLOBAL_MAX_KES_EVOLUTION: '62'
-  restart: always
-  depends_on:
-    bootstrap-producer:
-      condition: service_started
 x-fault-exclude: &id001
   com.antithesis.exclude_from_faults: network,kill,pause,stop
 services:
@@ -131,7 +113,7 @@ services:
     - relay2-state:/state
     - tracer:/tracer
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary-anti:0.10.0@sha256:0eb58fbfd2e77515abf13780cf5861bddc0bf40bc86ca7ced943b726e0163f15
+    image: ghcr.io/j-gainsec/dwarf-adversary-anti@sha256:0eb58fbfd2e77515abf13780cf5861bddc0bf40bc86ca7ced943b726e0163f15
     container_name: d807-dwarf-adversary
     hostname: dwarf-adversary.example
     labels:
@@ -158,7 +140,7 @@ services:
         aliases:
         - dwarf-adversary.example
   amaru-relay-1:
-    image: ghcr.io/j-gainsec/amaru-adv:807-k20@sha256:e7d3aa4ce3bd14bd08a08b998b6486fbe13cfd4430aa0c9489ab4de5e8e6934c
+    image: ghcr.io/j-gainsec/amaru-adv@sha256:e7d3aa4ce3bd14bd08a08b998b6486fbe13cfd4430aa0c9489ab4de5e8e6934c
     entrypoint:
     - /bin/sh
     - -c
@@ -193,7 +175,7 @@ services:
         aliases:
         - amaru-relay-1.example
   amaru-relay-2:
-    image: ghcr.io/j-gainsec/amaru-adv:807-k20@sha256:e7d3aa4ce3bd14bd08a08b998b6486fbe13cfd4430aa0c9489ab4de5e8e6934c
+    image: ghcr.io/j-gainsec/amaru-adv@sha256:e7d3aa4ce3bd14bd08a08b998b6486fbe13cfd4430aa0c9489ab4de5e8e6934c
     entrypoint:
     - /bin/sh
     - -c
@@ -273,7 +255,7 @@ services:
       tracer:
         condition: service_started
   dwarf-oracle:
-    image: ghcr.io/j-gainsec/dwarf-adversarial-oracle:0.1.1@sha256:d94dc5b787a4a3e0a031d0f7fcc4ce53f375f58da473e7c4803e640299a70c41
+    image: ghcr.io/j-gainsec/dwarf-adversarial-oracle@sha256:d94dc5b787a4a3e0a031d0f7fcc4ce53f375f58da473e7c4803e640299a70c41
     container_name: d807-dwarf-oracle
     hostname: dwarf-oracle.example
     labels:
