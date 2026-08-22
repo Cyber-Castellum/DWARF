@@ -1,9 +1,141 @@
 # Submission runbook — mixed adversarial Antithesis run
 
-Steps 0–2 are **DONE** (2026-08-20). Step 3 spends money and is **not executed** — run it only when
-you intend to. Design rationale and expected outcome: `RUN-DESIGN.md`.
+The original image publication is complete and the corrected `-1` baseline run
+has finished. The five-case corpus is published but has **not** been submitted.
+Any new Step 3 request spends money; run it only with explicit approval. Design
+rationale and expected outcome: `RUN-DESIGN.md`.
 
 All commands run on **cardano-box**.
+
+---
+
+## 2026-08-22 five-case fee corpus — FINDING CONFIRMED, RUN NOT SUBMITTED
+
+The corrected baseline run completed successfully at commit
+`6082f0eedabe478801051a661435a5ffb3424f47`:
+
+- Antithesis run: `0195e57647d3ee8322893e6f8af159a5-59-13`;
+- MOOG test-run: `f1334b7d8425d76f219d62dd0c01f462e35c6faf9f987b11f6b86c2ad83a9bd7`;
+- all original mixed `-1` properties passed;
+- the only overall failure was the known Cardano `cluster fork depth < k` property.
+
+The next bundle extends the same property to deltas `-100`, `-2`, `-1`, exact,
+and `+1`. Scheduling is load-bearing:
+
+- `first_fee_valid_boundaries.py` probes readiness with `-1`, then sends exact and
+  `+1` once each before faults;
+- `parallel_driver_underfee_corpus.py` selects only negative cases using
+  `antithesis.random.random_choice`;
+- `eventually_underfee_recovery.py` also selects only a negative case and retries
+  after faults stop;
+- `parallel_driver_underfee.py` remains for historical `-1` continuity.
+
+The public workload image is:
+
+```text
+ghcr.io/j-gainsec/dwarf-mixed-phase1-workload@sha256:26d02ae22e0d802b78285a3b19bd53687a257dd77a12879831b5262a4792811d
+```
+
+It was built from the bundle root with `workload/Dockerfile`, pushed as
+`fee-corpus-v2-20260822`, and anonymously fetched with HTTP 200. Compose must retain
+the digest-only reference above. The safe rebuild flow reads the existing
+mode-0600 token through stdin; never place the token in argv or output:
+
+```bash
+docker build -f workload/Dockerfile \
+  -t ghcr.io/j-gainsec/dwarf-mixed-phase1-workload:<new-tag> .
+docker login ghcr.io -u J-GainSec --password-stdin \
+  < /home/nigel/moog-secrets/ghcr.token
+docker push ghcr.io/j-gainsec/dwarf-mixed-phase1-workload:<new-tag>
+```
+
+Do not submit until the final test suite, Compose render, official `snouty
+validate`, public-safety scan, and public commit are complete. A paid run still
+requires explicit approval.
+
+Run the signed-corpus verifier directly from the bundle root; it supplies
+`cardano-cli` through a digest-pinned public image, so no host installation is
+required:
+
+```bash
+antithesis/cardano_amaru_adversarial/fixture/verify-corpus-container.sh
+```
+
+Preflight already established the expected report outcome: Cardano accepts the
+exact-minimum and `+1` cases while Amaru rejects them; both accept at `+44`.
+The root cause is Amaru mempool validation counting the standalone transaction's
+one-byte `is_valid` field, unlike its block-validation path. Do not reinterpret
+an Antithesis failure of the two valid-case properties as a harness fault. The
+run is useful to capture this formally and explore fault interaction, but the
+base finding is deterministic and independently reproduced.
+
+---
+
+## 2026-08-22 relay entrypoint incident — FIX REQUIRED BEFORE REPLACEMENT RUN
+
+MOOG test-run
+`e512a7b37d7d23b7b8a5dfe6e908d9c3b5794f64b861a0e2372a9862b77c3d3f`
+launched commit `60ccdf4c1d9b72fcb426a5458ae89adeec82c9b1`, but is not a valid
+mixed Cardano/Amaru experiment. Antithesis recorded both relay containers in a
+restart loop with:
+
+```text
+exec: /usr/local/bin/dwarf-amaru-entrypoint.sh: Permission denied
+```
+
+The Cardano reference and workload ran, but every Amaru submission was
+unavailable. The run emitted 157 failing classifiability assertions and zero
+`both implementations returned classifiable phase-1 results` events. Do not use
+this run for a differential conclusion or submit a longer follow-up at that
+commit.
+
+The repository file is mode `100755`; the unsafe assumption was that an
+Antithesis bind-mounted repository script remains directly executable. Both
+relay commands must invoke it through the interpreter:
+
+```sh
+exec /bin/sh /usr/local/bin/dwarf-amaru-entrypoint.sh
+```
+
+`workload/tests/test_bundle_contract.py` enforces this for both relays. The
+replacement one-hour `try 1` used fixed commit `6082f0e`, completed, and proved
+both Amaru startup and mixed classifiability. Retain the guardrail for every
+future run.
+
+---
+
+## 2026-08-22 original mixed phase-1 addendum — BASELINE COMPLETED
+
+The bundle now includes a same-byte under-fee differential. Do not restore the old
+runtime fixture builder or `utxo-keys` volume: a fresh configurator UTxO is not present
+in Amaru's baked store and yields `failed to prepare transaction ... for validation`,
+which is not phase-1 evidence.
+
+New published images pinned in Compose:
+
+| image | digest |
+|---|---|
+| `ghcr.io/j-gainsec/dwarf-cardano-phase1-reference` | `sha256:cadd549396712c649f6f5683fab36fa6c183b8db0f85440a82a05b59bbcb39e4` |
+| `ghcr.io/j-gainsec/dwarf-mixed-phase1-workload` | `sha256:31dc030ed0cd5884fa36ce0b230609167678f44ca55d565dc4169dafb018a0a1` |
+| `ghcr.io/j-gainsec/dwarf-adversary-anti` (seed sanitization) | `sha256:e99cb81ffc51465042b77ac3100d18092f69a25c36c66fff4954663b7200d2bd` |
+
+Verification completed on `cardano-box`:
+
+- 23 unit/contract tests pass after the relay-entrypoint regression guard;
+- image added paths contain no `.skey`, key, PEM, or environment files;
+- same-byte smoke gives Cardano `FeeTooSmallUTxO` and Amaru validation rejection;
+- official `snouty validate` detects setup-complete, one driver, and one eventual
+  command using the published digests.
+
+Anonymous manifest checks return HTTP 200 for `dwarf-cardano-phase1-reference`,
+`dwarf-mixed-phase1-workload`, and the sanitized `dwarf-adversary-anti` tag.
+
+The original image and digest remain provenance for the completed baseline; the
+five-case run must use the newer digest documented above. Before MOOG submission,
+commit and push this exact directory, verify no `._*` files, and use release
+`moog` 0.5.1.3—not `moog-head`. The target tenant is
+`amaru-cardano`; the requested repository/directory remain
+`Cyber-Castellum/DWARF` and `antithesis/cardano_amaru_adversarial`.
 
 ---
 
@@ -186,10 +318,10 @@ moog antithesis logs --run-id <ID>
 
 - [x] Three images pushed **and public** (verified with an anonymous registry token)
 - [x] Compose references the published images by digest, oracle pinned to `0.1.1`
-- [x] Published to `Cyber-Castellum/DWARF` @ **`46f308943b38e02cf26084d7286eee2ad1800ecc`**
-      ("New Reports", 2026-08-20). Verified: all 19 bundle files are SHA-256 identical to the
-      locally-validated copy, and the public `docker-compose.yaml` passes pre-flight (dual-peer
-      target, honest-only control, all four custom images digest-pinned, oracle `0.1.1`).
-      **Submit this SHA, not the local one** — moog fetches the public repo.
-- [ ] `-t 3`, faults ON (no `--no-faults`)
+- [x] Original corrected baseline published and completed at public commit
+      `6082f0eedabe478801051a661435a5ffb3424f47`.
+- [ ] Five-case corpus commit pushed to `Cyber-Castellum/DWARF`; submit the
+      resulting public SHA, never a local-only commit.
+- [ ] Corpus `try 1` uses `-t 1`, faults ON (no `--no-faults`).
+- [ ] Explicit approval to spend the corpus run.
 - [ ] Approval to spend the run

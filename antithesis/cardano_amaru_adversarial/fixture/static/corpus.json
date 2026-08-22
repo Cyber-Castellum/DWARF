@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "case_id": "underfee-minus-100",
+      "tx_file": "underfee-minus-100.tx",
+      "minimum_fee": 164181,
+      "actual_fee": 164081,
+      "fee_delta": -100,
+      "tx_id": "d1b8e3359e52843452ee4bd51f49d0f0c52e62b0ecaba94f3f6524d64bbac2ad",
+      "cbor_sha256": "21aa81dcc2a887455eb295e1cec12ad2b142f5d11e384be82f75e73ec0b0061c",
+      "cbor_size": 201,
+      "expected": "phase1_reject",
+      "input": "c0a35ac578d4a6cdfe8bef7857ba505bef91c2c4062b86e33afbb9ee8e8df10a#0"
+    },
+    {
+      "case_id": "underfee-minus-2",
+      "tx_file": "underfee-minus-2.tx",
+      "minimum_fee": 164181,
+      "actual_fee": 164179,
+      "fee_delta": -2,
+      "tx_id": "8e6fd8df891121749606f642a4ee232e641385e06d11f6ffe26603b3d0a043a6",
+      "cbor_sha256": "0f9ec93dbafd83adea940a6d732203532a38c583ae9afc2771e9c454b1f8706f",
+      "cbor_size": 201,
+      "expected": "phase1_reject",
+      "input": "c0a35ac578d4a6cdfe8bef7857ba505bef91c2c4062b86e33afbb9ee8e8df10a#0"
+    },
+    {
+      "case_id": "underfee-minus-1",
+      "tx_file": "underfee.tx",
+      "minimum_fee": 164181,
+      "actual_fee": 164180,
+      "fee_delta": -1,
+      "tx_id": "40b279fb4ce5cf95e4def7b5c10086937a7b4ee8c3f72fd8c0761b0aceaccc17",
+      "cbor_sha256": "5979a69e9786f0f532563b57e38690023bf10050245dffef9dfd8c4d9f8e2f26",
+      "cbor_size": 201,
+      "expected": "phase1_reject",
+      "input": "c0a35ac578d4a6cdfe8bef7857ba505bef91c2c4062b86e33afbb9ee8e8df10a#0"
+    },
+    {
+      "case_id": "minimum-exact",
+      "tx_file": "minimum-exact.tx",
+      "minimum_fee": 164181,
+      "actual_fee": 164181,
+      "fee_delta": 0,
+      "tx_id": "60dffadd16741960c6dc5296bac99db6f84cfe64f5c826a498cbb943a66f0c36",
+      "cbor_sha256": "c20f70d67c06e858966ba9466015b148a1bc1c1bc7d754e97b5a00340351bccf",
+      "cbor_size": 201,
+      "expected": "accepted",
+      "input": "9902a37f8768ef30402696434080d1d551c9e5da04a989df4fa13b093ac3e9e5#0"
+    },
+    {
+      "case_id": "minimum-plus-1",
+      "tx_file": "minimum-plus-1.tx",
+      "minimum_fee": 164181,
+      "actual_fee": 164182,
+      "fee_delta": 1,
+      "tx_id": "81222acadad135fb60c19cc0571a22ab8421d44e2e78d7927bd7e0baae07969d",
+      "cbor_sha256": "3d280c84ca0f0a0b5c24638701ab11e9d0c562d1cd35c42aa8124b581b11647b",
+      "cbor_size": 201,
+      "expected": "accepted",
+      "input": "9c89461d533e74f50501bbb551603d8ef351b435954ffd70c99a21dee0eaf0ca#0"
+    }
+  ]
+}

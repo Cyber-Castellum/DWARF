@@ -1,0 +1,14 @@
+Corpus verification command:
+  antithesis/cardano_amaru_adversarial/fixture/verify-corpus-container.sh
+Output:
+  verified 5 signed fee-corpus transactions
+
+minimum-plus-44.tx independent inspection:
+  transaction id: 99d12da5eb1afc5ef2255b4fe07b1dc2bdfa2d5c79ebc6c0e660fee912f1253d
+  CBOR SHA-256: c5f857cd79979c4addd2f9f9489a71f0f3fa6424ac1ecb74d06a8f311e402828
+  CBOR size: 201
+  era: Conway
+  fee: 164225 Lovelace
+  input: c0a35ac578d4a6cdfe8bef7857ba505bef91c2c4062b86e33afbb9ee8e8df10a#0
+  output: addr_test1vr6vpga4t8ms35sqergk687jmgney0hltcx6pdz4zy93aes9ehax0 + 199999999835775 Lovelace
+  key witness count: 1
