@@ -1,0 +1,19 @@
+EnableLogMetrics: false
+EnableLogging: true
+minSeverity: Info
+Options: {}
+setupBackends:
+  - KatipBK
+defaultBackends:
+  - KatipBK
+setupScribes:
+  - scKind: StdoutSK
+    scName: stdout
+    scFormat: ScText
+defaultScribes:
+  - - StdoutSK
+    - stdout
+rotation:
+  rpKeepFilesNum: 10
+  rpLogLimitBytes: 5000000
+  rpMaxAgeHours: 24

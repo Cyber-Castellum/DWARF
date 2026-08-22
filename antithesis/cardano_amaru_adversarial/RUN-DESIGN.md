@@ -1,7 +1,32 @@
 # Antithesis run design — Amaru consensus safety under fault × adversarial input
 
-**Status: prepared, NOT submitted.** Submission is gated on explicit approval (it is a paid run)
-and on publishing three images (see Prerequisites).
+**Status: prepared and locally validated, NOT submitted.** Submission is gated on a
+public commit and explicit approval for the paid run.
+
+## 2026-08-22 addition: mixed phase-1 fee differential
+
+This run now also tests a new semantic boundary: the identical correctly signed
+Conway transaction at exactly `minimum fee - 1 lovelace` is submitted to Cardano and
+Amaru during fault exploration. The existing consensus/adversarial properties remain.
+
+The phase-1 reference is deliberately **not** the fresh Cardano cluster. Fresh
+configurator keys do not match Amaru's baked store and caused Amaru to fail during
+transaction preparation. The new `cardano-phase1-reference` image contains the small
+Cardano snapshot paired with Amaru's store, while the workload contains only the
+signed invalid fixture and public metadata. No genesis signing key is shipped.
+
+Live same-byte smoke evidence:
+
+- tx `40b279fb4ce5cf95e4def7b5c10086937a7b4ee8c3f72fd8c0761b0aceaccc17`;
+- fee `164180`, Cardano minimum `164181`;
+- Cardano: `FeeTooSmallUTxO`;
+- Amaru: validation-layer `transaction ... is invalid`;
+- `both_classifiable=true`, `phase1_agreement=true`, `any_accepted=false`.
+
+Official `snouty` 0.6.1 validation against the published digest-pinned images passes
+locally and discovers one driver plus one eventual command. Anonymous manifest
+retrieval returns HTTP 200 for all three new images. See
+`docs/plans/2026-08-22-mixed-phase1-fee-differential-design.md` and the scratchbook.
 
 ## The question this run answers
 
@@ -69,7 +94,8 @@ run alongside, so their liveness signal comes for free.
 (`adversary-image/seed-entrypoint.sh`) sources the seed from `antithesis.random.get_random()`, so
 Antithesis explores **mutations × faults** — and because the entropy is Antithesis's own, any
 failure it finds still replays deterministically. `DWARF_ADV_SEED` pins the seed for reproducible
-local runs.
+local runs. The wrapper filters SDK diagnostic stdout and accepts only a complete
+unsigned-decimal seed; otherwise the adversary crash-loops before testing begins.
 
 ## What local validation already proved (free — do not pay to repeat)
 

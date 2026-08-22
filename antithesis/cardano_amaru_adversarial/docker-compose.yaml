@@ -25,7 +25,6 @@ x-fault-exclude: &id001
 services:
   configurator:
     image: ghcr.io/cardano-foundation/cardano-node-antithesis/configurator:0f9570b
-    container_name: d807-configurator
     labels: *id001
     volumes:
     - ./testnet.yaml:/testnet.yaml
@@ -35,7 +34,6 @@ services:
   tracer:
     image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
     hostname: tracer.example
-    container_name: d807-tracer
     labels: *id001
     volumes:
     - tracer:/opt/cardano-tracer
@@ -51,7 +49,6 @@ services:
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n  --database-path /state\n  --socket-path /state/node.socket\n  --tracer-socket-path-connect /tracer/tracer.socket\n  --shelley-operational-certificate /configs/keys/opcert.cert\n  --shelley-kes-key /configs/keys/kes.skey\n  --shelley-vrf-key /configs/keys/vrf.skey\n  --port 3001\n  --host-addr 0.0.0.0\n  +RTS -N -A16m -qg -qb -RTS\n"
     restart: always
     depends_on: *id003
-    container_name: d807-p1
     labels: *id001
     hostname: p1.example
     volumes:
@@ -64,7 +61,6 @@ services:
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n  --database-path /state\n  --socket-path /state/node.socket\n  --tracer-socket-path-connect /tracer/tracer.socket\n  --shelley-operational-certificate /configs/keys/opcert.cert\n  --shelley-kes-key /configs/keys/kes.skey\n  --shelley-vrf-key /configs/keys/vrf.skey\n  --port 3001\n  --host-addr 0.0.0.0\n  +RTS -N -A16m -qg -qb -RTS\n"
     restart: always
     depends_on: *id003
-    container_name: d807-p2
     labels: *id001
     hostname: p2.example
     volumes:
@@ -77,7 +73,6 @@ services:
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n  --database-path /state\n  --socket-path /state/node.socket\n  --tracer-socket-path-connect /tracer/tracer.socket\n  --shelley-operational-certificate /configs/keys/opcert.cert\n  --shelley-kes-key /configs/keys/kes.skey\n  --shelley-vrf-key /configs/keys/vrf.skey\n  --port 3001\n  --host-addr 0.0.0.0\n  +RTS -N -A16m -qg -qb -RTS\n"
     restart: always
     depends_on: *id003
-    container_name: d807-p3
     labels: *id001
     hostname: p3.example
     volumes:
@@ -90,7 +85,6 @@ services:
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n  --database-path /state\n  --socket-path /state/node.socket\n  --tracer-socket-path-connect /tracer/tracer.socket\n  --port 3001\n  --host-addr 0.0.0.0\n  +RTS -N -A16m -qg -qb -RTS\n"
     restart: always
     depends_on: *id005
-    container_name: d807-relay1
     labels: *id001
     hostname: relay1.example
     volumes:
@@ -104,7 +98,6 @@ services:
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n  --database-path /state\n  --socket-path /state/node.socket\n  --tracer-socket-path-connect /tracer/tracer.socket\n  --port 3001\n  --host-addr 0.0.0.0\n  +RTS -N -A16m -qg -qb -RTS\n"
     restart: always
     depends_on: *id005
-    container_name: d807-relay2
     labels: *id001
     hostname: relay2.example
     volumes:
@@ -112,9 +105,37 @@ services:
     - ./relay-topology.json:/configs/configs/topology.json:ro
     - relay2-state:/state
     - tracer:/tracer
+  cardano-phase1-reference:
+    image: ghcr.io/j-gainsec/dwarf-cardano-phase1-reference@sha256:cadd549396712c649f6f5683fab36fa6c183b8db0f85440a82a05b59bbcb39e4
+    hostname: cardano-phase1-reference.example
+    labels: *id001
+    volumes:
+    - phase1-reference-state:/state
+    restart: always
+  cardano-submit-api:
+    image: ghcr.io/intersectmbo/cardano-submit-api:10.7.1
+    hostname: cardano-submit-api.example
+    labels: *id001
+    command:
+    - --config
+    - /cfg/submit-api-config.yaml
+    - --testnet-magic
+    - '42'
+    - --socket-path
+    - /state/node.socket
+    - --listen-address
+    - 0.0.0.0
+    - --port
+    - '8090'
+    volumes:
+    - phase1-reference-state:/state
+    - ./haskell:/cfg:ro
+    restart: always
+    depends_on:
+      cardano-phase1-reference:
+        condition: service_started
   dwarf-adversary:
-    image: ghcr.io/j-gainsec/dwarf-adversary-anti@sha256:0eb58fbfd2e77515abf13780cf5861bddc0bf40bc86ca7ced943b726e0163f15
-    container_name: d807-dwarf-adversary
+    image: ghcr.io/j-gainsec/dwarf-adversary-anti@sha256:e99cb81ffc51465042b77ac3100d18092f69a25c36c66fff4954663b7200d2bd
     hostname: dwarf-adversary.example
     labels:
       com.antithesis.exclude_from_faults: network,kill,pause,stop
@@ -156,19 +177,20 @@ services:
       AMARU_GLOBAL_MAX_KES_EVOLUTION: '62'
       AMARU_PEER_ADDRESS: relay1.example:3001,dwarf-adversary.example:3001
       AMARU_LISTEN_ADDRESS: 0.0.0.0:3001
+      AMARU_SUBMIT_API_ADDRESS: 0.0.0.0:3011
       AMARU_STORE: /srv/amaru
       AMARU_GLOBAL_SYSTEM_START: '1787197790000'
     restart: always
     depends_on:
       dwarf-adversary:
         condition: service_started
-    container_name: d807-amaru-relay-1
     hostname: amaru-relay-1.example
     command:
     - mkdir -p /opt/amaru-logs && exec /usr/local/bin/dwarf-amaru-entrypoint.sh 2>&1 | tee -a /opt/amaru-logs/amaru-relay-1.log
     volumes:
     - a1-state:/srv/amaru
     - amaru-logs:/opt/amaru-logs
+    - ./relay-image/entrypoint.sh:/usr/local/bin/dwarf-amaru-entrypoint.sh:ro
     networks:
       default: null
       amaru-consumer-net:
@@ -191,19 +213,20 @@ services:
       AMARU_GLOBAL_MAX_KES_EVOLUTION: '62'
       AMARU_PEER_ADDRESS: relay2.example:3001
       AMARU_LISTEN_ADDRESS: 0.0.0.0:3001
+      AMARU_SUBMIT_API_ADDRESS: 0.0.0.0:3011
       AMARU_STORE: /srv/amaru
       AMARU_GLOBAL_SYSTEM_START: '1787197790000'
     restart: always
     depends_on:
       relay2:
         condition: service_started
-    container_name: d807-amaru-relay-2
     hostname: amaru-relay-2.example
     command:
     - mkdir -p /opt/amaru-logs && exec /usr/local/bin/dwarf-amaru-entrypoint.sh 2>&1 | tee -a /opt/amaru-logs/amaru-relay-2.log
     volumes:
     - a2-state:/srv/amaru
     - amaru-logs:/opt/amaru-logs
+    - ./relay-image/entrypoint.sh:/usr/local/bin/dwarf-amaru-entrypoint.sh:ro
     networks:
       default: null
       amaru-consumer-net:
@@ -215,7 +238,6 @@ services:
       NETWORKMAGIC: 42
       PORT: 3001
       POOLS: '3'
-    container_name: d807-sidecar
     labels: *id001
     hostname: sidecar.example
     depends_on:
@@ -226,7 +248,6 @@ services:
     - /tmp
   tracer-sidecar:
     image: ghcr.io/cardano-foundation/cardano-node-antithesis/tracer-sidecar:a94197a
-    container_name: d807-tracer-sidecar
     labels: *id001
     hostname: tracer-sidecar.example
     command:
@@ -234,7 +255,6 @@ services:
     environment:
       POOLS: '3'
       CHAINPOINT_FILEPATH: /opt/cardano-tracer/chainPoints.log
-      AMARU_CONSUMER_HOST: amaru-consumer.example
       AMARU_LOG_DIR: /opt/amaru-logs
     volumes:
     - tracer:/opt/cardano-tracer
@@ -245,7 +265,6 @@ services:
         condition: service_started
   log-tailer:
     image: ghcr.io/cardano-foundation/cardano-node-antithesis/log-tailer@sha256:a5d23c42408a1003bb14208fd97dd2bdda102e7002e4e2a2804e71a80df56484
-    container_name: d807-log-tailer
     labels: *id001
     hostname: log-tailer.example
     volumes:
@@ -256,7 +275,6 @@ services:
         condition: service_started
   dwarf-oracle:
     image: ghcr.io/j-gainsec/dwarf-adversarial-oracle@sha256:d94dc5b787a4a3e0a031d0f7fcc4ce53f375f58da473e7c4803e640299a70c41
-    container_name: d807-dwarf-oracle
     hostname: dwarf-oracle.example
     labels:
       com.antithesis.exclude_from_faults: network,kill,pause,stop
@@ -274,6 +292,21 @@ services:
     restart: always
     networks:
       default: null
+  mixed-phase1-workload:
+    image: ghcr.io/j-gainsec/dwarf-mixed-phase1-workload@sha256:31dc030ed0cd5884fa36ce0b230609167678f44ca55d565dc4169dafb018a0a1
+    hostname: mixed-phase1-workload.example
+    labels: *id001
+    environment:
+      PHASE1_FIXTURE_DIR: /fixture
+      AMARU_SUBMIT_URL: http://amaru-relay-1.example:3011/api/submit/tx
+      CARDANO_SUBMIT_URL: http://cardano-submit-api.example:8090/api/submit/tx
+      PHASE1_RECOVERY_SECS: '10'
+    restart: always
+    depends_on:
+      cardano-submit-api:
+        condition: service_started
+      amaru-relay-1:
+        condition: service_started
 volumes:
   tracer: null
   p1-configs: null
@@ -291,12 +324,11 @@ volumes:
   a2-state: null
   amaru-consumer-state: null
   amaru-logs: null
+  phase1-reference-state: null
 networks:
   default:
-    name: d807-cardano-amaru-testnet
     driver: bridge
     internal: ${INTERNAL_NETWORK}
   amaru-consumer-net:
-    name: d807-cardano-amaru-consumer-net
     driver: bridge
     internal: ${INTERNAL_NETWORK}

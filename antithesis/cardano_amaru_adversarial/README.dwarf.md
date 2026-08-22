@@ -35,6 +35,20 @@ no mutated CBOR, no differential agreement with cardano-node under attack.
 
 DWARF fills exactly that gap.
 
+## Added mixed phase-1 admission differential (2026-08-22)
+
+The bundle also submits one identical, correctly signed Conway transaction at exactly
+one lovelace below the minimum fee to Cardano and Amaru. The Cardano oracle uses a
+small baked snapshot paired with Amaru's baked store; using the fresh configurator
+ledger is invalid because its genesis keys and UTxOs differ. The workload contains
+only a signed invalid testnet transaction and public metadata—no signing key.
+
+Local same-byte evidence is Cardano `FeeTooSmallUTxO` versus Amaru's validation-layer
+`transaction ... is invalid`, classified as agreement. Preparation errors and
+transport outages remain inconclusive. The exact architecture, image digests, and
+evidence are in `docs/plans/2026-08-22-mixed-phase1-fee-differential-design.md` and
+`scratchbook/properties/phase1-underfee-admission-agreement.md`.
+
 ## Topology
 
 ```
@@ -92,9 +106,12 @@ normally. The differential works.
 
 Full procedure, including the pre-flight checklist: **`SUBMIT-RUNBOOK.md`**.
 
-1. **Images — already published and public** under `ghcr.io/j-gainsec/*`:
-   `amaru-adv:807-k20`, `dwarf-adversary-anti:0.10.0`, `dwarf-adversarial-oracle:0.1.1`.
-   `docker-compose.yaml` pins all three **by digest**, so a run uses exactly the validated bytes.
+1. **Images are published and anonymously pullable** under `ghcr.io/j-gainsec/*`.
+   Anonymous manifest checks return HTTP 200 for both phase-1 packages and the
+   sanitized-seed adversary.
+   `docker-compose.yaml` pins the Amaru relay, sanitized-seed adversary, oracle,
+   phase-1 Cardano reference, and phase-1 workload **by digest**, so a run uses
+   exactly the validated bytes.
 2. Commit this dir to `Cyber-Castellum/DWARF`.
 3. `moog requester create-test -r Cyber-Castellum/DWARF -d antithesis/cardano_amaru_adversarial …`
    (`-t <hours>`, faults ON — with faults off this is just the local validation at a price).
@@ -107,7 +124,8 @@ wrong: `dwarf-adversary` 0.10.0 rejects `--seed random` outright (it wants a `ui
 `dwarf-adversary-anti` wraps the binary with an entrypoint that reads the seed from
 **`antithesis.random.get_random()`** at startup. Antithesis therefore explores *mutations × faults*
 rather than many fault schedules against one fixed attack, and any failure it finds still replays
-deterministically. Set `DWARF_ADV_SEED` to pin the seed for a local run.
+deterministically. The wrapper discards SDK diagnostic stdout and selects only a
+complete unsigned-decimal seed. Set `DWARF_ADV_SEED` to pin the seed for a local run.
 
 ## Local run
 
