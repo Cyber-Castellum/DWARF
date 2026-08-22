@@ -186,7 +186,7 @@ services:
         condition: service_started
     hostname: amaru-relay-1.example
     command:
-    - mkdir -p /opt/amaru-logs && exec /usr/local/bin/dwarf-amaru-entrypoint.sh 2>&1 | tee -a /opt/amaru-logs/amaru-relay-1.log
+    - mkdir -p /opt/amaru-logs && exec /bin/sh /usr/local/bin/dwarf-amaru-entrypoint.sh 2>&1 | tee -a /opt/amaru-logs/amaru-relay-1.log
     volumes:
     - a1-state:/srv/amaru
     - amaru-logs:/opt/amaru-logs
@@ -222,7 +222,7 @@ services:
         condition: service_started
     hostname: amaru-relay-2.example
     command:
-    - mkdir -p /opt/amaru-logs && exec /usr/local/bin/dwarf-amaru-entrypoint.sh 2>&1 | tee -a /opt/amaru-logs/amaru-relay-2.log
+    - mkdir -p /opt/amaru-logs && exec /bin/sh /usr/local/bin/dwarf-amaru-entrypoint.sh 2>&1 | tee -a /opt/amaru-logs/amaru-relay-2.log
     volumes:
     - a2-state:/srv/amaru
     - amaru-logs:/opt/amaru-logs

@@ -41,6 +41,13 @@ class BundleContractTests(unittest.TestCase):
         )
         self.assertIn("--submit-api-address", entrypoint)
 
+    def test_bind_mounted_amaru_entrypoints_use_shell_interpreter(self):
+        safe_invocation = "exec /bin/sh /usr/local/bin/dwarf-amaru-entrypoint.sh"
+        self.assertEqual(self.compose.count(safe_invocation), 2)
+        self.assertNotIn(
+            "exec /usr/local/bin/dwarf-amaru-entrypoint.sh", self.compose
+        )
+
     def test_workload_image_catalogs_assertions_and_commands(self):
         dockerfile_path = BUNDLE / "workload" / "Dockerfile"
         if not dockerfile_path.exists():

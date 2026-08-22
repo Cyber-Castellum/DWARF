@@ -7,6 +7,39 @@ All commands run on **cardano-box**.
 
 ---
 
+## 2026-08-22 relay entrypoint incident — FIX REQUIRED BEFORE REPLACEMENT RUN
+
+MOOG test-run
+`e512a7b37d7d23b7b8a5dfe6e908d9c3b5794f64b861a0e2372a9862b77c3d3f`
+launched commit `60ccdf4c1d9b72fcb426a5458ae89adeec82c9b1`, but is not a valid
+mixed Cardano/Amaru experiment. Antithesis recorded both relay containers in a
+restart loop with:
+
+```text
+exec: /usr/local/bin/dwarf-amaru-entrypoint.sh: Permission denied
+```
+
+The Cardano reference and workload ran, but every Amaru submission was
+unavailable. The run emitted 157 failing classifiability assertions and zero
+`both implementations returned classifiable phase-1 results` events. Do not use
+this run for a differential conclusion or submit a longer follow-up at that
+commit.
+
+The repository file is mode `100755`; the unsafe assumption was that an
+Antithesis bind-mounted repository script remains directly executable. Both
+relay commands must invoke it through the interpreter:
+
+```sh
+exec /bin/sh /usr/local/bin/dwarf-amaru-entrypoint.sh
+```
+
+`workload/tests/test_bundle_contract.py` enforces this for both relays. A
+replacement one-hour `try 1` must use a new public commit containing that
+guardrail and must be checked for both Amaru process startup and a reachable
+mixed classifiability event before any longer run.
+
+---
+
 ## 2026-08-22 mixed phase-1 addendum — READY FOR PUBLIC COMMIT
 
 The bundle now includes a same-byte under-fee differential. Do not restore the old
@@ -24,7 +57,7 @@ New published images pinned in Compose:
 
 Verification completed on `cardano-box`:
 
-- 22 unit/contract tests pass;
+- 23 unit/contract tests pass after the relay-entrypoint regression guard;
 - image added paths contain no `.skey`, key, PEM, or environment files;
 - same-byte smoke gives Cardano `FeeTooSmallUTxO` and Amaru validation rejection;
 - official `snouty validate` detects setup-complete, one driver, and one eventual
