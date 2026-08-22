@@ -22,11 +22,42 @@ fuzzers, a devnet, or any Antithesis job. This gate just proves the definitions 
 | **Schema** | every `dwarf/scenarios/*.yaml` validates against `dwarf/spec/v1/schema.json` | ms |
 | **Semantic** | every scenario's referenced primitives exist in `dwarf/primitives/registry.json` (`scenario validate --semantic`) | seconds |
 | **Antithesis** | every profile renders into a well-formed Antithesis bundle **offline** — no docker daemon, no registry push | seconds |
+| **MOOG assets** | every documented submission-ready bundle uses only MOOG's supported `com.antithesis.exclude_from_faults` tokens: `network`, `kill`, `pause`, `stop` | ms |
 
-Current corpus status: **229 scenarios — 0 schema failures, 0 semantic failures, 76 warnings; 13
-Antithesis profiles render cleanly.** The gate passes today; it exists to catch the next
+Current corpus status (2026-08-21): **239 scenarios — 0 schema failures, 0 semantic failures, 77
+warnings; 13 Antithesis profiles render cleanly; 2 documented MOOG assets pass.** The gate passes today; it exists to catch the next
 regression (e.g. a scenario referencing an unregistered primitive — exactly the class of bug that
 slipped in during an earlier reclassification).
+
+The documented MOOG asset set is explicit in `validate_scenarios.py`:
+
+- `antithesis/cardano_node_dwarf`
+- `antithesis/cardano_amaru_adversarial`
+
+Experimental/reference Compose files are not silently treated as submission-ready. Add a bundle
+to `MOOG_ASSET_DIRS` when its runbook documents a MOOG launch path.
+
+### Fault-exclusion incident and prevention
+
+The mixed Amaru adversarial bundle once contained:
+
+```yaml
+com.antithesis.exclude_from_faults: "true"
+```
+
+MOOG parses this value as a comma-separated fault-class list, not as a Boolean, so release MOOG
+rejected it with `unknown fault class "true"` before calling Antithesis. The request remained
+`pending` and no tenant run existed. The native cardano-node generator already emitted the correct
+value, but the mixed bundle was hand-built; the old Stage-2 verifier checked only label presence,
+and the workflow did not trigger on `antithesis/**`.
+
+The prevention path is now shared:
+
+1. `profile_manager.antithesis_validation` owns the MOOG-compatible parser.
+2. `verify_generated_bundle` applies it to generated bundles.
+3. MOOG asset validation and create-test planning apply it before submission.
+4. The CI gate validates the documented checked-in MOOG assets.
+5. The workflow triggers on `antithesis/**`, `tests/**`, and CI dependency changes.
 
 ## Files
 
@@ -36,7 +67,7 @@ slipped in during an earlier reclassification).
 ## Run it locally
 
 ```bash
-python3 -m pip install -r dwarf/scripts/requirements-ci.txt   # jsonschema + jinja2
+python3 -m pip install -r dwarf/scripts/requirements-ci.txt   # jsonschema + jinja2 + PyYAML
 python3 dwarf/scripts/validate_scenarios.py            # non-strict: warnings allowed
 python3 dwarf/scripts/validate_scenarios.py --strict   # warnings are failures
 python3 dwarf/scripts/validate_scenarios.py --json      # machine-readable summary

@@ -36,5 +36,6 @@ exec /usr/local/bin/amaru node run --network testnet_42 \
   --ledger-dir "$STORE/ledger.testnet_42.db" \
   --chain-dir  "$STORE/chain.testnet_42.db" \
   --listen-address "${AMARU_LISTEN_ADDRESS:-0.0.0.0:3001}" \
+  --submit-api-address "${AMARU_SUBMIT_API_ADDRESS:-0.0.0.0:3011}" \
   $PEERS \
   --peer-removal-cooldown-secs "${AMARU_PEER_REMOVAL_COOLDOWN_SECS:-86400}"
