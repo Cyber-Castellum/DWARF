@@ -1,3 +1,0 @@
-2026-08-22T20:43:53.017155Z INFO amaru_consensus::stages::mempool::stage: transaction rejected by mempool tx_id=60dffadd16741960c6dc5296bac99db6f84cfe64f5c826a498cbb943a66f0c36 reason=transaction 60dffadd16741960c6dc5296bac99db6f84cfe64f5c826a498cbb943a66f0c36 is invalid
-2026-08-22T20:43:53.020723Z INFO amaru_consensus::stages::mempool::stage: transaction rejected by mempool tx_id=81222acadad135fb60c19cc0571a22ab8421d44e2e78d7927bd7e0baae07969d reason=transaction 81222acadad135fb60c19cc0571a22ab8421d44e2e78d7927bd7e0baae07969d is invalid
-2026-08-22T20:49:41.713451Z INFO amaru_consensus::stages::mempool::stage: transaction accepted into mempool tx_id=99d12da5eb1afc5ef2255b4fe07b1dc2bdfa2d5c79ebc6c0e660fee912f1253d seq_no=1 origin=Local
