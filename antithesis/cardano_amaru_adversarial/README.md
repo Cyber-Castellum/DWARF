@@ -65,6 +65,35 @@ The generic observability and assertion services remain enabled:
 transaction perturbator workload is deliberately absent; this testnet has
 no `tx-generator` service.
 
+## Mixed Cardano/Amaru phase-1 fee corpus
+
+The adversarial bundle also contains a stable Cardano phase-1 reference, the two
+Amaru relays, and a same-byte differential workload. Its signed public corpus is:
+
+| case | delta from minimum | expected outcome | scheduling |
+|---|---:|---|---|
+| `underfee-minus-100` | -100 | phase-1 rejection | replayable under faults |
+| `underfee-minus-2` | -2 | phase-1 rejection | replayable under faults |
+| `underfee-minus-1` | -1 | phase-1 rejection | replayable; historical baseline |
+| `minimum-exact` | 0 | acceptance | exactly once before faults |
+| `minimum-plus-1` | +1 | acceptance | exactly once before faults |
+
+Antithesis runs `first_fee_valid_boundaries.py` after setup and before fault
+injection. It first proves both submission endpoints are ready with the invalid
+`-1` case, then sends each valid transaction once. Accepted transactions are
+never placed in repeatable commands because replay would test spent-input or
+duplicate behavior instead of the fee boundary.
+
+During faults, `parallel_driver_underfee_corpus.py` calls
+`antithesis.random.random_choice` over only the three negative cases. The
+eventual recovery command does the same after fault injection stops. Every
+assertion includes the case ID, fee delta, expected result, input, transaction
+ID, and both endpoint observations. The original `-1` assertion names remain so
+results can be compared with the completed baseline run.
+
+The fixture directory contains only signed transaction envelopes and public
+metadata. It must never contain signing keys or mount genesis key material.
+
 ## Runtime Flow
 
 ```text

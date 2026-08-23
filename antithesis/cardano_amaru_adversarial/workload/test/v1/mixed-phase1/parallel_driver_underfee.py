@@ -10,6 +10,7 @@ from mixed_phase1 import (
     load_fixture,
     observe_differential,
     public_result,
+    report_command_error,
 )
 
 
@@ -29,4 +30,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as error:
+        report_command_error("parallel_driver_underfee", error)

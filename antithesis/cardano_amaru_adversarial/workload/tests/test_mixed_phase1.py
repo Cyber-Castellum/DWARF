@@ -1,8 +1,5 @@
 import importlib
-<<<<<<< HEAD
 import hashlib
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 import json
 import sys
 import tempfile
@@ -32,7 +29,6 @@ class RecordingTransport:
         return dict(self.observation)
 
 
-<<<<<<< HEAD
 class PayloadTransport:
     def __init__(self, observations):
         self.observations = observations
@@ -43,8 +39,6 @@ class PayloadTransport:
         return dict(self.observations[payload])
 
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 class ResponseClassificationTests(unittest.TestCase):
     def test_success_is_accepted(self):
         subject = load_subject(self)
@@ -139,7 +133,6 @@ class FixtureTests(unittest.TestCase):
                 subject.load_fixture(root)
 
 
-<<<<<<< HEAD
 class CorpusTests(unittest.TestCase):
     def write_case(self, root, case_id, *, fee_delta=-1, expected="phase1_reject", tx_file=None, tx_id=None):
         tx_file = tx_file or f"{case_id}.tx"
@@ -498,8 +491,6 @@ class CorpusExecutionTests(unittest.TestCase):
                 self.assertEqual(always_call[1], expected_always, case_id)
 
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 class DifferentialObservationTests(unittest.TestCase):
     def test_identical_bytes_are_submitted_and_phase1_rejections_agree(self):
         subject = load_subject(self)
@@ -554,7 +545,6 @@ class DifferentialObservationTests(unittest.TestCase):
         self.assertTrue(result["any_accepted"])
         self.assertIsNone(result["phase1_agreement"])
 
-<<<<<<< HEAD
     def test_matches_expected_acceptance_and_phase1_rejection(self):
         subject = load_subject(self)
         accepted = {
@@ -588,8 +578,6 @@ class DifferentialObservationTests(unittest.TestCase):
 
         self.assertFalse(subject.matches_expected(result, "phase1_reject"))
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 
 if __name__ == "__main__":
     unittest.main()

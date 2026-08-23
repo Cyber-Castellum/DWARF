@@ -293,21 +293,14 @@ services:
     networks:
       default: null
   mixed-phase1-workload:
-<<<<<<< HEAD
     image: ghcr.io/j-gainsec/dwarf-mixed-phase1-workload@sha256:26d02ae22e0d802b78285a3b19bd53687a257dd77a12879831b5262a4792811d
-=======
-    image: ghcr.io/j-gainsec/dwarf-mixed-phase1-workload@sha256:31dc030ed0cd5884fa36ce0b230609167678f44ca55d565dc4169dafb018a0a1
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
     hostname: mixed-phase1-workload.example
     labels: *id001
     environment:
       PHASE1_FIXTURE_DIR: /fixture
       AMARU_SUBMIT_URL: http://amaru-relay-1.example:3011/api/submit/tx
       CARDANO_SUBMIT_URL: http://cardano-submit-api.example:8090/api/submit/tx
-<<<<<<< HEAD
       PHASE1_READY_ATTEMPTS: '10'
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
       PHASE1_RECOVERY_SECS: '10'
     restart: always
     depends_on:

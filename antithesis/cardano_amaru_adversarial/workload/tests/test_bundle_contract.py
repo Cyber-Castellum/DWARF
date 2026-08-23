@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 import json
 import os
 import subprocess
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 import unittest
 from pathlib import Path
 
@@ -28,7 +25,6 @@ class BundleContractTests(unittest.TestCase):
         self.assertTrue((BUNDLE / "fixture" / "static" / "underfee.tx").is_file())
         self.assertTrue((BUNDLE / "fixture" / "static" / "metadata.json").is_file())
 
-<<<<<<< HEAD
     def test_signed_fee_corpus_has_expected_boundary_family(self):
         fixture_root = BUNDLE / "fixture" / "static"
         manifest = json.loads((fixture_root / "corpus.json").read_text(encoding="utf-8"))
@@ -63,8 +59,6 @@ class BundleContractTests(unittest.TestCase):
     def test_public_bundle_contains_no_signing_keys(self):
         self.assertEqual(list(BUNDLE.rglob("*.skey")), [])
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
     def test_reference_image_contains_matching_public_chain_state(self):
         dockerfile = (BUNDLE / "reference-image" / "Dockerfile").read_text(
             encoding="utf-8"
@@ -100,7 +94,6 @@ class BundleContractTests(unittest.TestCase):
         self.assertIn("/opt/antithesis/test/v1/mixed-phase1/", dockerfile)
         self.assertIn("fixture/static/ /fixture/", dockerfile)
 
-<<<<<<< HEAD
     def test_workload_runtime_dependencies_are_reproducibly_pinned(self):
         dockerfile = (BUNDLE / "workload" / "Dockerfile").read_text(encoding="utf-8")
         first_line = dockerfile.splitlines()[0]
@@ -149,8 +142,6 @@ class BundleContractTests(unittest.TestCase):
         self.assertNotIn("setup_complete", source)
         self.assertNotIn("send_event", source)
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
     def test_fault_exclusions_are_explicit(self):
         self.assertNotIn("com.antithesis.exclude_from_faults: 'true'", self.compose)
         self.assertNotIn('com.antithesis.exclude_from_faults: "true"', self.compose)

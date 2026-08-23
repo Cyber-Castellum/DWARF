@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Bounded post-fault probe for restoration of phase-1 agreement."""
+"""One Antithesis-chosen, replay-safe negative fee observation."""
 
 import json
 import os
-import time
 
 from antithesis.random import random_choice
 
@@ -28,18 +27,9 @@ def main() -> None:
         os.environ.get(
             "CARDANO_SUBMIT_URL", "http://cardano-submit-api.example:8090/api/submit/tx"
         ),
-        timeout=2.0,
     )
-    deadline = time.monotonic() + float(os.environ.get("PHASE1_RECOVERY_SECS", "10"))
-    result = None
-    while time.monotonic() < deadline:
-        result = observe_differential(fixture.payload, transports)
-        if result["phase1_agreement"] is True:
-            break
-        time.sleep(0.5)
-    if result is None:
-        result = observe_differential(fixture.payload, transports)
-    emit_assertions(fixture, result, recovery=True)
+    result = observe_differential(fixture.payload, transports)
+    emit_assertions(fixture, result)
     print(json.dumps(public_case_result(fixture, result), sort_keys=True), flush=True)
 
 
@@ -47,4 +37,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as error:
-        report_command_error("eventually_underfee_recovery", error)
+        report_command_error("parallel_driver_underfee_corpus", error)

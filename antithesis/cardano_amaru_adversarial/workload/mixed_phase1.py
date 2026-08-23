@@ -1,39 +1,22 @@
-<<<<<<< HEAD
 """Mixed Cardano/Amaru signed phase-1 fee-boundary differential.
 
 The immutable corpus spans negative, exact-minimum, and positive fee deltas.
 Transport outages are inconclusive; they are never promoted into ledger
 disagreements.
-=======
-"""Mixed Cardano/Amaru phase-1 transaction-admission differential.
-
-The fixture is a correctly signed Conway transaction whose fee is exactly one
-lovelace below the minimum calculated by cardano-cli. Transport outages are
-inconclusive; they are never promoted into ledger disagreements.
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 """
 
 from __future__ import annotations
 
 import json
-<<<<<<< HEAD
 import hashlib
 import re
 import socket
 import time
-=======
-import re
-import socket
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-<<<<<<< HEAD
 from typing import Callable, Mapping, Protocol
-=======
-from typing import Mapping, Protocol
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 
 try:
     from antithesis.assertions import always, reachable, sometimes
@@ -88,13 +71,10 @@ class Fixture:
     minimum_fee: int
     actual_fee: int
     tx_id: str
-<<<<<<< HEAD
     case_id: str = "underfee-minus-1"
     fee_delta: int = -1
     expected: str = PHASE1_REJECT
     input: str = ""
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 
 
 class SubmitTransport(Protocol):
@@ -121,22 +101,12 @@ def classify_response(
     return UNKNOWN
 
 
-<<<<<<< HEAD
 def _load_payload(path: Path) -> bytes:
     envelope = json.loads(path.read_text(encoding="utf-8"))
-=======
-def load_fixture(root: str | Path) -> Fixture:
-    """Load and validate the atomically published fixture artifacts."""
-    root = Path(root)
-    envelope = json.loads((root / "underfee.tx").read_text(encoding="utf-8"))
-    metadata = json.loads((root / "metadata.json").read_text(encoding="utf-8"))
-
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
     cbor_hex = envelope.get("cborHex")
     if not isinstance(cbor_hex, str) or not cbor_hex or len(cbor_hex) % 2:
         raise ValueError("fixture cborHex must be non-empty, even-length hexadecimal")
     try:
-<<<<<<< HEAD
         return bytes.fromhex(cbor_hex)
     except ValueError as exc:
         raise ValueError("fixture cborHex is not hexadecimal") from exc
@@ -155,18 +125,11 @@ def load_fixture(root: str | Path) -> Fixture:
     payload = _load_payload(root / "underfee.tx")
     metadata = json.loads((root / "metadata.json").read_text(encoding="utf-8"))
 
-=======
-        payload = bytes.fromhex(cbor_hex)
-    except ValueError as exc:
-        raise ValueError("fixture cborHex is not hexadecimal") from exc
-
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
     minimum_fee = int(metadata["minimum_fee"])
     actual_fee = int(metadata["actual_fee"])
     if minimum_fee <= 0 or actual_fee != minimum_fee - 1:
         raise ValueError("fixture fee must equal minimum fee minus one lovelace")
 
-<<<<<<< HEAD
     return Fixture(payload, minimum_fee, actual_fee, _validate_tx_id(metadata["tx_id"]))
 
 
@@ -229,13 +192,6 @@ def load_corpus(root: str | Path) -> list[Fixture]:
             )
         )
     return fixtures
-=======
-    tx_id = str(metadata["tx_id"])
-    if len(tx_id) != 64 or any(char not in "0123456789abcdefABCDEF" for char in tx_id):
-        raise ValueError("fixture transaction id must be 32-byte hexadecimal")
-
-    return Fixture(payload, minimum_fee, actual_fee, tx_id.lower())
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 
 
 class HttpSubmitTransport:
@@ -304,7 +260,6 @@ def observe_differential(
     }
 
 
-<<<<<<< HEAD
 def matches_expected(result: dict, expected: str) -> bool:
     """Return true only when every classifiable implementation matches the case."""
     return bool(result["both_classifiable"]) and all(
@@ -377,19 +332,14 @@ def probe_valid_boundaries(
     }
 
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 def emit_assertions(fixture: Fixture, result: dict, recovery: bool = False) -> None:
     """Emit non-vacuous Antithesis assertions for one real observation."""
     observations = result["observations"]
     details = {
-<<<<<<< HEAD
         "case_id": fixture.case_id,
         "fee_delta": fixture.fee_delta,
         "expected": fixture.expected,
         "input": fixture.input,
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
         "tx_id": fixture.tx_id,
         "minimum_fee": fixture.minimum_fee,
         "actual_fee": fixture.actual_fee,
@@ -403,7 +353,6 @@ def emit_assertions(fixture: Fixture, result: dict, recovery: bool = False) -> N
         },
     }
 
-<<<<<<< HEAD
     reachable("mixed phase-1 fee corpus case loaded", details)
     if result["both_classifiable"]:
         reachable("both implementations returned classifiable fee-corpus results", details)
@@ -537,33 +486,6 @@ def emit_readiness_assertion(fixture: Fixture, result: dict) -> None:
         details,
     )
 
-=======
-    reachable("mixed phase-1 underfee fixture loaded", details)
-    if result["both_classifiable"]:
-        reachable("both implementations returned classifiable phase-1 results", details)
-    sometimes(
-        result["both_classifiable"],
-        "both implementations sometimes return classifiable phase-1 results",
-        details,
-    )
-    always(
-        not result["any_accepted"],
-        "neither implementation accepts a one-lovelace-under-minimum transaction",
-        details,
-    )
-    always(
-        not result["both_classifiable"] or result["phase1_agreement"] is True,
-        "classifiable Cardano and Amaru results agree on phase-1 fee rejection",
-        details,
-    )
-    if recovery:
-        sometimes(
-            result["phase1_agreement"] is True,
-            "both implementations recover phase-1 fee rejection after faults",
-            details,
-        )
-
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 
 def default_transports(
     amaru_url: str, cardano_url: str, timeout: float = 5.0
@@ -589,7 +511,6 @@ def public_result(result: dict) -> dict:
             for label, observation in result["observations"].items()
         },
     }
-<<<<<<< HEAD
 
 
 def public_case_result(fixture: Fixture, result: dict) -> dict:
@@ -616,5 +537,3 @@ def report_command_error(command: str, exc: Exception) -> None:
         details,
     )
     print(json.dumps(details, sort_keys=True), flush=True)
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47

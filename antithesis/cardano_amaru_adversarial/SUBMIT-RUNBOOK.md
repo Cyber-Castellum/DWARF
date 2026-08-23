@@ -9,7 +9,6 @@ All commands run on **cardano-box**.
 
 ---
 
-<<<<<<< HEAD
 ## 2026-08-22 five-case fee corpus — FINDING CONFIRMED, RUN NOT SUBMITTED
 
 The corrected baseline run completed successfully at commit
@@ -72,8 +71,6 @@ base finding is deterministic and independently reproduced.
 
 ---
 
-=======
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 ## 2026-08-22 relay entrypoint incident — FIX REQUIRED BEFORE REPLACEMENT RUN
 
 MOOG test-run
@@ -100,7 +97,6 @@ relay commands must invoke it through the interpreter:
 exec /bin/sh /usr/local/bin/dwarf-amaru-entrypoint.sh
 ```
 
-<<<<<<< HEAD
 `workload/tests/test_bundle_contract.py` enforces this for both relays. The
 replacement one-hour `try 1` used fixed commit `6082f0e`, completed, and proved
 both Amaru startup and mixed classifiability. Retain the guardrail for every
@@ -109,16 +105,6 @@ future run.
 ---
 
 ## 2026-08-22 original mixed phase-1 addendum — BASELINE COMPLETED
-=======
-`workload/tests/test_bundle_contract.py` enforces this for both relays. A
-replacement one-hour `try 1` must use a new public commit containing that
-guardrail and must be checked for both Amaru process startup and a reachable
-mixed classifiability event before any longer run.
-
----
-
-## 2026-08-22 mixed phase-1 addendum — READY FOR PUBLIC COMMIT
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 
 The bundle now includes a same-byte under-fee differential. Do not restore the old
 runtime fixture builder or `utxo-keys` volume: a fresh configurator UTxO is not present
@@ -144,15 +130,10 @@ Verification completed on `cardano-box`:
 Anonymous manifest checks return HTTP 200 for `dwarf-cardano-phase1-reference`,
 `dwarf-mixed-phase1-workload`, and the sanitized `dwarf-adversary-anti` tag.
 
-<<<<<<< HEAD
 The original image and digest remain provenance for the completed baseline; the
 five-case run must use the newer digest documented above. Before MOOG submission,
 commit and push this exact directory, verify no `._*` files, and use release
 `moog` 0.5.1.3—not `moog-head`. The target tenant is
-=======
-Before MOOG submission, commit and push this exact directory, verify no `._*` files,
-and use release `moog` 0.5.1.3—not `moog-head`. The target tenant is
->>>>>>> 6082f0eedabe478801051a661435a5ffb3424f47
 `amaru-cardano`; the requested repository/directory remain
 `Cyber-Castellum/DWARF` and `antithesis/cardano_amaru_adversarial`.
 

@@ -1,6 +1,6 @@
 ---
 sut_path: /Users/nigel/dwarf-project/dwarf-v4/antithesis/cardano_amaru_adversarial
-commit: b2ed2450ebb95e460e7c64f0d2578102be4d7663
+commit: 0c8fed6cda53b5222d41fdf463a6e966169f143a
 updated: 2026-08-22
 external_references:
   - path: https://github.com/pragma-org/amaru/wiki
@@ -23,8 +23,13 @@ external_references:
 
 ## Phase-1 admission cluster
 
-- `phase1-underfee-admission-agreement` is the first member and establishes the
-  shared fixture, dual-submit, response-classification, and fault-recovery substrate.
+- `phase1-underfee-admission-agreement` establishes the shared fixture,
+  dual-submit, response-classification, and fault-recovery substrate across five
+  minimum-fee values: `-100`, `-2`, `-1`, exact, and `+1`.
+- The exact and `+1` cases are fault-free, exactly-once reachability checks. They
+  share the semantic property with the negative cases but not their replay model.
+- The three negative cases are replay-safe and form the only structured-random
+  menu used by parallel and eventual commands.
 - Future minimum-output, validity-interval, value-conservation, witness, and input-set
   properties can reuse the substrate but require separate fixtures and catalog IDs.
 - No future property is dominated by the under-fee property: agreement on one ledger
@@ -43,6 +48,11 @@ are related operationally but none substitutes for the scoped property.
 - Property clusters are separated by the validation or protocol stage whose outcome
   they observe.
 
-## Open Questions
+## Dominance and next-step rule
 
-- None for the current single-property cluster.
+The three nearby negative deltas do not justify another run by themselves; they
+are one compact boundary corpus. A subsequent scenario should add a new semantic
+axis, such as a fee transition caused by serialized transaction size, a
+minimum-output rule, validity interval, value conservation, witness validity, or
+input-set behavior. Consensus rollback/fork behavior remains a separate,
+previously exercised cluster and is not the next target here.
