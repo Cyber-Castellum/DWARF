@@ -1,0 +1,148 @@
+--- a/crates/amaru/src/bootstrap/mod.rs
++++ b/crates/amaru/src/bootstrap/mod.rs
+@@ -491,10 +491,25 @@
+     .await?;
+ 
+     let chain_db = RocksDBStore::create(RocksDbConfig::new(chain_dir.clone()))?;
+-    let chain_state = imported_third_snapshot
++    let mut chain_state = imported_third_snapshot
+         .chain_state
+         .ok_or("bootstrap import must produce the chain state for the latest snapshot")?;
+-    store_chain_state(imported_third_snapshot.epoch, &chain_db, chain_state)?;
++    let active_nonce_override = std::env::var("AMARU_BOOTSTRAP_ACTIVE_NONCE").ok();
++    let active_epoch_override = std::env::var("AMARU_BOOTSTRAP_ACTIVE_EPOCH").ok();
++    let chain_epoch = match live_nonce_override(
++        imported_third_snapshot.epoch,
++        target_epoch,
++        active_nonce_override.as_deref(),
++        active_epoch_override.as_deref(),
++    )? {
++        Some((epoch, active_nonce)) => {
++            chain_state.initial_nonces.active = active_nonce;
++            chain_state.initial_nonces.tail = live_nonce_override_tail(&chain_state.initial_nonces.at);
++            epoch
++        }
++        None => imported_third_snapshot.epoch,
++    };
++    store_chain_state(chain_epoch, &chain_db, chain_state)?;
+     let blocks = load_packaged_blocks_for_bootstrap(
+         &second_snapshot_path,
+         second_snapshot,
+@@ -580,8 +595,39 @@
+     pub evolving: Nonce,
+     pub candidate: Nonce,
+     pub tail: HeaderHash,
++}
++
++fn live_nonce_override(
++    imported_epoch: Epoch,
++    requested_epoch: Option<Epoch>,
++    active_nonce: Option<&str>,
++    active_epoch: Option<&str>,
++) -> Result<Option<(Epoch, Nonce)>, Box<dyn Error>> {
++    let (active_nonce, active_epoch) = match (active_nonce, active_epoch) {
++        (None, None) => return Ok(None),
++        (Some(active_nonce), Some(active_epoch)) => (active_nonce, active_epoch),
++        _ => return Err("live nonce override requires both active nonce and active epoch".into()),
++    };
++    let active_epoch = active_epoch
++        .parse::<Epoch>()
++        .map_err(|error| format!("invalid live nonce override epoch: {error}"))?;
++    if requested_epoch != Some(active_epoch) {
++        return Err(format!("live nonce override epoch {active_epoch} does not match requested epoch").into());
++    }
++    if imported_epoch.as_u64().checked_add(1) != Some(active_epoch.as_u64()) {
++        return Err(
++            format!("live nonce override epoch {active_epoch} is not adjacent to imported epoch {imported_epoch}").into(),
++        );
++    }
++    let active_nonce = amaru_kernel::parse_nonce(active_nonce)
++        .map_err(|error| format!("invalid live nonce override: {error}"))?;
++    Ok(Some((active_epoch, active_nonce)))
+ }
+ 
++fn live_nonce_override_tail(imported_point: &Point) -> HeaderHash {
++    Hash::from(imported_point)
++}
++
+ pub fn store_chain_state(epoch: Epoch, db: &dyn ChainStore, chain_state: ChainState) -> Result<(), Box<dyn Error>> {
+     let initial_nonces = chain_state.initial_nonces;
+     let header_hash = Hash::from(&initial_nonces.at);
+@@ -819,14 +865,14 @@
+         time::Duration,
+     };
+ 
+-    use amaru_kernel::{Epoch, EraBound, EraHistory, EraName, EraParams, EraSummary, HeaderHash, Slot};
++    use amaru_kernel::{Epoch, EraBound, EraHistory, EraName, EraParams, EraSummary, HeaderHash, Point, Slot};
+     use tar::{Builder, Header};
+     use tempfile::tempdir;
+ 
+     use super::{
+-        Snapshot, read_snapshot_archive_entry, select_bootstrap_snapshots, should_download_snapshot,
+-        snapshot_archive_entry_matches, sort_snapshots_by_slot, validate_publishable_snapshot_archive,
+-        validate_snapshot_archive,
++        Snapshot, live_nonce_override, live_nonce_override_tail, read_snapshot_archive_entry, select_bootstrap_snapshots,
++        should_download_snapshot, snapshot_archive_entry_matches, sort_snapshots_by_slot,
++        validate_publishable_snapshot_archive, validate_snapshot_archive,
+     };
+     use crate::cardano_node::ParsedStateSnapshot;
+ 
+@@ -1011,4 +1057,58 @@
+         let err = select_bootstrap_snapshots(&snapshots, Some(Epoch::from(2_u64))).unwrap_err();
+         assert!(dbg!(err.to_string()).contains("target epoch is too young"));
+     }
++
++    #[test]
++    fn live_nonce_override_sets_requested_target_epoch_and_nonce() {
++        let nonce_hex = "d6fe6439aed8bddc10eec22c1575bf0648e4a76125387d9e985e9a3f8342870d";
++        let (epoch, nonce) = live_nonce_override(
++            Epoch::from(2_u64),
++            Some(Epoch::from(3_u64)),
++            Some(nonce_hex),
++            Some("3"),
++        )
++        .unwrap()
++        .unwrap();
++
++        assert_eq!(epoch, Epoch::from(3_u64));
++        assert_eq!(nonce, amaru_kernel::parse_nonce(nonce_hex).unwrap());
++    }
++
++    #[test]
++    fn live_nonce_override_moves_tail_to_imported_epoch_tip() {
++        let imported_hash = "45201a4ce46b007ea776356079ee5f77487c61f6558cf1d86389e38a2b688103";
++        let imported_point = Point::try_from(format!("1199.{imported_hash}").as_str()).unwrap();
++
++        assert_eq!(live_nonce_override_tail(&imported_point).to_string(), imported_hash);
++    }
++
++    #[test]
++    fn live_nonce_override_is_absent_by_default_and_rejects_partial_configuration() {
++        assert!(live_nonce_override(Epoch::from(2_u64), Some(Epoch::from(3_u64)), None, None).unwrap().is_none());
++        assert!(live_nonce_override(Epoch::from(2_u64), Some(Epoch::from(3_u64)), Some("00"), None).is_err());
++        assert!(live_nonce_override(Epoch::from(2_u64), Some(Epoch::from(3_u64)), None, Some("3")).is_err());
++    }
++
++    #[test]
++    fn live_nonce_override_rejects_wrong_or_nonadjacent_epoch() {
++        let nonce_hex = "d6fe6439aed8bddc10eec22c1575bf0648e4a76125387d9e985e9a3f8342870d";
++        assert!(
++            live_nonce_override(
++                Epoch::from(2_u64),
++                Some(Epoch::from(3_u64)),
++                Some(nonce_hex),
++                Some("4"),
++            )
++            .is_err()
++        );
++        assert!(
++            live_nonce_override(
++                Epoch::from(1_u64),
++                Some(Epoch::from(3_u64)),
++                Some(nonce_hex),
++                Some("3"),
++            )
++            .is_err()
++        );
++    }
+ }

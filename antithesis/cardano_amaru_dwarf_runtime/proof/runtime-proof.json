@@ -1,0 +1,108 @@
+{
+  "bootstrap_exit": 0,
+  "commands": [
+    "python3 -m unittest discover -s tests -v",
+    "python3 -m unittest discover -s oracle -p 'test_*.py' -v",
+    "python3 -m unittest discover -s bootstrap-image -p 'test_*.py' -v",
+    "INTERNAL_NETWORK=false docker compose config --quiet"
+  ],
+  "conditions": {
+    "bootstrap_exit_zero": true,
+    "consumer_advanced": true,
+    "consumer_matches_producer": true,
+    "control_advanced": true,
+    "control_consensus_clean": true,
+    "decoder_rejection_observed": true,
+    "epoch_crossed": true,
+    "no_fatal_signatures": true,
+    "relay_restart_counts_stable": true,
+    "target_advanced": true
+  },
+  "epoch_length": 400,
+  "final": {
+    "consumer": {
+      "block": 350,
+      "block_hash": "6b802a62343f44c63fe23fcc4cd5b696930f57398140a0ad8e2096fe528ae7d8",
+      "slot": 1616
+    },
+    "control": {
+      "consensus_rejections": 0,
+      "decoder_rejections": 0,
+      "fatal_signatures": [],
+      "first_height": 259,
+      "first_slot": 1203,
+      "max_height": 350,
+      "max_slot": 1616
+    },
+    "producers": [
+      {
+        "block": 350,
+        "block_hash": "6b802a62343f44c63fe23fcc4cd5b696930f57398140a0ad8e2096fe528ae7d8",
+        "slot": 1616
+      },
+      {
+        "block": 350,
+        "block_hash": "6b802a62343f44c63fe23fcc4cd5b696930f57398140a0ad8e2096fe528ae7d8",
+        "slot": 1616
+      },
+      {
+        "block": 350,
+        "block_hash": "6b802a62343f44c63fe23fcc4cd5b696930f57398140a0ad8e2096fe528ae7d8",
+        "slot": 1616
+      }
+    ],
+    "target": {
+      "consensus_rejections": 0,
+      "decoder_rejections": 1,
+      "fatal_signatures": [],
+      "first_height": 259,
+      "first_slot": 1203,
+      "max_height": 347,
+      "max_slot": 1612
+    }
+  },
+  "images": {
+    "amaru-relay-1": {
+      "id": "sha256:7512e0cca44682ce5b6780c49c0e670d1befa85bfbc4e93abb8ba8001060e221",
+      "name": "ghcr.io/j-gainsec/dwarf-amaru-807-runtime:0.1.0"
+    },
+    "amaru-relay-2": {
+      "id": "sha256:7512e0cca44682ce5b6780c49c0e670d1befa85bfbc4e93abb8ba8001060e221",
+      "name": "ghcr.io/j-gainsec/dwarf-amaru-807-runtime:0.1.0"
+    },
+    "dwarf-adversary": {
+      "id": "sha256:e99cb81ffc51465042b77ac3100d18092f69a25c36c66fff4954663b7200d2bd",
+      "name": "ghcr.io/j-gainsec/dwarf-adversary-anti@sha256:e99cb81ffc51465042b77ac3100d18092f69a25c36c66fff4954663b7200d2bd"
+    }
+  },
+  "initial": {
+    "consumer": {
+      "block": 286,
+      "block_hash": "bf76e6e2e8a1778be68f980affdedbc54a85d42e519ac0559a0c0e88a65309a5",
+      "slot": 1311
+    },
+    "control": {
+      "consensus_rejections": 0,
+      "decoder_rejections": 0,
+      "fatal_signatures": [],
+      "first_height": 259,
+      "first_slot": 1203,
+      "max_height": 286,
+      "max_slot": 1311
+    },
+    "target": {
+      "consensus_rejections": 0,
+      "decoder_rejections": 0,
+      "fatal_signatures": [],
+      "first_height": 259,
+      "first_slot": 1203,
+      "max_height": 286,
+      "max_slot": 1311
+    }
+  },
+  "project": "dwarf-runtime807-proof-tail-fixed-20260823",
+  "restart_counts": {
+    "amaru-relay-1": 0,
+    "amaru-relay-2": 0
+  }
+}

@@ -1,0 +1,5 @@
+repository=https://github.com/pragma-org/amaru.git
+commit=493bffba0cc4db2291643cdd6698197c374958b3
+release=v10.11.20260807
+expected_version=Amaru 10.11.0 (493bffb+dirty)
+cardano_image=ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c

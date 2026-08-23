@@ -1,0 +1,468 @@
+x-cardano-node-10-7-1: &cardano-node-10-7-1
+  image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+  environment:
+    CARDANO_BLOCK_PRODUCER: true
+  command: >
+    run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --shelley-operational-certificate /configs/keys/opcert.cert
+      --shelley-kes-key /configs/keys/kes.skey
+      --shelley-vrf-key /configs/keys/vrf.skey
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+  restart: always
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+    tracer-sidecar:
+      condition: service_started
+
+x-cardano-relay-10-7-1: &cardano-relay-10-7-1
+  image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+  environment:
+    CARDANO_BLOCK_PRODUCER: false
+  command: >
+    run --topology /configs/configs/topology.json
+      --config /configs/configs/config.json
+      --database-path /state
+      --socket-path /state/node.socket
+      --tracer-socket-path-connect /tracer/tracer.socket
+      --port 3001
+      --host-addr 0.0.0.0
+      +RTS -N -A16m -qg -qb -RTS
+  restart: always
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+    tracer-sidecar:
+      condition: service_started
+
+x-amaru: &amaru
+  # Amaru is relay-only in this testnet. It receives no stake pool keys,
+  # no KES/VRF/opcert material, and no block-producing command.
+  image: ghcr.io/j-gainsec/dwarf-amaru-807-runtime@sha256:7512e0cca44682ce5b6780c49c0e670d1befa85bfbc4e93abb8ba8001060e221
+  entrypoint:
+    - /bin/sh
+  environment:
+    # Antithesis log ingestion is intentionally narrow: keep Amaru below
+    # warning/error quiet by default. Upstream Amaru uses AMARU_LOG rather
+    # than RUST_LOG for its tracing EnvFilter.
+    AMARU_LOG: info
+    AMARU_TRACE: info
+    AMARU_COLOR: never
+    # Genesis-derived global parameters (k=20, 1/f=5, scale=4, epochLength=400).
+    # Must match the producer's derivation from shelley-genesis.json.
+    AMARU_GLOBAL_CONSENSUS_SECURITY_PARAM: "20"
+    AMARU_GLOBAL_ACTIVE_SLOT_COEFF_INVERSE: "5"
+    AMARU_GLOBAL_EPOCH_LENGTH_SCALE_FACTOR: "4"
+    AMARU_GLOBAL_MAX_LOVELACE_SUPPLY: "45000000000000000"
+    AMARU_GLOBAL_SLOTS_PER_KES_PERIOD: "129600"
+    AMARU_GLOBAL_MAX_KES_EVOLUTION: "62"
+  restart: always
+  depends_on:
+    bootstrap-producer:
+      condition: service_started
+
+# Fault-exclusion (moog#107 compose labels): the system-under-test is
+# amaru-relay-1/2, so Antithesis faults target only those. Everything else — the
+# cardano-node chain cluster, the single-shot bootstrap-producer, and the
+# observability sidecars — must stay up or amaru never bootstraps (a fault that
+# kills the producer mid-bootstrap leaves the relay gate forever unmet). Emitting
+# any exclusion label replaces the notebook's historical default, so the
+# tracer/sidecar set is listed here too.
+x-fault-exclude: &fault-exclude
+  com.antithesis.exclude_from_faults: "network,kill,pause,stop"
+
+services:
+  configurator:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/configurator:0f9570b
+    container_name: configurator
+    labels: *fault-exclude
+    volumes:
+      - ./testnet.yaml:/testnet.yaml
+      - p1-configs:/configs/1
+      - p2-configs:/configs/2
+      - p3-configs:/configs/3
+
+  tracer:
+    image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
+    hostname: tracer.example
+    container_name: tracer
+    labels: *fault-exclude
+    volumes:
+      - tracer:/opt/cardano-tracer
+      - ./tracer-config.yaml:/tracer-config.yaml:ro
+    entrypoint: cardano-tracer
+    command:
+      - "--config"
+      - "/tracer-config.yaml"
+    restart: always
+
+  p1:
+    <<: *cardano-node-10-7-1
+    container_name: p1
+    labels: *fault-exclude
+    hostname: p1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - p1-state:/state
+      - tracer:/tracer
+
+  p2:
+    <<: *cardano-node-10-7-1
+    container_name: p2
+    labels: *fault-exclude
+    hostname: p2.example
+    volumes:
+      - p2-configs:/configs:ro
+      - p2-state:/state
+      - tracer:/tracer
+
+  p3:
+    <<: *cardano-node-10-7-1
+    container_name: p3
+    labels: *fault-exclude
+    hostname: p3.example
+    volumes:
+      - p3-configs:/configs:ro
+      - p3-state:/state
+      - tracer:/tracer
+
+  relay1:
+    <<: *cardano-relay-10-7-1
+    container_name: relay1
+    labels: *fault-exclude
+    hostname: relay1.example
+    volumes:
+      - p1-configs:/configs:ro
+      - ./relay-topology.json:/configs/configs/topology.json:ro
+      - relay1-state:/state
+      - tracer:/tracer
+
+  relay2:
+    <<: *cardano-relay-10-7-1
+    container_name: relay2
+    labels: *fault-exclude
+    hostname: relay2.example
+    volumes:
+      - p1-configs:/configs:ro
+      - ./relay-topology.json:/configs/configs/topology.json:ro
+      - relay2-state:/state
+      - tracer:/tracer
+
+  # DWARF sits beside the honest relay path. Relay 1 keeps its honest peer so
+  # liveness is measurable while also consuming mutated BlockFetch traffic.
+  dwarf-adversary:
+    image: ghcr.io/j-gainsec/dwarf-adversary-anti@sha256:e99cb81ffc51465042b77ac3100d18092f69a25c36c66fff4954663b7200d2bd
+    container_name: dwarf-adversary
+    hostname: dwarf-adversary.example
+    labels: *fault-exclude
+    command: --network-magic 42 --listen-port 3001 --mutation-rate 0.5 --upstream relay1.example:3001 --protocol blockfetch --cbor-shape block
+    depends_on:
+      relay1:
+        condition: service_started
+    restart: always
+
+  bootstrap-producer:
+    image: ghcr.io/j-gainsec/dwarf-amaru-807-runtime@sha256:7512e0cca44682ce5b6780c49c0e670d1befa85bfbc4e93abb8ba8001060e221
+    container_name: bootstrap-producer
+    labels: *fault-exclude
+    hostname: bootstrap-producer.example
+    entrypoint: [/usr/local/bin/python3]
+    command:
+      - /usr/local/bin/bootstrap.py
+      - --live-db
+      - /live
+      - --config-dir
+      - /cardano/config/configs
+      - --output-root
+      - /output
+      - --scratch-root
+      - /scratch
+      - --era-history
+      - /runtime/era-history.json
+      - --global-parameters
+      - /runtime/global-parameters.json
+      - --network
+      - testnet_42
+      - --epoch-length
+      - "400"
+    volumes:
+      - p1-state:/live:ro
+      - bootstrap-state:/scratch
+      - p1-configs:/cardano/config:ro
+      - amaru-bundle:/output
+      - ./amaru-runtime:/runtime:ro
+    depends_on:
+      p1:
+        condition: service_started
+    # Exit 75 means the live chain has not crossed three complete epochs yet.
+    # Docker retries it; parser, snapshot, schema, and import failures stay fatal.
+    restart: on-failure
+
+  amaru-consumer-seed:
+    image: ghcr.io/intersectmbo/cardano-node@sha256:3275d357053d21f3220f74b0854fd584e1fe322dfa1bbb78effd760c3191d14c
+    container_name: amaru-consumer-seed
+    labels: *fault-exclude
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        if [ ! -d /seed/immutable ]; then
+          rm -rf /seed/.copy-tmp
+          mkdir -p /seed/.copy-tmp
+          cp -a /live/immutable /live/ledger /live/volatile /live/protocolMagicId /live/lock /seed/.copy-tmp/
+          mv /seed/.copy-tmp/immutable /seed/.copy-tmp/ledger /seed/.copy-tmp/volatile /seed/.copy-tmp/protocolMagicId /seed/.copy-tmp/lock /seed/
+          rmdir /seed/.copy-tmp
+        fi
+    volumes:
+      - p1-state:/live:ro
+      - amaru-consumer-state:/seed
+    depends_on:
+      bootstrap-producer:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  amaru-relay-1:
+    <<: *amaru
+    container_name: amaru-relay-1
+    hostname: amaru-relay-1.example
+    depends_on:
+      bootstrap-producer:
+        condition: service_completed_successfully
+      relay1:
+        condition: service_started
+      dwarf-adversary:
+        condition: service_started
+    command:
+      - -c
+      - |
+        set -eu
+        if [ ! -f /srv/amaru/READY.v5 ]; then
+          until [ -f /bundle/testnet_42/READY.v5 ] \
+             && [ -d /bundle/testnet_42/ledger.testnet_42.db/live ] \
+             && [ -f /bundle/testnet_42/chain.testnet_42.db/CURRENT ]; do
+            sleep 10
+          done
+          find /srv/amaru -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          cp -rL /bundle/testnet_42/. /srv/amaru/
+        fi
+        mkdir -p /startup /tmp /opt/amaru-logs
+        printf '%s\n' "$${HOSTNAME:-amaru-relay-1.example}" > /startup/amaru-relay-1.started
+        log_file=/opt/amaru-logs/amaru-relay-1.log
+        touch "$$log_file"
+        mirror_log() {
+          while :; do
+            tail -n 0 -F "$$log_file" &
+            mirror_pid=$$!
+            printf '%s\n' "$$mirror_pid" > /tmp/amaru-log-mirror.pid
+            wait "$$mirror_pid" || true
+            sleep 1
+          done
+        }
+        mirror_log &
+        printf '%s\n' "$$!" > /tmp/amaru-log-mirror-supervisor.pid
+        export AMARU_GLOBAL_SYSTEM_START="$$(python3 -c 'import json; print(json.load(open("/srv/amaru/global-parameters.json"))["system_start"])')"
+        exec /usr/local/bin/amaru node run \
+          --network testnet_42 \
+          --ledger-dir /srv/amaru/ledger.testnet_42.db \
+          --chain-dir /srv/amaru/chain.testnet_42.db \
+          --era-history /srv/amaru/era-history.json \
+          --listen-address 0.0.0.0:3001 \
+          --peer-address relay1.example:3001 \
+          --peer-address dwarf-adversary.example:3001 \
+          >>"$$log_file" 2>&1
+    volumes:
+      - amaru-bundle:/bundle:ro
+      - amaru-startup:/startup
+      - a1-state:/srv/amaru
+      - amaru-logs:/opt/amaru-logs
+    networks:
+      default:
+      amaru-consumer-net:
+        aliases:
+          - amaru-relay-1.example
+
+  amaru-relay-2:
+    <<: *amaru
+    container_name: amaru-relay-2
+    hostname: amaru-relay-2.example
+    depends_on:
+      bootstrap-producer:
+        condition: service_completed_successfully
+      relay2:
+        condition: service_started
+    command:
+      - -c
+      - |
+        set -eu
+        if [ ! -f /srv/amaru/READY.v5 ]; then
+          until [ -f /bundle/testnet_42/READY.v5 ] \
+             && [ -d /bundle/testnet_42/ledger.testnet_42.db/live ] \
+             && [ -f /bundle/testnet_42/chain.testnet_42.db/CURRENT ]; do
+            sleep 10
+          done
+          find /srv/amaru -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          cp -rL /bundle/testnet_42/. /srv/amaru/
+        fi
+        mkdir -p /startup /tmp /opt/amaru-logs
+        printf '%s\n' "$${HOSTNAME:-amaru-relay-2.example}" > /startup/amaru-relay-2.started
+        log_file=/opt/amaru-logs/amaru-relay-2.log
+        touch "$$log_file"
+        mirror_log() {
+          while :; do
+            tail -n 0 -F "$$log_file" &
+            mirror_pid=$$!
+            printf '%s\n' "$$mirror_pid" > /tmp/amaru-log-mirror.pid
+            wait "$$mirror_pid" || true
+            sleep 1
+          done
+        }
+        mirror_log &
+        printf '%s\n' "$$!" > /tmp/amaru-log-mirror-supervisor.pid
+        export AMARU_GLOBAL_SYSTEM_START="$$(python3 -c 'import json; print(json.load(open("/srv/amaru/global-parameters.json"))["system_start"])')"
+        exec /usr/local/bin/amaru node run \
+          --network testnet_42 \
+          --ledger-dir /srv/amaru/ledger.testnet_42.db \
+          --chain-dir /srv/amaru/chain.testnet_42.db \
+          --era-history /srv/amaru/era-history.json \
+          --listen-address 0.0.0.0:3001 \
+          --peer-address relay2.example:3001 \
+          >>"$$log_file" 2>&1
+    volumes:
+      - amaru-bundle:/bundle:ro
+      - amaru-startup:/startup
+      - a2-state:/srv/amaru
+      - amaru-logs:/opt/amaru-logs
+    networks:
+      default:
+      amaru-consumer-net:
+        aliases:
+          - amaru-relay-2.example
+
+  amaru-consumer:
+    <<: *cardano-relay-10-7-1
+    container_name: amaru-consumer
+    labels: *fault-exclude
+    hostname: amaru-consumer.example
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+      tracer-sidecar:
+        condition: service_started
+      amaru-consumer-seed:
+        condition: service_completed_successfully
+      amaru-relay-1:
+        condition: service_started
+      amaru-relay-2:
+        condition: service_started
+    volumes:
+      - p1-configs:/configs:ro
+      - ./amaru-consumer-topology.json:/configs/configs/topology.json:ro
+      - amaru-consumer-state:/state
+      - tracer:/tracer
+    networks:
+      amaru-consumer-net:
+
+  # Convergence is the tracer-sidecar fork-tree probe ('cluster fork depth < k'),
+  # aligned to cardano_node_master. The old composer tip-equality probes (and
+  # the AMARU_RELAYS / amaru-startup wiring) were brittle and removed upstream
+  # (cna#119); amaru-follows-chain is tracked separately (cna#168).
+  sidecar:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/sidecar:1ff6913
+    environment:
+      NETWORKMAGIC: 42
+      PORT: 3001
+      POOLS: "3"
+    container_name: sidecar
+    labels: *fault-exclude
+    hostname: sidecar.example
+    depends_on:
+      tracer-sidecar:
+        condition: service_started
+    restart: always
+    tmpfs:
+      - /tmp
+
+  tracer-sidecar:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/tracer-sidecar:a94197a
+    container_name: tracer-sidecar
+    labels: *fault-exclude
+    hostname: tracer-sidecar.example
+    command:
+      - "/opt/cardano-tracer/logs"
+    environment:
+      POOLS: "3"
+      CHAINPOINT_FILEPATH: "/opt/cardano-tracer/chainPoints.log"
+      AMARU_CONSUMER_HOST: amaru-consumer.example
+      AMARU_LOG_DIR: /opt/amaru-logs
+    volumes:
+      - tracer:/opt/cardano-tracer
+      - amaru-logs:/opt/amaru-logs:ro
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  log-tailer:
+    image: ghcr.io/cardano-foundation/cardano-node-antithesis/log-tailer@sha256:a5d23c42408a1003bb14208fd97dd2bdda102e7002e4e2a2804e71a80df56484
+    container_name: log-tailer
+    labels: *fault-exclude
+    hostname: log-tailer.example
+    volumes:
+      - tracer:/tracer:ro
+    restart: always
+    depends_on:
+      tracer:
+        condition: service_started
+
+  dwarf-oracle:
+    # This is a new package name. Build and publish oracle/ under this tag,
+    # then replace the tag with its immutable digest before submission.
+    image: ghcr.io/j-gainsec/dwarf-amaru-runtime-oracle@sha256:10b5e15dbae7e9d0a2fa0cb5f62485082cd864727c2c0aa9bdbdeffa9729d431
+    container_name: dwarf-oracle
+    hostname: dwarf-oracle.example
+    labels: *fault-exclude
+    environment:
+      AMARU_LOG_DIR: /opt/amaru-logs
+      TARGET_RELAY_LOG: amaru-relay-1.log
+      CONTROL_RELAY_LOG: amaru-relay-2.log
+    volumes:
+      - amaru-logs:/opt/amaru-logs:ro
+    depends_on:
+      amaru-relay-1:
+        condition: service_started
+      amaru-relay-2:
+        condition: service_started
+    restart: always
+
+volumes:
+  tracer:
+  p1-configs:
+  p2-configs:
+  p3-configs:
+  p1-state:
+  p2-state:
+  p3-state:
+  bootstrap-state:
+  relay1-state:
+  relay2-state:
+  amaru-bundle:
+  amaru-startup:
+  a1-state:
+  a2-state:
+  amaru-consumer-state:
+  amaru-logs:
+
+networks:
+  default:
+    name: cardano-amaru-testnet
+    driver: bridge
+    internal: ${INTERNAL_NETWORK}
+  amaru-consumer-net:
+    name: cardano-amaru-consumer-net
+    driver: bridge
+    internal: ${INTERNAL_NETWORK}
