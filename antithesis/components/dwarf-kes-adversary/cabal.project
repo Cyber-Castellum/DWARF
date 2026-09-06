@@ -1,0 +1,15 @@
+index-state: 2025-08-07T00:00:00Z
+index-state:
+  , hackage.haskell.org 2025-08-07T00:00:00Z
+  , cardano-haskell-packages 2025-08-07T00:00:00Z
+
+packages: . ../dwarf-adversary
+
+repository cardano-haskell-packages
+  url: https://chap.intersectmbo.org/
+  secure: True
+  root-keys:
+    f0d4e0e2e8e188a8495f35b7c27bcb7c04704b5a1595f033a8d70c9d78fbd832
+    ca2f21e1e1e7e0dc8a99a7353a15b7469aa8a0f0e8357325d11ddf14f2b75a8f
+    1d8b9f5b3e6586aa1e9c2cf4d01924c9e35f2b3a4d6db2f8b3d8f3bce06f5b35
+  key-threshold: 3

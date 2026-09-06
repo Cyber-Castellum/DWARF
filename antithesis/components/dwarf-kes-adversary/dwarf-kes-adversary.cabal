@@ -1,0 +1,55 @@
+cabal-version: 3.0
+name: dwarf-kes-adversary
+version: 0.1.0.0
+build-type: Simple
+license: Apache-2.0
+
+common settings
+  default-language: GHC2021
+  ghc-options: -Wall -Werror
+
+library
+  import: settings
+  hs-source-dirs: src
+  exposed-modules: DwarfKesAdversary
+  build-depends:
+    , base
+    , bytestring
+    , cborg
+    , dwarf-adversary
+    , ouroboros-consensus
+    , ouroboros-network
+    , ouroboros-network-api
+    , ouroboros-network-protocols
+    , serialise
+    , typed-protocols
+
+executable dwarf-kes-adversary
+  import: settings
+  hs-source-dirs: app
+  main-is: Main.hs
+  build-depends:
+    , aeson
+    , base
+    , bytestring
+    , cborg
+    , directory
+    , dwarf-adversary
+    , dwarf-kes-adversary
+    , filepath
+    , ouroboros-consensus
+    , ouroboros-network
+    , ouroboros-network-api
+    , ouroboros-network-mock
+    , containers
+    , strict-stm
+
+test-suite dwarf-kes-adversary-test
+  import: settings
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends:
+    , base
+    , bytestring
+    , dwarf-kes-adversary

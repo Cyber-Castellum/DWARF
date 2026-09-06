@@ -1,0 +1,33 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-amaru-relay-bootstrap-control-local",
+  "title": "Fresh Cardano/Amaru self-bootstrap control with consumer-through-Amaru proof",
+  "authors": ["dwarf"],
+  "tags": ["mixed-net", "amaru", "relay-bootstrap", "readiness", "local-control"],
+  "evidence_intent": "regression",
+  "promotion_blockers": [
+    "This local control must prove both Amaru relays cross a post-bootstrap epoch boundary.",
+    "The isolated Cardano consumer must advance beyond its seed and reach a producer tip.",
+    "This scenario does not authorize a Moog request or Antithesis launch."
+  ],
+  "target": {"implementation": "cardano-node", "version": "10.7.1"},
+  "runtime": "devnet",
+  "attach": {"topology": "cardano_amaru", "network_magic": 42},
+  "seed": "0x20260905",
+  "iterations": 1,
+  "shrink": false,
+  "setup": [],
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-v4/tools/cardano_amaru_relay_bootstrap_probe.py /home/nigel/dwarf-v4/antithesis/cardano_amaru_relay_bootstrap_control --timeout-seconds 3600",
+      "timeout_seconds": 3700,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1, "min_event_count": 1}
+  ],
+  "teardown": []
+}

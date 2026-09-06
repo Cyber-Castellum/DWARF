@@ -1,0 +1,34 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-amaru-kes-security-local",
+  "title": "Mixed Cardano/Amaru live hot-KES signature security proof",
+  "authors": ["dwarf"],
+  "tags": ["mixed-net", "amaru", "cardano-node", "kes", "adversarial", "local"],
+  "evidence_intent": "risk-support",
+  "promotion_blockers": [
+    "Both dedicated proxies must first serve honest headers and then the same signature-only mutation.",
+    "Amaru must explicitly classify the delivered header as an invalid KES signature and neither victim may adopt its hash.",
+    "The inherited mixed control must independently cross the bootstrap epoch and converge through Amaru.",
+    "This scenario does not publish images or authorize a Moog/Antithesis request."
+  ],
+  "target": {"implementation": "cardano-node", "version": "10.7.1+Amaru-v10.11-lineage"},
+  "runtime": "devnet",
+  "attach": {"topology": "cardano_amaru", "network_magic": 42},
+  "seed": "0x20260906",
+  "iterations": 1,
+  "shrink": false,
+  "setup": [],
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-v4/tools/cardano_amaru_kes_security_probe.py /home/nigel/dwarf-v4/antithesis/cardano_amaru_kes_security --timeout-seconds 3600 --sample-seconds 10",
+      "timeout_seconds": 3700,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1, "min_event_count": 1}
+  ],
+  "teardown": []
+}
