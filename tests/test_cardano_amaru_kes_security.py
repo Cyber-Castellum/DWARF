@@ -137,16 +137,15 @@ def test_only_oracle_in_security_delta_is_fault_excluded():
 
 def test_antithesis_compose_uses_only_digest_images_and_no_build_contexts():
     services = load_yaml(COMPOSE)["services"]
-    unresolved = {
-        "kes-cardano-proxy": "${DWARF_KES_IMAGE:?DWARF_KES_IMAGE must be a public digest-pinned image}",
-        "kes-amaru-proxy": "${DWARF_KES_IMAGE:?DWARF_KES_IMAGE must be a public digest-pinned image}",
-        "kes-workload": "${DWARF_KES_WORKLOAD_IMAGE:?DWARF_KES_WORKLOAD_IMAGE must be a public digest-pinned image}",
+    expected = {
+        "kes-cardano-proxy": "ghcr.io/j-gainsec/dwarf-kes-proxy@sha256:d5a27a13c871cffcb5cc0b5ede02e18bc69cd49b96b617609162bcef76724f68",
+        "kes-amaru-proxy": "ghcr.io/j-gainsec/dwarf-kes-proxy@sha256:d5a27a13c871cffcb5cc0b5ede02e18bc69cd49b96b617609162bcef76724f68",
+        "kes-workload": "ghcr.io/j-gainsec/dwarf-kes-workload@sha256:03b1c345e2728f39a28a6ffae0c41a66a6f1bfe69dca05c5cea91fa22a7acf88",
     }
     for name, service in services.items():
         assert "build" not in service, name
-        if name in unresolved:
-            assert service["image"] == unresolved[name]
-            continue
+        if name in expected:
+            assert service["image"] == expected[name]
         assert re.search(r"@sha256:[0-9a-f]{64}$", service["image"]), (
             name,
             service["image"],

@@ -317,7 +317,7 @@ services:
     restart: on-failure
 
   kes-cardano-proxy:
-    image: ${DWARF_KES_IMAGE:?DWARF_KES_IMAGE must be a public digest-pinned image}
+    image: ghcr.io/j-gainsec/dwarf-kes-proxy@sha256:d5a27a13c871cffcb5cc0b5ede02e18bc69cd49b96b617609162bcef76724f68
     container_name: dwarf-kes-cardano-proxy
     hostname: kes-cardano-proxy.example
     command:
@@ -342,7 +342,7 @@ services:
     restart: always
 
   kes-amaru-proxy:
-    image: ${DWARF_KES_IMAGE:?DWARF_KES_IMAGE must be a public digest-pinned image}
+    image: ghcr.io/j-gainsec/dwarf-kes-proxy@sha256:d5a27a13c871cffcb5cc0b5ede02e18bc69cd49b96b617609162bcef76724f68
     container_name: dwarf-kes-amaru-proxy
     hostname: kes-amaru-proxy.example
     command:
@@ -430,7 +430,7 @@ services:
     restart: always
 
   kes-workload:
-    image: ${DWARF_KES_WORKLOAD_IMAGE:?DWARF_KES_WORKLOAD_IMAGE must be a public digest-pinned image}
+    image: ghcr.io/j-gainsec/dwarf-kes-workload@sha256:03b1c345e2728f39a28a6ffae0c41a66a6f1bfe69dca05c5cea91fa22a7acf88
     container_name: dwarf-kes-workload
     hostname: kes-workload.example
     labels: *fault-exclude

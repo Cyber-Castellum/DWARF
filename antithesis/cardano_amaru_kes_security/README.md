@@ -54,7 +54,10 @@ and DWARF evidence bundle after stopping services.
 
 ## Antithesis boundary
 
-The main Compose intentionally requires `DWARF_KES_IMAGE` and
-`DWARF_KES_WORKLOAD_IMAGE`. Before submission, both must be public,
-anonymous-pullable, digest-pinned images built from the locally proven source.
-No Antithesis or Moog run is authorized by this package or the local proof.
+The main Compose pins the two images built from public commit `e6bb061`:
+
+- `ghcr.io/j-gainsec/dwarf-kes-proxy@sha256:d5a27a13c871cffcb5cc0b5ede02e18bc69cd49b96b617609162bcef76724f68`
+- `ghcr.io/j-gainsec/dwarf-kes-workload@sha256:03b1c345e2728f39a28a6ffae0c41a66a6f1bfe69dca05c5cea91fa22a7acf88`
+
+Both packages must be public and anonymously pullable before a MOOG request.
+The local proof alone does not authorize an Antithesis launch.
