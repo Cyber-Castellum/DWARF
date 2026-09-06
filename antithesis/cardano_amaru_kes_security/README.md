@@ -51,6 +51,10 @@ and DWARF evidence bundle after stopping services.
 - Command output is parsed; exit code zero alone is not accepted.
 - Missing endpoints, missing explicit Amaru classification, or unavailable
   tips cannot count as rejection.
+- The pinned Antithesis sidecar image does not provide `grep`; its
+  `setup_complete` evidence gate uses Bash built-ins only. Reintroducing an
+  undeclared external command here can leave validation pending forever even
+  when the security evidence exists.
 
 ## Antithesis boundary
 

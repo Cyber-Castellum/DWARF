@@ -81,6 +81,8 @@ def test_setup_complete_is_delayed_until_security_path_is_real():
     assert command.count('"kind":"honest_header"') == 2
     assert command.count('"kind":"kes_mutation"') == 2
     assert "invalid[ _]?kes[ _]?signature" in command
+    assert "file_matches" in command
+    assert "grep" not in command
     assert command.index('"kind":"kes_mutation"') < command.index("exec /bin/sidecar")
 
 

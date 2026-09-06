@@ -468,17 +468,26 @@ services:
     entrypoint: ["/bin/bash", "-euo", "pipefail", "-c"]
     command:
       - |
+        file_matches() {
+          local file="$${1}" pattern="$${2}" line
+          [[ -r "$${file}" ]] || return 1
+          while IFS= read -r line || [[ -n "$${line}" ]]; do
+            [[ "$${line}" =~ $${pattern} ]] && return 0
+          done < "$${file}"
+          return 1
+        }
+        shopt -s nocasematch
         until [ -f /amaru-startup/amaru-relay-1.started ] && [ -f /amaru-startup/amaru-relay-2.started ]; do
           sleep 1
         done
         until [ -S /kes-cardano/node.socket ] && [ -f /kes-amaru/.bootstrap-complete ]; do
           sleep 1
         done
-        until grep -q '"kind":"honest_header"' /kes-cardano-evidence/events.jsonl 2>/dev/null \
-          && grep -q '"kind":"honest_header"' /kes-amaru-evidence/events.jsonl 2>/dev/null \
-          && grep -q '"kind":"kes_mutation"' /kes-cardano-evidence/events.jsonl 2>/dev/null \
-          && grep -q '"kind":"kes_mutation"' /kes-amaru-evidence/events.jsonl 2>/dev/null \
-          && grep -Eqi 'invalid[ _]?kes[ _]?signature' /kes-amaru-log/amaru.log 2>/dev/null; do
+        until file_matches /kes-cardano-evidence/events.jsonl '"kind":"honest_header"' \
+          && file_matches /kes-amaru-evidence/events.jsonl '"kind":"honest_header"' \
+          && file_matches /kes-cardano-evidence/events.jsonl '"kind":"kes_mutation"' \
+          && file_matches /kes-amaru-evidence/events.jsonl '"kind":"kes_mutation"' \
+          && file_matches /kes-amaru-log/amaru.log 'invalid[ _]?kes[ _]?signature'; do
           sleep 1
         done
         exec /bin/sidecar
