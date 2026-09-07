@@ -1,0 +1,7 @@
+services:
+  kes-cardano-proxy:
+    image: dwarf-kes-proxy:local
+  kes-amaru-proxy:
+    image: dwarf-kes-proxy:local
+  kes-workload:
+    image: dwarf-kes-workload:local

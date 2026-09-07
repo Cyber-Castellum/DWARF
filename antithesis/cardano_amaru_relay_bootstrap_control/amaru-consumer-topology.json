@@ -1,0 +1,15 @@
+{
+  "localRoots": [
+    {
+      "accessPoints": [
+        {"address": "amaru-relay-1.example", "port": 3000},
+        {"address": "amaru-relay-2.example", "port": 3000}
+      ],
+      "advertise": false,
+      "trustable": true,
+      "valency": 2
+    }
+  ],
+  "publicRoots": [],
+  "useLedgerAfterSlot": 0
+}
