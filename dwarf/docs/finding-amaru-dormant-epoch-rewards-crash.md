@@ -66,3 +66,19 @@ window, compute (or carry forward) a valid rewards summary at the boundary rathe
 `RewardsSummaryNotReady`. A dormant epoch is legal on low-participation networks (and during a fresh
 chain's producer warm-up); it should not be fatal. Optionally, downgrade "Consensus died" on this
 path to a recoverable state rather than a crash-loop.
+
+## 2026-09-06 Antithesis reconfirmation: restart-loss variant
+
+Mixed hot-KES Antithesis run `8417206dcfc6e6c97dc31e0c11a96bcb-60-7`
+reproduced 40 fatal `rewards summary not ready` failures in Amaru revision
+`ea1f34e42c7a1806d8ee60b3f512e58daae7ccc1` under kill/restart faults. This
+run used a mature, locally proven bootstrap and therefore does not support
+reclassifying the event as a new bootstrap failure.
+
+The precise restart mechanism is already documented by
+[Amaru PR #1007](https://github.com/pragma-org/amaru/pull/1007): the rewards
+summary lives only in the volatile overlay, is absent after restart, and the
+first block at the epoch boundary then fails with `RewardsSummaryNotReady`.
+That PR reported a successful recomputation fix in Antithesis but closed without
+merge. The September run therefore reconfirms a known unresolved availability
+defect; it is not a new hot-KES or consensus-safety result.
