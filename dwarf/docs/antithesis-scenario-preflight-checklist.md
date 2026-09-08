@@ -133,6 +133,11 @@ missing earlier level.
 ## G. Public/Moog submission gate
 
 - [ ] Commit the exact bundle and record the public commit SHA before submission.
+- [ ] Inspect the **public Git tree modes**, not only local filesystem modes or
+  raw file bytes. Every discovered test command must be mode `100755` at the
+  submitted commit, or the workload must stage and `chmod` the commands inside
+  the container before setup-complete. A shebang plus local `0755` is not proof
+  when files were uploaded through a browser or extracted on Windows.
 - [ ] Verify all custom images are public, anonymously pullable, and match the
   digest in the Compose file. Do not rely on an authenticated local Docker cache.
 - [ ] Validate `com.antithesis.exclude_from_faults` as a comma-separated subset
@@ -234,6 +239,13 @@ Immediately after launch, verify the run is doing the intended work:
     or a stale readiness marker and report a false setup success. Before every
     repeat, run scoped `docker compose down -v --remove-orphans`, verify the
     scenario's volume prefix is absent, and then validate from fresh state.
+20. **Public Git executable-bit loss:** browser uploads and Windows extraction can
+    publish Composer commands as `100644` even when the source archive and local
+    validation copy are `0755`. Antithesis may discover the filenames and then
+    emit `Permission denied` every time it invokes them. Query the submitted
+    commit's Git tree modes and fail the launch gate unless commands are `100755`
+    or the container stages them into a writable discovery root and applies
+    `chmod 0755` before setup-complete.
 
 ## Decision rule
 

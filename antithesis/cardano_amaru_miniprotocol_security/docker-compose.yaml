@@ -420,7 +420,14 @@ services:
     container_name: dwarf-sm-workload
     hostname: sm-workload.example
     labels: *fault-exclude
-    entrypoint: ["python3", "/workload/workload_entrypoint.py"]
+    entrypoint: ["/bin/bash", "-euo", "pipefail", "-c"]
+    command:
+      - |
+        rm -rf /opt/antithesis/test/v1
+        mkdir -p /opt/antithesis/test/v1
+        cp -a /workload/test/v1/. /opt/antithesis/test/v1/
+        chmod 0755 /opt/antithesis/test/v1/mixed-miniprotocol-security/*.py
+        exec python3 /workload/workload_entrypoint.py
     environment:
       DWARF_SM_SEED: "0x20260907"
       CARDANO_FUZZER_LOG: /cardano-evidence/fuzzer.log
@@ -440,7 +447,6 @@ services:
       NETWORK_MAGIC: "42"
     volumes:
       - ./workload:/workload:ro
-      - ./workload/test/v1:/opt/antithesis/test/v1:ro
       - sm-cardano-evidence:/cardano-evidence:ro
       - sm-amaru-evidence:/amaru-evidence:ro
       - sm-amaru-runtime-evidence:/amaru-runtime-evidence:ro
