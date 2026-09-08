@@ -17,6 +17,12 @@ connection-local containment, honest chain progress, unrelated control-peer
 usability, absence of fatal target evidence, and recovery/convergence of both
 victims and the Amaru-fed isolated consumer.
 
+The production workload reuses the published KES workload runtime image, but
+mounts this package's complete `workload/test/v1` directory over
+`/opt/antithesis/test/v1`. This deliberately hides the base image's KES test
+commands so Antithesis discovers exactly one mini-protocol driver, one anytime
+check, and one eventual check.
+
 The Amaru supervised-listener `EADDRINUSE` failure is classified as a known
 background signal. Reproducing it is not a new finding.
 
@@ -39,4 +45,3 @@ volumes and retain the paired transcript, sample counts, tips, fatal scan,
 container states, test-command results, revisions, and image digests.
 
 This package does not authorize a Moog or Antithesis submission.
-

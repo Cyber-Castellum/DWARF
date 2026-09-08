@@ -223,6 +223,17 @@ Immediately after launch, verify the run is doing the intended work:
     semantic health, use one worker and the same explicit seed, and fail closed
     before `setup_complete` unless the ordered common transcript prefix is
     identical and covers the complete required matrix.
+18. **Inherited test-template leakage:** reusing a workload image can silently
+    retain that image's `/opt/antithesis/test/v1` commands. Mounting only a new
+    sibling suite makes Snouty discover and Antithesis execute both workloads.
+    Inspect the base image and require the exact expected command count; when
+    reusing only its runtime, mount the scenario's complete `test/v1` directory
+    over the discovery root.
+19. **Stale Snouty validation volumes:** Snouty can remove validation containers
+    while leaving named Compose volumes. A later run may consume old transcripts
+    or a stale readiness marker and report a false setup success. Before every
+    repeat, run scoped `docker compose down -v --remove-orphans`, verify the
+    scenario's volume prefix is absent, and then validate from fresh state.
 
 ## Decision rule
 

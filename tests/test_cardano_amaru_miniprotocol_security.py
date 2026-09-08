@@ -218,6 +218,16 @@ def test_test_template_has_bounded_executable_driver_and_recovery_commands():
         assert path.stat().st_mode & stat.S_IXUSR
 
 
+def test_workload_hides_base_image_test_commands_from_discovery():
+    workload = load_yaml(COMPOSE)["services"]["sm-workload"]
+    mounts = workload["volumes"]
+    assert "./workload/test/v1:/opt/antithesis/test/v1:ro" in mounts
+    assert not any(
+        mount.startswith("./workload/test/v1/mixed-miniprotocol-security:")
+        for mount in mounts
+    )
+
+
 def test_package_contains_no_secrets_or_generated_junk():
     forbidden_names = {".env", ".DS_Store", "genesis.1.skey", "utxo-keys"}
     offenders = []
