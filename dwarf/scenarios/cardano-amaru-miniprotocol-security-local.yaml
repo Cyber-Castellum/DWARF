@@ -1,0 +1,35 @@
+{
+  "spec_version": "v1",
+  "id": "cardano-amaru-miniprotocol-security-local",
+  "title": "Mixed Cardano/Amaru N2N state-machine containment and recovery",
+  "authors": ["dwarf"],
+  "tags": ["mixed-net", "amaru", "cardano-node", "n2n", "state-machine", "adversarial", "local"],
+  "evidence_intent": "risk-support",
+  "promotion_blockers": [
+    "Both targets must receive an identical pre-fault SP4 transcript covering all 24 protocol/class cells.",
+    "Both targets and the Amaru-fed consumer must continue honest progress and recover/converge.",
+    "Known Amaru EADDRINUSE and prior findings remain background classifications.",
+    "This scenario does not authorize a Moog or Antithesis submission."
+  ],
+  "target": {"implementation": "cardano-node", "version": "10.7.1+Amaru-v10.11-lineage"},
+  "runtime": "devnet",
+  "attach": {"topology": "cardano_amaru", "network_magic": 42},
+  "seed": "0x20260907",
+  "iterations": 1,
+  "shrink": false,
+  "setup": [],
+  "load": [
+    {
+      "primitive": "load_shell_command",
+      "command": "python3 /home/nigel/dwarf-v4/tools/cardano_amaru_miniprotocol_security_probe.py /home/nigel/dwarf-v4/antithesis/cardano_amaru_miniprotocol_security --timeout-seconds 3600 --sample-seconds 10",
+      "timeout_seconds": 3700,
+      "expect_exit": 0
+    }
+  ],
+  "probes": [],
+  "assertions": [
+    {"primitive": "load_events_are_ok", "min_completed": 1, "min_event_count": 1}
+  ],
+  "teardown": []
+}
+
