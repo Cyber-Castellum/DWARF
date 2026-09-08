@@ -22,8 +22,13 @@ Audit date: 2026-09-07 UTC. This file contains no credentials.
   `ghcr.io/j-gainsec/dwarf-adversary@sha256:c5e35065b9a58c337cd770ef0317bf11c1057a5869d654f7873275d3c8fe1aa1`.
   Its OCI index is
   `sha256:81345e7dfeecbeadc8d94de4f868b15b6540a0563843298e80430fe976bbcb95`.
-- Workload base runtime:
-  `ghcr.io/j-gainsec/dwarf-kes-workload@sha256:f3b5603f2d880a617c3ef3b9624c589d6af01ad30951f41e807cfd436f167a20`.
+- Dedicated mini-protocol workload runtime:
+  `ghcr.io/j-gainsec/dwarf-sm@sha256:9fcea8709a6426c84fca6008435ae26a292734484b2006db6f99a331110bfb5a`.
+  It is built from the pinned Cardano-node image above and
+  `python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93`,
+  with `antithesis==0.3.1`. It contains exactly the single
+  `mixed-miniprotocol-security` test template and does not inherit the KES test
+  catalog.
 
 The inherited control assets are byte-identical to
 `antithesis/cardano_amaru_relay_bootstrap_control`. Its provenance remains the

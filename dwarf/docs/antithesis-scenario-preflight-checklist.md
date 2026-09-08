@@ -67,6 +67,11 @@ missing earlier level.
 - [ ] Confirm command names use supported prefixes: `parallel_driver_`,
   `serial_driver_`, `singleton_driver_`, `anytime_`, `eventually_`, or
   `finally_`. An `eventually` command cannot substitute for a driver.
+- [ ] Inspect the immutable workload image through a stopped container, before
+  its entrypoint runs. Require exactly the intended directories and commands
+  under `/opt/antithesis/test/v1`, executable modes for the image's default
+  user, and no inherited templates. A startup `cp`, `chmod`, deletion, or bind
+  mount is not pre-entrypoint catalog proof.
 - [ ] Confirm the driver does not emit `setup_complete`; setup belongs to the
   system readiness path.
 - [ ] Confirm the package is self-contained and has no `.env`, PAT, wallet,
@@ -134,10 +139,10 @@ missing earlier level.
 
 - [ ] Commit the exact bundle and record the public commit SHA before submission.
 - [ ] Inspect the **public Git tree modes**, not only local filesystem modes or
-  raw file bytes. Every discovered test command must be mode `100755` at the
-  submitted commit, or the workload must stage and `chmod` the commands inside
-  the container before setup-complete. A shebang plus local `0755` is not proof
-  when files were uploaded through a browser or extracted on Windows.
+  raw file bytes. If commands enter the image from browser/Windows-published
+  `100644` files, the Dockerfile must set their executable mode in the immutable
+  image layer (for example, `COPY --chmod=0755`). Runtime staging before
+  setup-complete is too late for the live Composer catalog.
 - [ ] Verify all custom images are public, anonymously pullable, and match the
   digest in the Compose file. Do not rely on an authenticated local Docker cache.
 - [ ] Validate `com.antithesis.exclude_from_faults` as a comma-separated subset
@@ -228,12 +233,13 @@ Immediately after launch, verify the run is doing the intended work:
     semantic health, use one worker and the same explicit seed, and fail closed
     before `setup_complete` unless the ordered common transcript prefix is
     identical and covers the complete required matrix.
-18. **Inherited test-template leakage:** reusing a workload image can silently
-    retain that image's `/opt/antithesis/test/v1` commands. Mounting only a new
-    sibling suite makes Snouty discover and Antithesis execute both workloads.
-    Inspect the base image and require the exact expected command count; when
-    reusing only its runtime, mount the scenario's complete `test/v1` directory
-    over the discovery root.
+18. **Inherited/pre-entrypoint test-template leakage:** reusing a workload image
+    can silently retain that image's `/opt/antithesis/test/v1` commands. Live run
+    `239fd7d2ad494119b76bea20f1a38460-60-7` proved Antithesis cataloged the
+    inherited KES suite before the replacement entrypoint ran, even though local
+    Compose and Snouty later saw the staged mini-protocol tree. Use a dedicated
+    immutable workload image and inspect a stopped container's exact catalog;
+    do not rely on runtime mounts, deletion, copies, or chmod.
 19. **Stale Snouty validation volumes:** Snouty can remove validation containers
     while leaving named Compose volumes. A later run may consume old transcripts
     or a stale readiness marker and report a false setup success. Before every
@@ -243,9 +249,9 @@ Immediately after launch, verify the run is doing the intended work:
     publish Composer commands as `100644` even when the source archive and local
     validation copy are `0755`. Antithesis may discover the filenames and then
     emit `Permission denied` every time it invokes them. Query the submitted
-    commit's Git tree modes and fail the launch gate unless commands are `100755`
-    or the container stages them into a writable discovery root and applies
-    `chmod 0755` before setup-complete.
+    commit's Git tree modes. Either publish commands as `100755` or bake them
+    into a dedicated workload image with build-layer mode `0755`; do not repair
+    executable bits in the entrypoint.
 
 ## Decision rule
 

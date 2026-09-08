@@ -416,18 +416,10 @@ services:
     restart: always
 
   sm-workload:
-    image: ghcr.io/j-gainsec/dwarf-kes-workload@sha256:f3b5603f2d880a617c3ef3b9624c589d6af01ad30951f41e807cfd436f167a20
+    image: ghcr.io/j-gainsec/dwarf-sm@sha256:9fcea8709a6426c84fca6008435ae26a292734484b2006db6f99a331110bfb5a
     container_name: dwarf-sm-workload
     hostname: sm-workload.example
     labels: *fault-exclude
-    entrypoint: ["/bin/bash", "-euo", "pipefail", "-c"]
-    command:
-      - |
-        rm -rf /opt/antithesis/test/v1
-        mkdir -p /opt/antithesis/test/v1
-        cp -a /workload/test/v1/. /opt/antithesis/test/v1/
-        chmod 0755 /opt/antithesis/test/v1/mixed-miniprotocol-security/*.py
-        exec python3 /workload/workload_entrypoint.py
     environment:
       DWARF_SM_SEED: "0x20260907"
       CARDANO_FUZZER_LOG: /cardano-evidence/fuzzer.log
@@ -446,7 +438,6 @@ services:
       AMARU_TARGET_PORT: "3000"
       NETWORK_MAGIC: "42"
     volumes:
-      - ./workload:/workload:ro
       - sm-cardano-evidence:/cardano-evidence:ro
       - sm-amaru-evidence:/amaru-evidence:ro
       - sm-amaru-runtime-evidence:/amaru-runtime-evidence:ro
