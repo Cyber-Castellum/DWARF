@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from profile_manager.config import config_exists, load_config
-from profile_manager.remote import ssh_command
+from profile_manager.remote import control_shim_enabled, ssh_command
 
 
 def _read_ndjson_rows(path):
@@ -133,6 +134,10 @@ def _summarize_testcase_state(state_root):
 def _local_testcase_lifecycle_summary():
     from profile_manager.dashboard import PROJECT_ROOT
 
+    configured_state_dir = os.environ.get("ADA2_DWARF_STATE_DIR", "").strip()
+    if configured_state_dir:
+        return _summarize_testcase_state(Path(configured_state_dir) / "testcases")
+
     candidates = [
         PROJECT_ROOT / "state" / "testcases",
         PROJECT_ROOT / "dwarf" / "state" / "testcases",
@@ -144,6 +149,12 @@ def _local_testcase_lifecycle_summary():
 
 
 def _live_testcase_lifecycle_summary():
+    # The restricted deploy key accepts named lifecycle verbs only; it cannot
+    # execute the inline Python used by the unrestricted remote fallback. In a
+    # dashboard deployment the authoritative lifecycle state is already mounted
+    # below ADA2_DWARF_STATE_DIR, so read that state directly in shim mode.
+    if control_shim_enabled():
+        return _local_testcase_lifecycle_summary()
     if not config_exists():
         return _local_testcase_lifecycle_summary()
     cfg = load_config()

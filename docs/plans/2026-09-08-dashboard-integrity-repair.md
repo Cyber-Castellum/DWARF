@@ -65,3 +65,14 @@
    container mounts.
 4. Repeat the complete route, visual, functional, freshness, and secret audit
    against `https://dwarf.gainpalfam.com`.
+
+### Post-deployment verification correction (2026-09-09)
+
+The exact-revision cutover exposed a pre-existing incompatibility between the
+dashboard lifecycle summary and the hardened SSH control channel. The summary
+attempted to send inline Python over SSH, while the forced-command key accepts
+only named control verbs, producing `bad-token-count`. In dashboard deployments
+the authoritative lifecycle state is already mounted beneath
+`ADA2_DWARF_STATE_DIR`; shim mode must read that mounted state directly and must
+not attempt arbitrary remote execution. Regression coverage verifies both the
+configured state-root selection and the absence of an SSH call in shim mode.
