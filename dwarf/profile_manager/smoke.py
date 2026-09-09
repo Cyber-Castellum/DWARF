@@ -46,6 +46,9 @@ def smoke_evidence_root():
     override = os.environ.get(SMOKE_EVIDENCE_ENV)
     if override:
         return Path(override).expanduser()
+    retained_root = os.environ.get("ADA2_PROFILE_MANAGER_EVIDENCE_ROOT")
+    if retained_root:
+        return Path(retained_root).expanduser() / "smoke-tests"
     return DEFAULT_SMOKE_EVIDENCE_ROOT
 
 
@@ -110,7 +113,7 @@ echo "WORKING_DIRECTORY={smoke.working_directory}"
 echo "TIMEOUT_SECONDS={smoke.timeout_seconds}"
 echo "No public Cardano network is contacted by this smoke manifest."
 cd {shlex.quote(smoke.working_directory)}
-export PATH=/home/dwarf/.local/bin:$PATH
+export PATH="$HOME/.local/bin:$PATH"
 {exports}
 {command_lines}
 """

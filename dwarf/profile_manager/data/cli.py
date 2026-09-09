@@ -11,9 +11,9 @@ so the page can deep-link readers to the source of truth.
 
 Discipline (slice 26): no fabricated commands. Every entry below maps
 to a real subcommand of dwarf/cardano-profile — verified against the
-running parser. Introspection-only surfaces (browsing the full target
-and primitive catalogues) live in the dashboard at /operate/targets and
-/operate/primitives, not the CLI, and are noted as such.
+running parser. Introspection-only surfaces are documented only where the
+dashboard actually exposes them; the primitive registry remains the canonical
+catalogue.
 """
 from __future__ import annotations
 
@@ -176,9 +176,8 @@ CLI_GROUPS: list[dict[str, Any]] = [
             "reference by name. Family is one of setup, load, probe, assertion, "
             "fault, teardown; the registry under "
             "<code>dwarf/primitives/registry.json</code> is the canonical "
-            "mapping. The CLI exposes scaffolding only; browse and inspect the "
-            "full catalogue of 206 primitives in the dashboard at "
-            "<code>/operate/primitives</code>."
+            "mapping. The CLI and <code>/operate/primitives/new</code> expose "
+            "scaffolding; inspect the registry for the full current catalogue."
         ),
         "anchor_path": "dwarf/primitives/registry.json",
         "commands": [

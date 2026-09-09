@@ -19,6 +19,7 @@ any command is built.
 
 Config is read from `dwarf-control.conf` next to this script:
     DWARF_ROOT=/abs/path/to/<checkout>/dwarf
+    CONFIG_PATH=/abs/path/to/runtime/state/config.yaml
     REMOTE_BASE_PATH=/home/<user>/cardano-profiles
     AUDIT_LOG=/abs/path/to/dwarf-control.log   # optional
 """
@@ -36,8 +37,8 @@ SHIM_DIR = Path(__file__).resolve().parent
 CONF_PATH = SHIM_DIR / "dwarf-control.conf"
 
 # Verbs the key is permitted to invoke. Everything else is rejected.
-READ_VERBS = {"status", "active"}
-WRITE_VERBS = {"deploy", "remove", "coverage"}
+READ_VERBS = {"status", "active", "moog-health", "moog-facts"}
+WRITE_VERBS = {"deploy", "remove", "coverage", "smoke"}
 ALLOWED_VERBS = READ_VERBS | WRITE_VERBS
 
 # A profile id / view token: starts alnum, then alnum/-/_ , bounded length.
@@ -98,6 +99,8 @@ def main() -> int:
         os.environ["ADA2_DWARF_PROFILES_DIR"] = conf["PROFILES_DIR"]
     if conf.get("REMOTE_BASE_PATH"):
         os.environ["ADA2_DWARF_REMOTE_BASE"] = conf["REMOTE_BASE_PATH"]
+    if conf.get("CONFIG_PATH"):
+        os.environ["ADA2_PROFILE_MANAGER_CONFIG"] = conf["CONFIG_PATH"]
 
     if not original:
         return _reject(conf, original, "empty-command")
@@ -122,6 +125,8 @@ def main() -> int:
         return _reject(conf, original, "verb-not-allowed")
     if arg is not None and not _ARG_RE.match(arg):
         return _reject(conf, original, "bad-arg")
+    if verb in {"moog-health", "moog-facts"} and arg is not None:
+        return _reject(conf, original, f"{verb}-does-not-accept-arg")
 
     try:
         from profile_manager.profiles import (
@@ -131,6 +136,13 @@ def main() -> int:
             remove_command,
             status_command,
         )
+        from profile_manager.config import load_config
+        from profile_manager.moog import (
+            build_moog_facts_command,
+            build_moog_health_command,
+            normalize_moog_config,
+        )
+        from profile_manager.smoke import find_smoke_test, smoke_remote_command
     except Exception as exc:  # import surface is host-controlled, not client
         return _reject(conf, original, f"import-failed:{type(exc).__name__}")
 
@@ -140,6 +152,18 @@ def main() -> int:
         script = status_command()
     elif verb == "active":
         script = active_profile_command()
+    elif verb == "moog-health":
+        try:
+            config = load_config()
+            script = build_moog_health_command(normalize_moog_config(config.moog))
+        except Exception as exc:
+            return _reject(conf, original, f"moog-health-config-failed:{type(exc).__name__}")
+    elif verb == "moog-facts":
+        try:
+            config = load_config()
+            script = build_moog_facts_command(normalize_moog_config(config.moog))
+        except Exception as exc:
+            return _reject(conf, original, f"moog-facts-config-failed:{type(exc).__name__}")
     elif verb == "deploy":
         if not arg:
             return _reject(conf, original, "deploy-requires-profile")
@@ -174,6 +198,14 @@ def main() -> int:
             f"DWARF_AFL_FUZZ={shlex.quote(aflfuzz)} "
             f"python3 cardano-profile scenario run {shlex.quote(str(scen_path))}"
         )
+    elif verb == "smoke":
+        if not arg:
+            return _reject(conf, original, "smoke-requires-test")
+        try:
+            smoke = find_smoke_test(arg)
+        except KeyError:
+            return _reject(conf, original, "unknown-smoke-test")
+        script = smoke_remote_command(smoke)
     else:  # unreachable — guarded above
         return _reject(conf, original, "verb-not-allowed")
 

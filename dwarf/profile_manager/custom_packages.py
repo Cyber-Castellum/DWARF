@@ -63,6 +63,9 @@ def custom_evidence_root():
     override = os.environ.get(CUSTOM_EVIDENCE_ROOT_ENV)
     if override:
         return Path(override).expanduser()
+    retained_root = os.environ.get("ADA2_PROFILE_MANAGER_EVIDENCE_ROOT")
+    if retained_root:
+        return Path(retained_root).expanduser() / "custom-packages"
     return DEFAULT_CUSTOM_EVIDENCE_ROOT
 
 

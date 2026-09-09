@@ -108,7 +108,7 @@ from profile_manager.profiles import (
     remove_dry_run_text,
     status_command,
 )
-from profile_manager.remote import CommandResult, rsync_to, ssh_command
+from profile_manager.remote import CommandResult, control_shim_enabled, rsync_to, ssh_command
 from profile_manager.smoke import (
     find_smoke_test,
     smoke_list_text,
@@ -670,7 +670,7 @@ def build_parser():
     dashboard_serve.add_argument("--port", type=int, default=8787)
     dashboard_serve.add_argument("--bind", default="0.0.0.0")
     dashboard_serve.add_argument("--token", default=None,
-                                 help="Token required for any future mutating endpoint. "
+                                 help="Token required for browser-initiated mutating endpoints. "
                                       "Defaults to ADA2_DWARF_TOKEN env var or 'dwarf'. Read-only routes are open.")
     dashboard_serve.add_argument("--dry-run", action="store_true")
 
@@ -2163,6 +2163,14 @@ def _extract_run_id(text):
 
 
 def _run_smoke_via_remote_scenario(args, config, smoke):
+    if control_shim_enabled():
+        return ssh_command(
+            config,
+            smoke_remote_command(smoke),
+            timeout=smoke.timeout_seconds,
+            dry_run=False,
+            verb=("smoke", smoke.id),
+        )
     remote_root = _remote_dwarf_root()
     remote_tmp_dir = remote_root / "tmp-generated-smokes"
     remote_scenario_path = remote_tmp_dir / f"{smoke.id}.json"

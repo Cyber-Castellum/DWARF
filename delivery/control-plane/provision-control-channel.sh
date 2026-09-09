@@ -39,6 +39,7 @@ PROFILES_DIR=${PROFILES_DIR:-$STATE_DIR/profiles}
 # Scenario overlay (same bind-mount the container uses) + AFL coverage harness,
 # so the `coverage` verb can run aflpp scenarios on the host where AFL works.
 SCENARIOS_DIR=${SCENARIOS_DIR:-$STATE_DIR/scenarios}
+CONFIG_PATH=${CONFIG_PATH:-$STATE_DIR/config.yaml}
 AFL_HARNESS=${AFL_HARNESS:-/opt/dwarf/afl-harness/dwarf-decode-any}
 AFL_FUZZ=${AFL_FUZZ:-/opt/dwarf/afl-harness/afl-fuzz}
 
@@ -94,6 +95,7 @@ DWARF_ROOT=$DWARF_ROOT
 REMOTE_BASE_PATH=$REMOTE_BASE_PATH
 PROFILES_DIR=$PROFILES_DIR
 SCENARIOS_DIR=$SCENARIOS_DIR
+CONFIG_PATH=$CONFIG_PATH
 AFL_HARNESS=$AFL_HARNESS
 AFL_FUZZ=$AFL_FUZZ
 AUDIT_LOG=$AUDIT_LOG

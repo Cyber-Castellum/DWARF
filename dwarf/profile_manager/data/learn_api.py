@@ -70,7 +70,7 @@ ENDPOINTS: list[dict[str, Any]] = [
         "kind": "json",
         "description": "Recent-runs payload over the local + remote run sources. Backs the /operate/runs page.",
         "parameters": [
-            {"name": "limit", "kind": "query", "required": False, "type": "integer", "default": "100"},
+            {"name": "limit", "kind": "query", "required": False, "type": "integer (1-200)", "default": "50"},
         ],
         "response_schema": {"recent_runs": "[{run_id, ended_at, scenario_id, exit_status, runtime, source}, ...]"},
         "example": '{"recent_runs": [{"run_id": "20260427T154920Z-4bdcb76f", "exit_status": "pass", "scenario_id": "honest-baseline-smoke", ...}]}',

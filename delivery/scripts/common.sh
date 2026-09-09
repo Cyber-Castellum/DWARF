@@ -96,19 +96,39 @@ ensure_runtime_dirs() {
 
 seed_example_runs() {
   local source_runs="${PACKAGE_ROOT}/dwarf/runs"
+  local source_bundles="${PACKAGE_ROOT}/dwarf/bundles"
   local target_runs="${DWARF_RUNTIME_ROOT}/runs"
 
-  [[ -d "${source_runs}" ]] || return 0
   mkdir -p "${target_runs}"
 
   local run_dir run_id
-  for run_dir in "${source_runs}"/*; do
-    [[ -d "${run_dir}" ]] || continue
-    run_id=$(basename "${run_dir}")
-    if [[ ! -e "${target_runs}/${run_id}" ]]; then
-      cp -R "${run_dir}" "${target_runs}/${run_id}"
-    fi
-  done
+  if [[ -d "${source_runs}" ]]; then
+    for run_dir in "${source_runs}"/*; do
+      [[ -d "${run_dir}" ]] || continue
+      run_id=$(basename "${run_dir}")
+      if [[ ! -e "${target_runs}/${run_id}" ]]; then
+        cp -R "${run_dir}" "${target_runs}/${run_id}"
+      fi
+    done
+  fi
+
+  # Public delivery keeps examples as tar.gz bundles rather than duplicating
+  # their unpacked run trees. Materialize each missing run on install/deploy so
+  # a fresh dashboard has the same inspectable examples without overwriting
+  # any runtime evidence already present.
+  local bundle_path
+  if [[ -d "${source_bundles}" ]]; then
+    for bundle_path in "${source_bundles}"/*.tar.gz; do
+      [[ -f "${bundle_path}" ]] || continue
+      run_id=$(basename "${bundle_path}" .tar.gz)
+      [[ -e "${target_runs}/${run_id}" ]] && continue
+      if tar -tzf "${bundle_path}" | grep -Evq "^${run_id}(/|$)"; then
+        echo "refusing example bundle with unexpected top-level path: ${bundle_path}" >&2
+        return 1
+      fi
+      tar -xzf "${bundle_path}" -C "${target_runs}"
+    done
+  fi
 }
 
 seed_example_bundles() {
@@ -129,10 +149,8 @@ seed_example_bundles() {
 }
 
 seed_scenarios() {
-  # Seed the writable scenario catalog (runtime state) from the baked read-only
-  # source. The container mounts this dir at ADA2_DWARF_SCENARIOS_DIR so the
-  # dashboard can create/edit scenarios (the image tree is read-only). Only
-  # copies files that don't already exist, so user edits are preserved.
+  # Synchronize packaged scenarios into the writable runtime catalog. Packaged
+  # names are authoritative on deploy; runtime-only scenarios are untouched.
   local source_scenarios="${PACKAGE_ROOT}/dwarf/scenarios"
   local target_scenarios="${DWARF_RUNTIME_ROOT}/state/scenarios"
 
@@ -143,15 +161,12 @@ seed_scenarios() {
   for scn_path in "${source_scenarios}"/*.yaml; do
     [[ -f "${scn_path}" ]] || continue
     scn_name=$(basename "${scn_path}")
-    if [[ ! -e "${target_scenarios}/${scn_name}" ]]; then
-      cp "${scn_path}" "${target_scenarios}/${scn_name}"
-    fi
+    cp "${scn_path}" "${target_scenarios}/${scn_name}"
   done
 }
 
 seed_manifests() {
-  # Seed the writable target-manifest catalog from the baked source so targets
-  # can be registered from the dashboard (ADA2_DWARF_MANIFESTS_DIR).
+  # Synchronize packaged target manifests; runtime-only manifests are untouched.
   local source_manifests="${PACKAGE_ROOT}/dwarf/targets/manifests"
   local target_manifests="${DWARF_RUNTIME_ROOT}/state/targets/manifests"
 
@@ -162,16 +177,12 @@ seed_manifests() {
   for m_path in "${source_manifests}"/*.yaml; do
     [[ -f "${m_path}" ]] || continue
     m_name=$(basename "${m_path}")
-    if [[ ! -e "${target_manifests}/${m_name}" ]]; then
-      cp "${m_path}" "${target_manifests}/${m_name}"
-    fi
+    cp "${m_path}" "${target_manifests}/${m_name}"
   done
 }
 
 seed_profiles() {
-  # Seed the writable profile catalog (<id>/profile.yaml dirs) from the baked
-  # source so profiles can be created/deployed from the dashboard
-  # (ADA2_DWARF_PROFILES_DIR).
+  # Synchronize packaged profiles; runtime-only profile directories are untouched.
   local source_profiles="${PACKAGE_ROOT}/dwarf/profiles"
   local target_profiles="${DWARF_RUNTIME_ROOT}/state/profiles"
 
@@ -182,10 +193,8 @@ seed_profiles() {
   for p_dir in "${source_profiles}"/*/; do
     [[ -f "${p_dir}profile.yaml" ]] || continue
     p_id=$(basename "${p_dir}")
-    if [[ ! -e "${target_profiles}/${p_id}/profile.yaml" ]]; then
-      mkdir -p "${target_profiles}/${p_id}"
-      cp "${p_dir}profile.yaml" "${target_profiles}/${p_id}/profile.yaml"
-    fi
+    mkdir -p "${target_profiles}/${p_id}"
+    cp "${p_dir}profile.yaml" "${target_profiles}/${p_id}/profile.yaml"
   done
 }
 
@@ -204,7 +213,7 @@ optional_moog_bootstrap() {
       ;;
     plan)
       echo "Moog bootstrap plan requested (no remote state change)"
-      docker exec -i "${DWARF_CONTAINER_NAME}" /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --json
+      docker exec -i "${DWARF_CONTAINER_NAME}" python3 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --json
       ;;
     approve)
       if [[ "${DWARF_MOOG_BOOTSTRAP_APPROVE}" != "1" ]]; then
@@ -212,8 +221,8 @@ optional_moog_bootstrap() {
         exit 1
       fi
       echo "Moog bootstrap approve requested"
-      docker exec -i "${DWARF_CONTAINER_NAME}" /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --approve --json
-      docker exec -i "${DWARF_CONTAINER_NAME}" /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
+      docker exec -i "${DWARF_CONTAINER_NAME}" python3 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog bootstrap --approve --json
+      docker exec -i "${DWARF_CONTAINER_NAME}" python3 /home/dwarf/dwarf-fw/dwarf/cardano-profile moog healthcheck --json
       ;;
     *)
       echo "invalid DWARF_MOOG_BOOTSTRAP value: ${DWARF_MOOG_BOOTSTRAP} (use off, plan, or approve)" >&2

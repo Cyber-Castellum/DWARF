@@ -234,7 +234,7 @@ custom-network and producer-less baked bundles are retained as local capabilitie
 
 ```text
 DWARF/
-├── README.md  INSTALL.md  OPERATIONS.md  RELEASE-NOTES.md
+├── README.md  INSTALL.md  OPERATIONS.md
 ├── antithesis/
 │   ├── components/dwarf-adversary/      # Haskell N2N adversary (cabal)
 │   ├── cardano_node_dwarf/              # full-harness CBOR bundle (live-proven)

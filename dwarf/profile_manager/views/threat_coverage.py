@@ -1,8 +1,9 @@
 """Learn > Threat/Risk coverage map.
 
-Serves the self-contained scenario-coverage page that correlates every DWARF
-scenario to the Amaru Risk Register v2 (RR) and Threat Model v2 (TM) via a
-vetted per-concern mapping, with maturity/kind pills and explicit GAP rows.
+Serves the self-contained scenario-coverage page that correlates the DWARF
+scenario inventory with vetted Amaru Risk Register v2 (RR) and Threat Model v2
+(TM) mappings, with maturity/kind pills and explicit GAP rows. Control and
+baseline scenarios may intentionally remain unmapped.
 
 The page is a complete, self-contained HTML document (own <head>/<style>/<script>,
 data embedded inline) authored from dwarf/scenarios/*.yaml + JG-RiskRegister-V2.csv
@@ -20,6 +21,43 @@ from profile_manager.data.coverage import _cbor_shapes_in_text, _protocols_in_te
 from profile_manager.data.scenarios import _list_scenarios_for_compare
 
 _PAGE = Path(__file__).resolve().parent.parent / "data" / "threat_risk_coverage.html"
+
+_ADDITIONAL_COVERAGE = {
+    "cardano-amaru-miniprotocol-security-local": {
+        "threats": (
+            "TM-001", "TM-002", "TM-003", "TM-004", "TM-005", "TM-006",
+            "TM-007", "TM-008", "TM-009", "TM-010", "TM-011", "TM-015",
+            "TM-026",
+        ),
+        "risks": (
+            "RR-001", "RR-002", "RR-003", "RR-004", "RR-005", "RR-006",
+            "RR-007", "RR-008", "RR-009", "RR-010", "RR-011", "RR-015",
+            "RR-034",
+        ),
+    },
+    "cardano-amaru-kes-security-local": {
+        "threats": ("TM-013",),
+        "risks": ("RR-013",),
+    },
+}
+
+
+def _merge_additional_coverage(data: dict, scenarios: list[dict]) -> None:
+    """Attach newly shipped security scenarios to already-vetted RR/TM cells."""
+    scenario_by_id = {item["id"]: item for item in scenarios}
+    for section, mapping_key in (("threats", "threats"), ("risks", "risks")):
+        row_by_id = {row["id"]: row for row in data.get(section) or []}
+        for scenario_id, mapping in _ADDITIONAL_COVERAGE.items():
+            scenario = scenario_by_id.get(scenario_id)
+            if scenario is None:
+                continue
+            for row_id in mapping[mapping_key]:
+                row = row_by_id.get(row_id)
+                if row is None:
+                    continue
+                attached = row.setdefault("scenarios", [])
+                if all(item.get("id") != scenario_id for item in attached):
+                    attached.append(scenario)
 
 
 def render_learn_threat_coverage() -> str:
@@ -70,6 +108,7 @@ def render_learn_threat_coverage() -> str:
             "m1": row.get("m1_trace") or {},
         })
     data["scenarios"] = current
+    _merge_additional_coverage(data, current)
     data["meta"]["n_scen"] = len(current)
     data["meta"]["types"] = dict(Counter(item["type"] for item in current))
     encoded = json.dumps(data, separators=(",", ":"), ensure_ascii=False).replace("</", "<\\/")

@@ -85,10 +85,9 @@ def _deliverable_catalog():
                     "Deliverable",
                     "Included",
                     [
-                        "dwarf/runs/20260419T020533Z-aa19a2d4/manifest.json",
                         "dwarf/bundles/20260419T020533Z-aa19a2d4.tar.gz",
                     ],
-                    "Deploy scripts seed these examples into the runtime volume so they appear in Operate after deployment.",
+                    "Deploy scripts unpack the shipped bundles into the runtime volume so the examples appear in Operate after deployment.",
                 ),
             ],
         },

@@ -94,6 +94,8 @@ def handle_config_save(body_bytes: bytes) -> tuple[int, str]:
     form = parse_qs(body_bytes.decode("utf-8", errors="replace"), keep_blank_values=True)
     try:
         values = load_config().to_dict()
+    except FileNotFoundError:
+        values = DeploymentConfig.from_dict({}).to_dict()
     except Exception as exc:  # noqa: BLE001 - surface, don't 500
         return _result(500, "Settings not saved", f"<p>Could not load current config: <code>{escape(str(exc))}</code></p>", ok=False)
 

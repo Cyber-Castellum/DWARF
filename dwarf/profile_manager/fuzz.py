@@ -61,6 +61,9 @@ def fuzz_evidence_root():
     override = os.environ.get(FUZZ_EVIDENCE_ENV)
     if override:
         return Path(override).expanduser()
+    retained_root = os.environ.get("ADA2_PROFILE_MANAGER_EVIDENCE_ROOT")
+    if retained_root:
+        return Path(retained_root).expanduser() / "fuzz"
     return DEFAULT_FUZZ_EVIDENCE_ROOT
 
 

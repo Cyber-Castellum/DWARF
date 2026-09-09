@@ -9,6 +9,9 @@ ensure_package_layout
 ensure_runtime_dirs
 seed_example_runs
 seed_example_bundles
+seed_scenarios
+seed_manifests
+seed_profiles
 require_docker
 
 docker image inspect "${DWARF_IMAGE}" >/dev/null || {

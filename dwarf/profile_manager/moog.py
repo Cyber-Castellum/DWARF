@@ -68,7 +68,7 @@ SECRET_FILE_PATTERNS = (
     "token",
     "pat",
     "docker-config",
-    "config.json",
+    ".docker/config.json",
 )
 
 
@@ -492,7 +492,13 @@ print(json.dumps({
 
 def query_moog_health(config, timeout: int = 20, dry_run: bool = False) -> dict[str, Any]:
     moog_config = normalize_moog_config(getattr(config, "moog", None))
-    result = ssh_command(config, build_moog_health_command(moog_config), timeout=timeout, dry_run=dry_run)
+    result = ssh_command(
+        config,
+        build_moog_health_command(moog_config),
+        timeout=timeout,
+        dry_run=dry_run,
+        verb=("moog-health",),
+    )
     return parse_moog_health_result(result)
 
 
@@ -548,7 +554,13 @@ print(json.dumps({"facts": facts, "checks": checks}, sort_keys=True))
 
 def query_moog_facts(config, timeout: int = 60, dry_run: bool = False) -> dict[str, Any]:
     moog_config = normalize_moog_config(getattr(config, "moog", None))
-    result = ssh_command(config, build_moog_facts_command(moog_config), timeout=timeout, dry_run=dry_run)
+    result = ssh_command(
+        config,
+        build_moog_facts_command(moog_config),
+        timeout=timeout,
+        dry_run=dry_run,
+        verb=("moog-facts",),
+    )
     return parse_moog_facts_result(result)
 
 

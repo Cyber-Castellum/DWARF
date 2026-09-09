@@ -4,6 +4,7 @@ import mimetypes
 import os
 import socket
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -792,7 +793,7 @@ body[data-shell="legacy"] textarea {{
     <button type="button" data-target-mode="advanced">Advanced</button>
   </div>
 </nav>
-<p class="legacy-strapline">No browser action deploys, removes, fuzzes, or mutates runtime state.</p>
+<p class="legacy-strapline">Browser mutations are token-gated and serialized; read-only routes remain open.</p>
 <main class="shell-main">
 {body}
 </main>
@@ -1173,15 +1174,21 @@ def stream_subprocess_sse(cmd, *, env=None, cwd=None):
     so operators see everything the process said.
     """
     import subprocess as _sub
-    proc = _sub.Popen(
-        cmd,
-        stdout=_sub.PIPE,
-        stderr=_sub.STDOUT,
-        env=env,
-        cwd=cwd,
-        text=True,
-        bufsize=1,
-    )
+    try:
+        proc = _sub.Popen(
+            cmd,
+            stdout=_sub.PIPE,
+            stderr=_sub.STDOUT,
+            env=env,
+            cwd=cwd,
+            text=True,
+            bufsize=1,
+        )
+    except OSError as exc:
+        payload = json.dumps({"error": str(exc), "exit_code": 126})
+        yield ("event: error\ndata: " + payload + "\n\n").encode("utf-8")
+        yield b'event: done\ndata: {"exit_code": 126}\n\n'
+        return
     try:
         assert proc.stdout is not None
         for line in proc.stdout:
@@ -1233,37 +1240,40 @@ def check_token(path, *, expected):
 DEFAULT_CLI_ENTRYPOINT = Path(__file__).resolve().parents[1] / "cardano-profile"
 
 
+def _cli_command(*args):
+    return [sys.executable, str(DEFAULT_CLI_ENTRYPOINT), *args]
+
+
 def _default_cli_command_builder(action, *, profile=None, test_id=None, approve=False, scenario_path=None):
-    entry = str(DEFAULT_CLI_ENTRYPOINT)
     if action == "deploy":
         if not profile:
             raise ValueError("deploy requires profile")
-        return [entry, "deploy", profile, "--approve"]
+        return _cli_command("deploy", profile, "--approve")
     if action == "remove":
-        return [entry, "remove", "--approve"]
+        return _cli_command("remove", "--approve")
     if action == "fuzz":
         if not test_id:
             raise ValueError("fuzz requires id")
-        cmd = [entry, "fuzz", "run", test_id]
+        cmd = _cli_command("fuzz", "run", test_id)
         if approve:
             cmd.append("--approve")
         return cmd
     if action == "smoke":
         if not test_id:
             raise ValueError("smoke requires id")
-        return [entry, "test", "smoke", "run", test_id]
+        return _cli_command("test", "smoke", "run", test_id)
     if action == "compare":
         if not scenario_path:
             raise ValueError("compare requires path")
-        return [entry, "compare", scenario_path]
+        return _cli_command("compare", scenario_path)
     if action == "scenario_run":
         if not scenario_path:
             raise ValueError("scenario_run requires path")
-        return [entry, "scenario", "run", scenario_path]
+        return _cli_command("scenario", "run", scenario_path)
     if action == "coverage":
         if not test_id:
             raise ValueError("coverage requires id")
-        return [entry, "coverage", "run", test_id]
+        return _cli_command("coverage", "run", test_id)
     if action == "backup":
         import os as _os
         from datetime import datetime as _dt, timezone as _tz
@@ -1272,7 +1282,7 @@ def _default_cli_command_builder(action, *, profile=None, test_id=None, approve=
         backups_dir.mkdir(parents=True, exist_ok=True)
         ts = _dt.now(_tz.utc).strftime("%Y%m%dT%H%M%SZ")
         dest = backups_dir / f"dwarf-backup-{ts}.tar.gz"
-        return [entry, "backup", "--to", str(dest)]
+        return _cli_command("backup", "--to", str(dest))
     raise ValueError(f"unknown action: {action}")
 
 
@@ -1425,7 +1435,6 @@ _ANTITHESIS_ROUTES = {
 
 def _build_antithesis_command(action, qs):
     """Build the cardano-profile command for an /operate/antithesis GUI action."""
-    entry = str(DEFAULT_CLI_ENTRYPOINT)
 
     def g(key):
         return (qs.get(key) or [None])[0]
@@ -1437,7 +1446,7 @@ def _build_antithesis_command(action, qs):
         return val
 
     if action == "/api/antithesis/build":
-        cmd = [entry, "antithesis", "build", need("profile")]
+        cmd = _cli_command("antithesis", "build", need("profile"))
         for flag, key in (("--scenario", "scenario"), ("--out", "out"),
                           ("--registry", "registry"), ("--tag", "tag")):
             val = g(key)
@@ -1446,9 +1455,9 @@ def _build_antithesis_command(action, qs):
         cmd.append("--json")
         return cmd
     if action == "/api/moog/validate":
-        return [entry, "moog", "asset", "validate", "--asset-dir", need("asset_dir"), "--json"]
+        return _cli_command("moog", "asset", "validate", "--asset-dir", need("asset_dir"), "--json")
     if action == "/api/moog/preflight":
-        cmd = [entry, "moog", "preflight", "--json"]
+        cmd = _cli_command("moog", "preflight", "--json")
         for flag, key in (("--asset-dir", "asset_dir"), ("--repo", "repo"),
                           ("--github-user", "github_user"), ("--directory", "directory"),
                           ("--commit", "commit")):
@@ -1457,7 +1466,7 @@ def _build_antithesis_command(action, qs):
                 cmd += [flag, val]
         return cmd
     if action == "/api/moog/create-test":
-        cmd = [entry, "moog", "create-test", "--json"]
+        cmd = _cli_command("moog", "create-test", "--json")
         for flag, key in (("--repo", "repo"), ("--github-user", "github_user"),
                           ("--directory", "directory"), ("--commit", "commit"),
                           ("--duration", "duration")):
@@ -1471,7 +1480,7 @@ def _build_antithesis_command(action, qs):
             cmd.append("--approve")
         return cmd
     if action == "/api/moog/test-status":
-        return [entry, "moog", "test-status", need("test_id"), "--json"]
+        return _cli_command("moog", "test-status", need("test_id"), "--json")
     raise ValueError(f"unknown antithesis action: {action}")
 
 
@@ -1624,8 +1633,16 @@ def dispatch_api_request(path, *, runs_dir=None, bundles_dir=None):
             return (503, "text/plain; charset=utf-8", conversion_error.encode("utf-8"))
         return (200, "application/pdf", body, _attachment_headers(f"{target.stem}.pdf"))
 
-    if path == "/api/runs":
-        payload = {"recent_runs": forensic.list_recent_runs(runs_dir=runs_dir, limit=50)}
+    if parsed.path == "/api/runs":
+        raw_limit = (parse_qs(parsed.query).get("limit") or ["50"])[0]
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            limit = 0
+        if not 1 <= limit <= 200:
+            body = json.dumps({"error": "limit must be an integer from 1 to 200"}).encode("utf-8")
+            return (400, "application/json; charset=utf-8", body)
+        payload = {"recent_runs": forensic.list_recent_runs(runs_dir=runs_dir, limit=limit)}
         body = json.dumps(payload, indent=2).encode("utf-8")
         return (200, "application/json; charset=utf-8", body)
 
@@ -2464,9 +2481,9 @@ def dashboard_serve_text(output_dir=None, port=8787, bind="0.0.0.0", token=None)
         f"Bind: {bind}:{port}\n"
         f"{urls}\n"
         "Live API: /api/status\n"
-        f"Token gate active for any future mutating endpoint (source: {token_source}; length: {len(token_active)} chars).\n"
+        f"Token gate active for mutating endpoints (source: {token_source}; length: {len(token_active)} chars).\n"
         "Read-only routes do not require a token.\n"
-        "No browser action deploys, removes, fuzzes, or mutates runtime state.\n"
+        "Browser mutations are token-gated and serialized.\n"
     )
 
 
