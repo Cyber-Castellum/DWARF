@@ -123,7 +123,7 @@ http://<host-lan-ip>:8787/operate
 If port `8787` is in use:
 
 ```bash
-DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh
+DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/deploy.sh
 ```
 
 Then open:
@@ -144,7 +144,7 @@ bash delivery/scripts/status.sh
 Or, if deployed on a non-default port:
 
 ```bash
-DWARF_DASHBOARD_PORT=8877 delivery/scripts/status.sh
+DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/status.sh
 ```
 
 The status command reports:
@@ -175,7 +175,7 @@ Scenario catalog: 239 scenarios
 By default, deployment binds Docker to `0.0.0.0`, so the dashboard is reachable on both loopback and the host LAN IP. If you deploy with:
 
 ```bash
-DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh
+DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/deploy.sh
 ```
 
 then open either:
@@ -256,7 +256,7 @@ Moog setup is not automatic. The delivery scripts deploy Dwarf by default and le
 To preview the Moog bootstrap plan from inside the running Dwarf container:
 
 ```bash
-DWARF_MOOG_BOOTSTRAP=plan delivery/scripts/deploy.sh
+DWARF_MOOG_BOOTSTRAP=plan bash delivery/scripts/deploy.sh
 ```
 
 To apply the safe skeleton setup, both variables are required:

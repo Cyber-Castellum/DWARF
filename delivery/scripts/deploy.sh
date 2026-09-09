@@ -16,7 +16,7 @@ require_docker
 
 docker image inspect "${DWARF_IMAGE}" >/dev/null || {
   echo "image not found: ${DWARF_IMAGE}" >&2
-  echo "run delivery/scripts/build-image.sh first" >&2
+  echo "run bash delivery/scripts/build-image.sh first" >&2
   exit 1
 }
 

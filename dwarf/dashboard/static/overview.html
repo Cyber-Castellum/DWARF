@@ -359,11 +359,11 @@ p { color: var(--muted); }
           <p class="eyebrow">Recipient command shape</p>
           <h3>Simple enough to verify, explicit enough to audit.</h3>
           <p>The package should remain boring at the infrastructure layer: install, deploy, check status, operate, then undeploy when done.</p>
-          <pre class="codebox">./delivery/scripts/install.sh
-./delivery/scripts/deploy.sh
+          <pre class="codebox">bash delivery/scripts/install.sh
+bash delivery/scripts/deploy.sh
 curl http://127.0.0.1:8787/api/status
 open http://127.0.0.1:8787
-./delivery/scripts/undeploy.sh</pre>
+bash delivery/scripts/undeploy.sh</pre>
         </aside>
       </div>
     </section>

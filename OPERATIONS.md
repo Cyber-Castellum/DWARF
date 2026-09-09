@@ -115,8 +115,8 @@ docker exec -it dwarf-fw bash
 If another service already uses `8787`, deploy on another host port:
 
 ```bash
-DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh
-DWARF_DASHBOARD_PORT=8877 delivery/scripts/status.sh
+DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/deploy.sh
+DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/status.sh
 ```
 
 The container still listens internally on `8787`; only the host port changes.
@@ -132,7 +132,7 @@ Client-prep mode allows saving GitHub PATs, Antithesis passwords/API keys, and a
 Dwarf does not set up Moog during normal install or deploy. To keep wallet/secrets/service changes explicit, the deploy script only runs Moog setup when requested:
 
 ```bash
-DWARF_MOOG_BOOTSTRAP=plan delivery/scripts/deploy.sh
+DWARF_MOOG_BOOTSTRAP=plan bash delivery/scripts/deploy.sh
 ```
 
 The plan mode prints the Moog bootstrap plan and changes no remote state. The approved mode requires a second confirmation variable:
@@ -250,7 +250,7 @@ ss -ltnp | grep 8787
 Use another port:
 
 ```bash
-DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh
+DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/deploy.sh
 ```
 
 ### Container exits immediately

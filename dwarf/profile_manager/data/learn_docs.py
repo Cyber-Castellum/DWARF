@@ -131,7 +131,7 @@ TROUBLESHOOTING: list[dict[str, str]] = [
      "fix": "Target the listener directly: <code>PID=$(ss -tlnp 2>/dev/null | grep 8787 | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2); kill -9 $PID</code>. The ss approach reads the socket→pid mapping from the kernel and is unambiguous."},
     {"symptom": "Code on /home/&lt;user&gt;/dwarf-fw is updated but the running dashboard serves the old version",
      "diagnosis": "The dashboard is running inside the deployed Docker container (dwarf-fw). Framework source is baked into the image at build time; host-side runtime directories are mounted only for runs, state, and bundles.",
-     "fix": "<code>delivery/scripts/build-image.sh && delivery/scripts/deploy.sh</code>. Verify with <code>docker exec dwarf-fw python3 dwarf/cardano-profile dashboard status</code>."},
+     "fix": "<code>bash delivery/scripts/build-image.sh && bash delivery/scripts/deploy.sh</code>. Verify with <code>docker exec dwarf-fw python3 dwarf/cardano-profile dashboard status</code>."},
     {"symptom": "ImportError: cannot import name 'X' from 'profile_manager.Y'",
      "diagnosis": "The container's profile_manager predates the import the dashboard now needs (e.g. plugin_loader added after the image was built; CONFIG_FIELDS added after, etc.). The image-rebuild pipeline lags head-of-tree.",
      "fix": "Either docker cp the missing module into the container (short-term), or add a graceful fallback in the importer (preferred for code that has to ship before the next image build). Pattern: <code>try: from profile_manager.X import Y; except ImportError: Y = &lt;fallback&gt;</code>."},
