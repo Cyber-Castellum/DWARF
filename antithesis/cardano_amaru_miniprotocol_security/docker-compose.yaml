@@ -438,7 +438,6 @@ services:
       AMARU_TARGET_PORT: "3000"
       NETWORK_MAGIC: "42"
     volumes:
-      - ./workload/test/v1:/opt/antithesis/test/v1:ro
       - sm-cardano-evidence:/cardano-evidence:ro
       - sm-amaru-evidence:/amaru-evidence:ro
       - sm-amaru-runtime-evidence:/amaru-runtime-evidence:ro
