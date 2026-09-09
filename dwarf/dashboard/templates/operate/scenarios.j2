@@ -44,6 +44,7 @@ async function runScn(){
   <span class="eyebrow">Run AFL coverage (on the substrate host)</span>
   <p class="page-subhero" style="margin:4px 0 8px">Coverage-guided cardano-node fuzz campaigns can't run in this hardened container (AFL forkserver needs host privileges), so they run on the substrate host over the restricted control channel. Output streams below.</p>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <label class="visually-hidden" for="run-cov-id">Coverage scenario id</label>
     <input id="run-cov-id" list="run-cov-list" placeholder="coverage scenario id — e.g. cardano-node-cov-applyblock-aflpp-smoke" style="flex:1;min-width:320px;background:var(--obsidian-1);border:1px solid var(--rule);color:var(--ink);border-radius:8px;padding:8px 11px;font-family:var(--font-mono);font-size:.84rem">
     <datalist id="run-cov-list">{% for c in coverage_ids %}<option value="{{ c }}">{% endfor %}</datalist>
     <button id="run-cov-btn" type="button" onclick="runCov()" style="background:var(--accent);color:var(--obsidian-0);border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer">Run on host</button>

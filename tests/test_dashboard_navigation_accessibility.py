@@ -80,3 +80,12 @@ def test_operate_and_learn_controls_have_accessible_names():
     assert re.search(r'<label[^>]+for="bundle-import"', bundles)
     assert 'id="bundle-import"' in bundles
     assert re.search(r'<label[^>]+for="q"', threat)
+
+
+def test_shim_enabled_coverage_runner_has_an_accessible_label(monkeypatch):
+    monkeypatch.setenv("ADA2_DWARF_CONTROL_SHIM", "1")
+
+    scenarios = render_operate_scenarios()
+
+    assert 'id="run-cov-id"' in scenarios
+    assert re.search(r'<label[^>]+for="run-cov-id"', scenarios)

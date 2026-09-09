@@ -76,3 +76,6 @@ the authoritative lifecycle state is already mounted beneath
 `ADA2_DWARF_STATE_DIR`; shim mode must read that mounted state directly and must
 not attempt arbitrary remote execution. Regression coverage verifies both the
 configured state-root selection and the absence of an SSH call in shim mode.
+The production-only shim branch also exposes the host AFL coverage runner;
+its scenario selector must retain an explicit accessible label and is covered
+by the shim-enabled route audit.
