@@ -28,6 +28,11 @@ from profile_manager.data.operate_profiles import _profile_url
 from profile_manager.data.runs import _forensic_runs_dir
 
 
+def _known_profile_ids() -> set[str]:
+    from profile_manager.data.operate_profiles import operate_profile_entries
+    return {entry["id"] for entry in operate_profile_entries()}
+
+
 def _bundle_catalog_url(run_id: str) -> str:
     """Single source of truth for bundle catalog deep-link URLs.
 
@@ -54,7 +59,7 @@ def _format_size(size_bytes: int) -> str:
     return f"{size_bytes / _GIB:.1f} GiB"
 
 
-def _enrich_bundle_row(bundle_path: Path, runs_dir: Path) -> dict[str, Any]:
+def _enrich_bundle_row(bundle_path: Path, runs_dir: Path, profile_ids: set[str] | None = None) -> dict[str, Any]:
     """Augment a bundle file with optional manifest fields.
 
     Reads runs/<run_id>/manifest.json defensively; missing run dir,
@@ -101,7 +106,7 @@ def _enrich_bundle_row(bundle_path: Path, runs_dir: Path) -> dict[str, Any]:
         "size_display": _format_size(size_bytes),
         "scenario_id": scenario_id,
         "profile_id": profile_id,
-        "profile_url": _profile_url(profile_id) if profile_id else None,
+        "profile_url": _profile_url(profile_id) if profile_id and profile_id in (profile_ids if profile_ids is not None else _known_profile_ids()) else None,
         "exit_status": exit_status,
     }
 
@@ -119,8 +124,9 @@ def operate_bundle_rows(*, bundles_dir: Path | None = None,
     if not base_bundles.is_dir():
         return []
     paths: list[Path] = sorted(base_bundles.glob("*.tar.gz"))
+    profile_ids = _known_profile_ids()
     rows: list[dict[str, Any]] = [
-        _enrich_bundle_row(path, runs_dir=base_runs) for path in paths
+        _enrich_bundle_row(path, runs_dir=base_runs, profile_ids=profile_ids) for path in paths
     ]
     # Newest first by `created` (ISO timestamp from file mtime).
     rows.sort(key=lambda r: r.get("created") or "", reverse=True)

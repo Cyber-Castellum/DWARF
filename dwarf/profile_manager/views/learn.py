@@ -20,6 +20,7 @@ from profile_manager.data.operate_runs import (
 )
 from profile_manager.data.profiles import _profile_rows
 from profile_manager.data.scenarios import _list_scenarios_for_compare
+from profile_manager.data.status import deployed_source_summary
 from profile_manager.data.walkthroughs import walkthrough_entries
 from profile_manager.templating import render
 
@@ -39,6 +40,7 @@ def render_learn_landing() -> str:
         active_sub="overview",
         implementations=impls,
         scenario_count=len(_list_scenarios_for_compare()),
+        primitive_count=deployed_source_summary()["primitive_count"],
         fuzz_target_count=len(operate_target_rows()),
         concept_count=len(CONCEPTS),
         glossary_count=len(GLOSSARY),

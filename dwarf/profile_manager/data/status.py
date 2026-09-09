@@ -15,6 +15,8 @@ when present in source documents.
 """
 from __future__ import annotations
 
+import json
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -58,6 +60,27 @@ def reset_data_source() -> None:
 def data_source_used_filesystem_fallback() -> bool:
     """Return True if any extractor in this render fell back to worktree filesystem."""
     return _DATA_SOURCE["used_filesystem_fallback"]
+
+
+def deployed_source_summary() -> dict:
+    """Return image provenance and live catalog totals available at runtime."""
+    from profile_manager.data.scenarios import _list_scenarios_for_compare
+
+    registry_path = _project_root() / "dwarf" / "primitives" / "registry.json"
+    primitive_count = 0
+    try:
+        registry = json.loads(registry_path.read_text(encoding="utf-8"))
+        primitive_count = len(registry.get("primitives") or [])
+    except (OSError, ValueError, TypeError):
+        pass
+    revision = os.environ.get("DWARF_SOURCE_REVISION", "").strip() or "unknown"
+    return {
+        "revision": revision,
+        "revision_known": revision != "unknown",
+        "repository": "https://github.com/Cyber-Castellum/DWARF",
+        "scenario_count": len(_list_scenarios_for_compare()),
+        "primitive_count": primitive_count,
+    }
 
 
 def _mark_fallback() -> None:

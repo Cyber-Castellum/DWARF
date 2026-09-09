@@ -46,7 +46,7 @@ The package is not hard-coded to a specific host or path; put it anywhere the de
 Run:
 
 ```bash
-delivery/scripts/install.sh
+bash delivery/scripts/install.sh
 ```
 
 This performs the full bring-up: it validates the package layout, seeds the
@@ -64,10 +64,10 @@ var/bundles
 Optional capabilities (off by default):
 
 ```bash
-delivery/scripts/install.sh --control-channel   # drive substrate deploy/teardown from the dashboard
-delivery/scripts/install.sh --afl                # build the host-side AFL coverage harness
-delivery/scripts/install.sh --all                # both of the above
-delivery/scripts/install.sh --prepare-only       # seed the catalog only (no build, no start)
+bash delivery/scripts/install.sh --control-channel   # drive substrate deploy/teardown from the dashboard
+bash delivery/scripts/install.sh --afl                # build the host-side AFL coverage harness
+bash delivery/scripts/install.sh --all                # both of the above
+bash delivery/scripts/install.sh --prepare-only       # seed the catalog only (no build, no start)
 ```
 
 The script does not install host packages, modify Docker daemon configuration, or start Cardano services.
@@ -77,7 +77,7 @@ The script does not install host packages, modify Docker daemon configuration, o
 Run:
 
 ```bash
-delivery/scripts/build-image.sh
+bash delivery/scripts/build-image.sh
 ```
 
 This builds:
@@ -104,7 +104,7 @@ Acquire::Check-Date "false";
 Run:
 
 ```bash
-delivery/scripts/deploy.sh
+bash delivery/scripts/deploy.sh
 ```
 
 Default dashboard:
@@ -138,7 +138,7 @@ http://<host-lan-ip>:8877/operate
 Run:
 
 ```bash
-delivery/scripts/status.sh
+bash delivery/scripts/status.sh
 ```
 
 Or, if deployed on a non-default port:
@@ -220,7 +220,7 @@ export DWARF_RUNTIME_ROOT=/absolute/path/to/var
 export ADA2_DWARF_TOKEN=dwarf
 ```
 
-Most operators only need `DWARF_DASHBOARD_PORT`. Set `DWARF_DASHBOARD_BIND=127.0.0.1` only when you want loopback-only access.
+Most operators only need `DWARF_DASHBOARD_PORT`. By default, persistent runtime data is stored under `~/.local/share/dwarf/` (or `$XDG_DATA_HOME/dwarf/` when `XDG_DATA_HOME` is set), independently of the source checkout. Set `DWARF_RUNTIME_ROOT` to use another location. Set `DWARF_DASHBOARD_BIND=127.0.0.1` only when you want loopback-only access.
 
 ## Moog, GitHub, And Antithesis Setup Values
 
@@ -230,7 +230,7 @@ The dashboard exposes a browser-based setup form at:
 /operate/config
 ```
 
-Values can be entered through that form and saved into `var/state/config.yaml`, or provided as Docker environment variables at startup. The delivery scripts source a package-local `.env` file before running Compose, and the Compose file passes through Moog/GitHub/Antithesis variables including:
+Values can be entered through that form and saved into `$DWARF_RUNTIME_ROOT/state/config.yaml` (by default `~/.local/share/dwarf/state/config.yaml`), or provided as Docker environment variables at startup. The delivery scripts source a package-local `.env` file before running Compose, and the Compose file passes through Moog/GitHub/Antithesis variables including:
 
 ```bash
 MOOG_GITHUB_USER=
@@ -264,7 +264,7 @@ To apply the safe skeleton setup, both variables are required:
 ```bash
 DWARF_MOOG_BOOTSTRAP=approve \
 DWARF_MOOG_BOOTSTRAP_APPROVE=1 \
-delivery/scripts/deploy.sh
+bash delivery/scripts/deploy.sh
 ```
 
 The approved path creates only Moog deploy/state/ops and requester/oracle secret directories, then writes an operator plan file. It does not download Moog release artifacts, create wallet files, read wallet JSON, store GitHub PATs, write Antithesis credentials, enable services, or start oracle/agent processes.
@@ -289,23 +289,23 @@ Some future or operator-specific substrate scenarios may require SSH fan-out to 
 Stop the stack and preserve runtime data and image:
 
 ```bash
-delivery/scripts/uninstall.sh
+bash delivery/scripts/uninstall.sh
 ```
 
 Remove runtime data:
 
 ```bash
-delivery/scripts/uninstall.sh --purge
+bash delivery/scripts/uninstall.sh --purge
 ```
 
 Remove image:
 
 ```bash
-delivery/scripts/uninstall.sh --remove-image
+bash delivery/scripts/uninstall.sh --remove-image
 ```
 
 Remove both:
 
 ```bash
-delivery/scripts/uninstall.sh --purge --remove-image
+bash delivery/scripts/uninstall.sh --purge --remove-image
 ```

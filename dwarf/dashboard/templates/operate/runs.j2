@@ -69,6 +69,7 @@
   <p class="filter-count" aria-live="polite">{{ filtered_count if filtered_count is defined else rows|length }} of {{ all_count if all_count is defined else rows|length }} runs</p>
 </form>
 
+<div class="responsive-table runs-table-wrap">
 <table class="runs-table" data-active-status="">
   <thead>
     <tr>
@@ -87,6 +88,7 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 
 <script type="module">
   import {initFilter} from "/static/js/filter.js";

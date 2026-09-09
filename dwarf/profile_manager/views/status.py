@@ -6,6 +6,7 @@ from profile_manager.data.status import (
     confirmed_findings,
     current_phase_summary,
     data_source_used_filesystem_fallback,
+    deployed_source_summary,
     open_carry_overs,
     recent_main_commits,
     reset_data_source,
@@ -22,6 +23,7 @@ def render_learn_status() -> str:
     candidates = candidate_findings()
     carry = open_carry_overs()
     fallback = data_source_used_filesystem_fallback()
+    deployed = deployed_source_summary()
     return render(
         "learn/status.j2",
         page_title="Status",
@@ -33,4 +35,5 @@ def render_learn_status() -> str:
         candidates=candidates,
         carry_overs=carry,
         data_source_caveat=fallback,
+        deployed=deployed,
     )

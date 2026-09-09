@@ -2,25 +2,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DWARF Consensus — Chain-Selection Differential (Status)</title>
 <style>
-  :root{--bg:#ffffff;--ink:#1a2230;--muted:#5b6573;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--rule:#e2e8f0;--card:#f8fafc;--mono:"SFMono-Regular",Menlo,Consolas,monospace}
-  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  :root{--obsidian-0:#06080b;--obsidian-1:#0b0f14;--obsidian-2:#131a22;--obsidian-3:#1c242e;--ink:#e6f2f2;--muted:#a4b5bd;--accent:#2be0e0;--ok:#3ecf8e;--bad:#e04848;--warn:#d9a441;--rule:rgba(43,224,224,.18);--card:rgba(19,26,34,.92);--mono:"SFMono-Regular",Menlo,Consolas,monospace}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--obsidian-0);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   .wrap{max-width:900px;margin:0 auto;padding:40px 28px 80px}
   h1{font-size:26px;margin:0 0 4px} h2{font-size:18px;margin:30px 0 10px;border-bottom:2px solid var(--rule);padding-bottom:6px}
   h3{font-size:15px;margin:16px 0 4px}
   .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
-  code{font-family:var(--mono);font-size:.86em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+  code{font-family:var(--mono);font-size:.86em;background:var(--obsidian-3);color:#bffafa;padding:1px 5px;border-radius:4px}
   .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin:12px 0}
-  .hero{background:linear-gradient(135deg,#eff6ff,#f8fafc);border:1px solid #dbeafe;border-radius:12px;padding:18px 22px;margin:8px 0}
+  .hero{background:linear-gradient(135deg,rgba(43,224,224,.10),var(--card));border:1px solid rgba(43,224,224,.28);border-radius:12px;padding:18px 22px;margin:8px 0}
   .hero b{color:var(--accent)}
   table{border-collapse:collapse;width:100%;font-size:13.5px;margin:6px 0}
-  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:#f1f5f9;color:var(--muted);font-weight:600}
+  .table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-scroll table{min-width:680px}
+  th,td{border:1px solid var(--rule);padding:7px 10px;text-align:left;vertical-align:top} th{background:var(--obsidian-3);color:var(--muted);font-weight:600}
   .chip{display:inline-block;font:600 11.5px/1.4 var(--mono);padding:1px 8px;border-radius:20px;border:1px solid}
-  .chip.ok{color:var(--ok);border-color:#bbf7d0;background:#f0fdf4}
-  .chip.muted{color:var(--muted);border-color:var(--rule);background:#fff}
+  .chip.ok{color:var(--ok);border-color:rgba(62,207,142,.42);background:rgba(62,207,142,.10)}
+  .chip.muted{color:var(--muted);border-color:var(--rule);background:var(--obsidian-2)}
   .ok{color:var(--ok)} .muted{color:var(--muted)} b.accent{color:var(--accent)}
   ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
   pre{font-family:var(--mono);font-size:12px;line-height:1.45;background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:8px 0}
-  @media print{.wrap{max-width:none;padding:0}.card,.hero{break-inside:avoid}pre{background:#f1f5f9;color:#0f172a}}
+  @media(max-width:640px){.wrap{padding:24px 16px 56px}h1{font-size:22px}.hero,.card{padding:14px 15px}table{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}}
+  @media print{:root{--obsidian-0:#fff;--ink:#17202b;--muted:#596574;--rule:#d9e0e8;--card:#f8fafc}.wrap{max-width:none;padding:0}.card,.hero{break-inside:avoid}pre{background:#f1f5f9;color:#0f172a}}
 </style></head><body><div class="wrap">
   <h1>DWARF Consensus — Cross-Implementation Chain-Selection Differential</h1>
   <div class="sub">Status &amp; capability note · does the Haskell cardano-node and Amaru ever disagree on which chain is real? · runs on the upstream cardano_amaru topology</div>
@@ -66,7 +69,7 @@ chain_select_differential → assert cardano-node relays == Amaru (amaru-consume
 
   <h2>Results by regime (smoke-level, all green)</h2>
   <div class="card">
-  <table>
+  <div class="table-scroll"><table>
     <tr><th>Regime</th><th>Scenario</th><th>Behavior</th><th>cardano-node ≡ Amaru</th></tr>
     <tr><td>Honest + <b>&gt;k fork</b></td><td><code>consensus-chainhold-upstream-differential</code></td>
         <td>Partitioned producer stranded — deep rollback correctly refused, canonical holds</td><td><span class="chip ok">PASS</span></td></tr>
@@ -74,7 +77,7 @@ chain_select_differential → assert cardano-node relays == Amaru (amaru-consume
         <td>Partitioned producer recovers (≤k rollback accepted), all reconverge</td><td><span class="chip ok">PASS</span></td></tr>
     <tr><td><b>Epoch boundary</b></td><td><code>consensus-epoch-boundary-differential</code></td>
         <td>Hash-identical across an epoch transition (nonce / stake snapshot)</td><td><span class="chip ok">PASS</span></td></tr>
-  </table>
+  </table></div>
   <p class="muted" style="margin:.4rem 0 0">In every case the two implementations agreed byte-for-byte (same block number, same block hash).</p>
   </div>
 
@@ -93,7 +96,7 @@ chain_select_differential → assert cardano-node relays == Amaru (amaru-consume
 
   <h2>Building blocks (composable)</h2>
   <div class="card">
-  <table>
+  <div class="table-scroll"><table>
     <tr><th>Piece</th><th>Kind</th><th>Role</th></tr>
     <tr><td><code>chain_select_differential</code></td><td>assertion</td><td>Implementation-aware Common-Prefix oracle: reference (cardano-node) group vs target (Amaru) group agree on the tip</td></tr>
     <tr><td><code>runtime_attach_topology</code></td><td>setup</td><td>Bind a scenario to an already-running upstream topology (no substrate composition)</td></tr>
@@ -103,7 +106,7 @@ chain_select_differential → assert cardano-node relays == Amaru (amaru-consume
     <tr><td><code>ensure_cardano_amaru_converged.py</code></td><td>tool</td><td>Convergence-gated bring-up: retries until the producers agree (fixes startup split-brain)</td></tr>
     <tr><td><code>consensus_differential_sweep.py</code></td><td>tool</td><td>Exhaustive driver: parameter grid × trials → coverage matrix + single verdict</td></tr>
     <tr><td><code>adapt_cardano_amaru_runtime.py</code></td><td>tool</td><td>Emit runtime.json from the live upstream containers</td></tr>
-  </table>
+  </table></div>
   <p class="muted" style="margin:.4rem 0 0">206 primitives total. New scenarios compose these — vary the partition target/depth, the observed
   nodes, the reference/target groups — and the sweep runs any of them across a grid.</p>
   </div>

@@ -13,7 +13,7 @@ This directory contains only the Docker files required by the Dwarf delivery pac
 Use the delivery wrapper from the repository root:
 
 ```bash
-delivery/scripts/build-image.sh
+bash delivery/scripts/build-image.sh
 ```
 
 Equivalent direct command:
@@ -30,10 +30,10 @@ docker build \
 Use the delivery Compose file and lifecycle scripts:
 
 ```bash
-delivery/scripts/install.sh
-delivery/scripts/build-image.sh
-delivery/scripts/deploy.sh
-delivery/scripts/status.sh
+bash delivery/scripts/install.sh
+bash delivery/scripts/build-image.sh
+bash delivery/scripts/deploy.sh
+bash delivery/scripts/status.sh
 ```
 
 The container serves the dashboard on port `8787` inside the container. The default host bind is `0.0.0.0:8787`.

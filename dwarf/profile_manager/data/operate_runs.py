@@ -23,7 +23,12 @@ from profile_manager.data.compare import _bundle_inspector_url
 from profile_manager.data.operate_profiles import _profile_url
 
 
-def _enrich_run_row(run: dict, runs_dir: Path) -> dict[str, Any]:
+def _known_profile_ids() -> set[str]:
+    from profile_manager.data.operate_profiles import operate_profile_entries
+    return {entry["id"] for entry in operate_profile_entries()}
+
+
+def _enrich_run_row(run: dict, runs_dir: Path, profile_ids: set[str] | None = None) -> dict[str, Any]:
     """Augment a recent_runs_payload entry with profile_id +
     target_implementation by re-reading the run's manifest.json.
 
@@ -65,7 +70,7 @@ def _enrich_run_row(run: dict, runs_dir: Path) -> dict[str, Any]:
         "ended_at": run.get("ended_at"),
         "scenario_id": run.get("scenario_id"),
         "profile_id": profile_id,
-        "profile_url": _profile_url(profile_id) if profile_id else None,
+        "profile_url": _profile_url(profile_id) if profile_id and profile_id in (profile_ids if profile_ids is not None else _known_profile_ids()) else None,
         "runtime": run.get("runtime"),
         "exit_status": run.get("exit_status"),
         "target_implementation": target_implementation,
@@ -87,7 +92,8 @@ def operate_run_rows(*, runs_dir: Path | None = None, limit: int = 100) -> list[
 
     base = Path(runs_dir) if runs_dir is not None else _forensic_runs_dir()
     payload = recent_runs_payload(runs_dir=base, limit=limit)
-    return [_enrich_run_row(run, runs_dir=base) for run in payload.get("recent_runs", [])]
+    profile_ids = _known_profile_ids()
+    return [_enrich_run_row(run, runs_dir=base, profile_ids=profile_ids) for run in payload.get("recent_runs", [])]
 
 
 def apply_run_filters(rows: list[dict[str, Any]], *, outcome: str = "",

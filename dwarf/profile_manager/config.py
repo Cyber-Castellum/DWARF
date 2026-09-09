@@ -12,15 +12,15 @@ CONFIG_FIELDS = {
     "deployment_name": {"type": "string", "default": "dwarf-devnet", "description": "Human-readable deployment label."},
     "host": {"type": "string", "default": "127.0.0.1", "description": "Remote SSH host or IP."},
     "ssh_user": {"type": "string", "default": "dwarf", "description": "Remote SSH username."},
-    "ssh_key_path": {"type": "string", "default": "~/.ssh/id_ed25519", "description": "SSH private-key path used for remote commands."},
+    "ssh_key_path": {"type": "string", "default": "~/.ssh/cardano-box", "description": "SSH private-key path used for remote commands."},
     "remote_base_path": {"type": "string", "default": "/opt/dwarf/cardano-profiles", "description": "Remote base directory for deployment artifacts."},
     "allow_prereq_install": {"type": "boolean", "default": False, "description": "Allow prerequisite installation via CLI."},
     "allow_sudo": {"type": "boolean", "default": False, "description": "Allow sudo-backed remote commands."},
     "log_level": {"type": "string", "default": "info", "description": "Operator-facing CLI log level."},
     "output_format": {"type": "string", "default": "text", "description": "Default human output format for future export-capable commands."},
     "docker_registry": {"type": "string", "default": "", "description": "Default Docker registry prefix for framework images."},
-    "runs_retention_days": {"type": "integer", "default": 30, "description": "Suggested local run retention window."},
-    "bundles_retention_days": {"type": "integer", "default": 90, "description": "Suggested retained export/archive window."},
+    "runs_retention_days": {"type": "integer", "default": 0, "description": "Run retention in days; 0 keeps runs until manually removed."},
+    "bundles_retention_days": {"type": "integer", "default": 0, "description": "Bundle retention in days; 0 keeps bundles until manually removed."},
     "sarif_rules": {"type": "array[string]", "default": [], "description": "Optional SARIF rule filters or preferred rule identifiers."},
     "wallets": {"type": "array[object]", "default": [], "description": "Public wallet metadata shown on dashboard status; never store secrets here."},
     "moog": {"type": "object", "default": {}, "description": "Moog deployment, GitHub, Antithesis, and requester setup values."},
@@ -39,8 +39,8 @@ class DeploymentConfig:
     log_level: str = "info"
     output_format: str = "text"
     docker_registry: str = ""
-    runs_retention_days: int = 30
-    bundles_retention_days: int = 90
+    runs_retention_days: int = 0
+    bundles_retention_days: int = 0
     sarif_rules: list[str] = None
     wallets: list[dict[str, Any]] = None
     moog: dict[str, Any] = None

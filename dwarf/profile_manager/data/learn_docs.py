@@ -1,6 +1,7 @@
 """Static content for /learn/glossary, /learn/faq, /learn/troubleshooting (slice 3)."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -39,7 +40,7 @@ GLOSSARY: list[dict[str, str]] = [
     {"term": "VRF", "definition": "Verifiable Random Function — the cryptographic primitive that picks slot leaders. Each pool has a VRF key; ``VRF(slot, epoch_nonce, vrf_skey)`` returns a value the rest of the network can verify with the public key. Output is uniform-random, leadership-eligible iff the value is below a stake-proportional threshold.", "see_also": "https://eprint.iacr.org/2017/573.pdf"},
     {"term": "KES", "definition": "Key Evolving Signatures. Each pool has a KES key that's used to sign minted blocks. The key evolves forward every N slots and old versions become unusable — protects against retroactive block-forging by a key compromise. Pools must rotate the KES key periodically.", "see_also": "https://docs.cardano.org/about-cardano/learn/cardano-keys/"},
     {"term": "Epoch", "definition": "A fixed-length window of slots. Mainnet: 432,000 slots = 5 days. Stake-snapshot rollovers + reward distribution + protocol-parameter updates fire on epoch boundaries. The k security parameter is measured in slots within an epoch.", "see_also": "/learn/examples#runtime-substrate-stake-snapshot-boundary-example-smoke"},
-    {"term": "Epoch boundary", "definition": "The transition between two epochs. Stake snapshots roll forward, rewards are paid out, protocol parameter updates take effect. Substrate scenarios that test epoch-boundary behaviour exercise this transition.", "see_also": "/learn/examples#runtime-substrate-compound-mempool-relay-epoch-boundary-example-smoke"},
+    {"term": "Epoch boundary", "definition": "The transition between two epochs. Stake snapshots roll forward, rewards are paid out, protocol parameter updates take effect. Substrate scenarios that test epoch-boundary behaviour exercise this transition.", "see_also": "/operate/scenarios#runtime-substrate-compound-mempool-relay-epoch-boundary-example-smoke"},
     {"term": "k (security parameter)", "definition": "The number of blocks past which a chain switch is forbidden — Cardano's deep-rollback prevention. Mainnet: k=2160. Praos's chain-prefix guarantee says no more than k blocks can be rolled back; nodes refuse to follow a fork that would.", "see_also": "https://eprint.iacr.org/2017/573.pdf"},
     {"term": "Common Prefix", "definition": "The core Ouroboros safety property: the chains held by any two honest nodes agree on all but the most recent k blocks. A violation — a reorg deeper than k — means a settled transaction was rewritten. DWARF's consensus scenarios assert it as a node-agnostic invariant across cardano-node and Amaru.", "see_also": "https://eprint.iacr.org/2017/573.pdf"},
     {"term": "Active slot coefficient (f)", "definition": "The probability a slot has a leader eligible to mint a block (Cardano mainnet: f=0.05, ~1 block per 20 slots). A protocol/genesis parameter — higher f means more forks and a lower effective safety threshold.", "see_also": "/learn/attack-cost"},
@@ -158,5 +159,11 @@ TROUBLESHOOTING: list[dict[str, str]] = [
 ]
 
 
+def _term_anchor(term: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", term.lower()).strip("-")
+    return f"term-{slug}"
+
+
 def docs_payload() -> dict[str, Any]:
-    return {"glossary": GLOSSARY, "faq": FAQ, "troubleshooting": TROUBLESHOOTING}
+    glossary = [{**entry, "anchor_id": _term_anchor(entry["term"])} for entry in GLOSSARY]
+    return {"glossary": glossary, "faq": FAQ, "troubleshooting": TROUBLESHOOTING}

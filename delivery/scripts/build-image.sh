@@ -10,10 +10,10 @@ require_docker
 
 echo "Building ${DWARF_IMAGE} from ${PACKAGE_ROOT}"
 docker build \
+  --build-arg "DWARF_SOURCE_REVISION=${DWARF_SOURCE_REVISION}" \
   -f "${PACKAGE_ROOT}/infrastructure/docker/dwarf-fw.Dockerfile" \
   -t "${DWARF_IMAGE}" \
   "${PACKAGE_ROOT}"
 
 docker image inspect "${DWARF_IMAGE}" >/dev/null
 echo "Built image: ${DWARF_IMAGE}"
-

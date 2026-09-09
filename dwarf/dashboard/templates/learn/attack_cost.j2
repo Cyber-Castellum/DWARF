@@ -1,8 +1,8 @@
 {% extends "_base.j2" %}
 {% block main %}
 <span class="eyebrow">Learn</span>
-<h1>Cost to attack Cardano (live)</h1>
-<p>The textbook figure is "51% of the stake." The <em>effective</em> figure is lower — because only part of all ADA is actively staked, an attacker needs a fraction of <strong>active</strong> stake, not of total supply. Computed live from on-chain data (Koios) + the ADA price (CoinGecko); falls back to the last snapshot if the live feed is blocked.</p>
+<h1>Cost to attack Cardano</h1>
+<p>The textbook figure is "51% of the stake." The <em>effective</em> figure is lower — because only part of all ADA is actively staked, an attacker needs a fraction of <strong>active</strong> stake, not of total supply. The server reads on-chain data from Koios and ADA/USD from CoinGecko, caches it briefly, and labels the baked fallback explicitly.</p>
 <hr class="hairline">
 
 <div id="dwarf-attackcost">
@@ -26,47 +26,21 @@
   <div class="tg">
     <div class="hero">
       <div class="lab">Est. cost to reach the ~40%-of-active-stake band</div>
-      <div class="big" id="ac-cost">$—</div>
-      <div class="sub"><span id="ac-ada">—</span> ADA · <span id="ac-pct">—</span> of circulating supply</div>
+      <div class="big" id="ac-cost">{{ attack.cost_40 }}</div>
+      <div class="sub"><span id="ac-ada">{{ attack.ada_40 }}</span> ADA · <span id="ac-pct">{{ attack.supply_pct_40 }}</span> of circulating supply</div>
     </div>
     <div class="cards">
-      <div class="card"><b id="ac-active">—</b><span>active stake (ADA)</span></div>
-      <div class="card"><b id="ac-ratio">—</b><span>staking ratio (of circulating)</span></div>
-      <div class="card"><b id="ac-price">$—</b><span>ADA price</span></div>
-      <div class="card"><b id="ac-epoch">—</b><span>epoch</span></div>
+      <div class="card"><b id="ac-active">{{ attack.active_display }}</b><span>active stake (ADA)</span></div>
+      <div class="card"><b id="ac-ratio">{{ attack.staking_ratio }}</b><span>staking ratio (of circulating)</span></div>
+      <div class="card"><b id="ac-price">{{ attack.price_display }}</b><span>ADA price</span></div>
+      <div class="card"><b id="ac-epoch">{{ attack.epoch }}</b><span>epoch</span></div>
     </div>
   </div>
   <div class="rows">
-    <div class="row"><span>~40% of active stake (effective / harm-onset band)</span><b id="ac-r40">—</b></div>
-    <div class="row"><span>50% of active stake (majority)</span><b id="ac-r50">—</b></div>
+    <div class="row"><span>~40% of active stake (effective / harm-onset band)</span><b id="ac-r40">{{ attack.row_40 }}</b></div>
+    <div class="row"><span>50% of active stake (majority)</span><b id="ac-r50">{{ attack.row_50 }}</b></div>
   </div>
-  <div class="st" id="ac-status">snapshot</div>
+  <div class="st" id="ac-status">{{ attack.source_detail }} · checked {{ attack.fetched_at }}</div>
   <p style="color:var(--mut);font-size:.84rem;margin-top:10px">The theoretical Praos threshold (~48% of active stake at mainnet's block rate) barely moves; the economic figures tick with staking ratio and price. Acquiring this much ADA would itself crash the price — the cost is a deterrent, not just a number. See <a href="/learn/glossary#term-k-security-parameter">the consensus glossary</a>.</p>
 </div>
-<script>
-(function(){
-  var SNAP={epoch:642,circ:36474473805.5,total:38743637897.0,active:21392411062.6,price:0.157322};
-  function fu(n){ if(n>=1e9)return '$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M'; return '$'+Math.round(n).toLocaleString(); }
-  function fa(n){ if(n>=1e9)return (n/1e9).toFixed(2)+'B'; if(n>=1e6)return (n/1e6).toFixed(1)+'M'; return Math.round(n).toLocaleString(); }
-  function s(id,v){ var e=document.getElementById(id); if(e)e.textContent=v; }
-  function render(d,live){
-    var a40=d.active*0.40,a50=d.active*0.50;
-    s('ac-cost',fu(a40*d.price)); s('ac-ada',fa(a40)); s('ac-pct',(100*a40/d.circ).toFixed(1)+'%');
-    s('ac-active',fa(d.active)); s('ac-ratio',(100*d.active/d.circ).toFixed(1)+'%');
-    s('ac-price','$'+d.price.toFixed(4)); s('ac-epoch',d.epoch);
-    s('ac-r40',fa(a40)+' ADA · '+fu(a40*d.price)+' · '+(100*a40/d.circ).toFixed(1)+'% supply');
-    s('ac-r50',fa(a50)+' ADA · '+fu(a50*d.price)+' · '+(100*a50/d.circ).toFixed(1)+'% supply');
-    s('ac-status', live ? 'live · updates every 60s' : 'snapshot (live feed unavailable here)');
-  }
-  async function live(){
-    try{
-      var t=(await fetch('https://api.koios.rest/api/v1/totals').then(function(r){return r.json();}))[0], ep=+t.epoch;
-      var ei=await fetch('https://api.koios.rest/api/v1/epoch_info?_epoch_no='+ep).then(function(r){return r.json();});
-      var pr=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd').then(function(r){return r.json();});
-      render({epoch:ep,circ:+t.circulation_lovelace/1e6,total:+t.total_supply_lovelace/1e6,active:+ei[0].active_stake/1e6,price:+pr.cardano.usd},true);
-    }catch(e){ render(SNAP,false); }
-  }
-  render(SNAP,false); live(); setInterval(live,60000);
-})();
-</script>
 {% endblock %}

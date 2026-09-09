@@ -1,6 +1,7 @@
 ARG PYTHON_BASE=python@sha256:46cb7cc2877e60fbd5e21a9ae6115c30ace7a077b9f8772da879e4590c18c2e3
 FROM ${PYTHON_BASE}
 
+ARG DWARF_SOURCE_REVISION=unknown
 ARG DEBIAN_SNAPSHOT=20260429T000000Z
 ARG BASH_VERSION=5.2.37-2+b8
 ARG CA_CERTIFICATES_VERSION=20250419
@@ -18,7 +19,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     ADA2_DWARF_RUNS_DIR=/var/dwarf/runs \
     ADA2_DWARF_STATE_DIR=/var/dwarf/state \
     ADA2_DWARF_BUNDLES_DIR=/var/dwarf/bundles \
-    ADA2_PROFILE_MANAGER_CONFIG=/var/dwarf/state/config.yaml
+    ADA2_PROFILE_MANAGER_CONFIG=/var/dwarf/state/config.yaml \
+    DWARF_SOURCE_REVISION=${DWARF_SOURCE_REVISION}
+
+LABEL org.opencontainers.image.source="https://github.com/Cyber-Castellum/DWARF" \
+      org.opencontainers.image.revision=${DWARF_SOURCE_REVISION}
 
 RUN printf 'Acquire::Check-Valid-Until "false";\nAcquire::Check-Date "false";\n' >/etc/apt/apt.conf.d/90snapshot \
     && cat >/etc/apt/sources.list.d/debian.sources <<EOF

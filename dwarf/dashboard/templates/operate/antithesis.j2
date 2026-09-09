@@ -17,7 +17,7 @@
 .at-run:disabled{opacity:.5;cursor:not-allowed}
 .at-card.at-danger{border-color:color-mix(in srgb,var(--crimson) 55%,transparent)}
 .at-card.at-danger .at-run{background:var(--crimson);color:#fff}
-.at-warn{color:var(--crimson-glow);font-size:.78rem;display:flex;gap:6px;align-items:flex-start}
+.at-warn{color:var(--crimson-glow);font-size:.78rem;display:block;line-height:1.5}
 .at-approve{display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--ink);text-transform:none;letter-spacing:0}
 .at-logwrap{margin-top:16px}
 .at-logwrap h3{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin:0 0 6px}
@@ -29,15 +29,15 @@
   <div class="at-card" id="card-build">
     <h3><span class="at-n">1</span>Build bundle</h3>
     <p class="sub">Render a profile + scenario into a hermetic bundle. <span class="at-hint">antithesis build</span></p>
-    <label>Profile id</label>
+    <label for="b-profile">Profile id</label>
     <input type="text" id="b-profile" list="profiles" placeholder="profile-l-amaru-closed-devnet">
-    <label>Scenario (optional)</label>
+    <label for="b-scenario">Scenario (optional)</label>
     <input type="text" id="b-scenario" list="scenarios" placeholder="dwarf/scenarios/cardano-node-cbor-tx-body-fuzz.yaml">
-    <label>Output dir (must be writable — under {{ build_out_root }})</label>
+    <label for="b-out">Output dir (must be writable — under {{ build_out_root }})</label>
     <input type="text" id="b-out" value="{{ build_out_root }}/" placeholder="{{ build_out_root }}/my-bundle">
-    <label>Registry (optional)</label>
+    <label for="b-registry">Registry (optional)</label>
     <input type="text" id="b-registry" placeholder="ghcr.io/j-gainsec">
-    <label>Tag (optional)</label>
+    <label for="b-tag">Tag (optional)</label>
     <input type="text" id="b-tag" placeholder="0.1.0">
     <button class="at-run" onclick="runStage('build')">Build</button>
   </div>
@@ -45,7 +45,7 @@
   <div class="at-card" id="card-validate">
     <h3><span class="at-n">2</span>Validate</h3>
     <p class="sub">Confirm the bundle is well-formed + self-contained. <span class="at-hint">moog asset validate</span></p>
-    <label>Asset dir</label>
+    <label for="v-asset">Asset dir</label>
     <input type="text" id="v-asset" list="assetdirs" placeholder="{{ build_out_root }}/my-bundle">
     <button class="at-run" onclick="runStage('validate')">Validate</button>
   </div>
@@ -53,15 +53,15 @@
   <div class="at-card" id="card-preflight">
     <h3><span class="at-n">3</span>Preflight</h3>
     <p class="sub">Combined readiness: deployment, requester, asset, plan. <span class="at-hint">moog preflight</span></p>
-    <label>Asset dir</label>
+    <label for="p-asset">Asset dir</label>
     <input type="text" id="p-asset" list="assetdirs" placeholder="{{ build_out_root }}/my-bundle">
-    <label>Repo (org/repo)</label>
+    <label for="p-repo">Repo (org/repo)</label>
     <input type="text" id="p-repo" placeholder="Cyber-Castellum/DWARF">
-    <label>GitHub user</label>
+    <label for="p-user">GitHub user</label>
     <input type="text" id="p-user" placeholder="requester-user">
-    <label>Directory (repo-relative)</label>
+    <label for="p-dir">Directory (repo-relative)</label>
     <input type="text" id="p-dir" placeholder="antithesis/cardano_node_dwarf">
-    <label>Commit</label>
+    <label for="p-commit">Commit</label>
     <input type="text" id="p-commit" placeholder="&lt;sha&gt;">
     <button class="at-run" onclick="runStage('preflight')">Preflight</button>
   </div>
@@ -69,15 +69,15 @@
   <div class="at-card at-danger" id="card-launch">
     <h3><span class="at-n">4</span>Launch</h3>
     <p class="sub">Submit through Moog to Antithesis. <span class="at-hint">moog create-test</span></p>
-    <label>Repo (org/repo)</label>
+    <label for="l-repo">Repo (org/repo)</label>
     <input type="text" id="l-repo" placeholder="Cyber-Castellum/DWARF">
-    <label>GitHub user</label>
+    <label for="l-user">GitHub user</label>
     <input type="text" id="l-user" placeholder="requester-user">
-    <label>Directory (repo-relative)</label>
+    <label for="l-dir">Directory (repo-relative)</label>
     <input type="text" id="l-dir" placeholder="antithesis/cardano_node_dwarf">
-    <label>Commit</label>
+    <label for="l-commit">Commit</label>
     <input type="text" id="l-commit" placeholder="&lt;sha&gt;">
-    <label>Duration (hours)</label>
+    <label for="l-duration">Duration (hours)</label>
     <input type="text" id="l-duration" placeholder="1">
     <label class="at-approve"><input type="checkbox" id="l-nofaults" checked> First run: <code>--no-faults</code> smoke</label>
     <label class="at-approve"><input type="checkbox" id="l-approve"> <strong>Approve live on-chain launch</strong> (spends Preprod tADA)</label>
@@ -88,7 +88,7 @@
   <div class="at-card" id="card-status">
     <h3><span class="at-n">5</span>Poll status</h3>
     <p class="sub">Check the Moog-side phase of a submitted run. <span class="at-hint">moog test-status</span></p>
-    <label>Test run id</label>
+    <label for="s-id">Test run id</label>
     <input type="text" id="s-id" placeholder="&lt;test-run-id&gt;">
     <button class="at-run" onclick="runStage('status')">Check</button>
   </div>

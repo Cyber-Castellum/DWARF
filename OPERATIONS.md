@@ -8,7 +8,7 @@ Full bring-up in one command — seeds the catalog, builds the image, and starts
 container:
 
 ```bash
-delivery/scripts/install.sh
+bash delivery/scripts/install.sh
 ```
 
 `install.sh` calls the two scripts below for you; run them individually to rebuild or
@@ -17,31 +17,31 @@ restart without re-seeding.
 Build the Docker image:
 
 ```bash
-delivery/scripts/build-image.sh
+bash delivery/scripts/build-image.sh
 ```
 
 Deploy (or restart) the container:
 
 ```bash
-delivery/scripts/deploy.sh
+bash delivery/scripts/deploy.sh
 ```
 
 Status:
 
 ```bash
-delivery/scripts/status.sh
+bash delivery/scripts/status.sh
 ```
 
 Undeploy while preserving runtime data:
 
 ```bash
-delivery/scripts/undeploy.sh
+bash delivery/scripts/undeploy.sh
 ```
 
 Conservative uninstall:
 
 ```bash
-delivery/scripts/uninstall.sh
+bash delivery/scripts/uninstall.sh
 ```
 
 ## Dashboard Routes
@@ -140,7 +140,7 @@ The plan mode prints the Moog bootstrap plan and changes no remote state. The ap
 ```bash
 DWARF_MOOG_BOOTSTRAP=approve \
 DWARF_MOOG_BOOTSTRAP_APPROVE=1 \
-delivery/scripts/deploy.sh
+bash delivery/scripts/deploy.sh
 ```
 
 Approved bootstrap creates only the Moog directory skeleton and a remote operator plan file. It does not fetch binaries, create wallet files, read secrets, write PATs, write Antithesis credentials, enable systemd units, or start Moog services.
@@ -259,7 +259,7 @@ Run:
 
 ```bash
 docker logs dwarf-fw
-delivery/scripts/status.sh
+bash delivery/scripts/status.sh
 ```
 
 Common causes:

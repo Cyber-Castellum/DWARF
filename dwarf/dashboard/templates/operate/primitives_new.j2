@@ -14,11 +14,11 @@
 </style>
 
 <form class="mn-form" method="post" action="/operate/primitives/new?token={{ token }}">
-  <label>Family</label>
-  <select name="family">{% for f in families %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select>
+  <label for="primitive-family">Family</label>
+  <select id="primitive-family" name="family">{% for f in families %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select>
   <p class="mn-hint">The conceptual bucket: setup / load / probe / assertion / fault / teardown.</p>
-  <label>Primitive name</label>
-  <input type="text" name="name" placeholder="my_new_primitive" required>
+  <label for="primitive-name">Primitive name</label>
+  <input id="primitive-name" type="text" name="name" placeholder="my_new_primitive" required>
   <p class="mn-hint">Starts with a letter; lowercase letters/digits/underscore; 3–80 chars.</p>
   <button class="mn-submit" type="submit">Scaffold primitive</button>
 </form>

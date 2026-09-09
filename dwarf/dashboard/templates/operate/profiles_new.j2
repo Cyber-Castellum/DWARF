@@ -17,11 +17,11 @@
 <p class="empty-section-statement">No profile templates found under <code>dwarf/profiles/templates/</code>.</p>
 {% else %}
 <form class="pn-form" method="post" action="/operate/profiles/new?token={{ token }}">
-  <label>Template</label>
-  <select name="template">{% for t in templates %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
+  <label for="profile-template">Template</label>
+  <select id="profile-template" name="template">{% for t in templates %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
   <p class="pn-hint">{{ templates|length }} templates available.</p>
-  <label>Profile name</label>
-  <input type="text" name="name" placeholder="my-devnet" required>
+  <label for="profile-name">Profile name</label>
+  <input id="profile-name" type="text" name="name" placeholder="my-devnet" required>
   <p class="pn-hint">Lowercase letters/digits/dot/underscore/dash, 3–80 chars. Becomes the profile id + directory.</p>
   <button class="pn-submit" type="submit">Create profile</button>
 </form>

@@ -53,7 +53,8 @@
   <header><span class="eyebrow">Import</span><h2 id="import-heading">Import a bundle</h2></header>
   <p class="page-subhero">Upload a previously-exported <code>bundle.tar.gz</code>. The framework verifies the bundle's hash chain before unpacking into <code>runs/&lt;run_id&gt;/</code>. Equivalent CLI: <code>cardano-profile bundle import &lt;path&gt;</code>.</p>
   <form class="bundle-import-form" method="post" action="/api/bundle/import" enctype="multipart/form-data">
-    <input type="file" name="bundle" accept=".tar.gz,.tgz,application/gzip,application/x-gzip" required>
+    <label for="bundle-import">Bundle archive</label>
+    <input id="bundle-import" type="file" name="bundle" accept=".tar.gz,.tgz,application/gzip,application/x-gzip" required>
     <button type="submit" class="cta">Import bundle</button>
   </form>
   <p class="page-subhero"><small>Existing run-ids are not overwritten.</small></p>

@@ -23,7 +23,7 @@ Usage: delivery/scripts/uninstall.sh [--purge] [--remove-image]
 Stops the Dwarf delivery stack. By default, runtime data and Docker images are preserved.
 
 Options:
-  --purge         Remove package-local runtime data under var/
+  --purge         Remove runtime data under ${DWARF_RUNTIME_ROOT}
   --remove-image  Remove ${DWARF_IMAGE}
 EOF
       exit 0
@@ -53,4 +53,3 @@ if [[ "$remove_image" == true ]]; then
 else
   echo "Preserving image: ${DWARF_IMAGE}"
 fi
-

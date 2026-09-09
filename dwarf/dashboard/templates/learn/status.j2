@@ -2,12 +2,21 @@
 {% block main %}
 <span class="eyebrow">Learn</span>
 <h1>Status</h1>
-<p>Where Dwarf-the-project is right now, derived from current repository state at request time. Combined with <a href="/learn/coverage">coverage</a>, this answers what Dwarf is and where it is at this moment.</p>
+<p>Deployed source provenance, live catalog inventory, findings, and available repository status. Combined with <a href="/learn/coverage">coverage</a>, this identifies exactly what this dashboard can run.</p>
+
+<section class="status-section" id="deployed-source">
+  <span class="eyebrow">Deployed source</span>
+  <p><strong>{{ deployed.scenario_count }} scenarios</strong> and <strong>{{ deployed.primitive_count }} primitives</strong> are readable from the live catalogs.</p>
+  <p class="coverage-matrix__anchor">
+    <span class="eyebrow">Public revision</span>
+    {% if deployed.revision_known %}<a href="{{ deployed.repository }}/commit/{{ deployed.revision }}"><code>{{ deployed.revision }}</code></a>{% else %}<code>unknown</code> — rebuild with <code>DWARF_SOURCE_REVISION</code>{% endif %}
+  </p>
+</section>
 
 {% if data_source_caveat %}
 <aside class="data-source-caveat">
   <span class="eyebrow">Data source caveat</span>
-  Loaded from worktree filesystem; the canonical <code>main</code>-branch view was unavailable at render time. The displayed state may not reflect the latest <code>main</code>.
+  Git history is not packaged in the runtime image. File-backed findings and live catalogs are current for the deployed revision; commit history and top-level status notes are unavailable here.
 </aside>
 {% endif %}
 
@@ -32,8 +41,8 @@
 
 <section class="status-section" id="recent-work">
   <span class="eyebrow">Recent work</span>
-  <p>Last {{ recent_commits|length }} feature commits on <code>main</code>. Dashboard scaffolding (<code>plan:</code> docs and any <code>(dashboard)</code>-scoped commit) is filtered out by commit-message pattern.</p>
   {% if recent_commits %}
+  <p>Last {{ recent_commits|length }} feature commits on <code>main</code>. Dashboard scaffolding (<code>plan:</code> docs and any <code>(dashboard)</code>-scoped commit) is filtered out by commit-message pattern.</p>
   <ul class="recent-work-list">
     {% for row in recent_commits %}
     <li class="recent-work-row">
@@ -45,14 +54,14 @@
   </ul>
   {% else %}
   <p class="empty-section-statement">
-    No commits returned.
-    <span class="empty-section-statement__cite">git log main --oneline -n20</span>
+    Commit history is not available in this runtime image.
+    <span class="empty-section-statement__cite">use the public revision above for canonical history</span>
   </p>
   {% endif %}
-  <p class="coverage-matrix__anchor">
+  {% if recent_commits %}<p class="coverage-matrix__anchor">
     <span class="eyebrow">Anchor</span>
     <code>git log main --oneline -n20</code>
-  </p>
+  </p>{% endif %}
 </section>
 <hr class="hairline">
 

@@ -8,7 +8,7 @@
 
 <dl class="learn-glossary">
   {% for t in terms %}
-  <dt id="term-{{ t.term|lower|replace(' ', '-') }}"><code>{{ t.term }}</code></dt>
+  <dt id="{{ t.anchor_id }}"><code>{{ t.term }}</code></dt>
   <dd>
     {{ t.definition|safe }}
     {% if t.see_also %}<p class="learn-glossary__see"><small>see also <a href="{{ t.see_also }}">{{ t.see_also }}</a></small></p>{% endif %}

@@ -9,7 +9,7 @@
 {% if empty %}
 <p class="empty-section-statement">
   No scheduled entries yet.
-  <span class="empty-section-statement__cite">store: <code>$ADA2_DWARF_STATE_DIR/schedule.json</code></span>
+  <span class="empty-section-statement__cite">DWARF state store · <code>{{ store_path }}</code></span>
 </p>
 {% else %}
 <div class="status-tile-grid">
@@ -32,6 +32,7 @@
 
 <hr class="hairline">
 
+<div class="responsive-table schedule-table-wrap">
 <table class="config-table schedule-table">
   <thead>
     <tr>
@@ -72,6 +73,7 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endif %}
 
 <hr class="hairline">

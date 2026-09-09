@@ -146,19 +146,25 @@ def html_route_groups() -> list[dict[str, Any]]:
     one giant bullet list."""
     operate = [
         "/operate", "/operate/runs", "/operate/runs/<id>", "/operate/runs/<id>/live",
-        "/operate/scenarios", "/operate/scenarios/new",
+        "/operate/scenarios", "/operate/scenarios/new", "/operate/scenarios/edit/<id>",
         "/operate/compare", "/operate/compare/runs",
-        "/operate/profiles", "/operate/bundles", "/operate/targets",
+        "/operate/profiles", "/operate/profiles/new",
+        "/operate/bundles", "/operate/targets", "/operate/targets/new",
         "/operate/status", "/operate/coverage", "/operate/timeline",
-        "/operate/static-analysis", "/operate/contract",
-        "/operate/plugins", "/operate/config", "/operate/notifications",
+        "/operate/static-analysis", "/operate/contract", "/operate/crashes",
+        "/operate/audit", "/operate/schedule", "/operate/antithesis",
+        "/operate/primitives/new", "/operate/plugins", "/operate/config",
+        "/operate/config/edit", "/operate/notifications",
     ]
     learn = [
         "/learn", "/learn/getting-started", "/learn/examples",
         "/learn/walkthroughs", "/learn/architecture",
         "/learn/concepts", "/learn/glossary",
         "/learn/api", "/learn/faq", "/learn/troubleshooting",
-        "/learn/coverage", "/learn/status", "/learn/cli",
+        "/learn/coverage", "/learn/threat-coverage", "/learn/consensus",
+        "/learn/status", "/learn/cli", "/learn/overview",
+        "/learn/attack-cost", "/learn/operator-runbook",
+        "/learn/developer-onboarding", "/learn/plugin-authoring",
     ]
     top_level = ["/"]
     return [

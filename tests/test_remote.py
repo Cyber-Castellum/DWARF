@@ -12,7 +12,7 @@ def test_render_ssh_command_resolves_container_key_path_on_host(tmp_path, monkey
     config = DeploymentConfig.from_dict({
         "ssh_user": "nigel",
         "host": "127.0.0.1",
-        "ssh_key_path": "/home/dwarf/.ssh/id_ed25519",
+        "ssh_key_path": "/home/dwarf/.ssh/cardano-box",
     })
 
     argv = render_ssh_command(config, "true")

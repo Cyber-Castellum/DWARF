@@ -52,7 +52,10 @@ _EXCLUDED = {"moog"}
 
 
 def config_edit_payload() -> dict:
-    cfg = load_config()
+    try:
+        cfg = load_config()
+    except FileNotFoundError:
+        cfg = DeploymentConfig.from_dict({})
     values = cfg.to_dict()
     fields = []
     for key, meta in CONFIG_FIELDS.items():

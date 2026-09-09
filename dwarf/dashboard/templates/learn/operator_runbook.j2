@@ -12,12 +12,12 @@
   <p>Clone the repo and run the four delivery scripts in order:</p>
   <pre class="run-payload-pre"><code>git clone https://github.com/Cyber-Castellum/DWARF.git
 cd DWARF
-delivery/scripts/install.sh       # create ./var/{runs,state,bundles}
-delivery/scripts/build-image.sh   # build dwarf/framework:current
-delivery/scripts/deploy.sh        # start container dwarf-fw on :8787</code></pre>
-  <p>The deployment mounts <code>runs/</code>, <code>state/</code>, <code>bundles/</code> from the package <code>var/</code> into the container and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites (Docker + Compose v2, ~20 GB free disk) and options are in <code>INSTALL.md</code>. Override the port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh</code>.</p>
+bash delivery/scripts/install.sh       # create ~/.local/share/dwarf/{runs,state,bundles}
+bash delivery/scripts/build-image.sh   # build dwarf/framework:current
+bash delivery/scripts/deploy.sh        # start container dwarf-fw on :8787</code></pre>
+  <p>The deployment mounts <code>runs/</code>, <code>state/</code>, and <code>bundles/</code> from <code>~/.local/share/dwarf/</code> by default and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Override the data location with <code>DWARF_RUNTIME_ROOT</code>. Prerequisites (Docker + Compose v2, ~20 GB free disk) and options are in <code>INSTALL.md</code>. Override the port with <code>DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/deploy.sh</code>.</p>
   <h3>Confirm it's working</h3>
-  <pre class="run-payload-pre"><code>delivery/scripts/status.sh                                    # image / container / port / inventory
+  <pre class="run-payload-pre"><code>bash delivery/scripts/status.sh                               # image / container / port / inventory
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8787/operate   # expect 200
 docker exec dwarf-fw python3 dwarf/scripts/validate_scenarios.py         # expect RESULT: PASS, 0 failures</code></pre>
   <h3>Alternative: bare metal</h3>
@@ -25,7 +25,7 @@ docker exec dwarf-fw python3 dwarf/scripts/validate_scenarios.py         # expec
 cd DWARF
 python3 -m pip install -r infrastructure/docker/requirements-framework.txt
 ./dwarf/cardano-profile dashboard serve --bind 0.0.0.0 --port 8787</code></pre>
-  <p>Same CLI, framework runs as host processes. <code>state/</code> · <code>runs/</code> · <code>bundles/</code> live under <code>var/</code> at the repo root.</p>
+  <p>Same CLI, framework runs as host processes. Its paths are controlled by the <code>ADA2_DWARF_*</code> environment variables; the Docker delivery scripts use <code>~/.local/share/dwarf/</code> unless <code>DWARF_RUNTIME_ROOT</code> is set.</p>
 </section>
 
 <hr class="hairline">
@@ -150,9 +150,9 @@ cardano-profile moog preflight --asset-dir &lt;dir&gt; --repo &lt;org/repo&gt; -
   <p>The Moog config block is safe for public deployment metadata only. Set or replace it with a JSON object like this:</p>
   <pre class="run-payload-pre"><code>cardano-profile moog set '{
   "enabled": true,
-  "deploy_root": "/home/nigel/moog-deploy",
-  "moog_binary": "/home/nigel/bin/moog",
-  "secrets_root": "/home/nigel/moog-secrets",
+  "deploy_root": "/srv/dwarf/moog-deploy",
+  "moog_binary": "/usr/local/bin/moog",
+  "secrets_root": "/srv/dwarf/moog-secrets",
   "mpfs_host": "https://mpfs.plutimus.com",
   "token_id": "21c523c3b4565f1fc1ad7e54e82ca976f60997d8e7e9946826813fabf341069b",
   "requester_wallet_id": "moog-requester",
@@ -204,7 +204,7 @@ cardano-profile moog asset validate --asset-dir /tmp/moog-asset --json</code></p
   <p>The scaffold creates a minimal <code>docker-compose.yaml</code> and <code>README.md</code>. Replace the placeholder workload with the target-specific Dwarf security test services before any live Moog request.</p>
 
   <h3 id="antithesis-bundles">Scenario → Antithesis: the full flow</h3>
-  <p>The path from a scenario to a launched Antithesis campaign. Today the <strong>setup and scenario authoring live in the dashboard</strong>; the <strong>build → validate → launch steps are CLI</strong> (<code>cardano-profile</code>). Each stage below shows where it runs and the command.</p>
+  <p>The path from a scenario to a launched Antithesis campaign. Setup and scenario authoring are available in the dashboard. Build, validation, preflight, launch, and status polling are available from <a href="/operate/antithesis">Antithesis campaigns</a> and from the equivalent <code>cardano-profile</code> commands below.</p>
 
   <style>
   .at-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:16px 0 20px}
@@ -233,7 +233,7 @@ cardano-profile moog asset validate --asset-dir /tmp/moog-asset --json</code></p
     <div class="at-arrow">→</div>
     <div class="at-stage at-cli"><span class="at-n">7</span><b>Poll</b><span class="at-where">CLI</span><span class="at-cmd">moog test-status</span></div>
   </div>
-  <p><strong>1–2 (dashboard):</strong> enter the Moog/GitHub/Antithesis values at <a href="/operate/config">/operate/config</a> and pick or clone a scenario at <a href="/operate/scenarios/new">/operate/scenarios/new</a>. <strong>3–7 (CLI):</strong> the commands below. The <code>antithesis build</code> command renders one profile definition to a self-contained, hermetic bundle — the workload container acts as the node&rsquo;s peer, dials the node, drives fuzzed CBOR, and emits Antithesis SDK assertions (no-crash, liveness, clean-reject).</p>
+  <p><strong>1–2:</strong> enter the Moog/GitHub/Antithesis values at <a href="/operate/config">/operate/config</a> and pick or clone a scenario at <a href="/operate/scenarios/new">/operate/scenarios/new</a>. <strong>3–7:</strong> use <a href="/operate/antithesis">/operate/antithesis</a> or the commands below. The <code>antithesis build</code> command renders one profile definition to a self-contained, hermetic bundle — the workload container acts as the node&rsquo;s peer, dials the node, drives fuzzed CBOR, and emits Antithesis SDK assertions (no-crash, liveness, clean-reject).</p>
 
   <h3>Build the bundle</h3>
   <pre class="run-payload-pre"><code>cardano-profile antithesis build profile-l-amaru-closed-devnet \
@@ -366,8 +366,8 @@ except ImportError:
   <header><span class="eyebrow">Step 5</span><h2>Backup &amp; restore</h2></header>
   <p>The framework's substrate state, runs, bundles, and config live under three host-mounted directories:</p>
   <ul>
-    <li><code>runs/</code> — every recorded scenario execution. Auto-pruned per <code>runs_retention_days</code> in config (default 30).</li>
-    <li><code>bundles/</code> — explicitly-preserved forensic archives. Retained per <code>bundles_retention_days</code> (default 90).</li>
+    <li><code>runs/</code> — every recorded scenario execution. Kept until manually removed by default (<code>runs_retention_days: 0</code>).</li>
+    <li><code>bundles/</code> — explicitly-preserved forensic archives. Kept until manually removed by default (<code>bundles_retention_days: 0</code>).</li>
     <li><code>state/</code> — dashboard config + notifications log + chain head + lifecycle ledger.</li>
   </ul>
   <p>Snapshot all three for backup. The framework provides primitives that wrap this:</p>

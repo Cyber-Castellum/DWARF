@@ -9,8 +9,9 @@
   <td>{{ row.ended_at or '—' }}</td>
   <td>{% if row.scenario_id %}<code>{{ row.scenario_id }}</code>{% else %}—{% endif %}</td>
   <td>
-    {% if row.profile_id %}
+    {% if row.profile_url %}
     <a href="{{ row.profile_url }}"><code>{{ row.profile_id }}</code></a>
+    {% elif row.profile_id %}<code title="Profile is not in the current catalog">{{ row.profile_id }}</code>
     {% else %}—{% endif %}
   </td>
   <td>{{ row.runtime or '—' }}</td>

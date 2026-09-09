@@ -263,10 +263,10 @@ DWARF/
 **Local framework / dashboard** (any Docker host with Compose v2):
 
 ```bash
-delivery/scripts/install.sh
-delivery/scripts/build-image.sh
-delivery/scripts/deploy.sh
-delivery/scripts/status.sh
+bash delivery/scripts/install.sh
+bash delivery/scripts/build-image.sh
+bash delivery/scripts/deploy.sh
+bash delivery/scripts/status.sh
 ```
 
 **`dwarf-adversary`** (built on a GHC 9.6.x host):

@@ -2675,6 +2675,111 @@ hr.hairline { opacity: 0.7; }
   }
 }
 
+/* ---- Schedule ------------------------------------------------------ */
+.schedule-create {
+  padding: var(--space-6);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: rgba(19, 26, 34, 0.72);
+  box-shadow: var(--shadow-card);
+}
+
+.schedule-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(240px, 2fr) minmax(150px, 1fr) minmax(150px, 1fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+  margin-top: var(--space-4);
+}
+
+.schedule-form__row {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--ink-secondary);
+  font-size: var(--type-small);
+}
+
+.schedule-form__row > span {
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: var(--type-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.schedule-form output {
+  grid-column: 1 / -1;
+  min-height: 1.4em;
+  color: var(--cyan-glow);
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+}
+
+.schedule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  color: var(--ink-primary);
+}
+
+.schedule-btn--primary,
+.schedule-btn--run,
+.schedule-btn--resume {
+  border-color: var(--cyan-deep);
+  background: var(--cyan-tint);
+  color: var(--cyan-glow);
+}
+
+.schedule-btn--pause {
+  border-color: rgba(181, 138, 79, 0.45);
+  color: var(--cork);
+}
+
+.schedule-btn--delete {
+  border-color: rgba(192, 48, 48, 0.5);
+  color: var(--crimson-glow);
+}
+
+.schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.schedule-table-wrap {
+  margin-block: var(--space-4);
+}
+
+.schedule-table {
+  min-width: 920px;
+}
+
+@media (max-width: 960px) {
+  .schedule-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .schedule-form > .schedule-btn {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .schedule-create {
+    padding: var(--space-4);
+  }
+
+  .schedule-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule-form > .schedule-btn {
+    width: 100%;
+  }
+}
+
 /* End slice-28 polish. */
 
 /* ---- Slice 30: bundle inspector enrichment ---- */
@@ -3766,4 +3871,158 @@ hr.hairline { opacity: 0.7; }
 }
 .moog-setup-form__commands {
   margin-top: var(--space-4);
+}
+
+/* ---- Shared responsive and native-control contract -----------------
+   Keep browser defaults from punching white holes through forensic-noir,
+   and contain intrinsically-wide operator data inside the content well. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.shell-main,
+.shell-main * {
+  box-sizing: border-box;
+}
+
+.shell-main,
+.shell-main :where(section, article, div, form, fieldset, label) {
+  min-width: 0;
+}
+
+.shell-main img,
+.shell-main svg,
+.shell-main canvas {
+  max-width: 100%;
+}
+
+.shell-main :where(p, li, dd, td, th, a, code) {
+  overflow-wrap: anywhere;
+}
+
+.shell-main pre {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.shell-main pre code {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.shell-main input:not([type="checkbox"]):not([type="radio"]),
+.shell-main select,
+.shell-main textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--obsidian-1);
+  color: var(--ink-primary);
+  caret-color: var(--cyan-primary);
+  font: inherit;
+}
+
+.shell-main select option {
+  background: var(--obsidian-2);
+  color: var(--ink-primary);
+}
+
+.shell-main textarea {
+  resize: vertical;
+}
+
+.shell-main input::placeholder,
+.shell-main textarea::placeholder {
+  color: var(--ink-tertiary);
+  opacity: 1;
+}
+
+.shell-main input:-webkit-autofill,
+.shell-main input:-webkit-autofill:hover,
+.shell-main input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink-primary);
+  box-shadow: 0 0 0 1000px var(--obsidian-1) inset;
+}
+
+.shell-main input:focus-visible,
+.shell-main select:focus-visible,
+.shell-main textarea:focus-visible,
+.shell-main button:focus-visible {
+  outline: 2px solid var(--cyan-primary);
+  outline-offset: 2px;
+  border-color: var(--cyan-primary);
+}
+
+.shell-main input:disabled,
+.shell-main select:disabled,
+.shell-main textarea:disabled,
+.shell-main button:disabled {
+  color: var(--ink-disabled);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.shell-main input[type="checkbox"],
+.shell-main input[type="radio"] {
+  accent-color: var(--cyan-primary);
+}
+
+.shell-main button {
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--obsidian-2);
+  color: var(--ink-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.shell-main button:hover:not(:disabled) {
+  border-color: var(--cyan-deep);
+  background: var(--obsidian-3);
+}
+
+.shell-main input[type="file"]::file-selector-button {
+  min-height: 32px;
+  margin-inline-end: var(--space-3);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--obsidian-2);
+  color: var(--ink-primary);
+  font: inherit;
+}
+
+@media (max-width: 800px) {
+  .shell-main table:not(.no-responsive-table) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .runs-table-wrap .runs-table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell-main input:not([type="checkbox"]):not([type="radio"]),
+  .shell-main select,
+  .shell-main textarea,
+  .shell-main button {
+    min-height: 44px;
+  }
 }

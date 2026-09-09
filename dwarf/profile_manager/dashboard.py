@@ -1729,7 +1729,7 @@ def render_tests_html():
         + _recent_runs_table_html() +
         '</section>'
     )
-    body = _target_live_cards() + runs_section + """
+    body = '<h1>Tests &amp; Evidence</h1>' + _target_live_cards() + runs_section + """
   <section class="adv-only">
     <h2>Tests & Evidence</h2>
     <svg class="viz viz-compact" id="test-pipeline-svg" viewBox="0 0 940 270" role="img" aria-label="Test and evidence pipeline"></svg>
@@ -1772,6 +1772,7 @@ def render_tests_html():
     <h2>Paste a scenario</h2>
     <p class="small basic-only">Paste a scenario YAML to add it to the framework. The server will check it for you and (if valid) you can promote it into the runnable corpus.</p>
     <p class="small adv-only">POST /api/scenario/paste writes to dwarf/scenarios/pending/&lt;id&gt;.yaml and re-validates against spec/v1/schema.json. POST /api/scenario/promote moves a pending scenario into dwarf/scenarios/.</p>
+    <label for="paste-textarea">Scenario YAML</label>
     <textarea id="paste-textarea" rows="14" placeholder='{ "spec_version": "v1", "id": "your-id", ... }'></textarea>
     <div class="action-row">
       <button id="paste-validate-button" class="action-button">Validate</button>
@@ -2011,6 +2012,7 @@ def render_scenarios_html():
         for row in rows
     ) or '<tr><td colspan="3"><em>No scenarios in dwarf/scenarios/. Paste one on the Tests page.</em></td></tr>'
     body = (
+        '<h1>Scenarios</h1>'
         '<section class="basic-only">'
         '<div class="card notice">'
         '<h3>Scenarios</h3>'

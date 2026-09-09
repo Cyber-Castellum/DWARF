@@ -46,8 +46,14 @@ def _state_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "dwarf" / "state"
 
 
-def _store_path() -> Path:
+def store_path() -> Path:
+    """Return the resolved schedule store path for status/UI reporting."""
     return _state_dir() / "schedule.json"
+
+
+def _store_path() -> Path:
+    """Compatibility alias for existing internal callers."""
+    return store_path()
 
 
 def _utc_now_iso() -> str:

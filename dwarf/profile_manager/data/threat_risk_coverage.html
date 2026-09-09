@@ -50,6 +50,8 @@
   .bar{height:20px;border-radius:5px;background:linear-gradient(90deg,var(--accent2),var(--accent));min-width:2px}
   .barrow .val{font-size:12px;color:var(--ink);font-weight:600}
   table{width:100%;border-collapse:collapse;font-size:13px}
+  .table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-scroll table{min-width:860px}
   th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.7px;position:sticky;top:64px;background:var(--bg)}
   tr:hover td{background:color-mix(in srgb,var(--accent) 5%,transparent)}
@@ -70,6 +72,15 @@
   .foot{margin-top:34px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
   a{color:var(--accent)}
   a:hover{color:var(--accent2)}
+
+  @media(max-width:640px){
+    header{padding:22px 16px 16px}
+    .wrap{padding:18px 16px 48px}
+    .controls{position:static}
+    .controls input[type=search]{min-width:100%}
+    .barrow .lbl{width:120px}
+    table{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+  }
 
   /* ---- Substrate atmosphere (matches the DWARF dashboard base.css) ----
      Fixed layers behind content: a slow-drifting cool-tinted obsidian glow
@@ -198,6 +209,7 @@
   <section>
     <h2>Coverage matrix — filter &amp; search</h2>
     <div class="controls" id="controls">
+      <label class="muted small" for="q">search</label>
       <input type="search" id="q" placeholder="search threats, risks, scenarios, surfaces…">
       <span class="muted small">show types:</span>
       <span class="pill t-scripted toggle on" data-t="scripted"><span class="dot t-scripted"></span>scripted</span>
@@ -211,12 +223,12 @@
 
   <section>
     <h2>Threat Model (TM) coverage</h2>
-    <table id="tm-table"><thead><tr><th>ID</th><th>Threat vector</th><th>Surface</th><th>Cov</th><th>Scenarios</th></tr></thead><tbody></tbody></table>
+    <div class="table-scroll"><table id="tm-table"><thead><tr><th>ID</th><th>Threat vector</th><th>Surface</th><th>Cov</th><th>Scenarios</th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <section>
     <h2>Risk Register (RR) coverage</h2>
-    <table id="rr-table"><thead><tr><th>ID</th><th>Risk</th><th>Surface</th><th>Cov</th><th>Scenarios</th></tr></thead><tbody></tbody></table>
+    <div class="table-scroll"><table id="rr-table"><thead><tr><th>ID</th><th>Risk</th><th>Surface</th><th>Cov</th><th>Scenarios</th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <section>

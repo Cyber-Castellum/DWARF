@@ -14,17 +14,17 @@
     <p>Clone the repository and run the four delivery scripts in order. Any Docker-capable Linux host with Compose v2 and ~20&nbsp;GB free disk works; no credentials or wallet are needed for local use.</p>
     <pre class="run-payload-pre"><code>git clone https://github.com/Cyber-Castellum/DWARF.git
 cd DWARF
-delivery/scripts/install.sh       # create ./var/{runs,state,bundles}
-delivery/scripts/build-image.sh   # build dwarf/framework:current
-delivery/scripts/deploy.sh        # start container dwarf-fw on :8787</code></pre>
-    <p>The deployment starts the <code>dwarf/framework:current</code> image, mounts <code>runs/</code> · <code>state/</code> · <code>bundles/</code> from the package runtime directory, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Prerequisites and options are in <code>INSTALL.md</code>. Use a different port with <code>DWARF_DASHBOARD_PORT=8877 delivery/scripts/deploy.sh</code>.</p>
+bash delivery/scripts/install.sh       # create ~/.local/share/dwarf/{runs,state,bundles}
+bash delivery/scripts/build-image.sh   # build dwarf/framework:current
+bash delivery/scripts/deploy.sh        # start container dwarf-fw on :8787</code></pre>
+    <p>The deployment starts the <code>dwarf/framework:current</code> image, mounts <code>runs/</code> · <code>state/</code> · <code>bundles/</code> from <code>~/.local/share/dwarf/</code> by default, and starts the dashboard at <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a>. Set <code>DWARF_RUNTIME_ROOT</code> to use another location. Prerequisites and options are in <code>INSTALL.md</code>. Use a different port with <code>DWARF_DASHBOARD_PORT=8877 bash delivery/scripts/deploy.sh</code>.</p>
     <p>This is the primary deploy path. The container layer pins framework dependencies so installs are reproducible across Docker-capable Linux hosts.</p>
 
     <h3>Confirm it's working</h3>
-    <pre class="run-payload-pre"><code>delivery/scripts/status.sh                                    # image / container / port / inventory
+    <pre class="run-payload-pre"><code>bash delivery/scripts/status.sh                               # image / container / port / inventory
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8787/operate   # expect 200
 docker exec dwarf-fw python3 dwarf/scripts/validate_scenarios.py         # expect RESULT: PASS, 0 failures</code></pre>
-    <p>Then open <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a> (or <code>http://&lt;host-lan-ip&gt;:8787/operate</code>). To tear down later: <code>delivery/scripts/uninstall.sh</code> (add <code>--purge</code> to also remove runtime data).</p>
+    <p>Then open <a href="http://127.0.0.1:8787/operate"><code>http://127.0.0.1:8787/operate</code></a> (or <code>http://&lt;host-lan-ip&gt;:8787/operate</code>). To tear down later: <code>bash delivery/scripts/uninstall.sh</code> (add <code>--purge</code> to also remove runtime data).</p>
 
     <h3>Alternative: bare-metal CLI</h3>
     <p>To develop on Dwarf itself or skip Docker, run the CLI from the source tree on a host with Python&nbsp;3.11+:</p>

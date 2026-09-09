@@ -31,4 +31,5 @@ def render_operate_schedule() -> str:
         entries=entries,
         scenarios=_scenario_options(),
         empty=not entries,
+        store_path=str(schedule_store.store_path()),
     )

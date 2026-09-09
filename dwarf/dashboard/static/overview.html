@@ -437,10 +437,10 @@ open http://127.0.0.1:8787
   
 <section id="attackcost" class="shell ref-section">
   <div class="section-head"><div>
-    <p class="eyebrow">Live &middot; Cardano</p>
+    <p class="eyebrow">Snapshot &middot; Cardano</p>
     <h2>Cost to attack Cardano, right now.</h2>
   </div></div>
-  <p class="ref-lede">The textbook figure is "51% of the stake." The <em>effective</em> figure is lower &mdash; because only part of all ADA is actively staked, an attacker needs a fraction of <b>active</b> stake, not of total supply. This is computed live from on-chain data + the ADA price.</p>
+  <p class="ref-lede">The textbook figure is "51% of the stake." The <em>effective</em> figure is lower &mdash; because only part of all ADA is actively staked, an attacker needs a fraction of <b>active</b> stake, not of total supply. This snapshot uses on-chain data and the ADA price; current figures are available on the dedicated attack-cost page.</p>
   <div class="tick-grid">
     <div class="tick-hero">
       <div class="tick-label">Est. cost to reach the ~40%-of-active-stake band</div>
@@ -467,7 +467,7 @@ open http://127.0.0.1:8787
   function fmtUSD(n){ if(n>=1e9)return '$'+(n/1e9).toFixed(2)+'B'; if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M'; return '$'+Math.round(n).toLocaleString(); }
   function fmtADA(n){ if(n>=1e9)return (n/1e9).toFixed(2)+'B'; if(n>=1e6)return (n/1e6).toFixed(1)+'M'; return Math.round(n).toLocaleString(); }
   function set(id,v){ var e=document.getElementById(id); if(e)e.textContent=v; }
-  function render(d,live){
+  function render(d){
     var ada40=d.active*0.40, ada50=d.active*0.50, cost=ada40*d.price;
     set('tk-cost',fmtUSD(cost));
     set('tk-ada',fmtADA(ada40));
@@ -478,20 +478,9 @@ open http://127.0.0.1:8787
     set('tk-epoch',d.epoch);
     set('tk-r40',fmtADA(ada40)+' ADA  ·  '+fmtUSD(ada40*d.price)+'  ·  '+(100*ada40/d.circ).toFixed(1)+'% supply');
     set('tk-r50',fmtADA(ada50)+' ADA  ·  '+fmtUSD(ada50*d.price)+'  ·  '+(100*ada50/d.circ).toFixed(1)+'% supply');
-    set('tk-status', live ? 'live · updates every 60s' : 'snapshot (live feed blocked here — live on the hosted site)');
+    set('tk-status', 'snapshot · live figures: /learn/attack-cost');
   }
-  async function live(){
-    try{
-      var totals=await fetch('https://api.koios.rest/api/v1/totals').then(function(r){return r.json();});
-      var t=totals[0], epoch=+t.epoch;
-      var ei=await fetch('https://api.koios.rest/api/v1/epoch_info?_epoch_no='+epoch).then(function(r){return r.json();});
-      var pr=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd').then(function(r){return r.json();});
-      render({epoch:epoch,circ:+t.circulation_lovelace/1e6,total:+t.total_supply_lovelace/1e6,active:+ei[0].active_stake/1e6,price:+pr.cardano.usd}, true);
-    }catch(e){ render(SNAP,false); }
-  }
-  render(SNAP,false);   // show snapshot immediately
-  live();               // then try to go live
-  setInterval(live, 60000);
+  render(SNAP);
 })();
 </script>
 
@@ -673,7 +662,7 @@ open http://127.0.0.1:8787
 </div>
 <div class="ref-note">The two <code>ghcr.io/j-gainsec/*</code> images above are DWARF's own. The Antithesis <em>testnet substrate</em> itself uses pinned upstream images (<code>ghcr.io/cardano-foundation/*</code>, <code>ghcr.io/pragma-org/amaru</code>) &mdash; registry-hermetic, no build contexts (the Stage-2 gate rejects any <code>build:</code>).</div>
 
-  <div class="ref-note"><b>Honest scope.</b> Generatable today = <code>cardano-node</code> only (Amaru / differential generation is follow-on work); decode surfaces map to the five built adversary modes above (on-wire modes for handshake / keepalive / txsub framing are still to come). Moog does <b>not</b> call an Antithesis API &mdash; it signs an on-chain create-test and CF's Moog agent launches the run.</div>
+  <div class="ref-note"><b>Honest scope.</b> Cardano-only decode generation remains available, and the <b>Mixed Cardano/Amaru N2N state-machine</b> package now delivers equivalent generated illegal ChainSync, BlockFetch, TxSubmission2, and KeepAlive transitions to both implementations. Its fresh-volume DWARF execution is local runtime proof, not a valid live Antithesis result. Moog does <b>not</b> call an Antithesis API &mdash; it signs an on-chain create-test and CF's Moog agent launches the run.</div>
 </section>
 
 
@@ -682,10 +671,10 @@ open http://127.0.0.1:8787
     <p class="eyebrow">Reference &middot; the catalogue</p>
     <h2>Every strategy, every oracle.</h2>
   </div></div>
-  <p class="ref-lede">The complete set of primitives a scenario can reference &mdash; each <em>strategy</em> (what a scenario does) and each <em>oracle</em> (the pass/fail condition). A scenario can only name primitives that exist here; pasted YAML can never add behaviour. All 206 are fully implemented; the <b>verified</b> column shows how far each has actually been exercised. Across the 239 shipped scenarios &mdash; 128 full + 111 smoke, 11 targeting Amaru &mdash; the deep, evidenced surfaces are the CBOR-decode / coverage / on-wire ones.</p>
+  <p class="ref-lede">The complete set of primitives a scenario can reference &mdash; each <em>strategy</em> (what a scenario does) and each <em>oracle</em> (what a scenario can assert). A scenario can only name primitives that exist here; pasted YAML cannot add behaviour. All 206 entries in this deployed catalogue are implemented; the <b>verified</b> column shows how far each has actually been exercised. The live scenario total and deployed source revision are shown on <a href="/learn/status">Project status</a>.</p>
   
 <div class="ref-stats">
-  <div class="ref-stat big"><b>204<span class="slash">/</span>206</b><span>primitives documented (100%)</span></div>
+  <div class="ref-stat big"><b>206</b><span>primitive entries in this deployed snapshot</span></div>
   <div class="ref-stat"><b>118</b><span>load strategies</span></div>
   <div class="ref-stat"><b>75</b><span>assertion oracles</span></div>
   <div class="ref-stat"><b>6</b><span>primitive families</span></div>
@@ -712,7 +701,7 @@ open http://127.0.0.1:8787
   </div>
   <h3 class="ref-h2">The nine surfaces</h3>
   <div class="surf-grid"><div class="surf-col"><h4 class="ref-h4">Decode</h4><div class="surf"><code>DWARF_DECODER=header</code><span class="sd">Praos / VRF / KES header</span><span class="sb both">both backends</span></div><div class="surf"><code>DWARF_DECODER=tx</code><span class="sd">Conway tx body + witnesses</span><span class="sb both">both backends</span></div><div class="surf"><code>DWARF_DECODER=block</code><span class="sd">full block &mdash; widest decode</span><span class="sb both">both backends</span></div></div><div class="surf-col"><h4 class="ref-h4">Ledger rules (state-transition system)</h4><div class="surf"><code>DWARF_DECODER=ledger</code><span class="sd">TxBody + min-fee</span><span class="sb both">both backends</span></div><div class="surf"><code>DWARF_DECODER=applytx</code><span class="sd">UTXOW &rarr; UTXO</span><span class="sb both">both backends</span></div><div class="surf surf-deep"><code>DWARF_DECODER=applyblock</code><span class="sd">BBODY &rarr; LEDGERS &rarr; LEDGER &middot; deepest</span><span class="sb both">both backends</span></div></div><div class="surf-col"><h4 class="ref-h4">Mini-protocol (on-wire framing)</h4><div class="surf"><code>DWARF_DECODER=handshake</code><span class="sd">version negotiation</span><span class="sb local">local only</span></div><div class="surf"><code>DWARF_DECODER=txsub</code><span class="sd">TxSubmission2</span><span class="sb local">local only</span></div><div class="surf"><code>DWARF_DECODER=keepalive</code><span class="sd">liveness</span><span class="sb local">local only</span></div></div></div>
-  <p class="ref-p">The six decode / ledger surfaces run on <b>both backends</b> from one definition (local AFL++ and the Antithesis adversary, same target &amp; seed); the three mini-protocol framing surfaces are local-AFL only today (the on-wire adversary mode is follow-on work).</p>
+  <p class="ref-p">The six decode / ledger surfaces run on <b>both backends</b> from one definition (local AFL++ and the Antithesis adversary, same target &amp; seed). The three framing decoders shown above remain local-AFL targets. Separately, the mixed N2N state-machine package generates illegal ChainSync, BlockFetch, TxSubmission2, and KeepAlive transitions for both node implementations; its status is reported with the explicit local-versus-live qualification above.</p>
   <div class="ref-card"><span class="tag-deep">deepest surface</span>
     <p class="ref-p" style="margin-top:6px"><code>applyblock</code> decodes a Conway tx, wraps it as a single-tx block body, and runs <code>applyBlockEither ValidateAll</code> &mdash; the full <b>BBODY &rarr; LEDGERS &rarr; per-tx LEDGER</b> pipeline (ConwayUtxow / Utxo / Certs) over a genesis-initialised Conway <code>NewEpochState</code>. It reaches the <em>real ledger rules</em>, not just the decoder &mdash; and runs both under AFL++ locally and in-process under Antithesis.</p>
   </div>

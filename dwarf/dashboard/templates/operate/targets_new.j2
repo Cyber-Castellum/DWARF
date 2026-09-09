@@ -16,28 +16,28 @@
 </style>
 
 <form class="tn-form" method="post" action="/operate/targets/new?token={{ token }}">
-  <label>Target id</label>
-  <input type="text" name="id" placeholder="amaru-cbor-decode-my-thing" required>
+  <label for="target-id">Target id</label>
+  <input id="target-id" type="text" name="id" placeholder="amaru-cbor-decode-my-thing" required>
   <p class="tn-hint">Lowercase letters/digits/dot/underscore/dash, 3–80 chars. Becomes the manifest filename.</p>
 
-  <label>Binary path</label>
-  <input type="text" name="binary" placeholder="dwarf/targets/amaru/target/release/amaru-cbor-decode-my-thing" required>
+  <label for="target-binary">Binary path</label>
+  <input id="target-binary" type="text" name="binary" placeholder="dwarf/targets/amaru/target/release/amaru-cbor-decode-my-thing" required>
   <p class="tn-hint">Path to the decoder executable (relative to the repo root, or absolute).</p>
 
   <div class="tn-row">
-    <div><label>Implementation</label><select name="implementation">{% for i in implementations %}<option>{{ i }}</option>{% endfor %}</select></div>
-    <div><label>Language</label><select name="language">{% for l in languages %}<option>{{ l }}</option>{% endfor %}</select></div>
+    <div><label for="target-implementation">Implementation</label><select id="target-implementation" name="implementation">{% for i in implementations %}<option>{{ i }}</option>{% endfor %}</select></div>
+    <div><label for="target-language">Language</label><select id="target-language" name="language">{% for l in languages %}<option>{{ l }}</option>{% endfor %}</select></div>
   </div>
   <div class="tn-row">
-    <div><label>Input format</label><select name="input_format">{% for f in input_formats %}<option>{{ f }}</option>{% endfor %}</select></div>
-    <div><label>Decoder type</label><select name="decoder_type">{% for d in decoder_types %}<option>{{ d }}</option>{% endfor %}</select></div>
+    <div><label for="target-input-format">Input format</label><select id="target-input-format" name="input_format">{% for f in input_formats %}<option>{{ f }}</option>{% endfor %}</select></div>
+    <div><label for="target-decoder-type">Decoder type</label><select id="target-decoder-type" name="decoder_type">{% for d in decoder_types %}<option>{{ d }}</option>{% endfor %}</select></div>
   </div>
 
-  <label>Upstream commit</label>
-  <input type="text" name="upstream_commit" value="local">
+  <label for="target-upstream-commit">Upstream commit</label>
+  <input id="target-upstream-commit" type="text" name="upstream_commit" value="local">
 
-  <label>Invariants (one per line)</label>
-  <textarea name="invariants" placeholder="deserialize-roundtrip preserved&#10;no panic on bounded input&#10;size-bounded output"></textarea>
+  <label for="target-invariants">Invariants (one per line)</label>
+  <textarea id="target-invariants" name="invariants" placeholder="deserialize-roundtrip preserved&#10;no panic on bounded input&#10;size-bounded output"></textarea>
 
   <button class="tn-submit" type="submit">Register target</button>
 </form>
