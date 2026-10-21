@@ -139,16 +139,61 @@ def classify_fatal_signals(text: str) -> dict[str, Any]:
     }
 
 
-def parse_amaru_tip(text: str) -> dict[str, Any]:
+ADOPTED_TIP_PATTERN = re.compile('adopted tip tip\\.slot=(?P<slot>\\d+) tip\\.hash=(?P<hash>[0-9a-f]+) tip\\.block_height=(?P<block_height>\\d+)')
+CONSENSUS_TIP_ADOPT_PATTERN = re.compile('\\btip\\.adopt\\s+slot=(?P<slot>\\d+)\\s+header_hash="(?P<hash>[0-9a-fA-F]{64})"\\s+block_height=(?P<block_height>\\d+)\\b')
+def extract_latest_adopted_tip(log_text: str) -> dict[str, object] | None:
     latest = None
-    for match in AMARU_TIP_RE.finditer(text):
-        latest = {
-            "status": "ok",
-            "slot": int(match.group("slot")),
-            "hash": match.group("hash").lower(),
-            "block": int(match.group("block")),
-        }
-    return latest or {"status": "unavailable", "error": "no tip.adopt record"}
+    for line in log_text.splitlines():
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            record = None
+        if isinstance(record, dict):
+            fields = record.get("fields")
+            if isinstance(fields, dict) and fields.get("message") in {
+                "tip.update",
+                "tip.adopt",
+            }:
+                slot = fields.get("slot")
+                block_height = fields.get("block_height")
+                block_hash = fields.get("header_hash")
+                valid_hash = (
+                    isinstance(block_hash, str)
+                    and re.fullmatch(r"[0-9a-fA-F]{64}", block_hash) is not None
+                )
+                if (
+                    isinstance(slot, int)
+                    and not isinstance(slot, bool)
+                    and slot >= 0
+                    and isinstance(block_height, int)
+                    and not isinstance(block_height, bool)
+                    and block_height >= 0
+                    and valid_hash
+                ):
+                    latest = {
+                        "slot": slot,
+                        "hash": block_hash,
+                        "block_hash": block_hash,
+                        "block_height": block_height,
+                    }
+        for match in (
+            *ADOPTED_TIP_PATTERN.finditer(line),
+            *CONSENSUS_TIP_ADOPT_PATTERN.finditer(line),
+        ):
+            block_hash = match.group("hash")
+            latest = {
+                "slot": int(match.group("slot")),
+                "hash": block_hash,
+                "block_hash": block_hash,
+                "block_height": int(match.group("block_height")),
+            }
+    return latest
+
+def parse_amaru_tip(text: str) -> dict[str, Any]:
+    tip = extract_latest_adopted_tip(text)
+    if tip is None:
+        return {"status":"unavailable", "error":"no valid Amaru tip record"}
+    return {"status":"ok", "slot":tip["slot"], "hash":tip["hash"].lower(), "block":tip["block_height"]}
 
 
 def query_tip(socket_path: str, network_magic: int = 42) -> dict[str, Any]:
@@ -179,6 +224,11 @@ def query_tip(socket_path: str, network_magic: int = 42) -> dict[str, Any]:
         }
     try:
         value = json.loads(result.stdout)
+        if not (isinstance(value, dict)
+                and all(type(value.get(key)) is int and value[key] >= 0 for key in ("slot", "block"))
+                and isinstance(value.get("hash"), str)
+                and re.fullmatch(r"[0-9a-fA-F]{64}", value["hash"])):
+            raise ValueError("tip requires nonnegative integer slot/block and a 64-hex hash")
         return {
             "status": "ok",
             "slot": int(value.get("slot", -1)),

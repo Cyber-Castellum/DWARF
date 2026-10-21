@@ -27,6 +27,7 @@ def atomic_json(path: Path, value: dict) -> None:
 def main() -> int:
     status = Path(os.environ["STATUS_DIR"])
     status.mkdir(parents=True, exist_ok=True)
+    (status / "prefault-ready").unlink(missing_ok=True)
     deadline = time.monotonic() + int(os.environ.get("PREFAULT_TIMEOUT_SECONDS", "1800"))
     while time.monotonic() < deadline:
         cardano = parse_fuzzer_log(read_text(os.environ["CARDANO_FUZZER_LOG"]))
@@ -63,6 +64,9 @@ def main() -> int:
                 },
                 "targets_reachable": targets,
             }
+            if not all(tip.get("status") == "ok" for tip in baseline["tips"].values()):
+                time.sleep(1)
+                continue
             atomic_json(status / "prefault.json", baseline)
             (status / "prefault-ready").write_text("paired 24-cell SP4 coverage\n", encoding="utf-8")
             while True:
