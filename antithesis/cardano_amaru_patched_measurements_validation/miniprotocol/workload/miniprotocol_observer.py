@@ -396,6 +396,12 @@ def observe_runtime() -> dict[str, Any]:
     evaluation = evaluate_runtime(**inputs)
     if not all(runtime_log_available.values()):
         evaluation.update(classifiable=False, safe=None)
+    convergence_observation = {"status": "observed-match" if inputs["converged"] else "unavailable",
+        "reason": "matching sampled hashes" if inputs["converged"] else "sequential latest tips do not establish divergence"}
+    if not inputs["converged"]:
+        known_fatal = any(inputs["fatal"][name] and runtime_log_available[name] for name in runtime_log_available)
+        evaluation["safe"] = False if known_fatal else None
+    evaluation["convergence_observation"] = convergence_observation
     evaluation["runtime_log_available"] = runtime_log_available
     return {
         **evaluation,
@@ -452,22 +458,16 @@ def emit_assertions(result: dict[str, Any], phase: str) -> None:
                 reachable_name,
                 {**details, "target": target, "protocol": protocol, "class": departure},
             )
-    if result["classifiable"]:
-        always(
-            not inputs["fatal"].get("cardano", True),
-            "mixed_sm_cardano_no_panic_or_fatal_termination",
-            details,
-        )
-        always(
-            not inputs["fatal"].get("amaru", True),
-            "mixed_sm_amaru_no_panic_or_fatal_termination",
-            details,
-        )
-        always(
-            result["safe"],
-            "mixed_sm_illegal_sessions_contained",
-            details,
-        )
+    details = {**details, "tips": result["tips"], "convergence_observation": result["convergence_observation"]}
+    if result["runtime_log_available"]["cardano"]:
+        always(not inputs["fatal"].get("cardano", True),
+            "mixed_sm_cardano_no_panic_or_fatal_termination", details)
+    if result["runtime_log_available"]["amaru"]:
+        always(not inputs["fatal"].get("amaru", True),
+            "mixed_sm_amaru_no_panic_or_fatal_termination", details)
+    sometimes(inputs["converged"], "mixed_sm_convergence_observation_available", details)
+    if result["classifiable"] and result["safe"] is not None:
+        always(result["safe"], "mixed_sm_illegal_sessions_contained", details)
 
 
 def wait_until(predicate, timeout_seconds: float, interval_seconds: float = 1.0):

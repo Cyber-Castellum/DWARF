@@ -642,7 +642,7 @@ services:
     restart: always
     platform: linux/amd64
     init: true
-    image: ghcr.io/j-gainsec/dwarf-sm@sha256:e877f127b5b4dfc4f5c875e46652e9f07ef739b0bb1b4eb690c7a8b8069d2acd
+    image: ghcr.io/j-gainsec/dwarf-sm@sha256:645aff5b6a1a86917b8cd73132f9de7211a3d177e7b1d1cd2277d3da69e2874d
   measure-config-sm-cardano-victim:
     platform: linux/amd64
     container_name: measure-config-sm-cardano-victim
@@ -659,7 +659,7 @@ services:
         condition: service_completed_successfully
     labels:
       com.antithesis.exclude_from_faults: network,kill,pause,stop
-    image: ghcr.io/j-gainsec/dwarf-sm@sha256:e7cbd7441f0db8253cb0ab24a60a603afe007d32015ec4d632ced8357ceb022b
+    image: ghcr.io/j-gainsec/dwarf-sm@sha256:7339d5282b392f557b40d3a723c56efafbccb1bfdc20988b1771f0daaa125793
   measure-tracer-sm-cardano-victim:
     image: ghcr.io/intersectmbo/cardano-tracer@sha256:da628263a851b419c38d020d3a7dc3b65b20ee84e730faeb74babd6d96f28efe
     container_name: measure-tracer-sm-cardano-victim
@@ -686,7 +686,7 @@ services:
     - sm-amaru-runtime-evidence:/inputs/sm-amaru-victim:ro
     labels:
       com.antithesis.exclude_from_faults: network,kill,pause,stop
-    image: ghcr.io/j-gainsec/dwarf-sm@sha256:4d1ea6282a19ab55fa377937449ab6f6b701f51c732c7f15e5842db313701878
+    image: ghcr.io/j-gainsec/dwarf-sm@sha256:38cd246970f19eb982115b813138f654570a906755f5bef61a2a5375b91ef13f
 volumes:
   a1-state: null
   a2-state: null
