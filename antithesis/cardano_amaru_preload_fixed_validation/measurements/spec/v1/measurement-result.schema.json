@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dwarf.gainpalfam.com/spec/v1/measurement-result.schema.json",
+  "title": "DWARF measurement result",
+  "description": "One evidence-backed result emitted by a measurement tap into an existing DWARF run bundle.",
+  "type": "object",
+  "required": ["schema_version", "measurement_id", "run_id", "status", "result_kind", "target", "provenance", "artifacts"],
+  "properties": {
+    "schema_version": {"const": "v1"},
+    "measurement_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
+    "run_id": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["collected", "unavailable", "failed"]},
+    "result_kind": {"type": "string", "enum": ["functional-scoreboard", "distribution", "timeseries", "resource", "transcript", "coverage", "summary"]},
+    "unit": {"type": "string"},
+    "sample_count": {"type": "integer", "minimum": 0},
+    "excluded_sample_count": {"type": "integer", "minimum": 0},
+    "warmup_policy": {"type": "string"},
+    "statistics": {
+      "type": "object",
+      "properties": {
+        "count": {"type": "integer", "minimum": 0},
+        "mean": {"type": "number"},
+        "median": {"type": "number"},
+        "p95": {"type": "number"},
+        "p99": {"type": "number"},
+        "min": {"type": "number"},
+        "max": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "records": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+    "target": {
+      "type": "object",
+      "required": ["implementation", "version", "source_revision", "mode"],
+      "properties": {
+        "implementation": {"type": "string", "enum": ["amaru", "cardano-node"]},
+        "version": {"type": "string", "minLength": 1},
+        "source_revision": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"},
+        "mode": {"type": "string", "enum": ["stock", "coverage", "patched"]},
+        "image_digest": {"type": "string"},
+        "image_reference": {"type": "string", "minLength": 1},
+        "image_manifest_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "image_config_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "qualification_image_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "source_image_reference": {"type": "string", "minLength": 1},
+        "transfer_manifest_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "transfer_source_installation_id": {"type": "string", "minLength": 1},
+        "executable_digest": {"type": "string"},
+        "build_result_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "runtime_probe_log_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "patch_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "measurement_revision": {"type": "string", "minLength": 1},
+        "version_catalog_revision": {"type": "string", "minLength": 1},
+        "profile_id": {"type": "string", "minLength": 1},
+        "deployment_adapter": {"type": "string", "minLength": 1},
+        "qualification_status": {"type": "string", "minLength": 1},
+        "coverage_harness_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "target_name": {"type": "string"},
+        "engine": {"type": "string"},
+        "performance_authority": {"type": "string"},
+        "non_authoritative_performance": {"type": "boolean"},
+        "schema_version": {"const": 1},
+        "coverage_target_ref": {"type": "string", "pattern": "^state:measurement-target-builds/[A-Za-z0-9._-]+$"},
+        "working_dir": {"type": "string", "minLength": 1},
+        "fuzz_dir": {"type": "string", "minLength": 1},
+        "binary": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "minLength": 1},
+        "identity_kind": {"type": "string", "enum": ["operator-local-config"]},
+        "image_config_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "platform": {"type": "string", "enum": ["linux/amd64", "linux/arm64"]},
+        "operator_registration_id": {"type": "string", "minLength": 1},
+        "operator_overlay_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "controller_installation_id": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"identity_kind": {"const": "operator-local-config"}},
+            "required": ["identity_kind"]
+          },
+          "then": {
+            "required": [
+              "image_reference",
+              "image_config_id",
+              "executable_digest",
+              "platform",
+              "operator_registration_id",
+              "operator_overlay_revision",
+              "controller_installation_id",
+              "version_catalog_revision"
+            ],
+            "properties": {
+              "image_reference": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+              "image_config_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+              "executable_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+              "operator_registration_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+              "operator_overlay_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+              "controller_installation_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+              "version_catalog_revision": {"type": "string", "pattern": "^(?:sha256:)?[0-9a-f]{64}$"}
+            }
+          },
+          "else": {
+            "properties": {
+              "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["scenario_id", "collector_mode", "hardware", "dataset"],
+      "properties": {
+        "scenario_id": {"type": "string"},
+        "collector_mode": {"type": "string", "enum": ["external", "stock-telemetry", "compiler-coverage", "patched-node"]},
+        "hardware": {"type": "object", "additionalProperties": true},
+        "dataset": {"type": "object", "additionalProperties": true},
+        "observer_overhead": {"type": ["object", "null"], "additionalProperties": true},
+        "experimental_consent": {"type": "boolean"},
+        "experimental_context_digest": {"type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$"},
+        "compatibility": {"type": ["object", "null"], "additionalProperties": true},
+        "capability": {"type": ["object", "null"], "additionalProperties": true}
+      },
+      "additionalProperties": false
+    },
+    "correlation": {"type": "object", "additionalProperties": {"type": ["string", "number", "integer", "null"]}},
+    "performance_authority": {"type": "string", "enum": ["authoritative", "non-authoritative", "requires-paired-calibration", "common-metric-calibrated", "not-calibrated"]},
+    "non_authoritative_performance": {"type": "boolean"},
+    "coverage": {"type": "object", "additionalProperties": true},
+    "campaign": {"type": "object", "additionalProperties": true},
+    "artifacts": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "unavailable_reason": {"type": "string"}
+  },
+  "additionalProperties": false
+}
