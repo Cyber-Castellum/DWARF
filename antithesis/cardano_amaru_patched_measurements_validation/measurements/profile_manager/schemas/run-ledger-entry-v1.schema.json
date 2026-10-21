@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dwarf.dev/schemas/run-ledger-entry-v1.schema.json",
+  "title": "DWARF run ledger entry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "kind", "origin", "backend", "scenario", "profile", "topology", "release_revision", "state", "created_at", "updated_at", "queued_at", "started_at", "ended_at", "verdict", "manifest_path", "evidence_path", "provenance"],
+  "properties": {
+    "schema_version": {"const": "v1"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"},
+    "kind": {"enum": ["scenario", "deployment", "maintenance", "ci", "external"]},
+    "origin": {"type": "string", "minLength": 1},
+    "backend": {"type": "string", "minLength": 1},
+    "scenario": {"$ref": "#/$defs/identity"},
+    "profile": {"$ref": "#/$defs/identity"},
+    "topology": {"$ref": "#/$defs/identity"},
+    "release_revision": {"type": ["string", "null"], "minLength": 1},
+    "state": {"enum": ["queued", "running", "completed", "failed", "interrupted"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "queued_at": {"$ref": "#/$defs/timestamp"},
+    "started_at": {"$ref": "#/$defs/timestamp"},
+    "ended_at": {"$ref": "#/$defs/timestamp"},
+    "verdict": {"enum": [null, "pass", "fail", "inconclusive"]},
+    "manifest_path": {"type": ["string", "null"], "minLength": 1},
+    "evidence_path": {"type": ["string", "null"], "minLength": 1},
+    "provenance": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"kind": {"enum": ["deployment", "maintenance"]}}},
+      "then": {"properties": {"verdict": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"state": {"enum": ["queued", "running"]}}},
+      "then": {"properties": {"verdict": {"type": "null"}, "ended_at": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"state": {"const": "running"}}},
+      "then": {"properties": {"started_at": {"type": "string", "format": "date-time"}}}
+    }
+  ],
+  "$defs": {
+    "timestamp": {"type": ["string", "null"], "format": "date-time"},
+    "identity": {
+      "type": ["object", "null"],
+      "properties": {"id": {"type": "string", "minLength": 1}, "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}},
+      "required": ["id"]
+    }
+  }
+}
