@@ -265,7 +265,7 @@ services:
     platform: linux/amd64
     init: true
   relay1:
-    image: ghcr.io/intersectmbo/cardano-node:10.6.2@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
     environment:
       CARDANO_BLOCK_PRODUCER: false
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n\
@@ -290,7 +290,7 @@ services:
     platform: linux/amd64
     init: true
   relay2:
-    image: ghcr.io/intersectmbo/cardano-node:10.6.2@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
     environment:
       CARDANO_BLOCK_PRODUCER: false
     command: "run --topology /configs/configs/topology.json\n  --config /configs/configs/config.json\n\
@@ -392,7 +392,7 @@ services:
     platform: linux/amd64
     init: true
   amaru-target-extract:
-    image: ghcr.io/pragma-org/amaru:v10.11.20260918@sha256:2176f12085219a4052be17dca89742954897eb9a5321554c799d0458913c9c60
+    image: ghcr.io/pragma-org/amaru@sha256:2176f12085219a4052be17dca89742954897eb9a5321554c799d0458913c9c60
     user: 0:0
     entrypoint:
     - /bin/sh
@@ -552,7 +552,7 @@ services:
     platform: linux/amd64
     init: true
   sm-cardano-victim:
-    image: ghcr.io/intersectmbo/cardano-node:10.6.2@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
+    image: ghcr.io/intersectmbo/cardano-node@sha256:c3cbc5aa0b758ba211567791539a67001e661fbe7a09275e37449e8b1252c4b2
     environment:
       CARDANO_BLOCK_PRODUCER: false
     command:
